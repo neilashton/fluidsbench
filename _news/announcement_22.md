@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Join us on Febrary 24th for a virtual kick off of AutoCFD5 - where we'll give more details of the event in Bologna (8th-9th October 2026) and hear about the official test-cases for the event. You can join via Microsoft teams link [here](https://teams.microsoft.com/meet/33628875703759?p=hhrjshvVxGutkzEbdp). 
+Join us on Febrary 24th (3-4pm GMT) for a virtual kick off of AutoCFD5 - where we'll give more details of the event in Bologna (8th-9th October 2026) and hear about the official test-cases for the event. You can join via Microsoft teams link [here](https://teams.microsoft.com/meet/33628875703759?p=hhrjshvVxGutkzEbdp). 
