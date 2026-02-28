@@ -5,15 +5,15 @@ nav: true
 nav_order: 7
 dropdown: true
 children:
-  - title: autocfd1
-    permalink: /autocfd1/
+  - title: fluidsbench1
+    permalink: /fluidsbench1/
   - title: divider
-  - title: autocfd2
-    permalink: /autocfd2/
+  - title: fluidsbench2
+    permalink: /fluidsbench2/
   - title: divider
-  - title: autocfd3
-    permalink: /autocfd3/
+  - title: fluidsbench3
+    permalink: /fluidsbench3/
   - title: divider
-  - title: autocfd4
-    permalink: /autocfd4/
+  - title: fluidsbench4
+    permalink: /fluidsbench4/
 ---

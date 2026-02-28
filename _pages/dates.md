@@ -13,5 +13,5 @@ nav_order: 5
 <b>Workshop</b> : October 8th-9th 2026 
 <br/><br/>
 
-**Please e-mail admin@autocfd.org with your expression to participate so you can be assigned an ID.
+**Please e-mail admin@fluidsbench.org with your expression to participate so you can be assigned an ID.
 
