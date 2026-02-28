@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Updated dates and details on the abstract submission have been included on the [dates](https://autocfd.org/dates) page.
+Updated dates and details on the abstract submission have been included on the [dates](https://fluidsbench.org/dates) page.

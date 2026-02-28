@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Workshop [booklet](https://autocfd4.s3.eu-west-1.amazonaws.com/AutoCFD4Bookletv1.3.pdf) (including presentation titles) is now available
+Workshop [booklet](https://fluidsbench4.s3.eu-west-1.amazonaws.com/AutoCFD4Bookletv1.3.pdf) (including presentation titles) is now available

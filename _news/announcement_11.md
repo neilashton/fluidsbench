@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Preliminary detailed agenda (v1.4) is now available [here](https://autocfd4.s3.eu-west-1.amazonaws.com/autocfd4-agenda1p4.pdf)
+Preliminary detailed agenda (v1.4) is now available [here](https://fluidsbench4.s3.eu-west-1.amazonaws.com/fluidsbench4-agenda1p4.pdf)

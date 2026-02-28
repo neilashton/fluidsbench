@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-The latest grids for case2, which have been updated for AutoCFD5, are now available. Please head to the [case2](https://autocfd.org/case2/) page to download them. 
+The latest grids for case2, which have been updated for AutoCFD5, are now available. Please head to the [case2](https://fluidsbench.org/case2/) page to download them. 

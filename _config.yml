@@ -3,16 +3,16 @@
 # -----------------------------------------------------------------------------
 
 title: AutoCFD5 # the website title (if blank, full name will be used instead)
-email: admin@autocfd.org
-description: Automotive CFD Prediction Workshop
+email: admin@fluidsbench.org
+description: Fluidsbench
 footer_text: >
   Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>
-keywords: autocfd,CFD,automotive,autocfd1,autocfd2,autocfd3,autocfd4jekyll, neil ashton, drivaer,windsor
+keywords: fluidsbench,CFD,automotive,fluidsbench1,fluidsbench2,fluidsbench3,fluidsbench4jekyll, neil ashton, drivaer,windsor
 lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: ⚛️ # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 
-url: https://neilashton.github.io/autocfd # the base hostname & protocol for your site
+url: https://neilashton.github.io/fluidsbench # the base hostname & protocol for your site
 baseurl: # the subpath of your site, e.g. /blog/. Leave blank for root
 last_updated: true # set to true if you want to display last updated in the footer
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR

@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Updated Case 2 surface [meshes](https://autocfd.org/case2/) are now available.
+Updated Case 2 surface [meshes](https://fluidsbench.org/case2/) are now available.

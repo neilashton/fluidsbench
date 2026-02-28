@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-The AutoCFD4 results dashboard is now available [here](https://autocfd4.cfdsolutions.net)
+The AutoCFD4 results dashboard is now available [here](https://fluidsbench4.cfdsolutions.net)
