@@ -7,8 +7,6 @@ nav: true
 nav_order: 5
 ---
 
-<b>All test-case and submission detail finalized</b> : Feb 28th \
-<b>Expression of interest**</b> : March 7th \
 <b>Deadline for abstract*</b> : June 8th \
 <b>Notice of acceptance</b> : July 1st \
 <b>Deadline for data submission</b> : August 21st \
