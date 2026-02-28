@@ -11,7 +11,7 @@ nav_order: 2
 
 <img class="photo" alt="Windsor Body" src="{{ site.baseurl }}/assets/img/windsor.png">
 
-Case 1 is the Windsor Squareback body at 2.5 degrees yaw and is the same test-case studied in the [3rd automotive CFD workshop](https://autocfd.org/autocfd3). The problem is at a Reynolds number of 3 million based on vehicle length and is within a wind-tunnel like domain. As well as force, moment and surface pressure data, there is also available non intrusive PIV measurements in the wake. The baseline grid is similar to the ‘eddy resolving’ grid from the second workshop and contains 37 million cells. The alternate grids halve and double the core cell size to give 7 million and 197 million cell grids. The grid type follows the second workshop using the ‘trimmer mesh’ and prism layer approach from Simcenter STAR-CCM+.
+Case 1 is the Windsor Squareback body at 2.5 degrees yaw and is the same test-case studied in the [4th automotive CFD workshop](https://autocfd.org/autocfd4). The problem is at a Reynolds number of 3 million based on vehicle length and is within a wind-tunnel like domain. As well as force, moment and surface pressure data, there is also available non intrusive PIV measurements in the wake. The baseline grid is similar to the ‘eddy resolving’ grid from the second workshop and contains 37 million cells. The alternate grids halve and double the core cell size to give 7 million and 197 million cell grids. The grid type follows the second workshop using the ‘trimmer mesh’ and prism layer approach from Simcenter STAR-CCM+.
 
 <h3>Documents</h3>
 
