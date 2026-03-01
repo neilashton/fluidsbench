@@ -3,7 +3,7 @@ layout: home
 title: home
 permalink: /
 page_title: "FluidsBench"
-page_subtitle: 
+page_subtitle: A benchmark for state of the art Computational Fluid Dynamics (CFD) AI surrogates models 
 
 news: true # includes a list of news items
 ---
