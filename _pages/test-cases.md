@@ -1,9 +1,9 @@
 ---
 layout: page
 title: test cases
-nav: true
+nav: false
 nav_order: 3
-dropdown: true
+dropdown: false
 children:
   - title: Case 1
     permalink: /case1/
