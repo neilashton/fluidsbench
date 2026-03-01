@@ -2,7 +2,7 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: AutoCFD5 # the website title (if blank, full name will be used instead)
+title: FluidsBench # the website title (if blank, full name will be used instead)
 email: admin@fluidsbench.org
 description: FluidsBench
 footer_text: >
