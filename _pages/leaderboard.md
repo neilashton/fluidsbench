@@ -1,7 +1,7 @@
 ---
 layout: page
-permalink: /datasets/
-title: datasets
+permalink: /leaderboards/
+title: leaderboards
 description: 
 nav: true
 nav_order: 6
