@@ -1,18 +1,10 @@
 ---
 layout: page
-permalink: /organisers/
-title: Organising Committee
+permalink: /datasets/
+title: Datasets
 description: 
-nav: false
+nav: true
 nav_order: 6
 ---
 
-<h3> Organizering Committee</h3>
-
-* Neil Ashton (NVIDIA)
-* Paola Cinnella  (Sorbonne University)
-* Astrid Walle (Siemens Energy)
-* Jean Kossai (NVIDIA)
-* Daniel Leibovic (NVIDIA)
-* Richard Dwight (TU Delft)
-
+Coming soon

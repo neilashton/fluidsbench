@@ -24,3 +24,6 @@ FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, de
 * Prof. Ricardo Vinuesa (University of Michigan)
 * Dr. Daniel Leibovic (NVIDIA)
 * Prof. Richard Dwight (TU Delft)
+
+<h3>Questions</h3>
+For any questions please e-mail [admin@fluidsbench.org](admin@fluidsbench.org) and/or join the mailing list for updates.
