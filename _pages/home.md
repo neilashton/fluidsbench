@@ -32,6 +32,7 @@ FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, de
 * Nils Thuerey (TUM)
 * Michalis Michaelides (PhysicsX)
 * Oriol Lehmkuhl (BSC)
+* Fabien Casenave (Safran)
 * Adam Clarke (Boeing)
 * Dirk Hartmann (Siemens/ TU Darmstadt)
 * Sina Hassanli (Arup) 
