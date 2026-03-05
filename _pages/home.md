@@ -33,6 +33,7 @@ FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, de
 * Michalis Michaelides (PhysicsX)
 * Oriol Lehmkuhl (BSC)
 * Adam Clarke (Boeing)
+* Dirk Hartmann (Siemens/ TU Darmstadt)
 * Sina Hassanli (Arup) 
 * Simon Dodman (Cadillac F1)
 
