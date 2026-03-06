@@ -30,6 +30,7 @@ FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, de
 
 * Siddhartha Mishra (ETH)
 * Nils Thuerey (TUM)
+* Nathan Kutz (Autodesk)
 * Michalis Michaelides (PhysicsX)
 * Oriol Lehmkuhl (BSC)
 * Fabien Casenave (Safran)
