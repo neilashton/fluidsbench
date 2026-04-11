@@ -25,6 +25,8 @@ FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, de
 * Ricardo Vinuesa (University of Michigan)
 * Daniel Leibovic (NVIDIA)
 * Richard Dwight (TU Delft)
+* Faez Ahmed (MIT)
+* Rishi Ranade (NVIDIA)
 
 <h3>Advisory Board</h3>
 
@@ -33,11 +35,12 @@ FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, de
 * Nathan Kutz (Autodesk)
 * Michalis Michaelides (PhysicsX)
 * Oriol Lehmkuhl (BSC)
+* Cristan Bodnar (Promethus)
 * Fabien Casenave (Safran)
 * Adam Clarke (Boeing)
-* Dirk Hartmann (Siemens/ TU Darmstadt)
+* Dirk Hartmann (Siemens/TU Darmstadt)
 * Sina Hassanli (Arup) 
 * Simon Dodman (Cadillac F1)
-
+* Daniel Morales Brotons (Neural Concept)
 <h3>Questions</h3>
 For any questions please e-mail [admin@fluidsbench.org](admin@fluidsbench.org) and/or join the mailing list for updates.
