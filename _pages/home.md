@@ -19,7 +19,7 @@ FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, de
 
 * Neil Ashton (NVIDIA)
 * Paola Cinnella  (Sorbonne University)
-* Astrid Walle (Siemens Energy)
+* Astrid Walle (Pasteur Labs)
 * Mohamed Elrefaie (MIT)
 * Jean Kossai (NVIDIA)
 * Ricardo Vinuesa (University of Michigan)
