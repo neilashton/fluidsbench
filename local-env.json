@@ -1,0 +1,10 @@
+{
+  "FetchFunction": {
+    "TABLE_NAME": "fluidsbench-submissions-dev",
+    "TRACES_BUCKET": "fluidsbench-traces-dev"
+  },
+  "SubmitFunction": {
+    "TABLE_NAME": "fluidsbench-submissions-dev",
+    "TRACES_BUCKET": "fluidsbench-traces-dev"
+  }
+}

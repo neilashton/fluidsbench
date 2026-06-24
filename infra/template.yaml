@@ -1,0 +1,134 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: FluidsBench leaderboard backend — DynamoDB, Lambda Function URLs, S3
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+  AllowedOrigin:
+    Type: String
+    Default: https://fluidsbench.org
+
+Conditions:
+  IsProd: !Equals [!Ref Environment, prod]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Environment:
+      Variables:
+        TABLE_NAME: !Sub 'fluidsbench-submissions-${Environment}'
+        TRACES_BUCKET: !If [IsProd, 'fluidsbench-traces', !Sub 'fluidsbench-traces-${Environment}']
+
+Resources:
+
+  SubmissionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'fluidsbench-submissions-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: submission_id
+          AttributeType: S
+        - AttributeName: dataset
+          AttributeType: S
+      KeySchema:
+        - AttributeName: submission_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: DatasetIndex
+          KeySchema:
+            - AttributeName: dataset
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  TracesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !If [IsProd, 'fluidsbench-traces', !Sub 'fluidsbench-traces-${Environment}']
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - !Ref AllowedOrigin
+            AllowedMethods:
+              - GET
+              - PUT
+            AllowedHeaders:
+              - '*'
+            MaxAge: 3600
+
+  TracesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TracesBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadTraces
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub
+              - 'arn:aws:s3:::${BucketName}/traces/*'
+              - BucketName: !If [IsProd, 'fluidsbench-traces', !Sub 'fluidsbench-traces-${Environment}']
+
+  FetchFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !If [IsProd, 'fluidsbench-fetch', !Sub 'fluidsbench-fetch-${Environment}']
+      Handler: handler.lambda_handler
+      CodeUri: ../lambda/fetch/
+      MemorySize: 128
+      Timeout: 10
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - !Ref AllowedOrigin
+          AllowMethods:
+            - GET
+          AllowHeaders:
+            - '*'
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref SubmissionsTable
+
+  SubmitFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !If [IsProd, 'fluidsbench-submit', !Sub 'fluidsbench-submit-${Environment}']
+      Handler: handler.lambda_handler
+      CodeUri: ../lambda/submit/
+      MemorySize: 128
+      Timeout: 15
+      ReservedConcurrentExecutions: 10
+      FunctionUrlConfig:
+        AuthType: NONE
+        Cors:
+          AllowOrigins:
+            - !Ref AllowedOrigin
+          AllowMethods:
+            - POST
+          AllowHeaders:
+            - '*'
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref SubmissionsTable
+        - S3WritePolicy:
+            BucketName: !Ref TracesBucket
+
+Outputs:
+  FetchFunctionUrl:
+    Description: Fetch Lambda Function URL
+    Value: !GetAtt FetchFunctionUrl.FunctionUrl
+
+  SubmitFunctionUrl:
+    Description: Submit Lambda Function URL
+    Value: !GetAtt SubmitFunctionUrl.FunctionUrl
