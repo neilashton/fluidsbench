@@ -69,6 +69,21 @@ class TestValidSubmission:
         assert item['status'] == 'pending'
         assert item['dataset'] == 'AhmedML'
 
+    def test_drivaerml_dataset_is_accepted(self):
+        _, mock_table, _ = _call({**VALID, 'dataset': 'DrivAerML'})
+        item = mock_table.put_item.call_args[1]['Item']
+        assert item['dataset'] == 'DrivAerML'
+
+    def test_windsorml_dataset_is_accepted(self):
+        _, mock_table, _ = _call({**VALID, 'dataset': 'WindsorML'})
+        item = mock_table.put_item.call_args[1]['Item']
+        assert item['dataset'] == 'WindsorML'
+
+    def test_hiliftaeroml_dataset_is_accepted(self):
+        _, mock_table, _ = _call({**VALID, 'dataset': 'HiLiftAeroML'})
+        item = mock_table.put_item.call_args[1]['Item']
+        assert item['dataset'] == 'HiLiftAeroML'
+
     def test_status_set_to_pending(self):
         _, mock_table, _ = _call(VALID)
         item = mock_table.put_item.call_args[1]['Item']

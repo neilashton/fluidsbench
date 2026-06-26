@@ -1,9 +1,9 @@
 ---
 layout: page
-permalink: /datasets/ahmedml/
-title: AhmedML dataset
-page_title: AhmedML dataset
-page_description: Dataset overview and leaderboard submission format for AhmedML.
+permalink: /datasets/hiliftaeroml/
+title: HiLiftAeroML dataset
+page_title: HiLiftAeroML dataset
+page_description: Dataset overview and leaderboard submission format for HiLiftAeroML.
 description:
 nav: false
 ---
@@ -12,15 +12,15 @@ nav: false
   <section>
     <p class="dataset-kicker">Dataset specification</p>
     <p class="dataset-intro">
-      AhmedML is a high-fidelity CFD dataset for incompressible, low-speed bluff-body aerodynamics using the Ahmed car
-      body. It contains 500 geometric variants, with boundary fields, volume fields, geometry, slices, and time-averaged
-      force and moment data.
+      HiLiftAeroML is a high-fidelity CFD dataset for high-lift aircraft aerodynamics using the NASA Common Research
+      Model High-Lift (CRM-HL) configuration. It provides CAD geometry, time-averaged surface and volume fields, flow
+      visualisations, and integrated aerodynamic coefficients for machine-learning surrogate development.
     </p>
     <p>
       The source dataset is maintained at
-      <a href="https://caemldatasets.org/ahmedml/">caemldatasets.org/ahmedml</a>. The dataset page describes the full
-      download layout, including Hugging Face access, OpenFOAM case setup, STL files, VTP/VTU fields, and force/moment
-      CSV files.
+      <a href="https://caemldatasets.org/hiliftaeroml/">caemldatasets.org/hiliftaeroml</a> and hosted on Hugging Face.
+      The current FluidsBench example rows use completed 200k inference benchmark results from the HiLiftAeroML paper and
+      the local June 25, 2026 PDF.
     </p>
   </section>
 
@@ -29,27 +29,31 @@ nav: false
     <dl class="dataset-facts">
       <div>
         <dt>Geometry</dt>
-        <dd>Parametric Ahmed car body variants.</dd>
+        <dd>NASA CRM-HL high-lift aircraft with parameterized slat and flap deflections and gaps.</dd>
       </div>
       <div>
         <dt>Cases</dt>
-        <dd>500 CFD simulations.</dd>
+        <dd>1,800 simulations: 180 geometry variants across 10 angles of attack from 4 degrees to 22 degrees.</dd>
       </div>
       <div>
         <dt>Solver</dt>
-        <dd>OpenFOAM v2212 finite-volume simulations.</dd>
+        <dd>Fidelity Charles explicit unstructured finite-volume solver with Fidelity Stitch Voronoi meshing.</dd>
       </div>
       <div>
         <dt>Fidelity</dt>
-        <dd>Transient hybrid RANS-LES, approximately 80 convective time units per case.</dd>
+        <dd>Wall-Modeled Large-Eddy Simulation (WMLES) with solution-adapted grids.</dd>
+      </div>
+      <div>
+        <dt>Flow conditions</dt>
+        <dd>Mach 0.2 and chord-based Reynolds number 1.6 x 10<sup>6</sup>.</dd>
       </div>
       <div>
         <dt>Mesh scale</dt>
-        <dd>Approximately 20 million cells per case.</dd>
+        <dd>Solution-adapted grids between roughly 300M and 500M control volumes; exported volume meshes are octree-based.</dd>
       </div>
       <div>
         <dt>License</dt>
-        <dd>CC BY-SA 4.0, as stated by the dataset source.</dd>
+        <dd>CC BY 4.0, as stated by the dataset source.</dd>
       </div>
     </dl>
   </section>
@@ -59,8 +63,8 @@ nav: false
     <p>
       Submit one compressed archive per model. Prediction files should use the benchmark case identifiers and point order
       provided by the evaluator package. The evaluator owns the ground-truth files and computes all metrics from the
-      predicted values below. Field values used for relative L1 and L2 must be submitted in the dataset-native
-      dimensional units after undoing any training normalization or non-dimensionalization.
+      predicted values below. Field values used for relative L1 and L2 must be submitted in dataset-native dimensional
+      units after undoing any training normalization or non-dimensionalization.
     </p>
 
     <div class="dataset-table-wrap">
@@ -90,18 +94,18 @@ nav: false
           </tr>
           <tr>
             <td><code>forces.csv</code></td>
-            <td><code>case_id</code>, <code>cd_pred</code>, <code>cl_pred</code></td>
-            <td>C<sub>d</sub> R<sup>2</sup>, C<sub>l</sub> R<sup>2</sup>, and force R<sup>2</sup>.</td>
+            <td><code>case_id</code>, <code>cd_pred</code>, <code>cl_pred</code>, optional <code>cm_pred</code></td>
+            <td>C<sub>d</sub> R<sup>2</sup>, C<sub>l</sub> R<sup>2</sup>, force R<sup>2</sup>, and optional pitching-moment diagnostics.</td>
           </tr>
           <tr>
             <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
-            <td>Cp cut R<sup>2</sup> and centreline Cp plots.</td>
+            <td><code>case_id</code>, <code>cut_id</code>, <code>x_over_c</code>, <code>cp_pred</code></td>
+            <td>Cp cut R<sup>2</sup> and CRM-HL wing section Cp plots.</td>
           </tr>
           <tr>
             <td><code>velocity_profiles.csv</code></td>
-            <td><code>case_id</code>, <code>station_id</code>, <code>z_over_h</code>, <code>u_x_pred</code>, <code>u_y_pred</code>, <code>u_z_pred</code></td>
-            <td>Velocity profile R<sup>2</sup> and profile plots.</td>
+            <td><code>case_id</code>, <code>station_id</code>, <code>sdf_distance_over_lref</code>, <code>u_parallel_pred</code></td>
+            <td>Velocity profile R<sup>2</sup> and near-wall profile plots.</td>
           </tr>
         </tbody>
       </table>
@@ -132,22 +136,23 @@ nav: false
         <dt>Dimensional evaluation</dt>
         <dd>
           Relative L1 and L2 metrics are not computed on normalized, standardized, or non-dimensional training targets. If
-          a model predicts normalized values, the submission/evaluator must undo that transform before scoring.
+          a model predicts normalized values, the submission/evaluator must undo that transform before scoring. For
+          HiLiftAeroML this means pressure, wall shear, and velocity are evaluated in the dataset-native physical units;
           C<sub>d</sub>, C<sub>l</sub>, and Cp-cut diagnostics remain coefficient-based by definition.
         </dd>
       </div>
       <div>
         <dt>Surface pressure relative L1/L2</dt>
         <dd>
-          Relative L1 and L2 error for dimensional surface pressure <code>p_surface_pred</code> against the evaluator surface
-          pressure values. Cp is used only for the Cp-cut diagnostic and plots.
+          Relative L1 and L2 error for dimensional surface pressure <code>p_surface_pred</code> against the evaluator
+          surface pressure values. Cp is used only for the Cp-cut diagnostic and plots.
         </dd>
       </div>
       <div>
         <dt>Surface wall-shear relative L1/L2</dt>
         <dd>
           Relative L1 and L2 error for the wall-shear vector \(\tau_w = (\tau_{w,x}, \tau_{w,y}, \tau_{w,z})\) on the
-          Ahmed body surface.
+          CRM-HL aircraft surface.
         </dd>
       </div>
       <div>
@@ -161,13 +166,6 @@ nav: false
         <dd>Relative L1 and L2 error for pressure on the benchmark volume sample points.</dd>
       </div>
       <div>
-        <dt>AB-UPT convention</dt>
-        <dd>
-          This matches the AB-UPT evaluation convention: targets are normalized for training, but evaluation metrics are
-          computed on unnormalized predictions and targets.
-        </dd>
-      </div>
-      <div>
         <dt>Coefficient of determination</dt>
         <dd>
           For scalar values \(y_i\), \(R^2 = 1 - \sum_i(\hat{y}_i - y_i)^2 / \sum_i(y_i - \bar{y})^2\). Higher is
@@ -178,7 +176,8 @@ nav: false
         <dt>C<sub>d</sub> and C<sub>l</sub> R<sup>2</sup></dt>
         <dd>
           R<sup>2</sup> computed over all evaluated cases using predicted drag coefficient <code>cd_pred</code> and lift
-          coefficient <code>cl_pred</code>.
+          coefficient <code>cl_pred</code>. HiLiftAeroML also reports pitching-moment R<sup>2</sup> in the paper; the
+          current leaderboard stores C<sub>d</sub> and C<sub>l</sub> for consistency with the automotive tables.
         </dd>
       </div>
       <div>
@@ -188,10 +187,10 @@ nav: false
       <div>
         <dt>Cp cut R<sup>2</sup></dt>
         <dd>
-          One global R<sup>2</sup> over all selected surface pressure coefficient samples from the held-out test cases.
-          The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
-          <code>case_id</code>, <code>cut_id</code>, and cut sample locations before computing R<sup>2</sup>. The first
-          plotted cut is the Ahmed body centreline Cp trace.
+          One global R<sup>2</sup> over all selected wing-section surface pressure coefficient samples from the held-out
+          test cases. The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
+          <code>case_id</code>, <code>cut_id</code>, and section sample locations before computing R<sup>2</sup>. The
+          first plotted cut is a representative CRM-HL wing section Cp trace.
         </dd>
       </div>
       <div>
@@ -205,8 +204,8 @@ nav: false
       <div>
         <dt>Velocity profile R<sup>2</sup></dt>
         <dd>
-          R<sup>2</sup> over the selected wake profile samples. Unless the benchmark package states otherwise, the score is
-          computed on the velocity vector components flattened across stations, cases, and sample points.
+          R<sup>2</sup> over selected near-wall profile samples. Unless the benchmark package states otherwise, the score
+          is computed on <code>u_parallel_pred</code> flattened across profile windows, cases, and sample locations.
         </dd>
       </div>
     </dl>
@@ -282,9 +281,10 @@ S_overall  = sum(weight_q * S_q)</code></pre>
   <section class="dataset-panel">
     <h3>Links</h3>
     <ul>
-      <li><a href="https://caemldatasets.org/ahmedml/">AhmedML dataset page</a></li>
-      <li><a href="https://arxiv.org/abs/2407.20801">AhmedML paper</a></li>
-      <li><a href="{{ '/leaderboards/' | relative_url }}">Automotive CFD leaderboard prototype</a></li>
+      <li><a href="https://caemldatasets.org/hiliftaeroml/">HiLiftAeroML dataset page</a></li>
+      <li><a href="https://arxiv.org/abs/2605.19565">HiLiftAeroML paper</a></li>
+      <li><a href="https://huggingface.co/datasets/nvidia/HiLiftAeroML">HiLiftAeroML Hugging Face dataset</a></li>
+      <li><a href="{{ '/leaderboards/' | relative_url }}">CFD leaderboard prototype</a></li>
     </ul>
   </section>
 </div>

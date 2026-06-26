@@ -64,13 +64,13 @@ class TestContactEmailStripping:
         resp = _call([
             {
                 'submission_id': '1', 'status': 'approved',
-                'model': 'TestNet', 'dataset': 'AhmedBody',
+                'model': 'TestNet', 'dataset': 'AhmedML',
                 'contact_email': 'secret@x.com',
             },
         ])
         item = json.loads(resp['body'])[0]
         assert item['model'] == 'TestNet'
-        assert item['dataset'] == 'AhmedBody'
+        assert item['dataset'] == 'AhmedML'
         assert 'contact_email' not in item
 
 

@@ -2,8 +2,8 @@
 layout: page
 permalink: /leaderboards/
 title: leaderboards
-page_title: AhmedML leaderboard
-page_description: Example benchmark view for AhmedML neural CFD surrogate submissions.
+page_title: CFD leaderboards
+page_description: Example benchmark view for AhmedML, DrivAerML, WindsorML, and HiLiftAeroML neural CFD surrogate submissions.
 description:
 nav: true
 nav_order: 5
@@ -15,20 +15,26 @@ chart:
   <section>
     <p class="leaderboard-kicker">Prototype leaderboard</p>
     <p class="leaderboard-intro">
-      This example uses the AhmedML rows reported in the AB-UPT v2 paper as seed data. Relative L2 values and parameter
-      counts are paper-derived; relative L1, force, centerline Cp, and velocity-profile R<sup>2</sup> values are
-      placeholders so the scoring and visual workflow can be reviewed before real submissions are wired in. Field error
-      metrics are reported on unnormalized physical-space quantities.
+      This example uses the AhmedML and DrivAerML rows reported in the AB-UPT v2 paper as seed data, HiLiftAeroML
+      benchmark rows from the local HiLiftAeroML PDF, plus illustrative WindsorML prototype rows until evaluator outputs
+      are available. Relative L2 values and parameter counts are paper-derived for AhmedML, DrivAerML, and HiLiftAeroML;
+      relative L1, force, centerline Cp, and velocity-profile R<sup>2</sup> values are placeholders where the source
+      papers do not yet report them. Field error metrics are reported on unnormalized physical-space quantities.
     </p>
   </section>
 
   <p class="leaderboard-note">
     Lower relative L2 error is better. Higher R<sup>2</sup> and overall score are better. Submission date is set to
-    2025-06-13, the AB-UPT v2 revision date used for these example rows. Table values come from
-    <a href="https://arxiv.org/html/2502.09692v2">AB-UPT v2</a>; plot traces are illustrative Ahmed-body profiles
-    informed by the <a href="https://arxiv.org/html/2407.20801">AhmedML paper</a> and should be replaced by evaluator
-    exports once those cuts are defined. The submission format and metric definitions are listed on the
-    <a href="{{ '/datasets/ahmedml/' | relative_url }}">AhmedML dataset page</a>.
+    2025-06-13 for AB-UPT-derived rows, 2024-07-27 for the illustrative WindsorML prototype rows, and 2026-06-25 for
+    the HiLiftAeroML PDF rows. AhmedML and DrivAerML table values come from
+    <a href="https://arxiv.org/html/2502.09692v2">AB-UPT v2</a>; HiLiftAeroML table values come from
+    <a href="https://arxiv.org/html/2605.19565v1">HiLiftAeroML</a> benchmark tables and the local PDF; WindsorML values
+    and all plot traces are illustrative profiles informed by the source dataset papers and should be replaced by
+    evaluator exports once those cuts are defined. The submission format and metric definitions are listed on the
+    <a href="{{ '/datasets/ahmedml/' | relative_url }}">AhmedML</a>,
+    <a href="{{ '/datasets/drivaerml/' | relative_url }}">DrivAerML</a>,
+    <a href="{{ '/datasets/windsorml/' | relative_url }}">WindsorML</a>, and
+    <a href="{{ '/datasets/hiliftaeroml/' | relative_url }}">HiLiftAeroML</a> dataset pages.
   </p>
 
   <div class="leaderboard-backend-row">
@@ -42,6 +48,9 @@ chart:
       <select id="dataset-filter">
         <option value="all">All datasets</option>
         <option value="AhmedML" selected>AhmedML</option>
+        <option value="DrivAerML">DrivAerML</option>
+        <option value="WindsorML">WindsorML</option>
+        <option value="HiLiftAeroML">HiLiftAeroML</option>
       </select>
     </div>
     <div class="leaderboard-control">
@@ -75,7 +84,7 @@ chart:
     </div>
   </section>
 
-  <section class="leaderboard-table-wrap" aria-label="AhmedML leaderboard table">
+  <section class="leaderboard-table-wrap" aria-label="CFD leaderboard table">
     <table class="leaderboard-table">
       <thead>
         <tr>
@@ -106,8 +115,8 @@ chart:
   </section>
 
   <section class="leaderboard-panel">
-    <h3>Centreline surface Cp</h3>
-    <p>Ground truth versus selected submissions along the Ahmed body centreline.</p>
+    <h3 id="cp-panel-title">Centreline surface Cp</h3>
+    <p id="cp-panel-description">Ground truth versus selected submissions along the Ahmed body centreline.</p>
     <div class="chart-toolbar">
       <div class="chart-options" id="cp-models" aria-label="Cp model toggles"></div>
     </div>
@@ -117,7 +126,8 @@ chart:
   </section>
 
   <section class="leaderboard-panel">
-    <h3>Velocity profiles</h3>
+    <h3 id="velocity-panel-title">Velocity profiles</h3>
+    <p><span id="velocity-panel-description">Wake velocity profiles for the selected AhmedML station.</span></p>
     <p><span id="velocity-station-label">x/H = 0.25 downstream</span></p>
     <div class="chart-toolbar">
       <div class="chart-options" aria-label="Velocity station toggles">
@@ -180,7 +190,7 @@ chart:
   <dialog class="submission-dialog" id="submission-dialog">
     <form class="submission-form" id="leaderboard-submission-form" method="dialog">
       <div class="submission-form-header">
-        <h3>Submit AhmedML result</h3>
+        <h3>Submit benchmark result</h3>
         <button id="close-submission-form" type="button" aria-label="Close submission form">×</button>
       </div>
 
@@ -203,7 +213,12 @@ chart:
         </label>
         <label>
           Dataset
-          <input name="dataset" readonly required type="text" value="AhmedML" />
+          <select name="dataset" required>
+            <option>AhmedML</option>
+            <option>DrivAerML</option>
+            <option>WindsorML</option>
+            <option>HiLiftAeroML</option>
+          </select>
         </label>
         <label>
           Parameters (M)

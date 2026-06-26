@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed DynamoDB with one approved test entry and upload a placeholder trace zip."""
+"""Seed DynamoDB with approved test entries and upload placeholder trace zips."""
 
 import io
 import os
@@ -18,57 +18,126 @@ def main():
     ddb = boto3.resource('dynamodb').Table(TABLE_NAME)
     s3 = boto3.client('s3')
 
-    submission_id = str(uuid.uuid4())
-    trace_key = f'traces/{submission_id}.zip'
     now = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
-    # Build a minimal placeholder zip in memory
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, 'w') as zf:
-        zf.writestr('README.txt', 'Placeholder trace file for seed data.')
-    buf.seek(0)
+    for item in seed_items(now):
+        submission_id = item['submission_id']
+        trace_key = item['trace_file_key']
 
-    print(f'Uploading placeholder trace to s3://{TRACES_BUCKET}/{trace_key} ...')
-    s3.put_object(
-        Bucket=TRACES_BUCKET,
-        Key=trace_key,
-        Body=buf.read(),
-        ContentType='application/zip',
-    )
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, 'w') as zf:
+            zf.writestr('README.txt', f'Placeholder trace file for {item["dataset"]} seed data.')
+        buf.seek(0)
 
-    item = {
-        'submission_id': submission_id,
+        print(f'Uploading placeholder trace to s3://{TRACES_BUCKET}/{trace_key} ...')
+        s3.put_object(
+            Bucket=TRACES_BUCKET,
+            Key=trace_key,
+            Body=buf.read(),
+            ContentType='application/zip',
+        )
+
+        print(f'Inserting {item["dataset"]} seed entry (id={submission_id}) into {TABLE_NAME} ...')
+        ddb.put_item(Item=item)
+    print('Done. Seed entries inserted with status=approved.')
+
+
+def seed_items(now):
+    common = {
         'model': 'AB-UPT',
         'model_type': 'Transformer',
-        'dataset': 'AhmedML',
-        'surface_pressure_l2': Decimal('3.00'),
-        'surface_pressure_l1': Decimal('2.16'),
-        'surface_tau_l2': Decimal('3.88'),
-        'surface_tau_l1': Decimal('2.64'),
-        'volume_velocity_l2': Decimal('1.88'),
-        'volume_velocity_l1': Decimal('1.32'),
-        'volume_pressure_l2': Decimal('1.98'),
-        'volume_pressure_l1': Decimal('1.37'),
-        'r2_cd': Decimal('0.993'),
-        'r2_cl': Decimal('0.987'),
-        'velocity_profile_r2': Decimal('0.982'),
-        'cp_cut_r2': Decimal('0.976'),
         'parameter_count': Decimal('8.75'),
-        'paper_url': 'https://arxiv.org/abs/2502.09692',
-        'code_url': 'https://github.com/example/ab-upt',
         'submitter_name': 'Seed Script',
         'contact_email': 'seed@fluidsbench.org',
         'institution': 'FluidsBench',
-        'trace_file_key': trace_key,
         'status': 'approved',
         'submitted_at': now,
         'submission_date': now[:10],
         'reviewed_at': now,
     }
 
-    print(f'Inserting seed entry (id={submission_id}) into {TABLE_NAME} ...')
-    ddb.put_item(Item=item)
-    print('Done. Seed entry inserted with status=approved.')
+    rows = [
+        {
+            'dataset': 'AhmedML',
+            'paper_url': 'https://arxiv.org/abs/2502.09692',
+            'code_url': 'https://github.com/example/ab-upt',
+            'surface_pressure_l2': Decimal('3.00'),
+            'surface_pressure_l1': Decimal('2.16'),
+            'surface_tau_l2': Decimal('3.88'),
+            'surface_tau_l1': Decimal('2.64'),
+            'volume_velocity_l2': Decimal('1.88'),
+            'volume_velocity_l1': Decimal('1.32'),
+            'volume_pressure_l2': Decimal('1.98'),
+            'volume_pressure_l1': Decimal('1.37'),
+            'r2_cd': Decimal('0.993'),
+            'r2_cl': Decimal('0.987'),
+            'velocity_profile_r2': Decimal('0.982'),
+            'cp_cut_r2': Decimal('0.976'),
+        },
+        {
+            'dataset': 'DrivAerML',
+            'paper_url': 'https://arxiv.org/abs/2502.09692',
+            'code_url': 'https://github.com/example/ab-upt',
+            'surface_pressure_l2': Decimal('3.82'),
+            'surface_pressure_l1': Decimal('2.75'),
+            'surface_tau_l2': Decimal('7.29'),
+            'surface_tau_l1': Decimal('4.96'),
+            'volume_velocity_l2': Decimal('5.93'),
+            'volume_velocity_l1': Decimal('4.15'),
+            'volume_pressure_l2': Decimal('6.08'),
+            'volume_pressure_l1': Decimal('4.20'),
+            'r2_cd': Decimal('0.991'),
+            'r2_cl': Decimal('0.984'),
+            'velocity_profile_r2': Decimal('0.970'),
+            'cp_cut_r2': Decimal('0.968'),
+        },
+        {
+            'dataset': 'WindsorML',
+            'paper_url': 'https://arxiv.org/abs/2407.19320',
+            'surface_pressure_l2': Decimal('4.10'),
+            'surface_pressure_l1': Decimal('2.95'),
+            'surface_tau_l2': Decimal('6.85'),
+            'surface_tau_l1': Decimal('4.66'),
+            'volume_velocity_l2': Decimal('4.35'),
+            'volume_velocity_l1': Decimal('3.05'),
+            'volume_pressure_l2': Decimal('4.80'),
+            'volume_pressure_l1': Decimal('3.31'),
+            'r2_cd': Decimal('0.989'),
+            'r2_cl': Decimal('0.982'),
+            'velocity_profile_r2': Decimal('0.966'),
+            'cp_cut_r2': Decimal('0.964'),
+        },
+        {
+            'model': 'GeoTransolver (full split)',
+            'model_type': 'Transformer',
+            'dataset': 'HiLiftAeroML',
+            'parameter_count': Decimal('9.05'),
+            'paper_url': 'https://arxiv.org/abs/2605.19565',
+            'surface_pressure_l2': Decimal('8.84'),
+            'surface_pressure_l1': Decimal('6.36'),
+            'surface_tau_l2': Decimal('11.09'),
+            'surface_tau_l1': Decimal('7.54'),
+            'volume_velocity_l2': Decimal('8.78'),
+            'volume_velocity_l1': Decimal('6.15'),
+            'volume_pressure_l2': Decimal('8.06'),
+            'volume_pressure_l1': Decimal('5.56'),
+            'r2_cd': Decimal('0.995'),
+            'r2_cl': Decimal('0.992'),
+            'velocity_profile_r2': Decimal('0.940'),
+            'cp_cut_r2': Decimal('0.952'),
+        },
+    ]
+
+    items = []
+    for row in rows:
+        submission_id = str(uuid.uuid4())
+        items.append({
+            **common,
+            **row,
+            'submission_id': submission_id,
+            'trace_file_key': f'traces/{submission_id}.zip',
+        })
+    return items
 
 
 if __name__ == '__main__':

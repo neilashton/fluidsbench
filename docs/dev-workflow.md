@@ -150,6 +150,9 @@ def test_invalid_r2_returns_400():
     assert resp['statusCode'] == 400
 ```
 
+Use `dataset: 'DrivAerML'`, `dataset: 'WindsorML'`, or `dataset: 'HiLiftAeroML'` for the other supported submissions;
+the metric field names are the same.
+
 ### Run
 
 ```bash
@@ -225,6 +228,8 @@ payload = {
 print(json.dumps({'body': json.dumps(payload)}))
 PY
 ```
+
+Change the `dataset` value to `DrivAerML`, `WindsorML`, or `HiLiftAeroML` to test the other supported leaderboards.
 
 ### Browser testing
 

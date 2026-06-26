@@ -1,9 +1,9 @@
 ---
 layout: page
-permalink: /datasets/ahmedml/
-title: AhmedML dataset
-page_title: AhmedML dataset
-page_description: Dataset overview and leaderboard submission format for AhmedML.
+permalink: /datasets/drivaerml/
+title: DrivAerML dataset
+page_title: DrivAerML dataset
+page_description: Dataset overview and leaderboard submission format for DrivAerML.
 description:
 nav: false
 ---
@@ -12,15 +12,15 @@ nav: false
   <section>
     <p class="dataset-kicker">Dataset specification</p>
     <p class="dataset-intro">
-      AhmedML is a high-fidelity CFD dataset for incompressible, low-speed bluff-body aerodynamics using the Ahmed car
-      body. It contains 500 geometric variants, with boundary fields, volume fields, geometry, slices, and time-averaged
-      force and moment data.
+      DrivAerML is a high-fidelity CFD dataset for road-car external aerodynamics based on 500 parametrically morphed
+      variants of the DrivAer notchback vehicle. It provides geometry, surface fields, volume fields, slices, and
+      time-averaged forces and moments for machine-learning surrogate development.
     </p>
     <p>
       The source dataset is maintained at
-      <a href="https://caemldatasets.org/ahmedml/">caemldatasets.org/ahmedml</a>. The dataset page describes the full
-      download layout, including Hugging Face access, OpenFOAM case setup, STL files, VTP/VTU fields, and force/moment
-      CSV files.
+      <a href="https://caemldatasets.org/drivaerml/">caemldatasets.org/drivaerml</a>. The dataset page describes the full
+      Hugging Face layout, including STL geometry, VTP boundary fields, VTU volume fields, force/moment CSV files, and
+      flow slices.
     </p>
   </section>
 
@@ -29,7 +29,7 @@ nav: false
     <dl class="dataset-facts">
       <div>
         <dt>Geometry</dt>
-        <dd>Parametric Ahmed car body variants.</dd>
+        <dd>Parametrically morphed DrivAer notchback road-car variants.</dd>
       </div>
       <div>
         <dt>Cases</dt>
@@ -37,15 +37,15 @@ nav: false
       </div>
       <div>
         <dt>Solver</dt>
-        <dd>OpenFOAM v2212 finite-volume simulations.</dd>
+        <dd>OpenFOAM v2212 finite-volume simulations with custom workflow modifications.</dd>
       </div>
       <div>
         <dt>Fidelity</dt>
-        <dd>Transient hybrid RANS-LES, approximately 80 convective time units per case.</dd>
+        <dd>Scale-resolving hybrid RANS-LES representative of industrial automotive aerodynamic workflows.</dd>
       </div>
       <div>
         <dt>Mesh scale</dt>
-        <dd>Approximately 20 million cells per case.</dd>
+        <dd>Approximately 140 million volume grid cells and 8.8 million surface points per case.</dd>
       </div>
       <div>
         <dt>License</dt>
@@ -59,8 +59,8 @@ nav: false
     <p>
       Submit one compressed archive per model. Prediction files should use the benchmark case identifiers and point order
       provided by the evaluator package. The evaluator owns the ground-truth files and computes all metrics from the
-      predicted values below. Field values used for relative L1 and L2 must be submitted in the dataset-native
-      dimensional units after undoing any training normalization or non-dimensionalization.
+      predicted values below. Field values used for relative L1 and L2 must be submitted in dataset-native dimensional
+      units after undoing any training normalization or non-dimensionalization.
     </p>
 
     <div class="dataset-table-wrap">
@@ -96,12 +96,12 @@ nav: false
           <tr>
             <td><code>cp_cuts.csv</code></td>
             <td><code>case_id</code>, <code>cut_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
-            <td>Cp cut R<sup>2</sup> and centreline Cp plots.</td>
+            <td>Cp cut R<sup>2</sup> and DrivAer centreline Cp plots.</td>
           </tr>
           <tr>
             <td><code>velocity_profiles.csv</code></td>
             <td><code>case_id</code>, <code>station_id</code>, <code>z_over_h</code>, <code>u_x_pred</code>, <code>u_y_pred</code>, <code>u_z_pred</code></td>
-            <td>Velocity profile R<sup>2</sup> and profile plots.</td>
+            <td>Velocity profile R<sup>2</sup> and wake profile plots.</td>
           </tr>
         </tbody>
       </table>
@@ -139,15 +139,15 @@ nav: false
       <div>
         <dt>Surface pressure relative L1/L2</dt>
         <dd>
-          Relative L1 and L2 error for dimensional surface pressure <code>p_surface_pred</code> against the evaluator surface
-          pressure values. Cp is used only for the Cp-cut diagnostic and plots.
+          Relative L1 and L2 error for dimensional surface pressure <code>p_surface_pred</code> against the evaluator
+          surface pressure values. Cp is used only for the Cp-cut diagnostic and plots.
         </dd>
       </div>
       <div>
         <dt>Surface wall-shear relative L1/L2</dt>
         <dd>
           Relative L1 and L2 error for the wall-shear vector \(\tau_w = (\tau_{w,x}, \tau_{w,y}, \tau_{w,z})\) on the
-          Ahmed body surface.
+          vehicle surface.
         </dd>
       </div>
       <div>
@@ -178,7 +178,8 @@ nav: false
         <dt>C<sub>d</sub> and C<sub>l</sub> R<sup>2</sup></dt>
         <dd>
           R<sup>2</sup> computed over all evaluated cases using predicted drag coefficient <code>cd_pred</code> and lift
-          coefficient <code>cl_pred</code>.
+          coefficient <code>cl_pred</code>. AB-UPT computes these forces from high-resolution surface pressure and wall
+          shear stress predictions.
         </dd>
       </div>
       <div>
@@ -191,7 +192,7 @@ nav: false
           One global R<sup>2</sup> over all selected surface pressure coefficient samples from the held-out test cases.
           The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
           <code>case_id</code>, <code>cut_id</code>, and cut sample locations before computing R<sup>2</sup>. The first
-          plotted cut is the Ahmed body centreline Cp trace.
+          plotted cut is the DrivAer centreline Cp trace.
         </dd>
       </div>
       <div>
@@ -205,8 +206,9 @@ nav: false
       <div>
         <dt>Velocity profile R<sup>2</sup></dt>
         <dd>
-          R<sup>2</sup> over the selected wake profile samples. Unless the benchmark package states otherwise, the score is
-          computed on the velocity vector components flattened across stations, cases, and sample points.
+          R<sup>2</sup> over selected wake profile samples behind the vehicle. Unless the benchmark package states
+          otherwise, the score is computed on the velocity vector components flattened across stations, cases, and sample
+          points.
         </dd>
       </div>
     </dl>
@@ -282,8 +284,8 @@ S_overall  = sum(weight_q * S_q)</code></pre>
   <section class="dataset-panel">
     <h3>Links</h3>
     <ul>
-      <li><a href="https://caemldatasets.org/ahmedml/">AhmedML dataset page</a></li>
-      <li><a href="https://arxiv.org/abs/2407.20801">AhmedML paper</a></li>
+      <li><a href="https://caemldatasets.org/drivaerml/">DrivAerML dataset page</a></li>
+      <li><a href="https://arxiv.org/abs/2408.11969">DrivAerML paper</a></li>
       <li><a href="{{ '/leaderboards/' | relative_url }}">Automotive CFD leaderboard prototype</a></li>
     </ul>
   </section>

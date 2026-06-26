@@ -1,9 +1,9 @@
 ---
 layout: page
-permalink: /datasets/ahmedml/
-title: AhmedML dataset
-page_title: AhmedML dataset
-page_description: Dataset overview and leaderboard submission format for AhmedML.
+permalink: /datasets/windsorml/
+title: WindsorML dataset
+page_title: WindsorML dataset
+page_description: Dataset overview and leaderboard submission format for WindsorML.
 description:
 nav: false
 ---
@@ -12,15 +12,15 @@ nav: false
   <section>
     <p class="dataset-kicker">Dataset specification</p>
     <p class="dataset-intro">
-      AhmedML is a high-fidelity CFD dataset for incompressible, low-speed bluff-body aerodynamics using the Ahmed car
-      body. It contains 500 geometric variants, with boundary fields, volume fields, geometry, slices, and time-averaged
-      force and moment data.
+      WindsorML is a high-fidelity CFD dataset for external automotive aerodynamics using geometric variants of the
+      Windsor body. It provides 3D time-averaged volume and boundary data, geometry, and force and moment coefficients for
+      machine-learning surrogate development.
     </p>
     <p>
       The source dataset is maintained at
-      <a href="https://caemldatasets.org/ahmedml/">caemldatasets.org/ahmedml</a>. The dataset page describes the full
-      download layout, including Hugging Face access, OpenFOAM case setup, STL files, VTP/VTU fields, and force/moment
-      CSV files.
+      <a href="https://caemldatasets.org/windsorml/">caemldatasets.org/windsorml</a>. The dataset page describes the
+      Hugging Face layout and links to the NeurIPS dataset paper. The current FluidsBench WindsorML leaderboard rows are
+      illustrative prototype rows until benchmark evaluator outputs are available.
     </p>
   </section>
 
@@ -29,27 +29,31 @@ nav: false
     <dl class="dataset-facts">
       <div>
         <dt>Geometry</dt>
-        <dd>Parametric Ahmed car body variants.</dd>
+        <dd>Geometric variants of the Windsor body, a simplified automotive bluff-body configuration.</dd>
       </div>
       <div>
         <dt>Cases</dt>
-        <dd>500 CFD simulations.</dd>
+        <dd>355 CFD simulations.</dd>
       </div>
       <div>
         <dt>Solver</dt>
-        <dd>OpenFOAM v2212 finite-volume simulations.</dd>
+        <dd>Volcano Platforms GPU-native Cartesian immersed-boundary CFD solver.</dd>
       </div>
       <div>
         <dt>Fidelity</dt>
-        <dd>Transient hybrid RANS-LES, approximately 80 convective time units per case.</dd>
+        <dd>Wall-Modelled Large-Eddy Simulation (WMLES), run transiently for approximately 80 convective time units.</dd>
       </div>
       <div>
         <dt>Mesh scale</dt>
-        <dd>Approximately 20 million cells per case.</dd>
+        <dd>Approximately 300 million cells per case, with the paper describing meshes above 280 million cells.</dd>
+      </div>
+      <div>
+        <dt>Included data</dt>
+        <dd>Geometry, 3D time-averaged volume and boundary fields, and force and moment coefficients.</dd>
       </div>
       <div>
         <dt>License</dt>
-        <dd>CC BY-SA 4.0, as stated by the dataset source.</dd>
+        <dd>CC-BY-SA, as stated by the dataset paper and dataset source.</dd>
       </div>
     </dl>
   </section>
@@ -59,8 +63,8 @@ nav: false
     <p>
       Submit one compressed archive per model. Prediction files should use the benchmark case identifiers and point order
       provided by the evaluator package. The evaluator owns the ground-truth files and computes all metrics from the
-      predicted values below. Field values used for relative L1 and L2 must be submitted in the dataset-native
-      dimensional units after undoing any training normalization or non-dimensionalization.
+      predicted values below. Field values used for relative L1 and L2 must be submitted in dataset-native dimensional
+      units after undoing any training normalization or non-dimensionalization.
     </p>
 
     <div class="dataset-table-wrap">
@@ -96,12 +100,12 @@ nav: false
           <tr>
             <td><code>cp_cuts.csv</code></td>
             <td><code>case_id</code>, <code>cut_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
-            <td>Cp cut R<sup>2</sup> and centreline Cp plots.</td>
+            <td>Cp cut R<sup>2</sup> and Windsor body centreline Cp plots.</td>
           </tr>
           <tr>
             <td><code>velocity_profiles.csv</code></td>
             <td><code>case_id</code>, <code>station_id</code>, <code>z_over_h</code>, <code>u_x_pred</code>, <code>u_y_pred</code>, <code>u_z_pred</code></td>
-            <td>Velocity profile R<sup>2</sup> and profile plots.</td>
+            <td>Velocity profile R<sup>2</sup> and wake profile plots.</td>
           </tr>
         </tbody>
       </table>
@@ -139,15 +143,15 @@ nav: false
       <div>
         <dt>Surface pressure relative L1/L2</dt>
         <dd>
-          Relative L1 and L2 error for dimensional surface pressure <code>p_surface_pred</code> against the evaluator surface
-          pressure values. Cp is used only for the Cp-cut diagnostic and plots.
+          Relative L1 and L2 error for dimensional surface pressure <code>p_surface_pred</code> against the evaluator
+          surface pressure values. Cp is used only for the Cp-cut diagnostic and plots.
         </dd>
       </div>
       <div>
         <dt>Surface wall-shear relative L1/L2</dt>
         <dd>
           Relative L1 and L2 error for the wall-shear vector \(\tau_w = (\tau_{w,x}, \tau_{w,y}, \tau_{w,z})\) on the
-          Ahmed body surface.
+          Windsor body surface.
         </dd>
       </div>
       <div>
@@ -163,8 +167,9 @@ nav: false
       <div>
         <dt>AB-UPT convention</dt>
         <dd>
-          This matches the AB-UPT evaluation convention: targets are normalized for training, but evaluation metrics are
-          computed on unnormalized predictions and targets.
+          This matches the AB-UPT evaluation convention used for AhmedML and DrivAerML: targets are normalized for
+          training, but evaluation metrics are computed on unnormalized predictions and targets. AB-UPT v2 does not
+          currently report WindsorML benchmark numbers.
         </dd>
       </div>
       <div>
@@ -191,7 +196,7 @@ nav: false
           One global R<sup>2</sup> over all selected surface pressure coefficient samples from the held-out test cases.
           The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
           <code>case_id</code>, <code>cut_id</code>, and cut sample locations before computing R<sup>2</sup>. The first
-          plotted cut is the Ahmed body centreline Cp trace.
+          plotted cut is the Windsor body centreline Cp trace.
         </dd>
       </div>
       <div>
@@ -205,8 +210,8 @@ nav: false
       <div>
         <dt>Velocity profile R<sup>2</sup></dt>
         <dd>
-          R<sup>2</sup> over the selected wake profile samples. Unless the benchmark package states otherwise, the score is
-          computed on the velocity vector components flattened across stations, cases, and sample points.
+          R<sup>2</sup> over selected wake profile samples behind the body. Unless the benchmark package states otherwise,
+          the score is computed on the velocity vector components flattened across stations, cases, and sample points.
         </dd>
       </div>
     </dl>
@@ -282,8 +287,8 @@ S_overall  = sum(weight_q * S_q)</code></pre>
   <section class="dataset-panel">
     <h3>Links</h3>
     <ul>
-      <li><a href="https://caemldatasets.org/ahmedml/">AhmedML dataset page</a></li>
-      <li><a href="https://arxiv.org/abs/2407.20801">AhmedML paper</a></li>
+      <li><a href="https://caemldatasets.org/windsorml/">WindsorML dataset page</a></li>
+      <li><a href="https://arxiv.org/abs/2407.19320">WindsorML paper</a></li>
       <li><a href="{{ '/leaderboards/' | relative_url }}">Automotive CFD leaderboard prototype</a></li>
     </ul>
   </section>
