@@ -1,0 +1,182 @@
+/******************************************************************************
+ * Datasets
+ ******************************************************************************/
+
+.datasets-page,
+.dataset-page {
+  --dataset-border: var(--global-divider-color);
+  --dataset-muted: var(--global-text-color-light);
+  --dataset-panel-bg: var(--global-card-bg-color);
+  --dataset-chip-bg: rgba(0, 0, 0, 0.04);
+
+  display: grid;
+  gap: 1.5rem;
+}
+
+html[data-theme="dark"] .datasets-page,
+html[data-theme="dark"] .dataset-page {
+  --dataset-chip-bg: rgba(255, 255, 255, 0.08);
+}
+
+.datasets-intro,
+.dataset-intro,
+.dataset-page p {
+  color: var(--dataset-muted);
+}
+
+.dataset-kicker {
+  color: var(--dataset-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+}
+
+.dataset-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.dataset-card,
+.dataset-panel {
+  background: var(--dataset-panel-bg);
+  border: 1px solid var(--dataset-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.dataset-card {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+
+  h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.35rem;
+  }
+
+  p {
+    color: var(--dataset-muted);
+    margin: 0;
+  }
+
+  a {
+    flex: 0 0 auto;
+    font-weight: 700;
+  }
+}
+
+.dataset-panel {
+  h3 {
+    font-size: 1.15rem;
+    margin-bottom: 0.7rem;
+  }
+
+  p:last-child,
+  ul:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.dataset-facts,
+.metric-definition-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.dataset-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metric-definition-list {
+  grid-template-columns: 1fr;
+}
+
+.dataset-facts div,
+.metric-definition-list div {
+  border-top: 1px solid var(--dataset-border);
+  padding: 0.8rem 0;
+}
+
+.dataset-facts div:nth-child(odd) {
+  padding-right: 1rem;
+}
+
+.dataset-facts div:nth-child(even) {
+  padding-left: 1rem;
+}
+
+.dataset-facts dt,
+.metric-definition-list dt {
+  color: var(--dataset-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dataset-facts dd,
+.metric-definition-list dd {
+  color: var(--global-text-color);
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0;
+}
+
+.dataset-table-wrap {
+  border: 1px solid var(--dataset-border);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.dataset-table {
+  border-collapse: collapse;
+  margin: 0;
+  min-width: 720px;
+  width: 100%;
+
+  th,
+  td {
+    border-bottom: 1px solid var(--dataset-border);
+    padding: 0.65rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--dataset-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  td {
+    font-size: 0.88rem;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+}
+
+.dataset-table.compact {
+  min-width: 560px;
+}
+
+@media (max-width: 780px) {
+  .dataset-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dataset-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .dataset-facts div:nth-child(odd),
+  .dataset-facts div:nth-child(even) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
