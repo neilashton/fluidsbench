@@ -119,7 +119,7 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # -----------------------------------------------------------------------------
 
 blog_name: # blog_name will be displayed in your blog page
-blog_description: 
+blog_description:
 permalink: /blog/:year/:title/
 
 # Pagination
@@ -153,8 +153,8 @@ disqus_shortname: al-folio # put your disqus shortname
 # If you have blog posts published on medium.com or other external sources,
 # you can display them in your blog by adding a link to the RSS feed.
 #external_sources:
-#  - name: 
-#    rss_url: 
+#  - name:
+#    rss_url:
 
 # -----------------------------------------------------------------------------
 # Collections
@@ -203,18 +203,27 @@ exclude:
   - Dockerfile
   - docker-compose.yml
   - docker-compose-slim.yml
+  - conftest.py
+  - docs/
   - FAQ.md
   - Gemfile
   - Gemfile.lock
+  - infra/
   - INSTALL.md
+  - lambda/
   - LICENSE
   - lighthouse_results/
+  - local-env.json
   - package.json
   - package-lock.json
+  - .pytest_cache/
+  - pytest.ini
   - _pages/about_einstein.md
   - purgecss.config.js
   - README.md
   - readme_preview/
+  - scripts/
+  - tests/
   - vendor
 keep_files:
   - CNAME

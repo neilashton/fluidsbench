@@ -24,6 +24,21 @@
     volumePressure: 0.69,
   };
 
+  const backendUrls = {
+    dev: {
+      fetch: "https://ezmaejyn7i7f4djjlgzqycukw40gjojx.lambda-url.us-east-1.on.aws/",
+      submit: "https://aynbbamhdmpw5jbjdnwygs46qe0nbgwy.lambda-url.us-east-1.on.aws/",
+    },
+    prod: {
+      fetch: "https://7qdywdyxlfmc7neivnarewbvpy0gkjvg.lambda-url.us-east-1.on.aws/",
+      submit: "https://vjfjkk3bwskka2qezpzksof3s40cpowl.lambda-url.us-east-1.on.aws/",
+    },
+  };
+
+  const backendEnvironment = ["localhost", "127.0.0.1"].includes(window.location.hostname) ? "dev" : "prod";
+  const fetchUrl = backendUrls[backendEnvironment].fetch;
+  const submitUrl = backendUrls[backendEnvironment].submit;
+
   const lowerIsBetterMetrics = new Set([
     "surfacePressure",
     "surfacePressureL1",
@@ -36,7 +51,7 @@
     "params",
   ]);
 
-  const submissions = [
+  const exampleSubmissions = [
     {
       id: "ab-upt",
       model: "AB-UPT",
@@ -201,6 +216,9 @@
     },
   ];
 
+  let submissions = [...exampleSubmissions];
+  let backendStatusMessage = "Loading approved submissions from the leaderboard backend...";
+
   const cpProfile = {
     x: [0, 0.05, 0.1, 0.18, 0.28, 0.4, 0.52, 0.64, 0.76, 0.86, 0.94, 1],
     groundTruth: [0.78, 0.42, 0.08, -0.1, -0.22, -0.3, -0.34, -0.31, -0.22, -0.05, 0.16, 0.02],
@@ -292,10 +310,10 @@
   function enrichedRows() {
     return submissions.map((row) => ({
       ...row,
-      surfacePressureL1: estimatedRelL1(row, "surfacePressure"),
-      surfaceTauL1: estimatedRelL1(row, "surfaceTau"),
-      volumeVelocityL1: estimatedRelL1(row, "volumeVelocity"),
-      volumePressureL1: estimatedRelL1(row, "volumePressure"),
+      surfacePressureL1: row.surfacePressureL1 ?? estimatedRelL1(row, "surfacePressure"),
+      surfaceTauL1: row.surfaceTauL1 ?? estimatedRelL1(row, "surfaceTau"),
+      volumeVelocityL1: row.volumeVelocityL1 ?? estimatedRelL1(row, "volumeVelocity"),
+      volumePressureL1: row.volumePressureL1 ?? estimatedRelL1(row, "volumePressure"),
       forceR2: forceR2(row),
       score: weightedScore(row),
     }));
@@ -309,6 +327,81 @@
 
   function formatNumber(value, digits) {
     return Number(value).toFixed(digits);
+  }
+
+  function parseNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function slug(value) {
+    return String(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+
+  function displayDate(entry) {
+    if (entry.submission_date) return entry.submission_date;
+    if (entry.submitted_at) return String(entry.submitted_at).slice(0, 10);
+    return "";
+  }
+
+  function normalizeBackendSubmission(entry) {
+    const metrics = {
+      surfacePressure: parseNumber(entry.surface_pressure_l2),
+      surfacePressureL1: parseNumber(entry.surface_pressure_l1),
+      surfaceTau: parseNumber(entry.surface_tau_l2),
+      surfaceTauL1: parseNumber(entry.surface_tau_l1),
+      volumeVelocity: parseNumber(entry.volume_velocity_l2),
+      volumeVelocityL1: parseNumber(entry.volume_velocity_l1),
+      volumePressure: parseNumber(entry.volume_pressure_l2),
+      volumePressureL1: parseNumber(entry.volume_pressure_l1),
+      r2Cd: parseNumber(entry.r2_cd),
+      r2Cl: parseNumber(entry.r2_cl),
+      velocityProfileR2: parseNumber(entry.velocity_profile_r2),
+      cpCutR2: parseNumber(entry.cp_cut_r2),
+    };
+    if (Object.values(metrics).some((value) => value === null)) return null;
+
+    const model = entry.model || "Unnamed model";
+    const id = `backend-${entry.submission_id || slug(model)}`;
+    return {
+      id,
+      model,
+      type: entry.model_type || "Other",
+      dataset: entry.dataset || "AhmedML",
+      ...metrics,
+      params: parseNumber(entry.parameter_count ?? entry.num_parameters) ?? 0,
+      date: displayDate(entry),
+      href: `#details-${id}`,
+      paperUrl: entry.paper_url || "",
+      codeUrl: entry.code_url || "",
+      institution: entry.institution || "",
+      note: entry.institution ? `Approved backend submission from ${entry.institution}.` : "Approved backend submission.",
+    };
+  }
+
+  function renderBackendStatus() {
+    const status = document.getElementById("leaderboard-backend-status");
+    if (!status) return;
+    status.textContent = backendStatusMessage;
+  }
+
+  async function loadBackendSubmissions() {
+    try {
+      const response = await fetch(fetchUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const entries = await response.json();
+      const backendRows = entries.map(normalizeBackendSubmission).filter(Boolean);
+      submissions = [...backendRows, ...exampleSubmissions];
+      backendStatusMessage = backendRows.length
+        ? `Loaded ${backendRows.length} approved backend submission${backendRows.length === 1 ? "" : "s"} from ${backendEnvironment}.`
+        : `Backend reachable in ${backendEnvironment}, but no approved AhmedML metric submissions were found. Showing example rows.`;
+    } catch (error) {
+      submissions = [...exampleSubmissions];
+      backendStatusMessage = `Backend unavailable from this page (${error.message}). Showing example rows.`;
+    }
   }
 
   function tableCell(label, value, className) {
@@ -484,14 +577,19 @@
     };
   }
 
+  function modelColor(modelId, index) {
+    const fallbackColors = ["#0072b2", "#009e73", "#d55e00", "#cc79a7", "#f0a202", "#6f42c1"];
+    return palette[modelId] || fallbackColors[index % fallbackColors.length];
+  }
+
   function updateCpChart() {
     if (!cpChart) return;
     const models = checkedModels("cp-models");
     cpChart.data.datasets = [
       lineDataset("Ground truth", cpProfile.groundTruth, palette.groundTruth, false),
-      ...models.map((modelId) => {
+      ...models.map((modelId, index) => {
         const row = submissions.find((entry) => entry.id === modelId);
-        return lineDataset(row.model, cpSeries(modelId), palette[modelId], true);
+        return lineDataset(row.model, cpSeries(modelId), modelColor(modelId, index), true);
       }),
     ];
     cpChart.update();
@@ -505,9 +603,9 @@
     velocityChart.data.labels = station.z;
     velocityChart.data.datasets = [
       lineDataset("Ground truth", station.groundTruth, palette.groundTruth, false),
-      ...models.map((modelId) => {
+      ...models.map((modelId, index) => {
         const row = submissions.find((entry) => entry.id === modelId);
-        return lineDataset(row.model, velocitySeries(modelId, station), palette[modelId], true);
+        return lineDataset(row.model, velocitySeries(modelId, station), modelColor(modelId, index), true);
       }),
     ];
     velocityChart.update();
@@ -569,6 +667,110 @@
     });
   }
 
+  function formValue(form, name) {
+    return form.elements[name]?.value?.trim() || "";
+  }
+
+  function numberFormValue(form, name) {
+    return Number(formValue(form, name));
+  }
+
+  function setSubmitStatus(message, isError) {
+    const status = document.getElementById("submission-form-status");
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle("error", Boolean(isError));
+  }
+
+  function submissionPayload(form) {
+    return {
+      model: formValue(form, "model"),
+      model_type: formValue(form, "model_type"),
+      dataset: formValue(form, "dataset"),
+      parameter_count: numberFormValue(form, "parameter_count"),
+      surface_pressure_l2: numberFormValue(form, "surface_pressure_l2"),
+      surface_pressure_l1: numberFormValue(form, "surface_pressure_l1"),
+      surface_tau_l2: numberFormValue(form, "surface_tau_l2"),
+      surface_tau_l1: numberFormValue(form, "surface_tau_l1"),
+      volume_velocity_l2: numberFormValue(form, "volume_velocity_l2"),
+      volume_velocity_l1: numberFormValue(form, "volume_velocity_l1"),
+      volume_pressure_l2: numberFormValue(form, "volume_pressure_l2"),
+      volume_pressure_l1: numberFormValue(form, "volume_pressure_l1"),
+      r2_cd: numberFormValue(form, "r2_cd"),
+      r2_cl: numberFormValue(form, "r2_cl"),
+      velocity_profile_r2: numberFormValue(form, "velocity_profile_r2"),
+      cp_cut_r2: numberFormValue(form, "cp_cut_r2"),
+      submitter_name: formValue(form, "submitter_name"),
+      contact_email: formValue(form, "contact_email"),
+      institution: formValue(form, "institution"),
+      paper_url: formValue(form, "paper_url"),
+      code_url: formValue(form, "code_url"),
+    };
+  }
+
+  async function uploadTrace(uploadUrl, file) {
+    const response = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/zip" },
+      body: file,
+    });
+    if (!response.ok) throw new Error(`trace upload failed with HTTP ${response.status}`);
+  }
+
+  async function submitResult(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const submitButton = form.querySelector('button[type="submit"]');
+    const traceFile = form.elements.trace_file?.files?.[0];
+    if (!traceFile) {
+      setSubmitStatus("Choose a .zip trace file before submitting.", true);
+      return;
+    }
+
+    submitButton.disabled = true;
+    setSubmitStatus("Submitting metadata...", false);
+
+    try {
+      const response = await fetch(submitUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submissionPayload(form)),
+      });
+      const responseBody = await response.json().catch(() => ({}));
+      if (response.status !== 201) {
+        throw new Error(responseBody.error || `metadata submission failed with HTTP ${response.status}`);
+      }
+
+      setSubmitStatus("Uploading trace archive...", false);
+      await uploadTrace(responseBody.upload_url, traceFile);
+      setSubmitStatus(`Submission ${responseBody.submission_id} received. It will appear in the table after approval.`, false);
+      form.reset();
+    } catch (error) {
+      setSubmitStatus(error.message, true);
+    } finally {
+      submitButton.disabled = false;
+    }
+  }
+
+  function configureSubmissionForm() {
+    const openButton = document.getElementById("open-submission-form");
+    const dialog = document.getElementById("submission-dialog");
+    const closeButton = document.getElementById("close-submission-form");
+    const form = document.getElementById("leaderboard-submission-form");
+
+    openButton?.addEventListener("click", () => {
+      setSubmitStatus("", false);
+      if (dialog?.showModal) {
+        dialog.showModal();
+      } else {
+        dialog?.setAttribute("open", "open");
+      }
+    });
+
+    closeButton?.addEventListener("click", () => dialog?.close());
+    form?.addEventListener("submit", submitResult);
+  }
+
   function renderDetails() {
     const container = document.getElementById("submission-detail-grid");
     if (!container) return;
@@ -578,19 +780,30 @@
       const card = document.createElement("section");
       card.className = "submission-card";
       card.id = row.href.replace("#", "");
+      const links = [
+        row.paperUrl ? `<a href="${row.paperUrl}" target="_blank" rel="noopener">Paper</a>` : "",
+        row.codeUrl ? `<a href="${row.codeUrl}" target="_blank" rel="noopener">Code</a>` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
       card.innerHTML = `
         <h4>${row.model}</h4>
         <p>${row.note}</p>
+        ${links ? `<p class="submission-card-links">${links}</p>` : ""}
       `;
       container.appendChild(card);
     });
   }
 
-  function initLeaderboard() {
-    renderTable();
+  async function initLeaderboard() {
+    renderBackendStatus();
     configureSort();
     configurePrimaryRanking();
     configureFilters();
+    configureSubmissionForm();
+    await loadBackendSubmissions();
+    renderBackendStatus();
+    renderTable();
     renderDetails();
     configureCharts();
   }

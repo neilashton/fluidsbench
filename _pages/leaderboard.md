@@ -31,6 +31,11 @@ chart:
     <a href="{{ '/datasets/ahmedml/' | relative_url }}">AhmedML dataset page</a>.
   </p>
 
+  <div class="leaderboard-backend-row">
+    <p id="leaderboard-backend-status">Loading approved submissions from the leaderboard backend...</p>
+    <button id="open-submission-form" class="leaderboard-submit-button" type="button">Submit result</button>
+  </div>
+
   <section class="leaderboard-controls" aria-label="Leaderboard filters">
     <div class="leaderboard-control">
       <label for="dataset-filter">Dataset</label>
@@ -171,6 +176,120 @@ chart:
       </div>
     </dl>
   </section>
+
+  <dialog class="submission-dialog" id="submission-dialog">
+    <form class="submission-form" id="leaderboard-submission-form" method="dialog">
+      <div class="submission-form-header">
+        <h3>Submit AhmedML result</h3>
+        <button id="close-submission-form" type="button" aria-label="Close submission form">×</button>
+      </div>
+
+      <div class="submission-form-grid">
+        <label>
+          Model name
+          <input name="model" required type="text" />
+        </label>
+        <label>
+          Model type
+          <select name="model_type" required>
+            <option value="">Select...</option>
+            <option>Transformer</option>
+            <option>GNN</option>
+            <option>Neural operator</option>
+            <option>Point cloud</option>
+            <option>CNN</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>
+          Dataset
+          <input name="dataset" readonly required type="text" value="AhmedML" />
+        </label>
+        <label>
+          Parameters (M)
+          <input min="0" name="parameter_count" required step="any" type="number" />
+        </label>
+        <label>
+          Surface pressure L2 (%)
+          <input min="0" name="surface_pressure_l2" required step="any" type="number" />
+        </label>
+        <label>
+          Surface pressure L1 (%)
+          <input min="0" name="surface_pressure_l1" required step="any" type="number" />
+        </label>
+        <label>
+          Surface tau wall L2 (%)
+          <input min="0" name="surface_tau_l2" required step="any" type="number" />
+        </label>
+        <label>
+          Surface tau wall L1 (%)
+          <input min="0" name="surface_tau_l1" required step="any" type="number" />
+        </label>
+        <label>
+          Volume velocity L2 (%)
+          <input min="0" name="volume_velocity_l2" required step="any" type="number" />
+        </label>
+        <label>
+          Volume velocity L1 (%)
+          <input min="0" name="volume_velocity_l1" required step="any" type="number" />
+        </label>
+        <label>
+          Volume pressure L2 (%)
+          <input min="0" name="volume_pressure_l2" required step="any" type="number" />
+        </label>
+        <label>
+          Volume pressure L1 (%)
+          <input min="0" name="volume_pressure_l1" required step="any" type="number" />
+        </label>
+        <label>
+          C<sub>d</sub> R<sup>2</sup>
+          <input max="1" name="r2_cd" required step="any" type="number" />
+        </label>
+        <label>
+          C<sub>l</sub> R<sup>2</sup>
+          <input max="1" name="r2_cl" required step="any" type="number" />
+        </label>
+        <label>
+          Velocity profiles R<sup>2</sup>
+          <input max="1" name="velocity_profile_r2" required step="any" type="number" />
+        </label>
+        <label>
+          Cp cuts R<sup>2</sup>
+          <input max="1" name="cp_cut_r2" required step="any" type="number" />
+        </label>
+        <label>
+          Submitter name
+          <input name="submitter_name" required type="text" />
+        </label>
+        <label>
+          Contact email
+          <input name="contact_email" required type="email" />
+        </label>
+        <label>
+          Institution
+          <input name="institution" type="text" />
+        </label>
+        <label>
+          Paper URL
+          <input name="paper_url" type="url" />
+        </label>
+        <label>
+          Code URL
+          <input name="code_url" type="url" />
+        </label>
+        <label>
+          Trace archive (.zip)
+          <input accept=".zip,application/zip" name="trace_file" required type="file" />
+        </label>
+      </div>
+
+      <p id="submission-form-status" class="submission-form-status"></p>
+      <div class="submission-form-footer">
+        <button type="submit">Submit metadata and upload trace</button>
+      </div>
+    </form>
+
+  </dialog>
 </div>
 
 <script defer src="{{ '/assets/js/leaderboard.js' | relative_url | bust_file_cache }}"></script>
