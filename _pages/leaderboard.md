@@ -2,41 +2,15 @@
 layout: page
 permalink: /leaderboards/
 title: leaderboards
-page_title: CFD leaderboards
-page_description: Example benchmark view for AhmedML, DrivAerML, WindsorML, and HiLiftAeroML neural CFD surrogate submissions.
 description:
 nav: true
 nav_order: 5
+hide_header: true
 chart:
   chartjs: true
 ---
 
 <div class="leaderboard-page">
-  <section>
-    <p class="leaderboard-kicker">Prototype leaderboard</p>
-    <p class="leaderboard-intro">
-      This example uses the AhmedML and DrivAerML rows reported in the AB-UPT v2 paper as seed data, HiLiftAeroML
-      benchmark rows from the local HiLiftAeroML PDF, plus illustrative WindsorML prototype rows until evaluator outputs
-      are available. Relative L2 values and parameter counts are paper-derived for AhmedML, DrivAerML, and HiLiftAeroML;
-      relative L1, force, centerline Cp, and velocity-profile R<sup>2</sup> values are placeholders where the source
-      papers do not yet report them. Field error metrics are reported on unnormalized physical-space quantities.
-    </p>
-  </section>
-
-  <p class="leaderboard-note">
-    Lower relative L2 error is better. Higher R<sup>2</sup> and overall score are better. Submission date is set to
-    2025-06-13 for AB-UPT-derived rows, 2024-07-27 for the illustrative WindsorML prototype rows, and 2026-06-25 for
-    the HiLiftAeroML PDF rows. AhmedML and DrivAerML table values come from
-    <a href="https://arxiv.org/html/2502.09692v2">AB-UPT v2</a>; HiLiftAeroML table values come from
-    <a href="https://arxiv.org/html/2605.19565v1">HiLiftAeroML</a> benchmark tables and the local PDF; WindsorML values
-    and all plot traces are illustrative profiles informed by the source dataset papers and should be replaced by
-    evaluator exports once those cuts are defined. The submission format and metric definitions are listed on the
-    <a href="{{ '/datasets/ahmedml/' | relative_url }}">AhmedML</a>,
-    <a href="{{ '/datasets/drivaerml/' | relative_url }}">DrivAerML</a>,
-    <a href="{{ '/datasets/windsorml/' | relative_url }}">WindsorML</a>, and
-    <a href="{{ '/datasets/hiliftaeroml/' | relative_url }}">HiLiftAeroML</a> dataset pages.
-  </p>
-
   <div class="leaderboard-backend-row">
     <p id="leaderboard-backend-status">Loading approved submissions from the leaderboard backend...</p>
     <button id="open-submission-form" class="leaderboard-submit-button" type="button">Submit result</button>
@@ -44,24 +18,171 @@ chart:
 
   <section class="leaderboard-controls" aria-label="Leaderboard filters">
     <div class="leaderboard-control">
-      <label for="dataset-filter">Dataset</label>
-      <select id="dataset-filter">
-        <option value="all">All datasets</option>
-        <option value="AhmedML" selected>AhmedML</option>
-        <option value="DrivAerML">DrivAerML</option>
-        <option value="WindsorML">WindsorML</option>
-        <option value="HiLiftAeroML">HiLiftAeroML</option>
-      </select>
+      <span class="leaderboard-control-title" id="dataset-filter-label">Dataset</span>
+      <div class="leaderboard-filter-dropdown" id="dataset-filter" data-all-label="All datasets">
+        <button
+          class="leaderboard-filter-toggle"
+          type="button"
+          aria-controls="dataset-filter-menu"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-filter-toggle
+        >
+          <span data-filter-summary>All datasets</span>
+          <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+        </button>
+        <div
+          class="leaderboard-filter-menu"
+          id="dataset-filter-menu"
+          role="group"
+          aria-labelledby="dataset-filter-label"
+          data-filter-menu
+          hidden
+        >
+          <label class="leaderboard-filter-option">
+            <input data-filter-all type="checkbox" value="all" checked />
+            All datasets
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="AhmedML" />
+            AhmedML
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="DrivAerML" />
+            DrivAerML
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="DrivAerNet++" />
+            DrivAerNet++
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="WindsorML" />
+            WindsorML
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="HiLiftAeroML" />
+            HiLiftAeroML
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="AirfRANS" />
+            AirfRANS
+          </label>
+        </div>
+      </div>
     </div>
     <div class="leaderboard-control">
-      <label for="type-filter">Model type</label>
-      <select id="type-filter">
-        <option value="all">All model types</option>
-        <option value="Transformer">Transformer</option>
-        <option value="GNN">GNN</option>
-        <option value="Neural operator">Neural operator</option>
-        <option value="Point cloud">Point cloud</option>
-      </select>
+      <span class="leaderboard-control-title" id="type-filter-label">Model type</span>
+      <div class="leaderboard-filter-dropdown" id="type-filter" data-all-label="All model types">
+        <button
+          class="leaderboard-filter-toggle"
+          type="button"
+          aria-controls="type-filter-menu"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-filter-toggle
+        >
+          <span data-filter-summary>All model types</span>
+          <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+        </button>
+        <div
+          class="leaderboard-filter-menu"
+          id="type-filter-menu"
+          role="group"
+          aria-labelledby="type-filter-label"
+          data-filter-menu
+          hidden
+        >
+          <label class="leaderboard-filter-option">
+            <input data-filter-all type="checkbox" value="all" checked />
+            All model types
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="Transformer" />
+            Transformer
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="GNN" />
+            GNN
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="Neural operator" />
+            Neural operator
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="Implicit field" />
+            Implicit field
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="MLP" />
+            MLP
+          </label>
+          <label class="leaderboard-filter-option">
+            <input type="checkbox" value="Point cloud" />
+            Point cloud
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="leaderboard-control">
+      <span class="leaderboard-control-title" id="split-filter-label">Split</span>
+      <div class="leaderboard-filter-dropdown" id="split-filter" data-all-label="All splits">
+        <button
+          class="leaderboard-filter-toggle"
+          type="button"
+          aria-controls="split-filter-menu"
+          aria-expanded="false"
+          aria-haspopup="true"
+          data-filter-toggle
+        >
+          <span data-filter-summary>All splits</span>
+          <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+        </button>
+        <div
+          class="leaderboard-filter-menu"
+          id="split-filter-menu"
+          role="group"
+          aria-labelledby="split-filter-label"
+          data-filter-menu
+          hidden
+        >
+          <label class="leaderboard-filter-option">
+            <input data-filter-all type="checkbox" value="all" checked />
+            All splits
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML DrivAerNet++ WindsorML">
+            <input type="checkbox" value="Default" />
+            Default
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML AirfRANS">
+            <input type="checkbox" value="Full" />
+            Full
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+            <input type="checkbox" value="Scarce" />
+            Scarce
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+            <input type="checkbox" value="Reynolds extrapolation" />
+            Reynolds extrapolation
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+            <input type="checkbox" value="AoA extrapolation" />
+            AoA extrapolation
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+            <input type="checkbox" value="AoA 4" />
+            AoA 4
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+            <input type="checkbox" value="AoA 12" />
+            AoA 12
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+            <input type="checkbox" value="AoA 22" />
+            AoA 22
+          </label>
+        </div>
+      </div>
     </div>
     <div class="leaderboard-control">
       <label for="score-sort">Primary ranking</label>
@@ -92,6 +213,7 @@ chart:
           <th data-sort="model">Model</th>
           <th data-sort="type">Type</th>
           <th data-sort="dataset">Dataset</th>
+          <th data-sort="split">Split</th>
           <th data-sort="surfacePressure">Surface pressure<br>dim. rel L2 (%)</th>
           <th data-sort="surfacePressureL1">Surface pressure<br>dim. rel L1 (%)</th>
           <th data-sort="surfaceTau">Surface tau wall<br>dim. rel L2 (%)</th>
@@ -117,8 +239,137 @@ chart:
   <section class="leaderboard-panel">
     <h3 id="cp-panel-title">Centreline surface Cp</h3>
     <p id="cp-panel-description">Ground truth versus selected submissions along the Ahmed body centreline.</p>
-    <div class="chart-toolbar">
-      <div class="chart-options" id="cp-models" aria-label="Cp model toggles"></div>
+    <div class="chart-control-row" aria-label="Cp plot filters">
+      <div class="chart-control">
+        <span class="chart-control-title" id="cp-dataset-filter-label">Dataset</span>
+        <div class="leaderboard-filter-dropdown" id="cp-dataset-filter">
+          <button
+            class="leaderboard-filter-toggle"
+            type="button"
+            aria-controls="cp-dataset-filter-menu"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-filter-toggle
+          >
+            <span data-filter-summary>AhmedML</span>
+            <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+          </button>
+          <div
+            class="leaderboard-filter-menu"
+            id="cp-dataset-filter-menu"
+            role="radiogroup"
+            aria-labelledby="cp-dataset-filter-label"
+            data-filter-menu
+            hidden
+          >
+            <label class="leaderboard-filter-option">
+              <input name="cp-dataset-filter-value" type="radio" value="AhmedML" checked />
+              AhmedML
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="cp-dataset-filter-value" type="radio" value="DrivAerML" />
+              DrivAerML
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="cp-dataset-filter-value" type="radio" value="DrivAerNet++" />
+              DrivAerNet++
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="cp-dataset-filter-value" type="radio" value="WindsorML" />
+              WindsorML
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="cp-dataset-filter-value" type="radio" value="HiLiftAeroML" />
+              HiLiftAeroML
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="cp-dataset-filter-value" type="radio" value="AirfRANS" />
+              AirfRANS
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="chart-control">
+        <span class="chart-control-title" id="cp-split-filter-label">Split</span>
+        <div class="leaderboard-filter-dropdown" id="cp-split-filter">
+          <button
+            class="leaderboard-filter-toggle"
+            type="button"
+            aria-controls="cp-split-filter-menu"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-filter-toggle
+          >
+            <span data-filter-summary>Default</span>
+            <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+          </button>
+          <div
+            class="leaderboard-filter-menu"
+            id="cp-split-filter-menu"
+            role="radiogroup"
+            aria-labelledby="cp-split-filter-label"
+            data-filter-menu
+            hidden
+          >
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML DrivAerNet++ WindsorML">
+              <input name="cp-split-filter-value" type="radio" value="Default" checked />
+              Default
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML AirfRANS">
+              <input name="cp-split-filter-value" type="radio" value="Full" />
+              Full
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+              <input name="cp-split-filter-value" type="radio" value="Scarce" />
+              Scarce
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+              <input name="cp-split-filter-value" type="radio" value="Reynolds extrapolation" />
+              Reynolds extrapolation
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+              <input name="cp-split-filter-value" type="radio" value="AoA extrapolation" />
+              AoA extrapolation
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="cp-split-filter-value" type="radio" value="AoA 4" />
+              AoA 4
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="cp-split-filter-value" type="radio" value="AoA 12" />
+              AoA 12
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="cp-split-filter-value" type="radio" value="AoA 22" />
+              AoA 22
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="chart-control chart-model-control">
+        <span class="chart-control-title" id="cp-models-label">Submissions</span>
+        <div class="leaderboard-filter-dropdown" id="cp-models-filter">
+          <button
+            class="leaderboard-filter-toggle"
+            type="button"
+            aria-controls="cp-models"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-filter-toggle
+          >
+            <span data-chart-model-summary>Top submissions</span>
+            <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+          </button>
+          <div
+            class="leaderboard-filter-menu"
+            id="cp-models"
+            role="group"
+            aria-labelledby="cp-models-label"
+            data-filter-menu
+            hidden
+          ></div>
+        </div>
+      </div>
     </div>
     <div class="chart-frame">
       <canvas id="cp-chart"></canvas>
@@ -129,13 +380,145 @@ chart:
     <h3 id="velocity-panel-title">Velocity profiles</h3>
     <p><span id="velocity-panel-description">Wake velocity profiles for the selected AhmedML station.</span></p>
     <p><span id="velocity-station-label">x/H = 0.25 downstream</span></p>
-    <div class="chart-toolbar">
-      <div class="chart-options" aria-label="Velocity station toggles">
-        <button class="station-toggle active" type="button" data-station="0.25L">0.25L</button>
-        <button class="station-toggle" type="button" data-station="0.50L">0.50L</button>
-        <button class="station-toggle" type="button" data-station="1.00L">1.00L</button>
+    <div class="chart-control-row velocity-chart-controls" aria-label="Velocity plot filters">
+      <div class="chart-control">
+        <span class="chart-control-title" id="velocity-dataset-filter-label">Dataset</span>
+        <div class="leaderboard-filter-dropdown" id="velocity-dataset-filter">
+          <button
+            class="leaderboard-filter-toggle"
+            type="button"
+            aria-controls="velocity-dataset-filter-menu"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-filter-toggle
+          >
+            <span data-filter-summary>AhmedML</span>
+            <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+          </button>
+          <div
+            class="leaderboard-filter-menu"
+            id="velocity-dataset-filter-menu"
+            role="radiogroup"
+            aria-labelledby="velocity-dataset-filter-label"
+            data-filter-menu
+            hidden
+          >
+            <label class="leaderboard-filter-option">
+              <input name="velocity-dataset-filter-value" type="radio" value="AhmedML" checked />
+              AhmedML
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="velocity-dataset-filter-value" type="radio" value="DrivAerML" />
+              DrivAerML
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="velocity-dataset-filter-value" type="radio" value="DrivAerNet++" />
+              DrivAerNet++
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="velocity-dataset-filter-value" type="radio" value="WindsorML" />
+              WindsorML
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="velocity-dataset-filter-value" type="radio" value="HiLiftAeroML" />
+              HiLiftAeroML
+            </label>
+            <label class="leaderboard-filter-option">
+              <input name="velocity-dataset-filter-value" type="radio" value="AirfRANS" />
+              AirfRANS
+            </label>
+          </div>
+        </div>
       </div>
-      <div class="chart-options" id="velocity-models" aria-label="Velocity model toggles"></div>
+      <div class="chart-control">
+        <span class="chart-control-title" id="velocity-split-filter-label">Split</span>
+        <div class="leaderboard-filter-dropdown" id="velocity-split-filter">
+          <button
+            class="leaderboard-filter-toggle"
+            type="button"
+            aria-controls="velocity-split-filter-menu"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-filter-toggle
+          >
+            <span data-filter-summary>Default</span>
+            <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+          </button>
+          <div
+            class="leaderboard-filter-menu"
+            id="velocity-split-filter-menu"
+            role="radiogroup"
+            aria-labelledby="velocity-split-filter-label"
+            data-filter-menu
+            hidden
+          >
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML DrivAerNet++ WindsorML">
+              <input name="velocity-split-filter-value" type="radio" value="Default" checked />
+              Default
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML AirfRANS">
+              <input name="velocity-split-filter-value" type="radio" value="Full" />
+              Full
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+              <input name="velocity-split-filter-value" type="radio" value="Scarce" />
+              Scarce
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+              <input name="velocity-split-filter-value" type="radio" value="Reynolds extrapolation" />
+              Reynolds extrapolation
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+              <input name="velocity-split-filter-value" type="radio" value="AoA extrapolation" />
+              AoA extrapolation
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="velocity-split-filter-value" type="radio" value="AoA 4" />
+              AoA 4
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="velocity-split-filter-value" type="radio" value="AoA 12" />
+              AoA 12
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="velocity-split-filter-value" type="radio" value="AoA 22" />
+              AoA 22
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="chart-control chart-station-control">
+        <span class="chart-control-title">Station</span>
+        <div class="chart-options" aria-label="Velocity station toggles">
+          <button class="station-toggle active" type="button" data-station="0.25L">0.25L</button>
+          <button class="station-toggle" type="button" data-station="0.50L">0.50L</button>
+          <button class="station-toggle" type="button" data-station="1.00L">1.00L</button>
+        </div>
+      </div>
+      <div class="chart-control chart-model-control">
+        <span class="chart-control-title" id="velocity-models-label">Submissions</span>
+        <div class="leaderboard-filter-dropdown" id="velocity-models-filter">
+          <button
+            class="leaderboard-filter-toggle"
+            type="button"
+            aria-controls="velocity-models"
+            aria-expanded="false"
+            aria-haspopup="true"
+            data-filter-toggle
+          >
+            <span data-chart-model-summary>Top submissions</span>
+            <span class="leaderboard-filter-caret" aria-hidden="true"></span>
+          </button>
+          <div
+            class="leaderboard-filter-menu"
+            id="velocity-models"
+            role="group"
+            aria-labelledby="velocity-models-label"
+            data-filter-menu
+            hidden
+          ></div>
+        </div>
+      </div>
     </div>
     <div class="chart-frame">
       <canvas id="velocity-chart"></canvas>
@@ -206,6 +589,8 @@ chart:
             <option>Transformer</option>
             <option>GNN</option>
             <option>Neural operator</option>
+            <option>Implicit field</option>
+            <option>MLP</option>
             <option>Point cloud</option>
             <option>CNN</option>
             <option>Other</option>
@@ -216,8 +601,23 @@ chart:
           <select name="dataset" required>
             <option>AhmedML</option>
             <option>DrivAerML</option>
+            <option>DrivAerNet++</option>
             <option>WindsorML</option>
             <option>HiLiftAeroML</option>
+            <option>AirfRANS</option>
+          </select>
+        </label>
+        <label>
+          Split
+          <select name="split" required>
+            <option>Default</option>
+            <option>Full</option>
+            <option>AoA 4</option>
+            <option>AoA 12</option>
+            <option>AoA 22</option>
+            <option>Scarce</option>
+            <option>Reynolds extrapolation</option>
+            <option>AoA extrapolation</option>
           </select>
         </label>
         <label>

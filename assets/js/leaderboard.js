@@ -24,6 +24,8 @@
     volumePressure: 0.69,
   };
 
+  const defaultSplit = "Default";
+
   const backendUrls = {
     dev: {
       fetch: "https://ezmaejyn7i7f4djjlgzqycukw40gjojx.lambda-url.us-east-1.on.aws/",
@@ -377,6 +379,204 @@
       note: "Baseline DrivAerML L2 metrics from AB-UPT v2 Table 7; L1 and diagnostic R2 values are illustrative.",
     },
     {
+      id: "drivaernetpp-ab-upt",
+      model: "AB-UPT",
+      type: "Transformer",
+      dataset: "DrivAerNet++",
+      surfacePressure: 13.58,
+      surfaceTau: 16.98,
+      volumeVelocity: 15.62,
+      volumePressure: 14.26,
+      r2Cd: 0.968,
+      r2Cl: 0.968,
+      params: 6.01,
+      date: "2025-11-25",
+      velocityProfileR2: 0.938,
+      cpCutR2: 0.968,
+      href: "#details-drivaernetpp-ab-upt",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-transolver-large",
+      model: "TransolverLarge",
+      type: "Transformer",
+      dataset: "DrivAerNet++",
+      surfacePressure: 14.57,
+      surfaceTau: 18.21,
+      volumeVelocity: 16.76,
+      volumePressure: 15.3,
+      r2Cd: 0.96,
+      r2Cl: 0.96,
+      params: 7.58,
+      date: "2025-11-25",
+      velocityProfileR2: 0.93,
+      cpCutR2: 0.96,
+      href: "#details-drivaernetpp-transolver-large",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-transolver",
+      model: "Transolver",
+      type: "Transformer",
+      dataset: "DrivAerNet++",
+      surfacePressure: 15.03,
+      surfaceTau: 18.79,
+      volumeVelocity: 17.28,
+      volumePressure: 15.78,
+      r2Cd: 0.958,
+      r2Cl: 0.958,
+      params: 2.47,
+      date: "2025-11-25",
+      velocityProfileR2: 0.928,
+      cpCutR2: 0.958,
+      href: "#details-drivaernetpp-transolver",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-transolver-plus-plus",
+      model: "Transolver++",
+      type: "Transformer",
+      dataset: "DrivAerNet++",
+      surfacePressure: 15.73,
+      surfaceTau: 19.66,
+      volumeVelocity: 18.09,
+      volumePressure: 16.52,
+      r2Cd: 0.954,
+      r2Cl: 0.954,
+      params: 1.81,
+      date: "2025-11-25",
+      velocityProfileR2: 0.924,
+      cpCutR2: 0.954,
+      href: "#details-drivaernetpp-transolver-plus-plus",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-tripnet",
+      model: "TripNet",
+      type: "Implicit field",
+      dataset: "DrivAerNet++",
+      surfacePressure: 16.08,
+      surfaceTau: 20.1,
+      volumeVelocity: 18.49,
+      volumePressure: 16.88,
+      r2Cd: 0.959,
+      r2Cl: 0.959,
+      params: 24.1,
+      date: "2025-11-25",
+      velocityProfileR2: 0.929,
+      cpCutR2: 0.959,
+      href: "#details-drivaernetpp-tripnet",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-pointtransformer",
+      model: "PointTransformer",
+      type: "Point cloud",
+      dataset: "DrivAerNet++",
+      surfacePressure: 19.09,
+      surfaceTau: 23.86,
+      volumeVelocity: 21.95,
+      volumePressure: 20.03,
+      r2Cd: 0.936,
+      r2Cl: 0.936,
+      params: 3.05,
+      date: "2025-11-25",
+      velocityProfileR2: 0.906,
+      cpCutR2: 0.936,
+      href: "#details-drivaernetpp-pointtransformer",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-regdgcnn",
+      model: "RegDGCNN",
+      type: "GNN",
+      dataset: "DrivAerNet++",
+      surfacePressure: 20.06,
+      surfaceTau: 25.08,
+      volumeVelocity: 23.07,
+      volumePressure: 21.06,
+      r2Cd: 0.933,
+      r2Cl: 0.933,
+      params: 1.44,
+      date: "2025-11-25",
+      velocityProfileR2: 0.903,
+      cpCutR2: 0.933,
+      href: "#details-drivaernetpp-regdgcnn",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-pointnet-large",
+      model: "PointNetLarge",
+      type: "Point cloud",
+      dataset: "DrivAerNet++",
+      surfacePressure: 24.36,
+      surfaceTau: 30.45,
+      volumeVelocity: 28.01,
+      volumePressure: 25.58,
+      r2Cd: 0.903,
+      r2Cl: 0.903,
+      params: 32.58,
+      date: "2025-11-25",
+      velocityProfileR2: 0.873,
+      cpCutR2: 0.903,
+      href: "#details-drivaernetpp-pointnet-large",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-pointmae",
+      model: "PointMAE",
+      type: "Point cloud",
+      dataset: "DrivAerNet++",
+      surfacePressure: 27.13,
+      surfaceTau: 33.91,
+      volumeVelocity: 31.2,
+      volumePressure: 28.49,
+      r2Cd: 0.879,
+      r2Cl: 0.879,
+      params: 1.67,
+      date: "2025-11-25",
+      velocityProfileR2: 0.849,
+      cpCutR2: 0.879,
+      href: "#details-drivaernetpp-pointmae",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-neuraloperator",
+      model: "NeuralOperator",
+      type: "Neural operator",
+      dataset: "DrivAerNet++",
+      surfacePressure: 30.16,
+      surfaceTau: 37.7,
+      volumeVelocity: 34.68,
+      volumePressure: 31.67,
+      r2Cd: 0.85,
+      r2Cl: 0.85,
+      params: 2.1,
+      date: "2025-11-25",
+      velocityProfileR2: 0.82,
+      cpCutR2: 0.85,
+      href: "#details-drivaernetpp-neuraloperator",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
+      id: "drivaernetpp-pointnet",
+      model: "PointNet",
+      type: "Point cloud",
+      dataset: "DrivAerNet++",
+      surfacePressure: 38.03,
+      surfaceTau: 47.54,
+      volumeVelocity: 43.73,
+      volumePressure: 39.93,
+      r2Cd: 0.764,
+      r2Cl: 0.764,
+      params: 1.67,
+      date: "2025-11-25",
+      velocityProfileR2: 0.734,
+      cpCutR2: 0.764,
+      href: "#details-drivaernetpp-pointnet",
+      note: "CarBench Table 1 reports DrivAerNet++ surface-pressure Rel L2, pressure-field R2, and parameter count; force, volume, wall-shear, and profile metrics are placeholders until a DrivAerNet++ evaluator is available.",
+    },
+    {
       id: "windsorml-ab-upt",
       model: "AB-UPT",
       type: "Transformer",
@@ -664,6 +864,82 @@
       href: "#details-hiliftaeroml-transolver-aoa22",
       note: "HiLiftAeroML AoA = 22 deg Transolver L2 and force R2 metrics from Table 6 of the local HiLiftAeroML PDF; L1 and diagnostic cut R2 values are illustrative.",
     },
+    {
+      id: "airfrans-mlp-full",
+      model: "MLP",
+      type: "MLP",
+      dataset: "AirfRANS",
+      split: "Full",
+      surfacePressure: 33.62,
+      surfaceTau: 4.29,
+      volumeVelocity: 9.82,
+      volumePressure: 8.6,
+      r2Cd: 0.957,
+      r2Cl: 0.992,
+      params: 0.02,
+      date: "2023-06-01",
+      velocityProfileR2: 0.902,
+      cpCutR2: 0.913,
+      href: "#details-airfrans-mlp-full",
+      note: "AirfRANS full-data baseline from the arXiv v3 benchmark tables. Field columns are prototype conversions from normalized MSE values; force R2 columns are placeholders derived from force relative-error diagnostics until a dimensional FluidsBench evaluator is available.",
+    },
+    {
+      id: "airfrans-graphsage-full",
+      model: "GraphSAGE",
+      type: "GNN",
+      dataset: "AirfRANS",
+      split: "Full",
+      surfacePressure: 25.69,
+      surfaceTau: 4.05,
+      volumeVelocity: 9.54,
+      volumePressure: 8.12,
+      r2Cd: 0.96,
+      r2Cl: 0.995,
+      params: 0.03,
+      date: "2023-06-01",
+      velocityProfileR2: 0.905,
+      cpCutR2: 0.965,
+      href: "#details-airfrans-graphsage-full",
+      note: "AirfRANS full-data baseline from the arXiv v3 benchmark tables. Field columns are prototype conversions from normalized MSE values; force R2 columns are placeholders derived from force relative-error diagnostics until a dimensional FluidsBench evaluator is available.",
+    },
+    {
+      id: "airfrans-pointnet-full",
+      model: "PointNet",
+      type: "Point cloud",
+      dataset: "AirfRANS",
+      split: "Full",
+      surfacePressure: 30.5,
+      surfaceTau: 14.64,
+      volumeVelocity: 18.89,
+      volumePressure: 10.72,
+      r2Cd: 0.854,
+      r2Cl: 0.993,
+      params: 0.08,
+      date: "2023-06-01",
+      velocityProfileR2: 0.811,
+      cpCutR2: 0.938,
+      href: "#details-airfrans-pointnet-full",
+      note: "AirfRANS full-data baseline from the arXiv v3 benchmark tables. Field columns are prototype conversions from normalized MSE values; force R2 columns are placeholders derived from force relative-error diagnostics until a dimensional FluidsBench evaluator is available.",
+    },
+    {
+      id: "airfrans-graph-u-net-full",
+      model: "Graph U-Net",
+      type: "GNN",
+      dataset: "AirfRANS",
+      split: "Full",
+      surfacePressure: 19.75,
+      surfaceTau: 10.39,
+      volumeVelocity: 13.32,
+      volumePressure: 8.12,
+      r2Cd: 0.896,
+      r2Cl: 0.995,
+      params: 0.07,
+      date: "2023-06-01",
+      velocityProfileR2: 0.867,
+      cpCutR2: 0.967,
+      href: "#details-airfrans-graph-u-net-full",
+      note: "AirfRANS full-data baseline from the arXiv v3 benchmark tables. Field columns are prototype conversions from normalized MSE values; force R2 columns are placeholders derived from force relative-error diagnostics until a dimensional FluidsBench evaluator is available.",
+    },
   ];
 
   let submissions = [...exampleSubmissions];
@@ -728,6 +1004,35 @@
         },
       },
     },
+    "DrivAerNet++": {
+      cpTitle: "DrivAerNet++ surface pressure cut",
+      cpDescription: "Ground truth versus selected submissions along a representative DrivAerNet++ body centreline surface cut.",
+      cpXTitle: "x/L along DrivAerNet++ centreline",
+      cp: {
+        x: [0, 0.05, 0.11, 0.18, 0.28, 0.4, 0.52, 0.65, 0.77, 0.88, 0.95, 1],
+        groundTruth: [0.95, 0.62, 0.25, -0.05, -0.34, -0.54, -0.58, -0.44, -0.2, 0.02, 0.16, 0.06],
+      },
+      velocityTitle: "DrivAerNet++ wake velocity profiles",
+      velocityDescription: "Representative wake velocity profiles for the selected DrivAerNet++ station.",
+      velocityXTitle: "z/L",
+      velocityStations: {
+        "0.25L": {
+          label: "x/L = 0.25 behind the vehicle base",
+          z: [0, 0.1, 0.22, 0.34, 0.46, 0.58, 0.72, 0.9, 1.1, 1.32],
+          groundTruth: [0.2, 0.29, 0.44, 0.62, 0.78, 0.9, 0.98, 1.03, 1.05, 1.05],
+        },
+        "0.50L": {
+          label: "x/L = 0.50 behind the vehicle base",
+          z: [0, 0.1, 0.22, 0.34, 0.46, 0.58, 0.72, 0.9, 1.1, 1.32],
+          groundTruth: [0.34, 0.4, 0.52, 0.68, 0.82, 0.92, 0.99, 1.04, 1.05, 1.05],
+        },
+        "1.00L": {
+          label: "x/L = 1.00 behind the vehicle base",
+          z: [0, 0.1, 0.22, 0.34, 0.46, 0.58, 0.72, 0.9, 1.1, 1.32],
+          groundTruth: [0.5, 0.55, 0.64, 0.76, 0.87, 0.96, 1.01, 1.05, 1.06, 1.06],
+        },
+      },
+    },
     WindsorML: {
       cpTitle: "Windsor body centreline Cp",
       cpDescription: "Ground truth versus selected submissions along the Windsor body roof and deck centreline cut.",
@@ -786,6 +1091,35 @@
         },
       },
     },
+    AirfRANS: {
+      cpTitle: "AirfRANS airfoil surface Cp",
+      cpDescription: "Ground truth versus selected submissions along a representative AirfRANS airfoil surface pressure cut.",
+      cpXTitle: "x/c along airfoil chord",
+      cp: {
+        x: [0, 0.01, 0.025, 0.05, 0.09, 0.15, 0.25, 0.38, 0.52, 0.68, 0.84, 1],
+        groundTruth: [0.12, -1.42, -1.18, -0.86, -0.62, -0.43, -0.27, -0.15, -0.06, 0.01, 0.07, 0.1],
+      },
+      velocityTitle: "AirfRANS boundary-layer velocity profiles",
+      velocityDescription: "Boundary-layer velocity profiles for representative AirfRANS chordwise stations.",
+      velocityXTitle: "wall-normal distance / c",
+      velocityStations: {
+        "0.25L": {
+          label: "x/c = 0.20 upper-surface profile",
+          z: [0, 0.002, 0.005, 0.01, 0.018, 0.03, 0.045, 0.065, 0.09],
+          groundTruth: [0.0, 0.18, 0.36, 0.55, 0.72, 0.86, 0.95, 1.0, 1.03],
+        },
+        "0.50L": {
+          label: "x/c = 0.50 upper-surface profile",
+          z: [0, 0.002, 0.005, 0.01, 0.018, 0.03, 0.045, 0.065, 0.09],
+          groundTruth: [0.0, 0.14, 0.31, 0.5, 0.68, 0.83, 0.94, 1.01, 1.04],
+        },
+        "1.00L": {
+          label: "x/c = 0.80 upper-surface profile",
+          z: [0, 0.002, 0.005, 0.01, 0.018, 0.03, 0.045, 0.065, 0.09],
+          groundTruth: [0.0, 0.1, 0.24, 0.42, 0.61, 0.78, 0.91, 0.99, 1.04],
+        },
+      },
+    },
   };
 
   const palette = {
@@ -806,6 +1140,10 @@
     "hiliftaeroml-transolver-aoa12": "#ca6702",
     "hiliftaeroml-geot-aoa22": "#bb3e03",
     "hiliftaeroml-transolver-aoa22": "#9b2226",
+    "airfrans-mlp-full": "#7f7f7f",
+    "airfrans-graphsage-full": "#0072b2",
+    "airfrans-pointnet-full": "#009e73",
+    "airfrans-graph-u-net-full": "#d55e00",
   };
 
   let sortState = { key: "score", direction: "desc" };
@@ -813,7 +1151,10 @@
   let cpChart = null;
   let velocityChart = null;
   let activeStation = "0.25L";
-  let activeChartDataset = "AhmedML";
+  const chartSelections = {
+    cp: { dataset: "AhmedML", split: defaultSplit },
+    velocity: { dataset: "AhmedML", split: defaultSplit },
+  };
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -849,7 +1190,7 @@
   }
 
   function defaultSortDirection(key) {
-    if (key === "model" || key === "type" || key === "dataset" || lowerIsBetterMetrics.has(key)) return "asc";
+    if (key === "model" || key === "type" || key === "dataset" || key === "split" || lowerIsBetterMetrics.has(key)) return "asc";
     return "desc";
   }
 
@@ -864,6 +1205,7 @@
   function enrichedRows() {
     return submissions.map((row) => ({
       ...row,
+      split: rowSplit(row),
       surfacePressureL1: row.surfacePressureL1 ?? estimatedRelL1(row, "surfacePressure"),
       surfaceTauL1: row.surfaceTauL1 ?? estimatedRelL1(row, "surfaceTau"),
       volumeVelocityL1: row.volumeVelocityL1 ?? estimatedRelL1(row, "volumeVelocity"),
@@ -874,9 +1216,10 @@
   }
 
   function rowMatchesFilters(row, filters) {
-    const datasetMatch = filters.dataset === "all" || row.dataset === filters.dataset;
-    const typeMatch = filters.type === "all" || row.type === filters.type;
-    return datasetMatch && typeMatch;
+    const datasetMatch = filters.datasets.all || filters.datasets.values.has(row.dataset);
+    const typeMatch = filters.types.all || filters.types.values.has(row.type);
+    const splitMatch = filters.splits.all || filters.splits.values.has(row.split);
+    return datasetMatch && typeMatch && splitMatch;
   }
 
   function rankedRows() {
@@ -909,13 +1252,41 @@
     return "";
   }
 
-  function chartProfile() {
-    return datasetProfiles[activeChartDataset] || datasetProfiles.AhmedML;
+  function normalizeSplit(value, dataset) {
+    const rawValue = String(value || "").trim();
+    if (!rawValue) return defaultSplit;
+
+    const lowerValue = rawValue.toLowerCase();
+    if (lowerValue === "default") return defaultSplit;
+    if (lowerValue === "full") return "Full";
+
+    const aoaMatch = rawValue.match(/(?:aoa\s*)?(\d+)/i);
+    if (dataset === "HiLiftAeroML" && aoaMatch) return `AoA ${aoaMatch[1]}`;
+
+    return rawValue;
+  }
+
+  function rowSplit(row) {
+    if (row.split) return normalizeSplit(row.split, row.dataset);
+    if (row.dataset !== "HiLiftAeroML") return defaultSplit;
+    const id = row.id || "";
+    const model = row.model || "";
+    if (id.includes("full")) return "Full";
+
+    const aoaMatch = id.match(/aoa(\d+)/i) || model.match(/AoA\s*(\d+)/i);
+    return aoaMatch ? `AoA ${aoaMatch[1]}` : defaultSplit;
+  }
+
+  function chartProfile(chartType) {
+    return datasetProfiles[chartSelections[chartType]?.dataset] || datasetProfiles.AhmedML;
   }
 
   function selectedDatasetForCharts() {
-    const selectedDataset = document.getElementById("dataset-filter")?.value || "AhmedML";
-    return datasetProfiles[selectedDataset] ? selectedDataset : "AhmedML";
+    const filters = currentFilters();
+    const selectedDataset = filters.datasets.all
+      ? chartSelections.cp.dataset
+      : Array.from(filters.datasets.values).find((dataset) => datasetProfiles[dataset]);
+    return datasetProfiles[selectedDataset] ? selectedDataset : chartSelections.cp.dataset;
   }
 
   function normalizeBackendSubmission(entry) {
@@ -936,12 +1307,14 @@
     if (Object.values(metrics).some((value) => value === null)) return null;
 
     const model = entry.model || "Unnamed model";
+    const dataset = entry.dataset || "AhmedML";
     const id = `backend-${entry.submission_id || slug(model)}`;
     return {
       id,
       model,
       type: entry.model_type || "Other",
-      dataset: entry.dataset || "AhmedML",
+      dataset,
+      split: normalizeSplit(entry.split ?? entry.dataset_split ?? entry.benchmark_split, dataset),
       ...metrics,
       params: parseNumber(entry.parameter_count ?? entry.num_parameters) ?? 0,
       date: displayDate(entry),
@@ -988,9 +1361,11 @@
   }
 
   function currentFilters() {
-    const dataset = document.getElementById("dataset-filter")?.value || "all";
-    const type = document.getElementById("type-filter")?.value || "all";
-    return { dataset, type };
+    return {
+      datasets: checkedFilterValues("dataset-filter"),
+      types: checkedFilterValues("type-filter"),
+      splits: checkedFilterValues("split-filter"),
+    };
   }
 
   function filteredRows() {
@@ -1020,6 +1395,8 @@
       tr.lastElementChild.innerHTML = `<span class="leaderboard-type">${row.type}</span>`;
       tr.appendChild(tableCell("Dataset", row.dataset, "leaderboard-dataset-cell"));
       tr.lastElementChild.innerHTML = `<span class="leaderboard-dataset">${row.dataset}</span>`;
+      tr.appendChild(tableCell("Split", row.split, "leaderboard-split-cell"));
+      tr.lastElementChild.innerHTML = `<span class="leaderboard-split">${row.split}</span>`;
       tr.appendChild(tableCell("Surface pressure dim. rel L2 (%)", formatNumber(row.surfacePressure, 2)));
       tr.appendChild(tableCell("Surface pressure dim. rel L1 (%)", formatNumber(row.surfacePressureL1, 2)));
       tr.appendChild(tableCell("Surface tau wall dim. rel L2 (%)", formatNumber(row.surfaceTau, 2)));
@@ -1068,22 +1445,267 @@
       sortState = { key: primaryRankingKey, direction: defaultSortDirection(primaryRankingKey) };
       renderTable();
       renderDetails();
-      syncChartsToDataset();
+      refreshAllChartPanels();
     });
   }
 
   function configureFilters() {
-    ["dataset-filter", "type-filter"].forEach((id) => {
-      document.getElementById(id)?.addEventListener("change", () => {
-        renderTable();
-        renderDetails();
-        syncChartsToDataset();
+    ["dataset-filter", "type-filter", "split-filter"].forEach(configureFilterGroup);
+    syncSplitFilterOptions();
+    document.addEventListener("click", (event) => {
+      const activeDropdown = event.target instanceof Element ? event.target.closest(".leaderboard-filter-dropdown") : null;
+      closeFilterDropdowns(activeDropdown);
+    });
+  }
+
+  function filterInputs(containerId) {
+    return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]`));
+  }
+
+  function checkedFilterValues(containerId) {
+    const inputs = filterInputs(containerId).filter((input) => !input.disabled);
+    const allInput = inputs.find((input) => input.dataset.filterAll !== undefined);
+    const selected = inputs.filter((input) => input !== allInput && input.checked).map((input) => input.value);
+    return {
+      all: !allInput || allInput.checked || selected.length === 0,
+      values: new Set(selected),
+    };
+  }
+
+  function updateFilterGroup(containerId, changedInput) {
+    const inputs = filterInputs(containerId);
+    const allInput = inputs.find((input) => input.dataset.filterAll !== undefined);
+    const optionInputs = inputs.filter((input) => input !== allInput && !input.disabled);
+    if (!allInput) return;
+
+    if (!changedInput) {
+      allInput.checked = !optionInputs.some((input) => input.checked);
+      return;
+    }
+
+    if (changedInput === allInput && allInput.checked) {
+      optionInputs.forEach((input) => {
+        input.checked = false;
       });
+      return;
+    }
+
+    if (changedInput !== allInput && changedInput?.checked) {
+      allInput.checked = false;
+    }
+
+    if (!optionInputs.some((input) => input.checked)) {
+      allInput.checked = true;
+    }
+  }
+
+  function syncSplitFilterOptions() {
+    const splitContainer = document.getElementById("split-filter");
+    if (!splitContainer) return;
+
+    const datasetFilter = checkedFilterValues("dataset-filter");
+    splitContainer.querySelectorAll("[data-split-datasets]").forEach((label) => {
+      const datasets = (label.dataset.splitDatasets || "").split(/\s+/).filter(Boolean);
+      const visible = datasetFilter.all || datasets.some((dataset) => datasetFilter.values.has(dataset));
+      const input = label.querySelector('input[type="checkbox"]');
+
+      label.hidden = !visible;
+      if (input) {
+        input.disabled = !visible;
+        if (!visible) input.checked = false;
+      }
+    });
+
+    updateFilterGroup("split-filter");
+    updateFilterSummary("split-filter");
+  }
+
+  function filterOptionLabel(input) {
+    return input.closest("label")?.textContent.trim() || input.value;
+  }
+
+  function updateFilterSummary(containerId) {
+    const container = document.getElementById(containerId);
+    const summary = container?.querySelector("[data-filter-summary]");
+    if (!container || !summary) return;
+
+    const inputs = filterInputs(containerId);
+    const allInput = inputs.find((input) => input.dataset.filterAll !== undefined);
+    const selected = inputs.filter((input) => input !== allInput && input.checked);
+
+    if (!allInput || allInput.checked || selected.length === 0) {
+      summary.textContent = container.dataset.allLabel || "All";
+    } else if (selected.length === 1) {
+      summary.textContent = filterOptionLabel(selected[0]);
+    } else if (selected.length === 2) {
+      summary.textContent = selected.map(filterOptionLabel).join(", ");
+    } else {
+      summary.textContent = `${selected.length} selected`;
+    }
+  }
+
+  function setFilterDropdownOpen(container, open) {
+    const toggle = container.querySelector("[data-filter-toggle]");
+    const menu = container.querySelector("[data-filter-menu]");
+    if (!toggle || !menu) return;
+
+    container.classList.toggle("is-open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    menu.hidden = !open;
+  }
+
+  function closeFilterDropdowns(exceptContainer) {
+    document.querySelectorAll(".leaderboard-filter-dropdown.is-open").forEach((container) => {
+      if (container !== exceptContainer) {
+        setFilterDropdownOpen(container, false);
+      }
+    });
+  }
+
+  function configureDropdownShell(container) {
+    if (!container) return;
+    if (container.dataset.dropdownConfigured === "true") return;
+    container.dataset.dropdownConfigured = "true";
+
+    const toggle = container.querySelector("[data-filter-toggle]");
+    if (toggle) {
+      toggle.addEventListener("click", () => {
+        const shouldOpen = !container.classList.contains("is-open");
+        closeFilterDropdowns(container);
+        setFilterDropdownOpen(container, shouldOpen);
+      });
+    }
+
+    container.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setFilterDropdownOpen(container, false);
+      }
+    });
+  }
+
+  function configureFilterGroup(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    configureDropdownShell(container);
+
+    container.addEventListener("change", (event) => {
+      if (!(event.target instanceof HTMLInputElement)) return;
+      updateFilterGroup(containerId, event.target);
+      if (containerId === "dataset-filter") {
+        syncSplitFilterOptions();
+      }
+      updateFilterSummary(containerId);
+      renderTable();
+      renderDetails();
+    });
+    updateFilterSummary(containerId);
+  }
+
+  function selectedRadioInput(containerId) {
+    return document.querySelector(`#${containerId} input[type="radio"]:checked:not(:disabled)`);
+  }
+
+  function selectedRadioValue(containerId, fallback) {
+    return selectedRadioInput(containerId)?.value || fallback;
+  }
+
+  function updateSingleFilterSummary(containerId) {
+    const container = document.getElementById(containerId);
+    const summary = container?.querySelector("[data-filter-summary]");
+    const selected = selectedRadioInput(containerId);
+    if (summary && selected) summary.textContent = filterOptionLabel(selected);
+  }
+
+  function syncChartSplitOptions(chartType) {
+    const containerId = `${chartType}-split-filter`;
+    const splitContainer = document.getElementById(containerId);
+    if (!splitContainer) return;
+
+    const dataset = chartSelections[chartType].dataset;
+    let firstVisibleInput = null;
+    let selectedVisible = false;
+
+    splitContainer.querySelectorAll("[data-split-datasets]").forEach((label) => {
+      const datasets = (label.dataset.splitDatasets || "").split(/\s+/).filter(Boolean);
+      const visible = datasets.includes(dataset);
+      const input = label.querySelector('input[type="radio"]');
+
+      label.hidden = !visible;
+      if (input) {
+        input.disabled = !visible;
+        if (!visible) input.checked = false;
+        if (visible && !firstVisibleInput) firstVisibleInput = input;
+        if (visible && input.checked) selectedVisible = true;
+      }
+    });
+
+    if (!selectedVisible && firstVisibleInput) {
+      firstVisibleInput.checked = true;
+    }
+
+    chartSelections[chartType].split = normalizeSplit(selectedRadioValue(containerId, defaultSplit), dataset);
+    updateSingleFilterSummary(containerId);
+  }
+
+  function configureChartSingleFilter(containerId, chartType, key) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    configureDropdownShell(container);
+
+    const selectedValue = selectedRadioValue(containerId, key === "split" ? defaultSplit : "AhmedML");
+    chartSelections[chartType][key] = key === "split" ? normalizeSplit(selectedValue, chartSelections[chartType].dataset) : selectedValue;
+    updateSingleFilterSummary(containerId);
+
+    container.addEventListener("change", (event) => {
+      if (!(event.target instanceof HTMLInputElement) || event.target.type !== "radio") return;
+
+      if (key === "dataset") {
+        chartSelections[chartType].dataset = event.target.value;
+        syncChartSplitOptions(chartType);
+      } else {
+        chartSelections[chartType].split = normalizeSplit(event.target.value, chartSelections[chartType].dataset);
+      }
+
+      updateSingleFilterSummary(containerId);
+      syncChartPanel(chartType);
+      setFilterDropdownOpen(container, false);
     });
   }
 
   function checkedModels(containerId) {
     return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)).map((input) => input.value);
+  }
+
+  function updateChartModelSummary(filterId, menuId) {
+    const container = document.getElementById(filterId);
+    const summary = container?.querySelector("[data-chart-model-summary]");
+    if (!summary) return;
+
+    const selected = Array.from(document.querySelectorAll(`#${menuId} input[type="checkbox"]:checked`));
+    if (selected.length === 0) {
+      summary.textContent = "No submissions";
+    } else if (selected.length === 1) {
+      summary.textContent = filterOptionLabel(selected[0]);
+    } else if (selected.length === 2) {
+      summary.textContent = selected.map(filterOptionLabel).join(", ");
+    } else {
+      summary.textContent = `${selected.length} submissions`;
+    }
+  }
+
+  function configureChartModelFilter(filterId, menuId, chartType) {
+    const container = document.getElementById(filterId);
+    if (!container) return;
+
+    configureDropdownShell(container);
+    container.addEventListener("change", (event) => {
+      if (!(event.target instanceof HTMLInputElement) || event.target.type !== "checkbox") return;
+      updateChartModelSummary(filterId, menuId);
+      if (chartType === "cp") updateCpChart();
+      if (chartType === "velocity") updateVelocityChart();
+    });
   }
 
   function modelPerturbation(modelId, index, scale) {
@@ -1093,8 +1715,8 @@
     return direction * magnitude * scale * (0.45 + index / 18);
   }
 
-  function cpSeries(modelId) {
-    const profile = chartProfile();
+  function cpSeries(modelId, chartType) {
+    const profile = chartProfile(chartType);
     return profile.cp.groundTruth.map((value, index) => value + modelPerturbation(modelId, index, 0.22));
   }
 
@@ -1160,22 +1782,23 @@
     if (element) element.textContent = text;
   }
 
-  function chartRows() {
+  function chartRows(chartType) {
+    const selection = chartSelections[chartType];
     return enrichedRows()
-      .filter((row) => row.dataset === activeChartDataset)
+      .filter((row) => row.dataset === selection.dataset && row.split === selection.split)
       .sort((a, b) => compareRows(a, b, primaryRankingKey, defaultSortDirection(primaryRankingKey)));
   }
 
   function updateCpChart() {
     if (!cpChart) return;
-    const profile = chartProfile();
+    const profile = chartProfile("cp");
     const models = checkedModels("cp-models");
     cpChart.data.labels = profile.cp.x;
     cpChart.data.datasets = [
       lineDataset("Ground truth", profile.cp.groundTruth, palette.groundTruth, false),
       ...models.map((modelId, index) => {
         const row = submissions.find((entry) => entry.id === modelId);
-        return lineDataset(row?.model || modelId, cpSeries(modelId), modelColor(modelId, index), true);
+        return lineDataset(row?.model || modelId, cpSeries(modelId, "cp"), modelColor(modelId, index), true);
       }),
     ];
     cpChart.options.scales.x.title.text = profile.cpXTitle;
@@ -1184,7 +1807,7 @@
 
   function updateVelocityChart() {
     if (!velocityChart) return;
-    const profile = chartProfile();
+    const profile = chartProfile("velocity");
     const station = profile.velocityStations[activeStation] || Object.values(profile.velocityStations)[0];
     const models = checkedModels("velocity-models");
     setText("velocity-station-label", station.label);
@@ -1200,51 +1823,81 @@
     velocityChart.update();
   }
 
-  function renderModelToggles(containerId) {
+  function renderModelToggles(containerId, chartType) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.textContent = "";
 
-    chartRows()
-      .slice(0, 6)
-      .forEach((row, index) => {
-        const label = document.createElement("label");
-        label.className = "chart-chip";
-        label.innerHTML = `<input type="checkbox" value="${row.id}" ${index < 3 ? "checked" : ""}> ${row.model}`;
-        label.querySelector("input").addEventListener("change", () => {
-          if (containerId === "cp-models") updateCpChart();
-          if (containerId === "velocity-models") updateVelocityChart();
-        });
-        container.appendChild(label);
-      });
+    const rows = chartRows(chartType).slice(0, 12);
+    if (!rows.length) {
+      const empty = document.createElement("div");
+      empty.className = "leaderboard-filter-empty";
+      empty.textContent = "No submissions for this dataset and split";
+      container.appendChild(empty);
+      updateChartModelSummary(`${containerId}-filter`, containerId);
+      return;
+    }
+
+    rows.forEach((row, index) => {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      label.className = "leaderboard-filter-option";
+      input.type = "checkbox";
+      input.value = row.id;
+      input.checked = index < 3;
+      label.append(input, document.createTextNode(` ${row.model}`));
+      container.appendChild(label);
+    });
+
+    updateChartModelSummary(`${containerId}-filter`, containerId);
   }
 
-  function syncChartsToDataset() {
-    activeChartDataset = selectedDatasetForCharts();
-    const profile = chartProfile();
+  function syncChartPanel(chartType) {
+    const profile = chartProfile(chartType);
+
+    if (chartType === "cp") {
+      setText("cp-panel-title", profile.cpTitle);
+      setText("cp-panel-description", profile.cpDescription);
+      renderModelToggles("cp-models", chartType);
+      updateCpChart();
+      return;
+    }
+
     if (!profile.velocityStations[activeStation]) {
       activeStation = Object.keys(profile.velocityStations)[0];
     }
 
-    setText("cp-panel-title", profile.cpTitle);
-    setText("cp-panel-description", profile.cpDescription);
     setText("velocity-panel-title", profile.velocityTitle);
     setText("velocity-panel-description", profile.velocityDescription);
     document.querySelectorAll(".station-toggle").forEach((button) => {
       button.classList.toggle("active", button.getAttribute("data-station") === activeStation);
     });
-    renderModelToggles("cp-models");
-    renderModelToggles("velocity-models");
-    updateCpChart();
+    renderModelToggles("velocity-models", chartType);
     updateVelocityChart();
+  }
+
+  function refreshAllChartPanels() {
+    syncChartPanel("cp");
+    syncChartPanel("velocity");
+  }
+
+  function configureChartControls() {
+    ["cp", "velocity"].forEach((chartType) => {
+      configureChartSingleFilter(`${chartType}-dataset-filter`, chartType, "dataset");
+      configureChartSingleFilter(`${chartType}-split-filter`, chartType, "split");
+      configureChartModelFilter(`${chartType}-models-filter`, `${chartType}-models`, chartType);
+      syncChartSplitOptions(chartType);
+    });
   }
 
   function configureCharts() {
     if (!window.Chart) return;
 
+    configureChartControls();
+
     const cpCanvas = document.getElementById("cp-chart");
     if (cpCanvas) {
-      const profile = chartProfile();
+      const profile = chartProfile("cp");
       cpChart = new Chart(cpCanvas, {
         type: "line",
         data: { labels: profile.cp.x, datasets: [] },
@@ -1254,11 +1907,12 @@
 
     const velocityCanvas = document.getElementById("velocity-chart");
     if (velocityCanvas) {
-      const station = chartProfile().velocityStations[activeStation];
+      const velocityProfile = chartProfile("velocity");
+      const station = velocityProfile.velocityStations[activeStation];
       velocityChart = new Chart(velocityCanvas, {
         type: "line",
         data: { labels: station.z, datasets: [] },
-        options: baseChartOptions("U / U∞", chartProfile().velocityXTitle || "z/H"),
+        options: baseChartOptions("U / U∞", velocityProfile.velocityXTitle || "z/H"),
       });
     }
 
@@ -1271,7 +1925,7 @@
       });
     });
 
-    syncChartsToDataset();
+    refreshAllChartPanels();
   }
 
   function formValue(form, name) {
@@ -1294,6 +1948,7 @@
       model: formValue(form, "model"),
       model_type: formValue(form, "model_type"),
       dataset: formValue(form, "dataset"),
+      split: normalizeSplit(formValue(form, "split"), formValue(form, "dataset")),
       parameter_count: numberFormValue(form, "parameter_count"),
       surface_pressure_l2: numberFormValue(form, "surface_pressure_l2"),
       surface_pressure_l1: numberFormValue(form, "surface_pressure_l1"),
@@ -1369,6 +2024,11 @@
       setSubmitStatus("", false);
       if (form?.elements.dataset && datasetProfiles[selectedDatasetForCharts()]) {
         form.elements.dataset.value = selectedDatasetForCharts();
+      }
+      const splitFilter = currentFilters().splits;
+      const selectedSplit = splitFilter.all ? chartSelections.cp.split : Array.from(splitFilter.values)[0];
+      if (form?.elements.split) {
+        form.elements.split.value = selectedSplit || defaultSplit;
       }
       if (dialog?.showModal) {
         dialog.showModal();

@@ -40,6 +40,18 @@ nav_order: 6
     <article class="dataset-card">
       <div>
         <p class="dataset-kicker">Automotive external aerodynamics</p>
+        <h3>DrivAerNet++</h3>
+        <p>
+          Large-scale high-fidelity automotive CFD data used by CarBench, covering over 8,000 car simulations across
+          multiple body categories. The FluidsBench page defines the pressure-field leaderboard format and notes the
+          additional fields needed for future force, volume, Cp-cut, and velocity-profile scoring.
+        </p>
+      </div>
+      <a href="{{ '/datasets/drivaernetplusplus/' | relative_url }}">View dataset spec</a>
+    </article>
+    <article class="dataset-card">
+      <div>
+        <p class="dataset-kicker">Automotive external aerodynamics</p>
         <h3>WindsorML</h3>
         <p>
           High-fidelity WMLES data for 355 geometric variants of the Windsor body. The FluidsBench page defines the
@@ -60,6 +72,18 @@ nav_order: 6
         </p>
       </div>
       <a href="{{ '/datasets/hiliftaeroml/' | relative_url }}">View dataset spec</a>
+    </article>
+    <article class="dataset-card">
+      <div>
+        <p class="dataset-kicker">Airfoil RANS aerodynamics</p>
+        <h3>AirfRANS</h3>
+        <p>
+          High-fidelity 2D RANS simulations over NACA 4- and 5-digit airfoils. The FluidsBench page defines the
+          submission format for field errors, force coefficients, surface Cp profiles, and boundary-layer velocity
+          profiles across the AirfRANS benchmark regimes.
+        </p>
+      </div>
+      <a href="{{ '/datasets/airfrans/' | relative_url }}">View dataset spec</a>
     </article>
   </section>
 </div>
