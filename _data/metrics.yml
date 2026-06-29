@@ -1,0 +1,198 @@
+# Canonical metric registry for the FluidsBench leaderboard.
+#
+# Single source of truth for:
+#   (a) which columns the leaderboard renders, per dataset;
+#   (b) how each value is formatted and sorted;
+#   (c) submit-Lambda validation (Stage 2 bundles this file into the function package).
+#
+# `parameter_count` is a top-level model property (in millions), NOT a metric, so it is
+# not listed here. Each metric lives in the item under metrics.<id> = {value[, std]}.
+#
+# Per-entry fields:
+#   display_name / short_name : full + compact column labels
+#   unit        : display unit ("" = dimensionless)
+#   direction   : lower_better | higher_better   (sort order + good/bad colouring)
+#   kind        : error | r2 | performance       (frontend styling class)
+#   range       : [min, max] inclusive validation bounds; null = unbounded.
+#                 r2-kind uses [null, 1] so a negative R^2 is still valid; errors use [0, null].
+#   decimals    : display precision
+#   datasets    : which datasets expose this metric (controls column visibility)
+#   group       : column-group header
+
+metrics:
+
+  # --- Multi-field CFD metrics (AhmedML / DrivAerML / WindsorML / HiLiftAeroML) ---
+  # Relative L2/L1 errors reported as percentages across several physical fields.
+  surface_pressure_l2:
+    display_name: "Surface pressure L2"
+    short_name: "p L2"
+    unit: "%"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 2
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Surface pressure"
+  surface_pressure_l1:
+    display_name: "Surface pressure L1"
+    short_name: "p L1"
+    unit: "%"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 2
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Surface pressure"
+  surface_tau_l2:
+    display_name: "Wall shear stress L2"
+    short_name: "τ L2"
+    unit: "%"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 2
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Wall shear stress"
+  surface_tau_l1:
+    display_name: "Wall shear stress L1"
+    short_name: "τ L1"
+    unit: "%"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 2
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Wall shear stress"
+  volume_velocity_l2:
+    display_name: "Volume velocity L2"
+    short_name: "U L2"
+    unit: "%"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 2
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Volume fields"
+  volume_velocity_l1:
+    display_name: "Volume velocity L1"
+    short_name: "U L1"
+    unit: "%"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 2
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Volume fields"
+  volume_pressure_l2:
+    display_name: "Volume pressure L2"
+    short_name: "p_vol L2"
+    unit: "%"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 2
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Volume fields"
+  volume_pressure_l1:
+    display_name: "Volume pressure L1"
+    short_name: "p_vol L1"
+    unit: "%"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 2
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Volume fields"
+  r2_cd:
+    display_name: "Drag coefficient R²"
+    short_name: "R² Cd"
+    unit: ""
+    direction: higher_better
+    kind: r2
+    range: [null, 1]
+    decimals: 3
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Forces & profiles"
+  r2_cl:
+    display_name: "Lift coefficient R²"
+    short_name: "R² Cl"
+    unit: ""
+    direction: higher_better
+    kind: r2
+    range: [null, 1]
+    decimals: 3
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Forces & profiles"
+  velocity_profile_r2:
+    display_name: "Velocity profile R²"
+    short_name: "R² U-prof"
+    unit: ""
+    direction: higher_better
+    kind: r2
+    range: [null, 1]
+    decimals: 3
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Forces & profiles"
+  cp_cut_r2:
+    display_name: "Cp cut R²"
+    short_name: "R² Cp"
+    unit: ""
+    direction: higher_better
+    kind: r2
+    range: [null, 1]
+    decimals: 3
+    datasets: [AhmedML, DrivAerML, WindsorML, HiLiftAeroML]
+    group: "Forces & profiles"
+
+  # --- CarBench (DrivAerNet++, surface-pressure field only) ---
+  # Kinematic pressure convention: RMSE in m²/s², MSE in m⁴/s⁴. rel_l2 stored raw (fraction).
+  surface_pressure_rel_l2:
+    display_name: "Surface pressure relative L2"
+    short_name: "rel L2"
+    unit: ""
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 4
+    datasets: [DrivAerNet++]
+    group: "Surface pressure"
+  surface_pressure_r2:
+    display_name: "Surface pressure R²"
+    short_name: "R²"
+    unit: ""
+    direction: higher_better
+    kind: r2
+    range: [null, 1]
+    decimals: 4
+    datasets: [DrivAerNet++]
+    group: "Surface pressure"
+  surface_pressure_mse:
+    display_name: "Surface pressure MSE"
+    short_name: "MSE"
+    unit: "m⁴/s⁴"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 0
+    datasets: [DrivAerNet++]
+    group: "Surface pressure"
+  surface_pressure_rmse:
+    display_name: "Surface pressure RMSE"
+    short_name: "RMSE"
+    unit: "m²/s²"
+    direction: lower_better
+    kind: error
+    range: [0, null]
+    decimals: 1
+    datasets: [DrivAerNet++]
+    group: "Surface pressure"
+  inference_latency_ms:
+    display_name: "Inference latency"
+    short_name: "Latency"
+    unit: "ms"
+    direction: lower_better
+    kind: performance
+    range: [0, null]
+    decimals: 2
+    datasets: [DrivAerNet++]
+    group: "Performance"
