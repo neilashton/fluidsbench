@@ -93,6 +93,19 @@
   const allChartDatasetsValue = "__all_datasets__";
   const allChartSplitsValue = "__all_splits__";
 
+  const trainingRegimeLabels = {
+    from_scratch: "Scratch",
+    pretrained_zero_shot: "Zero-shot",
+    pretrained_official_train: "Pretrained + official train",
+    other: "Other",
+  };
+
+  const targetDataLabels = {
+    official_train: "Official train",
+    none: "None",
+    other: "Other",
+  };
+
   const predefinedSplitOptions = [
     { value: defaultSplit, label: "Default", datasets: ["AhmedML", "DrivAerML", "DrivAerNet++", "WindsorML"] },
     { value: "Full", label: "Full", datasets: ["HiLiftAeroML", "AirfRANS"] },
@@ -299,6 +312,7 @@
       key === "model" ||
       key === "submittedBy" ||
       key === "type" ||
+      key === "trainingRegimeLabel" ||
       key === "dataset" ||
       key === "split" ||
       lowerIsBetterMetrics.has(key)
@@ -524,6 +538,51 @@
     return types.join(", ");
   }
 
+  function normalizeTrainingRegime(value) {
+    const key = String(value || "from_scratch").trim();
+    return Object.prototype.hasOwnProperty.call(trainingRegimeLabels, key) ? key : "other";
+  }
+
+  function trainingLabelFor(regime) {
+    return trainingRegimeLabels[normalizeTrainingRegime(regime)];
+  }
+
+  function normalizeTargetDataUsed(value) {
+    const key = String(value || "official_train").trim();
+    return Object.prototype.hasOwnProperty.call(targetDataLabels, key) ? key : "other";
+  }
+
+  function targetDataLabelFor(value) {
+    return targetDataLabels[normalizeTargetDataUsed(value)];
+  }
+
+  function parseBoolean(value, fallback = false) {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (["true", "yes", "1"].includes(normalized)) return true;
+      if (["false", "no", "0"].includes(normalized)) return false;
+    }
+    return fallback;
+  }
+
+  function normalizePretrainingData(value) {
+    const items = Array.isArray(value) ? value : [];
+    return items
+      .filter(Boolean)
+      .map((item) => (typeof item === "string" ? { name: item } : item))
+      .filter((item) => item && typeof item === "object");
+  }
+
+  function pretrainingDataLabel(row) {
+    if (!row.externalPretraining) return "None";
+    if (!row.pretrainingData?.length) return "Not specified";
+    return row.pretrainingData
+      .map((item) => [item.name, item.type].filter(Boolean).join(" - "))
+      .filter(Boolean)
+      .join("; ") || "Not specified";
+  }
+
   function knownDatasetNames() {
     return uniqueInOrder([
       ...Object.keys(datasetProfiles),
@@ -629,11 +688,23 @@
     const dataset = entry.dataset || "AhmedML";
     const id = `approved-${entry.submission_id || slug(`${dataset}-${rowSplit(entry)}-${model}`)}`;
     const modelTypes = normalizeModelTypes(entry);
+    const trainingRegime = normalizeTrainingRegime(entry.training_regime ?? entry.trainingRegime);
+    const targetDataUsed = normalizeTargetDataUsed(entry.target_data_used ?? entry.targetDataUsed);
+    const externalPretraining = parseBoolean(
+      entry.external_pretraining ?? entry.externalPretraining,
+      trainingRegime.startsWith("pretrained_")
+    );
     return {
       id,
       model,
       type: modelTypes[0],
       modelTypes,
+      trainingRegime,
+      trainingRegimeLabel: trainingLabelFor(trainingRegime),
+      targetDataUsed,
+      targetDataLabel: targetDataLabelFor(targetDataUsed),
+      externalPretraining,
+      pretrainingData: normalizePretrainingData(entry.pretraining_data ?? entry.pretrainingData),
       dataset,
       split: normalizeSplit(entry.split ?? entry.dataset_split ?? entry.benchmark_split, dataset),
       ...metrics,
@@ -939,6 +1010,7 @@
       tr.appendChild(tableCell("Model", row.model, "leaderboard-model"));
       tr.appendChild(tableCell("Submitted by", row.submittedBy, "leaderboard-submitter"));
       tr.appendChild(chipListCell("Type", row.modelTypes?.length ? row.modelTypes : [row.type], "leaderboard-type-cell", "leaderboard-type"));
+      tr.appendChild(chipCell("Training", row.trainingRegimeLabel, "leaderboard-training-cell", "leaderboard-training"));
       tr.appendChild(chipCell("Dataset", row.dataset, "leaderboard-dataset-cell", "leaderboard-dataset"));
       tr.appendChild(chipCell("Split", row.split, "leaderboard-split-cell", "leaderboard-split"));
       tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score"));
@@ -1942,6 +2014,10 @@
     details.className = "details-grid";
     appendDetailField(details, "Submitted by", row.submittedBy);
     appendDetailField(details, "Model types", modelTypesLabel(row));
+    appendDetailField(details, "Training regime", row.trainingRegimeLabel);
+    appendDetailField(details, "Target data used", row.targetDataLabel);
+    appendDetailField(details, "External pretraining", row.externalPretraining ? "Yes" : "No");
+    appendDetailField(details, "Pretraining data", pretrainingDataLabel(row));
     appendDetailField(details, "Dataset", row.dataset);
     appendDetailField(details, "Split", row.split);
     appendDetailField(details, "Field score (50%)", formatNumber(row.fieldScore, 1));

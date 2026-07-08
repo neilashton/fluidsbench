@@ -218,6 +218,7 @@ chart:
           <th data-sort="model">Model</th>
           <th data-sort="submittedBy">Submitted by</th>
           <th data-sort="type">Type</th>
+          <th data-sort="trainingRegimeLabel">Training</th>
           <th data-sort="dataset">Dataset</th>
           <th data-sort="split">Split</th>
           <th data-sort="score">Overall score</th>

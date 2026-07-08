@@ -19,6 +19,8 @@
   --leaderboard-badge-green-text: #166534;
   --leaderboard-badge-purple-bg: #f3e8ff;
   --leaderboard-badge-purple-text: #6b21a8;
+  --leaderboard-badge-amber-bg: #fef3c7;
+  --leaderboard-badge-amber-text: #92400e;
 
   display: grid;
   gap: 1.5rem;
@@ -38,6 +40,8 @@ html[data-theme="dark"] .leaderboard-page {
   --leaderboard-badge-green-text: #bbf7d0;
   --leaderboard-badge-purple-bg: rgba(139, 92, 246, 0.22);
   --leaderboard-badge-purple-text: #ddd6fe;
+  --leaderboard-badge-amber-bg: rgba(245, 158, 11, 0.2);
+  --leaderboard-badge-amber-text: #fde68a;
 }
 
 .leaderboard-kicker {
@@ -344,6 +348,7 @@ html[data-theme="dark"] .leaderboard-page {
 }
 
 .leaderboard-type,
+.leaderboard-training,
 .leaderboard-dataset,
 .leaderboard-split {
   border-radius: 999px;
@@ -356,6 +361,11 @@ html[data-theme="dark"] .leaderboard-page {
 .leaderboard-type {
   background: var(--leaderboard-badge-blue-bg);
   color: var(--leaderboard-badge-blue-text);
+}
+
+.leaderboard-training {
+  background: var(--leaderboard-badge-amber-bg);
+  color: var(--leaderboard-badge-amber-text);
 }
 
 .leaderboard-dataset {
