@@ -284,7 +284,7 @@ S_overall  = sum(weight_q * S_q)</code></pre>
       <li><a href="https://caemldatasets.org/hiliftaeroml/">HiLiftAeroML dataset page</a></li>
       <li><a href="https://arxiv.org/abs/2605.19565">HiLiftAeroML paper</a></li>
       <li><a href="https://huggingface.co/datasets/nvidia/HiLiftAeroML">HiLiftAeroML Hugging Face dataset</a></li>
-      <li><a href="{{ '/leaderboards/' | relative_url }}">CFD leaderboard prototype</a></li>
+      <li><a href="{{ '/' | relative_url }}">CFD leaderboard prototype</a></li>
     </ul>
   </section>
 </div>

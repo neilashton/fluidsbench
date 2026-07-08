@@ -26,9 +26,13 @@
 
   const defaultSplit = "Default";
 
-  const approvedSubmissionsUrl =
-    window.FluidsBenchApprovedSubmissionsUrl ||
-    new URL("/leaderboard/approved_submissions.json", window.location.origin).href;
+  const leaderboardBaseUrl =
+    window.FluidsBenchLeaderboardBaseUrl || new URL("/", window.location.origin).href;
+  const leaderboardManifestUrl =
+    window.FluidsBenchLeaderboardManifestUrl ||
+    new URL("/leaderboard/manifest.json", window.location.origin).href;
+  const approvedSubmissionsSourceLabel =
+    window.FluidsBenchApprovedSubmissionsSourceLabel || "leaderboard manifest";
 
   const lowerIsBetterMetrics = new Set([
     "surfacePressure",
@@ -1001,7 +1005,11 @@
   ];
 
   let submissions = [...exampleSubmissions];
-  let approvedSubmissionStatusMessage = "Loading approved submissions from approved_submissions.json...";
+  let leaderboardManifest = null;
+  let approvedDatasetRows = new Map();
+  let datasetLoadPromises = new Map();
+  let dataRefreshToken = 0;
+  let approvedSubmissionStatusMessage = `Loading approved submissions from ${approvedSubmissionsSourceLabel}...`;
 
   const datasetProfiles = {
     AhmedML: {
@@ -1250,6 +1258,23 @@
     return metric.unit ? `${formatted}${metric.unit}` : formatted;
   }
 
+  function comparisonValueDigits(metric) {
+    if (!metric) return 1;
+    if (metric.scoreKind === "r2") return 2;
+    return 1;
+  }
+
+  function formatComparisonValue(row, key) {
+    const metric = metricDefinitions[key];
+    const value = Number(row[key]);
+    if (!metric || !Number.isFinite(value)) return "N/A";
+
+    if (metric.scoreKind === "score") return `${formatNumber(value, 1)} pts`;
+    if (metric.scoreKind === "r2") return formatNumber(value, comparisonValueDigits(metric));
+    if (metric.unit) return `${formatNumber(value, comparisonValueDigits(metric))}${metric.unit}`;
+    return formatNumber(value, comparisonValueDigits(metric));
+  }
+
   function fieldComponentScore(row) {
     return (
       weights.surfacePressure * errorScore(row.surfacePressure, errorCaps.surfacePressure) +
@@ -1470,22 +1495,169 @@
     status.textContent = approvedSubmissionStatusMessage;
   }
 
+  function normalizedLeaderboardBaseUrl() {
+    return leaderboardBaseUrl.endsWith("/") ? leaderboardBaseUrl : `${leaderboardBaseUrl}/`;
+  }
+
+  function leaderboardFileUrl(file) {
+    return new URL(file, normalizedLeaderboardBaseUrl()).href;
+  }
+
+  async function fetchLeaderboardJson(url, label) {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
+    return response.json();
+  }
+
+  function leaderboardDatasetEntries() {
+    return Array.isArray(leaderboardManifest?.datasets) ? leaderboardManifest.datasets : [];
+  }
+
+  function leaderboardDatasetNames() {
+    return leaderboardDatasetEntries().map((entry) => entry.name).filter(Boolean);
+  }
+
+  function leaderboardDatasetEntry(datasetName) {
+    return leaderboardDatasetEntries().find((entry) => entry.name === datasetName);
+  }
+
+  function refreshSubmissionsFromApprovedCache() {
+    const approvedRows = Array.from(approvedDatasetRows.values()).flat();
+    submissions = [...approvedRows, ...exampleSubmissions];
+  }
+
+  function approvedSubmissionCount() {
+    return Array.from(approvedDatasetRows.values()).reduce((total, rows) => total + rows.length, 0);
+  }
+
+  function setApprovedLoadedStatus(failedCount = 0) {
+    const loadedDatasets = approvedDatasetRows.size;
+    const totalDatasets = leaderboardDatasetEntries().length;
+    const rows = approvedSubmissionCount();
+    const datasetLabel = totalDatasets === 1 ? "dataset feed" : "dataset feeds";
+    const failureText = failedCount ? ` ${failedCount} ${failedCount === 1 ? "feed" : "feeds"} failed to load.` : "";
+
+    approvedSubmissionStatusMessage =
+      `Loaded ${rows} approved submission${rows === 1 ? "" : "s"} from ` +
+      `${loadedDatasets}/${totalDatasets} ${datasetLabel} via ${approvedSubmissionsSourceLabel}.` +
+      failureText;
+  }
+
+  async function loadLeaderboardManifest() {
+    if (leaderboardManifest) return leaderboardManifest;
+
+    const manifest = await fetchLeaderboardJson(leaderboardManifestUrl, approvedSubmissionsSourceLabel);
+    if (!manifest || !Array.isArray(manifest.datasets)) {
+      throw new Error(`${approvedSubmissionsSourceLabel} must contain a datasets array`);
+    }
+
+    leaderboardManifest = manifest;
+    approvedSubmissionStatusMessage =
+      `Loaded ${leaderboardDatasetEntries().length} dataset feed${leaderboardDatasetEntries().length === 1 ? "" : "s"} ` +
+      `from ${approvedSubmissionsSourceLabel}.`;
+    return leaderboardManifest;
+  }
+
+  async function loadDatasetRows(datasetName) {
+    if (approvedDatasetRows.has(datasetName)) return approvedDatasetRows.get(datasetName);
+    if (datasetLoadPromises.has(datasetName)) return datasetLoadPromises.get(datasetName);
+
+    const entry = leaderboardDatasetEntry(datasetName);
+    if (!entry?.file) return [];
+
+    const datasetUrl = leaderboardFileUrl(entry.file);
+    const loadPromise = (async () => {
+      const entries = await fetchLeaderboardJson(datasetUrl, entry.file);
+      if (!Array.isArray(entries)) throw new Error(`${entry.file} must contain an array`);
+
+      const rows = entries.map(normalizeApprovedSubmission).filter(Boolean);
+      approvedDatasetRows.set(datasetName, rows);
+      refreshSubmissionsFromApprovedCache();
+      return rows;
+    })().catch((error) => {
+      datasetLoadPromises.delete(datasetName);
+      throw error;
+    });
+
+    datasetLoadPromises.set(datasetName, loadPromise);
+    return loadPromise;
+  }
+
+  function datasetsForCurrentState() {
+    const filters = currentFilters();
+    const datasets = new Set();
+
+    if (filters.datasets.all) {
+      leaderboardDatasetNames().forEach((datasetName) => datasets.add(datasetName));
+    } else {
+      filters.datasets.values.forEach((datasetName) => datasets.add(datasetName));
+    }
+
+    ["cp", "velocity"].forEach((chartType) => {
+      if (chartSelections[chartType]?.dataset) datasets.add(chartSelections[chartType].dataset);
+    });
+
+    return Array.from(datasets).filter((datasetName) => Boolean(leaderboardDatasetEntry(datasetName)));
+  }
+
+  async function ensureDatasetRows(datasetNames) {
+    const names = Array.from(new Set(datasetNames));
+    const missing = names.filter((datasetName) => !approvedDatasetRows.has(datasetName));
+    if (!missing.length) {
+      refreshSubmissionsFromApprovedCache();
+      setApprovedLoadedStatus();
+      return;
+    }
+
+    approvedSubmissionStatusMessage =
+      `Loading ${missing.length} dataset feed${missing.length === 1 ? "" : "s"} from ${approvedSubmissionsSourceLabel}...`;
+    renderApprovedSubmissionStatus();
+
+    const results = await Promise.allSettled(missing.map((datasetName) => loadDatasetRows(datasetName)));
+    const failedCount = results.filter((result) => result.status === "rejected").length;
+    refreshSubmissionsFromApprovedCache();
+    setApprovedLoadedStatus(failedCount);
+  }
+
+  async function ensureDatasetsForCurrentState() {
+    await loadLeaderboardManifest();
+    await ensureDatasetRows(datasetsForCurrentState());
+  }
+
   async function loadApprovedSubmissions() {
     try {
-      const response = await fetch(approvedSubmissionsUrl, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const entries = await response.json();
-      if (!Array.isArray(entries)) throw new Error("approved_submissions.json must contain an array");
-
-      const approvedRows = entries.map(normalizeApprovedSubmission).filter(Boolean);
-      submissions = [...approvedRows, ...exampleSubmissions];
-      approvedSubmissionStatusMessage = approvedRows.length
-        ? `Loaded ${approvedRows.length} approved submission${approvedRows.length === 1 ? "" : "s"} from approved_submissions.json.`
-        : "No approved submissions were found in approved_submissions.json. Showing reference baseline rows.";
+      await ensureDatasetsForCurrentState();
     } catch (error) {
       submissions = [...exampleSubmissions];
-      approvedSubmissionStatusMessage = `Could not load approved_submissions.json (${error.message}). Showing reference baseline rows.`;
+      approvedSubmissionStatusMessage = `Could not load ${approvedSubmissionsSourceLabel} (${error.message}). Showing reference baseline rows.`;
     }
+  }
+
+  async function refreshLeaderboardForCurrentState() {
+    const token = ++dataRefreshToken;
+    try {
+      await ensureDatasetsForCurrentState();
+      if (token !== dataRefreshToken) return;
+    } catch (error) {
+      if (token !== dataRefreshToken) return;
+      approvedSubmissionStatusMessage =
+        `Could not load ${approvedSubmissionsSourceLabel} (${error.message}). Showing currently cached rows.`;
+    }
+
+    renderApprovedSubmissionStatus();
+    renderTable();
+    refreshAllChartPanels();
+  }
+
+  async function refreshChartPanelForSelection(chartType) {
+    try {
+      await ensureDatasetRows([chartSelections[chartType].dataset]);
+    } catch (error) {
+      approvedSubmissionStatusMessage =
+        `Could not load ${chartSelections[chartType].dataset} from ${approvedSubmissionsSourceLabel} (${error.message}).`;
+    }
+    renderApprovedSubmissionStatus();
+    syncChartPanel(chartType);
   }
 
   function tableCell(label, value, className) {
@@ -1783,9 +1955,7 @@
         syncSplitFilterOptions();
       }
       updateFilterSummary(containerId);
-      renderTable();
-      updateComparisonChart();
-      updateScatterChart();
+      void refreshLeaderboardForCurrentState();
     });
     updateFilterSummary(containerId);
   }
@@ -1857,7 +2027,7 @@
       }
 
       updateSingleFilterSummary(containerId);
-      syncChartPanel(chartType);
+      void refreshChartPanelForSelection(chartType);
       setFilterDropdownOpen(container, false);
     });
   }
@@ -1994,6 +2164,18 @@
     return `${row.model} (${row.dataset}${splitLabel})`;
   }
 
+  function comparisonAxisTitle(group) {
+    if (group === "l2") return "Relative L2 error (%) - lower is better";
+    if (group === "l1") return "Relative L1 error (%) - lower is better";
+    if (group === "r2") return "R2 - higher is better";
+    return "Score (points) - higher is better";
+  }
+
+  function comparisonMetricValue(row, metricKey) {
+    const value = Number(row[metricKey]);
+    return Number.isFinite(value) ? Number(value.toFixed(3)) : null;
+  }
+
   function comparisonDatasets(metricKeys, rows) {
     return metricKeys.map((metricKey, index) => {
       const metric = metricDefinitions[metricKey];
@@ -2001,10 +2183,7 @@
       return {
         label: metric?.label || metricKey,
         metricKey,
-        data: rows.map((row) => {
-          const score = metricScore(row, metricKey);
-          return score === null ? null : Number(score.toFixed(3));
-        }),
+        data: rows.map((row) => comparisonMetricValue(row, metricKey)),
         backgroundColor: hexToRgba(color, 0.68),
         borderColor: color,
         borderRadius: 4,
@@ -2029,10 +2208,11 @@
         if (meta.hidden) return;
 
         meta.data.forEach((bar, valueIndex) => {
-          const value = Number(dataset.data[valueIndex]);
-          if (!Number.isFinite(value)) return;
+          const row = comparisonChartRowsCache[valueIndex];
+          const value = Number(row?.[dataset.metricKey]);
+          if (!row || !dataset.metricKey || !Number.isFinite(value)) return;
 
-          const label = value >= 99.95 ? "100" : formatNumber(value, 0);
+          const label = formatComparisonValue(row, dataset.metricKey);
           const y = Math.max(chartArea.top + 10, bar.y - 4);
           ctx.fillText(label, bar.x, y);
         });
@@ -2055,9 +2235,9 @@
         label(context) {
           const row = comparisonChartRowsCache[context.dataIndex];
           const metricKey = context.dataset.metricKey;
-          const score = Number(context.parsed.y);
-          if (!row || !metricKey || !Number.isFinite(score)) return context.dataset.label;
-          return `${context.dataset.label}: ${formatMetricValue(row, metricKey)} (${formatNumber(score, 1)} / 100)`;
+          const value = Number(context.parsed.y);
+          if (!row || !metricKey || !Number.isFinite(value)) return context.dataset.label;
+          return `${context.dataset.label}: ${formatComparisonValue(row, metricKey)}`;
         },
       },
     };
@@ -2076,11 +2256,15 @@
   function updateComparisonChart() {
     if (!comparisonChart) return;
 
+    const group = comparisonMetricGroup();
     const rows = sortedRows().slice(0, comparisonRowCount());
-    const metricKeys = comparisonMetricGroups[comparisonMetricGroup()];
+    const metricKeys = comparisonMetricGroups[group];
     comparisonChartRowsCache = rows;
     comparisonChart.data.labels = rows.map(comparisonRowLabel);
     comparisonChart.data.datasets = comparisonDatasets(metricKeys, rows);
+    comparisonChart.options.scales.y.title.text = comparisonAxisTitle(group);
+    comparisonChart.options.scales.y.min = 0;
+    comparisonChart.options.scales.y.max = group === "r2" ? 1 : group === "summary" ? 100 : undefined;
     comparisonChart.update();
   }
 

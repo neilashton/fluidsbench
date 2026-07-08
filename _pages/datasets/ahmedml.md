@@ -284,7 +284,7 @@ S_overall  = sum(weight_q * S_q)</code></pre>
     <ul>
       <li><a href="https://caemldatasets.org/ahmedml/">AhmedML dataset page</a></li>
       <li><a href="https://arxiv.org/abs/2407.20801">AhmedML paper</a></li>
-      <li><a href="{{ '/leaderboards/' | relative_url }}">Automotive CFD leaderboard prototype</a></li>
+      <li><a href="{{ '/' | relative_url }}">Automotive CFD leaderboard prototype</a></li>
     </ul>
   </section>
 </div>

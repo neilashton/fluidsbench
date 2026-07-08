@@ -1,7 +1,9 @@
 ---
 layout: home
-title: home
-permalink: /
+title: about
+permalink: /about/
+nav: true
+nav_order: 2
 page_title: "FluidsBench"
 page_subtitle: A benchmark for the next generation of Computational Fluid Dynamics (CFD) AI models 
 

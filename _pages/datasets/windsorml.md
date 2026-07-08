@@ -289,7 +289,7 @@ S_overall  = sum(weight_q * S_q)</code></pre>
     <ul>
       <li><a href="https://caemldatasets.org/windsorml/">WindsorML dataset page</a></li>
       <li><a href="https://arxiv.org/abs/2407.19320">WindsorML paper</a></li>
-      <li><a href="{{ '/leaderboards/' | relative_url }}">Automotive CFD leaderboard prototype</a></li>
+      <li><a href="{{ '/' | relative_url }}">Automotive CFD leaderboard prototype</a></li>
     </ul>
   </section>
 </div>

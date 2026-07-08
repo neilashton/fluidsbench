@@ -1,10 +1,9 @@
 ---
 layout: page
-permalink: /leaderboards/
-title: leaderboards
+permalink: /
+title: leaderboard
 description:
-nav: true
-nav_order: 5
+nav: false
 hide_header: true
 wide: true
 chart:
@@ -13,7 +12,7 @@ chart:
 
 <div class="leaderboard-page">
   <div class="leaderboard-source-row">
-    <p id="leaderboard-source-status">Loading approved submissions from approved_submissions.json...</p>
+    <p id="leaderboard-source-status">Loading approved submissions from fluidsbench-submission dev manifest...</p>
     <a
       id="open-submission-repo"
       class="leaderboard-submit-button"
@@ -600,6 +599,8 @@ chart:
         <dd>
           0-100 score combining the field score (50%), force score (25%), and diagnostic score (25%). Each component is
           also shown in the main table.
+          <br />
+          <code>Overall = 0.50 Field + 0.25 Force + 0.25 Diagnostic</code>
         </dd>
       </div>
       <div>
@@ -608,12 +609,18 @@ chart:
           Relative L2 and L1 errors for surface pressure, surface wall shear, volume velocity, and volume pressure after
           mapping predictions and targets back to dimensional physical space. Lower is better. The prototype L1 values are
           illustrative until evaluator exports are available.
+          <br />
+          <code>Lp_rel(%) = 100 ||y_pred - y_true||_p / ||y_true||_p</code>
         </dd>
       </div>
       <div>
         <dt>Field score</dt>
         <dd>
           0-100 score from the four L2 field-error columns, contributing 50% of the weighted overall score.
+          <br />
+          <code>E_score(e, cap) = clamp(100(1 - e / cap), 0, 100)</code>
+          <br />
+          <code>Field = (0.15 S_p + 0.10 S_tau + 0.15 V_u + 0.10 V_p) / 0.50</code>
         </dd>
       </div>
       <div>
@@ -621,6 +628,10 @@ chart:
         <dd>
           0-100 weighted blend of C<sub>d</sub> R<sup>2</sup> and C<sub>l</sub> R<sup>2</sup>, contributing 25% of the
           weighted overall score.
+          <br />
+          <code>R2_score(r) = 100 clamp(r, 0, 1)</code>
+          <br />
+          <code>Force = (0.15 R2_score(Cd) + 0.10 R2_score(Cl)) / 0.25</code>
         </dd>
       </div>
       <div>
@@ -628,6 +639,8 @@ chart:
         <dd>
           0-100 weighted blend of velocity-profile R<sup>2</sup> and Cp-cut R<sup>2</sup>, contributing 25% of the
           weighted overall score.
+          <br />
+          <code>Diagnostic = (0.15 R2_score(velocity profiles) + 0.10 R2_score(Cp cuts)) / 0.25</code>
         </dd>
       </div>
       <div>
@@ -635,19 +648,36 @@ chart:
         <dd>
           L2 metrics are mapped to bounded subscores using caps of 15% for surface pressure, 20% for wall shear, 12% for
           volume velocity, and 15% for volume pressure.
+          <br />
+          <code>S_p = E_score(surface pressure L2, 15)</code>,
+          <code>S_tau = E_score(surface tau wall L2, 20)</code>,
+          <code>V_u = E_score(volume velocity L2, 12)</code>,
+          <code>V_p = E_score(volume pressure L2, 15)</code>
         </dd>
       </div>
       <div>
         <dt>Force R<sup>2</sup></dt>
-        <dd>Mean of C<sub>d</sub> R<sup>2</sup> and C<sub>l</sub> R<sup>2</sup> over the evaluated cases.</dd>
+        <dd>
+          Mean of C<sub>d</sub> R<sup>2</sup> and C<sub>l</sub> R<sup>2</sup> over the evaluated cases.
+          <br />
+          <code>Force R2 mean = (R2(Cd) + R2(Cl)) / 2</code>
+        </dd>
       </div>
       <div>
         <dt>Velocity profiles R<sup>2</sup></dt>
-        <dd>Coefficient of determination for selected wake velocity profiles. The exact profile cuts are still to be defined.</dd>
+        <dd>
+          Coefficient of determination for selected wake velocity profiles. The exact profile cuts are still to be defined.
+          <br />
+          <code>R2 = 1 - sum_i (y_i - yhat_i)^2 / sum_i (y_i - mean(y))^2</code>
+        </dd>
       </div>
       <div>
         <dt>Cp cuts R<sup>2</sup></dt>
-        <dd>Coefficient of determination for selected surface pressure coefficient cuts. The exact surface cuts are still to be defined.</dd>
+        <dd>
+          Coefficient of determination for selected surface pressure coefficient cuts. The exact surface cuts are still to be defined.
+          <br />
+          <code>R2 = 1 - sum_i (Cp_i - Cphat_i)^2 / sum_i (Cp_i - mean(Cp))^2</code>
+        </dd>
       </div>
     </dl>
   </section>
@@ -668,6 +698,10 @@ chart:
 </div>
 
 <script>
-  window.FluidsBenchApprovedSubmissionsUrl = "{{ '/leaderboard/approved_submissions.json' | relative_url }}";
+  window.FluidsBenchLeaderboardBaseUrl =
+    "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/";
+  window.FluidsBenchLeaderboardManifestUrl =
+    "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/leaderboard/manifest.json";
+  window.FluidsBenchApprovedSubmissionsSourceLabel = "fluidsbench-submission dev manifest";
 </script>
 <script defer src="{{ '/assets/js/leaderboard.js' | relative_url | bust_file_cache }}"></script>
