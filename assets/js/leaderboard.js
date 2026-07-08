@@ -26,20 +26,9 @@
 
   const defaultSplit = "Default";
 
-  const backendUrls = {
-    dev: {
-      fetch: "https://ezmaejyn7i7f4djjlgzqycukw40gjojx.lambda-url.us-east-1.on.aws/",
-      submit: "https://aynbbamhdmpw5jbjdnwygs46qe0nbgwy.lambda-url.us-east-1.on.aws/",
-    },
-    prod: {
-      fetch: "https://7qdywdyxlfmc7neivnarewbvpy0gkjvg.lambda-url.us-east-1.on.aws/",
-      submit: "https://vjfjkk3bwskka2qezpzksof3s40cpowl.lambda-url.us-east-1.on.aws/",
-    },
-  };
-
-  const backendEnvironment = ["localhost", "127.0.0.1"].includes(window.location.hostname) ? "dev" : "prod";
-  const fetchUrl = backendUrls[backendEnvironment].fetch;
-  const submitUrl = backendUrls[backendEnvironment].submit;
+  const approvedSubmissionsUrl =
+    window.FluidsBenchApprovedSubmissionsUrl ||
+    new URL("/leaderboard/approved_submissions.json", window.location.origin).href;
 
   const lowerIsBetterMetrics = new Set([
     "surfacePressure",
@@ -52,6 +41,75 @@
     "volumePressureL1",
     "params",
   ]);
+
+  const errorMetricCaps = {
+    surfacePressure: errorCaps.surfacePressure,
+    surfacePressureL1: errorCaps.surfacePressure * relL1Ratios.surfacePressure,
+    surfaceTau: errorCaps.surfaceTau,
+    surfaceTauL1: errorCaps.surfaceTau * relL1Ratios.surfaceTau,
+    volumeVelocity: errorCaps.volumeVelocity,
+    volumeVelocityL1: errorCaps.volumeVelocity * relL1Ratios.volumeVelocity,
+    volumePressure: errorCaps.volumePressure,
+    volumePressureL1: errorCaps.volumePressure * relL1Ratios.volumePressure,
+  };
+
+  const scoreComponentWeights = {
+    fieldScore: 0.5,
+    forceScore: 0.25,
+    diagnosticScore: 0.25,
+  };
+
+  const metricDefinitions = {
+    surfacePressure: { label: "Surface pressure L2", digits: 2, unit: "%", scoreKind: "error", cap: errorMetricCaps.surfacePressure },
+    surfacePressureL1: { label: "Surface pressure L1", digits: 2, unit: "%", scoreKind: "error", cap: errorMetricCaps.surfacePressureL1 },
+    surfaceTau: { label: "Surface tau wall L2", digits: 2, unit: "%", scoreKind: "error", cap: errorMetricCaps.surfaceTau },
+    surfaceTauL1: { label: "Surface tau wall L1", digits: 2, unit: "%", scoreKind: "error", cap: errorMetricCaps.surfaceTauL1 },
+    volumeVelocity: { label: "Volume velocity L2", digits: 2, unit: "%", scoreKind: "error", cap: errorMetricCaps.volumeVelocity },
+    volumeVelocityL1: { label: "Volume velocity L1", digits: 2, unit: "%", scoreKind: "error", cap: errorMetricCaps.volumeVelocityL1 },
+    volumePressure: { label: "Volume pressure L2", digits: 2, unit: "%", scoreKind: "error", cap: errorMetricCaps.volumePressure },
+    volumePressureL1: { label: "Volume pressure L1", digits: 2, unit: "%", scoreKind: "error", cap: errorMetricCaps.volumePressureL1 },
+    r2Cd: { label: "Cd R2", digits: 3, scoreKind: "r2" },
+    r2Cl: { label: "Cl R2", digits: 3, scoreKind: "r2" },
+    forceR2: { label: "Force R2 mean", digits: 3, scoreKind: "r2" },
+    velocityProfileR2: { label: "Velocity profiles R2", digits: 3, scoreKind: "r2" },
+    cpCutR2: { label: "Cp cuts R2", digits: 3, scoreKind: "r2" },
+    fieldScore: { label: "Field score", digits: 1, scoreKind: "score" },
+    forceScore: { label: "Force score", digits: 1, scoreKind: "score" },
+    diagnosticScore: { label: "Diagnostic score", digits: 1, scoreKind: "score" },
+    score: { label: "Overall score", digits: 1, scoreKind: "score" },
+  };
+
+  const comparisonMetricGroups = {
+    summary: ["score", "fieldScore", "forceScore", "diagnosticScore"],
+    l2: ["surfacePressure", "surfaceTau", "volumeVelocity", "volumePressure"],
+    l1: ["surfacePressureL1", "surfaceTauL1", "volumeVelocityL1", "volumePressureL1"],
+    r2: ["r2Cd", "r2Cl", "forceR2", "velocityProfileR2", "cpCutR2"],
+  };
+
+  const comparisonColors = ["#2563eb", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
+  const datasetColors = ["#2563eb", "#10b981", "#8b5cf6", "#f59e0b", "#ec4899", "#06b6d4", "#64748b", "#1e40af"];
+
+  const scatterAxisDefinitions = [
+    { key: "rank", label: "Rank", digits: 0 },
+    { key: "surfacePressure", label: "Surface pressure L2 (%)", digits: 2 },
+    { key: "surfacePressureL1", label: "Surface pressure L1 (%)", digits: 2 },
+    { key: "surfaceTau", label: "Surface tau wall L2 (%)", digits: 2 },
+    { key: "surfaceTauL1", label: "Surface tau wall L1 (%)", digits: 2 },
+    { key: "volumeVelocity", label: "Volume velocity L2 (%)", digits: 2 },
+    { key: "volumeVelocityL1", label: "Volume velocity L1 (%)", digits: 2 },
+    { key: "volumePressure", label: "Volume pressure L2 (%)", digits: 2 },
+    { key: "volumePressureL1", label: "Volume pressure L1 (%)", digits: 2 },
+    { key: "r2Cd", label: "Cd R2", digits: 3 },
+    { key: "r2Cl", label: "Cl R2", digits: 3 },
+    { key: "velocityProfileR2", label: "Velocity profiles R2", digits: 3 },
+    { key: "cpCutR2", label: "Cp cuts R2", digits: 3 },
+    { key: "params", label: "Params (M)", digits: 2 },
+    { key: "date", label: "Submission date", kind: "date" },
+    { key: "fieldScore", label: "Field score (50%)", digits: 1 },
+    { key: "forceScore", label: "Force score (25%)", digits: 1 },
+    { key: "diagnosticScore", label: "Diagnostic score (25%)", digits: 1 },
+    { key: "score", label: "Overall score", digits: 1 },
+  ];
 
   const exampleSubmissions = [
     {
@@ -943,7 +1001,7 @@
   ];
 
   let submissions = [...exampleSubmissions];
-  let backendStatusMessage = "Loading approved submissions from the leaderboard backend...";
+  let approvedSubmissionStatusMessage = "Loading approved submissions from approved_submissions.json...";
 
   const datasetProfiles = {
     AhmedML: {
@@ -1123,31 +1181,35 @@
   };
 
   const palette = {
-    groundTruth: "#111827",
-    "ab-upt": "#0072b2",
-    transformer: "#009e73",
-    transolver: "#d55e00",
-    oformer: "#cc79a7",
-    upt: "#f0a202",
-    "graph-u-net": "#6f42c1",
-    pointnet: "#7f7f7f",
-    gino: "#56b4e9",
-    lno: "#b22222",
-    "hiliftaeroml-geot-full": "#005f73",
-    "hiliftaeroml-geot-aoa4": "#0a9396",
-    "hiliftaeroml-transolver-aoa4": "#ee9b00",
-    "hiliftaeroml-geot-aoa12": "#94d2bd",
-    "hiliftaeroml-transolver-aoa12": "#ca6702",
-    "hiliftaeroml-geot-aoa22": "#bb3e03",
-    "hiliftaeroml-transolver-aoa22": "#9b2226",
-    "airfrans-mlp-full": "#7f7f7f",
-    "airfrans-graphsage-full": "#0072b2",
-    "airfrans-pointnet-full": "#009e73",
-    "airfrans-graph-u-net-full": "#d55e00",
+    groundTruth: "#0f172a",
+    "ab-upt": "#2563eb",
+    transformer: "#10b981",
+    transolver: "#8b5cf6",
+    oformer: "#ec4899",
+    upt: "#f59e0b",
+    "graph-u-net": "#64748b",
+    pointnet: "#94a3b8",
+    gino: "#06b6d4",
+    lno: "#1e40af",
+    "hiliftaeroml-geot-full": "#1e40af",
+    "hiliftaeroml-geot-aoa4": "#2563eb",
+    "hiliftaeroml-transolver-aoa4": "#8b5cf6",
+    "hiliftaeroml-geot-aoa12": "#10b981",
+    "hiliftaeroml-transolver-aoa12": "#f59e0b",
+    "hiliftaeroml-geot-aoa22": "#ec4899",
+    "hiliftaeroml-transolver-aoa22": "#64748b",
+    "airfrans-mlp-full": "#64748b",
+    "airfrans-graphsage-full": "#2563eb",
+    "airfrans-pointnet-full": "#10b981",
+    "airfrans-graph-u-net-full": "#8b5cf6",
   };
 
   let sortState = { key: "score", direction: "desc" };
   let primaryRankingKey = "score";
+  let comparisonChart = null;
+  let comparisonChartRowsCache = [];
+  let scatterChart = null;
+  let scatterChartRowsCache = [];
   let cpChart = null;
   let velocityChart = null;
   let activeStation = "0.25L";
@@ -1168,16 +1230,54 @@
     return clamp(value, 0, 1) * 100;
   }
 
-  function weightedScore(row) {
+  function metricScore(row, key) {
+    const metric = metricDefinitions[key];
+    const value = Number(row[key]);
+    if (!metric || !Number.isFinite(value)) return null;
+
+    if (metric.scoreKind === "error") return errorScore(value, metric.cap);
+    if (metric.scoreKind === "r2") return r2Score(value);
+    if (metric.scoreKind === "score") return clamp(value, 0, 100);
+    return null;
+  }
+
+  function formatMetricValue(row, key) {
+    const metric = metricDefinitions[key];
+    const value = Number(row[key]);
+    if (!metric || !Number.isFinite(value)) return "N/A";
+
+    const formatted = formatNumber(value, metric.digits);
+    return metric.unit ? `${formatted}${metric.unit}` : formatted;
+  }
+
+  function fieldComponentScore(row) {
     return (
       weights.surfacePressure * errorScore(row.surfacePressure, errorCaps.surfacePressure) +
       weights.surfaceTau * errorScore(row.surfaceTau, errorCaps.surfaceTau) +
       weights.volumeVelocity * errorScore(row.volumeVelocity, errorCaps.volumeVelocity) +
-      weights.volumePressure * errorScore(row.volumePressure, errorCaps.volumePressure) +
+      weights.volumePressure * errorScore(row.volumePressure, errorCaps.volumePressure)
+    ) / scoreComponentWeights.fieldScore;
+  }
+
+  function forceComponentScore(row) {
+    return (
       weights.r2Cd * r2Score(row.r2Cd) +
-      weights.r2Cl * r2Score(row.r2Cl) +
+      weights.r2Cl * r2Score(row.r2Cl)
+    ) / scoreComponentWeights.forceScore;
+  }
+
+  function diagnosticComponentScore(row) {
+    return (
       weights.velocityProfileR2 * r2Score(row.velocityProfileR2) +
       weights.cpCutR2 * r2Score(row.cpCutR2)
+    ) / scoreComponentWeights.diagnosticScore;
+  }
+
+  function weightedScore(row) {
+    return (
+      scoreComponentWeights.fieldScore * fieldComponentScore(row) +
+      scoreComponentWeights.forceScore * forceComponentScore(row) +
+      scoreComponentWeights.diagnosticScore * diagnosticComponentScore(row)
     );
   }
 
@@ -1190,7 +1290,17 @@
   }
 
   function defaultSortDirection(key) {
-    if (key === "model" || key === "type" || key === "dataset" || key === "split" || lowerIsBetterMetrics.has(key)) return "asc";
+    if (
+      key === "rank" ||
+      key === "model" ||
+      key === "submittedBy" ||
+      key === "type" ||
+      key === "dataset" ||
+      key === "split" ||
+      lowerIsBetterMetrics.has(key)
+    ) {
+      return "asc";
+    }
     return "desc";
   }
 
@@ -1205,12 +1315,16 @@
   function enrichedRows() {
     return submissions.map((row) => ({
       ...row,
+      submittedBy: displaySubmitter(row, "Reference baseline"),
       split: rowSplit(row),
       surfacePressureL1: row.surfacePressureL1 ?? estimatedRelL1(row, "surfacePressure"),
       surfaceTauL1: row.surfaceTauL1 ?? estimatedRelL1(row, "surfaceTau"),
       volumeVelocityL1: row.volumeVelocityL1 ?? estimatedRelL1(row, "volumeVelocity"),
       volumePressureL1: row.volumePressureL1 ?? estimatedRelL1(row, "volumePressure"),
       forceR2: forceR2(row),
+      fieldScore: fieldComponentScore(row),
+      forceScore: forceComponentScore(row),
+      diagnosticScore: diagnosticComponentScore(row),
       score: weightedScore(row),
     }));
   }
@@ -1246,10 +1360,33 @@
       .replace(/(^-|-$)/g, "");
   }
 
+  function safeExternalUrl(value) {
+    const rawValue = String(value || "").trim();
+    if (!rawValue) return "";
+
+    try {
+      const url = new URL(rawValue, window.location.href);
+      return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+    } catch {
+      return "";
+    }
+  }
+
   function displayDate(entry) {
     if (entry.submission_date) return entry.submission_date;
     if (entry.submitted_at) return String(entry.submitted_at).slice(0, 10);
     return "";
+  }
+
+  function displaySubmitter(entry, fallback = "") {
+    return (
+      entry.submittedBy ||
+      entry.submitterName ||
+      entry.submitter_name ||
+      entry.submitter ||
+      entry.institution ||
+      fallback
+    );
   }
 
   function normalizeSplit(value, dataset) {
@@ -1289,7 +1426,7 @@
     return datasetProfiles[selectedDataset] ? selectedDataset : chartSelections.cp.dataset;
   }
 
-  function normalizeBackendSubmission(entry) {
+  function normalizeApprovedSubmission(entry) {
     const metrics = {
       surfacePressure: parseNumber(entry.surface_pressure_l2),
       surfacePressureL1: parseNumber(entry.surface_pressure_l1),
@@ -1308,7 +1445,7 @@
 
     const model = entry.model || "Unnamed model";
     const dataset = entry.dataset || "AhmedML";
-    const id = `backend-${entry.submission_id || slug(model)}`;
+    const id = `approved-${entry.submission_id || slug(`${dataset}-${rowSplit(entry)}-${model}`)}`;
     return {
       id,
       model,
@@ -1318,33 +1455,36 @@
       ...metrics,
       params: parseNumber(entry.parameter_count ?? entry.num_parameters) ?? 0,
       date: displayDate(entry),
+      submittedBy: displaySubmitter(entry, "Approved submission"),
       href: `#details-${id}`,
       paperUrl: entry.paper_url || "",
       codeUrl: entry.code_url || "",
       institution: entry.institution || "",
-      note: entry.institution ? `Approved backend submission from ${entry.institution}.` : "Approved backend submission.",
+      note: entry.note || (entry.institution ? `Approved submission from ${entry.institution}.` : "Approved submission."),
     };
   }
 
-  function renderBackendStatus() {
-    const status = document.getElementById("leaderboard-backend-status");
+  function renderApprovedSubmissionStatus() {
+    const status = document.getElementById("leaderboard-source-status");
     if (!status) return;
-    status.textContent = backendStatusMessage;
+    status.textContent = approvedSubmissionStatusMessage;
   }
 
-  async function loadBackendSubmissions() {
+  async function loadApprovedSubmissions() {
     try {
-      const response = await fetch(fetchUrl);
+      const response = await fetch(approvedSubmissionsUrl, { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const entries = await response.json();
-      const backendRows = entries.map(normalizeBackendSubmission).filter(Boolean);
-      submissions = [...backendRows, ...exampleSubmissions];
-      backendStatusMessage = backendRows.length
-        ? `Loaded ${backendRows.length} approved backend submission${backendRows.length === 1 ? "" : "s"} from ${backendEnvironment}.`
-        : `Backend reachable in ${backendEnvironment}, but no approved supported metric submissions were found. Showing example rows.`;
+      if (!Array.isArray(entries)) throw new Error("approved_submissions.json must contain an array");
+
+      const approvedRows = entries.map(normalizeApprovedSubmission).filter(Boolean);
+      submissions = [...approvedRows, ...exampleSubmissions];
+      approvedSubmissionStatusMessage = approvedRows.length
+        ? `Loaded ${approvedRows.length} approved submission${approvedRows.length === 1 ? "" : "s"} from approved_submissions.json.`
+        : "No approved submissions were found in approved_submissions.json. Showing reference baseline rows.";
     } catch (error) {
       submissions = [...exampleSubmissions];
-      backendStatusMessage = `Backend unavailable from this page (${error.message}). Showing example rows.`;
+      approvedSubmissionStatusMessage = `Could not load approved_submissions.json (${error.message}). Showing reference baseline rows.`;
     }
   }
 
@@ -1357,6 +1497,27 @@
     } else {
       td.textContent = value;
     }
+    return td;
+  }
+
+  function chipCell(label, value, cellClassName, chipClassName) {
+    const chip = document.createElement("span");
+    chip.className = chipClassName;
+    chip.textContent = value;
+    return tableCell(label, chip, cellClassName);
+  }
+
+  function metricCell(label, row, key, className) {
+    const metric = metricDefinitions[key];
+    const value = Number(row[key]);
+    const td = tableCell(label, Number.isFinite(value) ? formatNumber(value, metric?.digits ?? 2) : "N/A", className);
+    const score = metricScore(row, key);
+
+    td.classList.add("leaderboard-metric-cell");
+    if (score !== null) {
+      td.title = `${metric?.label || label}: ${formatMetricValue(row, key)}; normalized score ${formatNumber(score, 1)} / 100`;
+    }
+
     return td;
   }
 
@@ -1377,9 +1538,23 @@
     return rows.sort((a, b) => compareRows(a, b, sortState.key, sortState.direction));
   }
 
+  function updateSortIndicators() {
+    document.querySelectorAll(".leaderboard-table th[data-sort]").forEach((th) => {
+      const key = th.getAttribute("data-sort");
+      const isActive = key === sortState.key;
+      th.classList.toggle("sort-asc", isActive && sortState.direction === "asc");
+      th.classList.toggle("sort-desc", isActive && sortState.direction === "desc");
+      th.setAttribute("aria-sort", isActive ? (sortState.direction === "asc" ? "ascending" : "descending") : "none");
+      th.title = isActive
+        ? `Sorted ${sortState.direction === "asc" ? "ascending" : "descending"}; click to reverse`
+        : `Sort by ${th.textContent.replace(/\s+/g, " ").trim()}`;
+    });
+  }
+
   function renderTable() {
     const tbody = document.getElementById("leaderboard-body");
     if (!tbody) return;
+    updateSortIndicators();
     tbody.textContent = "";
 
     sortedRows().forEach((row) => {
@@ -1391,32 +1566,34 @@
       tr.appendChild(tableCell("Rank", rank));
 
       tr.appendChild(tableCell("Model", row.model, "leaderboard-model"));
-      tr.appendChild(tableCell("Type", row.type, "leaderboard-type-cell"));
-      tr.lastElementChild.innerHTML = `<span class="leaderboard-type">${row.type}</span>`;
-      tr.appendChild(tableCell("Dataset", row.dataset, "leaderboard-dataset-cell"));
-      tr.lastElementChild.innerHTML = `<span class="leaderboard-dataset">${row.dataset}</span>`;
-      tr.appendChild(tableCell("Split", row.split, "leaderboard-split-cell"));
-      tr.lastElementChild.innerHTML = `<span class="leaderboard-split">${row.split}</span>`;
-      tr.appendChild(tableCell("Surface pressure dim. rel L2 (%)", formatNumber(row.surfacePressure, 2)));
-      tr.appendChild(tableCell("Surface pressure dim. rel L1 (%)", formatNumber(row.surfacePressureL1, 2)));
-      tr.appendChild(tableCell("Surface tau wall dim. rel L2 (%)", formatNumber(row.surfaceTau, 2)));
-      tr.appendChild(tableCell("Surface tau wall dim. rel L1 (%)", formatNumber(row.surfaceTauL1, 2)));
-      tr.appendChild(tableCell("Volume velocity dim. rel L2 (%)", formatNumber(row.volumeVelocity, 2)));
-      tr.appendChild(tableCell("Volume velocity dim. rel L1 (%)", formatNumber(row.volumeVelocityL1, 2)));
-      tr.appendChild(tableCell("Volume pressure dim. rel L2 (%)", formatNumber(row.volumePressure, 2)));
-      tr.appendChild(tableCell("Volume pressure dim. rel L1 (%)", formatNumber(row.volumePressureL1, 2)));
-      tr.appendChild(tableCell("Cd R2", formatNumber(row.r2Cd, 3)));
-      tr.appendChild(tableCell("Cl R2", formatNumber(row.r2Cl, 3)));
-      tr.appendChild(tableCell("Velocity profiles R2", formatNumber(row.velocityProfileR2, 3)));
-      tr.appendChild(tableCell("Cp cuts R2", formatNumber(row.cpCutR2, 3)));
+      tr.appendChild(tableCell("Submitted by", row.submittedBy, "leaderboard-submitter"));
+      tr.appendChild(chipCell("Type", row.type, "leaderboard-type-cell", "leaderboard-type"));
+      tr.appendChild(chipCell("Dataset", row.dataset, "leaderboard-dataset-cell", "leaderboard-dataset"));
+      tr.appendChild(chipCell("Split", row.split, "leaderboard-split-cell", "leaderboard-split"));
+      tr.appendChild(metricCell("Surface pressure rel L2 (%)", row, "surfacePressure"));
+      tr.appendChild(metricCell("Surface pressure rel L1 (%)", row, "surfacePressureL1"));
+      tr.appendChild(metricCell("Surface tau wall rel L2 (%)", row, "surfaceTau"));
+      tr.appendChild(metricCell("Surface tau wall rel L1 (%)", row, "surfaceTauL1"));
+      tr.appendChild(metricCell("Volume velocity rel L2 (%)", row, "volumeVelocity"));
+      tr.appendChild(metricCell("Volume velocity rel L1 (%)", row, "volumeVelocityL1"));
+      tr.appendChild(metricCell("Volume pressure rel L2 (%)", row, "volumePressure"));
+      tr.appendChild(metricCell("Volume pressure rel L1 (%)", row, "volumePressureL1"));
+      tr.appendChild(metricCell("Cd R2", row, "r2Cd"));
+      tr.appendChild(metricCell("Cl R2", row, "r2Cl"));
+      tr.appendChild(metricCell("Velocity profiles R2", row, "velocityProfileR2"));
+      tr.appendChild(metricCell("Cp cuts R2", row, "cpCutR2"));
       tr.appendChild(tableCell("Params (M)", formatNumber(row.params, 2)));
       tr.appendChild(tableCell("Submission date", row.date));
-      tr.appendChild(tableCell("Overall score", formatNumber(row.score, 1), "leaderboard-score"));
+      tr.appendChild(metricCell("Field score (50%)", row, "fieldScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Force score (25%)", row, "forceScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Diagnostic score (25%)", row, "diagnosticScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score"));
 
-      const details = document.createElement("a");
-      details.className = "leaderboard-detail-link";
-      details.href = row.href;
+      const details = document.createElement("button");
+      details.className = "leaderboard-detail-button";
+      details.type = "button";
       details.textContent = "Details";
+      details.addEventListener("click", () => openDetailsDialog(row));
       tr.appendChild(tableCell("Details", details));
 
       tbody.appendChild(tr);
@@ -1425,7 +1602,7 @@
 
   function configureSort() {
     document.querySelectorAll(".leaderboard-table th[data-sort]").forEach((th) => {
-      th.addEventListener("click", () => {
+      const sortColumn = () => {
         const key = th.getAttribute("data-sort");
         if (sortState.key === key) {
           sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
@@ -1433,6 +1610,17 @@
           sortState = { key, direction: defaultSortDirection(key) };
         }
         renderTable();
+        updateComparisonChart();
+        updateScatterChart();
+      };
+
+      th.tabIndex = 0;
+      th.setAttribute("role", "button");
+      th.addEventListener("click", sortColumn);
+      th.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        sortColumn();
       });
     });
   }
@@ -1444,7 +1632,6 @@
       primaryRankingKey = select.value;
       sortState = { key: primaryRankingKey, direction: defaultSortDirection(primaryRankingKey) };
       renderTable();
-      renderDetails();
       refreshAllChartPanels();
     });
   }
@@ -1597,7 +1784,8 @@
       }
       updateFilterSummary(containerId);
       renderTable();
-      renderDetails();
+      updateComparisonChart();
+      updateScatterChart();
     });
     updateFilterSummary(containerId);
   }
@@ -1777,9 +1965,275 @@
     return palette[modelId] || fallbackColors[index % fallbackColors.length];
   }
 
+  function hexToRgba(hex, alpha) {
+    const value = hex.replace("#", "");
+    const number = parseInt(value, 16);
+    const red = (number >> 16) & 255;
+    const green = (number >> 8) & 255;
+    const blue = number & 255;
+    return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+  }
+
   function setText(id, text) {
     const element = document.getElementById(id);
     if (element) element.textContent = text;
+  }
+
+  function comparisonMetricGroup() {
+    const selected = document.getElementById("comparison-metric-group")?.value || "summary";
+    return comparisonMetricGroups[selected] ? selected : "summary";
+  }
+
+  function comparisonRowCount() {
+    const selected = Number(document.getElementById("comparison-row-count")?.value || 5);
+    return Number.isFinite(selected) ? selected : 5;
+  }
+
+  function comparisonRowLabel(row) {
+    const splitLabel = row.split && row.split !== defaultSplit ? ` / ${row.split}` : "";
+    return `${row.model} (${row.dataset}${splitLabel})`;
+  }
+
+  function comparisonDatasets(metricKeys, rows) {
+    return metricKeys.map((metricKey, index) => {
+      const metric = metricDefinitions[metricKey];
+      const color = comparisonColors[index % comparisonColors.length];
+      return {
+        label: metric?.label || metricKey,
+        metricKey,
+        data: rows.map((row) => {
+          const score = metricScore(row, metricKey);
+          return score === null ? null : Number(score.toFixed(3));
+        }),
+        backgroundColor: hexToRgba(color, 0.68),
+        borderColor: color,
+        borderRadius: 4,
+        borderWidth: 1,
+        maxBarThickness: 28,
+      };
+    });
+  }
+
+  const comparisonValueLabelPlugin = {
+    id: "comparisonValueLabels",
+    afterDatasetsDraw(chart) {
+      const { ctx, chartArea } = chart;
+      ctx.save();
+      ctx.fillStyle = chartTextColor();
+      ctx.font = "600 10px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+
+      chart.data.datasets.forEach((dataset, datasetIndex) => {
+        const meta = chart.getDatasetMeta(datasetIndex);
+        if (meta.hidden) return;
+
+        meta.data.forEach((bar, valueIndex) => {
+          const value = Number(dataset.data[valueIndex]);
+          if (!Number.isFinite(value)) return;
+
+          const label = value >= 99.95 ? "100" : formatNumber(value, 0);
+          const y = Math.max(chartArea.top + 10, bar.y - 4);
+          ctx.fillText(label, bar.x, y);
+        });
+      });
+
+      ctx.restore();
+    },
+  };
+
+  function comparisonChartOptions() {
+    const options = baseChartOptions("Normalized score (higher is better)", "Submission");
+    options.interaction = { mode: "index", intersect: false };
+    options.layout = { padding: { top: 24 } };
+    options.plugins.tooltip = {
+      callbacks: {
+        title(items) {
+          const row = comparisonChartRowsCache[items[0]?.dataIndex];
+          return row ? `${row.model} - ${row.dataset} / ${row.split}` : "";
+        },
+        label(context) {
+          const row = comparisonChartRowsCache[context.dataIndex];
+          const metricKey = context.dataset.metricKey;
+          const score = Number(context.parsed.y);
+          if (!row || !metricKey || !Number.isFinite(score)) return context.dataset.label;
+          return `${context.dataset.label}: ${formatMetricValue(row, metricKey)} (${formatNumber(score, 1)} / 100)`;
+        },
+      },
+    };
+    options.scales.x.grid.display = false;
+    options.scales.x.ticks.autoSkip = false;
+    options.scales.x.ticks.maxRotation = 35;
+    options.scales.x.ticks.callback = function (value) {
+      const label = this.getLabelForValue(value);
+      return label.length > 24 ? `${label.slice(0, 23)}...` : label;
+    };
+    options.scales.y.min = 0;
+    options.scales.y.max = 100;
+    return options;
+  }
+
+  function updateComparisonChart() {
+    if (!comparisonChart) return;
+
+    const rows = sortedRows().slice(0, comparisonRowCount());
+    const metricKeys = comparisonMetricGroups[comparisonMetricGroup()];
+    comparisonChartRowsCache = rows;
+    comparisonChart.data.labels = rows.map(comparisonRowLabel);
+    comparisonChart.data.datasets = comparisonDatasets(metricKeys, rows);
+    comparisonChart.update();
+  }
+
+  function configureComparisonControls() {
+    ["comparison-metric-group", "comparison-row-count"].forEach((id) => {
+      document.getElementById(id)?.addEventListener("change", updateComparisonChart);
+    });
+  }
+
+  function scatterAxisDefinition(key) {
+    return scatterAxisDefinitions.find((axis) => axis.key === key) || scatterAxisDefinitions[0];
+  }
+
+  function populateScatterAxisSelect(select, defaultKey) {
+    if (!select) return;
+    select.textContent = "";
+    scatterAxisDefinitions.forEach((axis) => {
+      const option = document.createElement("option");
+      option.value = axis.key;
+      option.textContent = axis.label;
+      option.selected = axis.key === defaultKey;
+      select.appendChild(option);
+    });
+  }
+
+  function selectedScatterAxis(id, fallback) {
+    const selected = document.getElementById(id)?.value || fallback;
+    return scatterAxisDefinition(selected).key;
+  }
+
+  function scatterAxisValue(row, key) {
+    const axis = scatterAxisDefinition(key);
+    if (axis.kind === "date") {
+      const timestamp = Date.parse(row[key]);
+      return Number.isFinite(timestamp) ? timestamp : null;
+    }
+
+    const value = Number(row[key]);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  function formatDateValue(value) {
+    const timestamp = typeof value === "number" ? value : Date.parse(value);
+    if (!Number.isFinite(timestamp)) return "N/A";
+    return new Date(timestamp).toISOString().slice(0, 10);
+  }
+
+  function formatScatterAxisValue(row, key) {
+    const axis = scatterAxisDefinition(key);
+    if (axis.kind === "date") return formatDateValue(row[key]);
+
+    const value = Number(row[key]);
+    if (!Number.isFinite(value)) return "N/A";
+    return formatNumber(value, axis.digits ?? 2);
+  }
+
+  function scatterTickLabel(key, value) {
+    const axis = scatterAxisDefinition(key);
+    if (axis.kind === "date") return formatDateValue(Number(value));
+    if (!Number.isFinite(Number(value))) return value;
+    return formatNumber(Number(value), axis.digits ?? 2);
+  }
+
+  function datasetColor(dataset, index) {
+    return palette[slug(dataset)] || datasetColors[index % datasetColors.length];
+  }
+
+  function scatterDatasets(rows, xKey, yKey) {
+    const groupedRows = new Map();
+    scatterChartRowsCache = [];
+
+    rows.forEach((row) => {
+      const x = scatterAxisValue(row, xKey);
+      const y = scatterAxisValue(row, yKey);
+      if (x === null || y === null) return;
+
+      if (!groupedRows.has(row.dataset)) groupedRows.set(row.dataset, []);
+      groupedRows.get(row.dataset).push({
+        x,
+        y,
+        rowIndex: scatterChartRowsCache.length,
+      });
+      scatterChartRowsCache.push(row);
+    });
+
+    return Array.from(groupedRows.entries()).map(([dataset, data], index) => {
+      const color = datasetColor(dataset, index);
+      return {
+        label: dataset,
+        data,
+        backgroundColor: hexToRgba(color, 0.72),
+        borderColor: color,
+        borderWidth: 1,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+      };
+    });
+  }
+
+  function scatterChartOptions() {
+    const options = baseChartOptions("Overall score", "Params (M)");
+    options.interaction = { mode: "nearest", intersect: true };
+    options.plugins.tooltip = {
+      callbacks: {
+        title(items) {
+          const row = scatterChartRowsCache[items[0]?.raw?.rowIndex];
+          return row ? row.model : "";
+        },
+        label(context) {
+          const row = scatterChartRowsCache[context.raw?.rowIndex];
+          if (!row) return context.dataset.label;
+          const xKey = selectedScatterAxis("scatter-x-axis", "params");
+          const yKey = selectedScatterAxis("scatter-y-axis", "score");
+          return [
+            `${row.dataset} / ${row.split}`,
+            `Submitted by: ${row.submittedBy}`,
+            `${scatterAxisDefinition(xKey).label}: ${formatScatterAxisValue(row, xKey)}`,
+            `${scatterAxisDefinition(yKey).label}: ${formatScatterAxisValue(row, yKey)}`,
+          ];
+        },
+      },
+    };
+    options.scales.x.type = "linear";
+    options.scales.x.grace = "8%";
+    options.scales.y.type = "linear";
+    options.scales.y.grace = "8%";
+    return options;
+  }
+
+  function updateScatterChart() {
+    if (!scatterChart) return;
+
+    const xKey = selectedScatterAxis("scatter-x-axis", "params");
+    const yKey = selectedScatterAxis("scatter-y-axis", "score");
+    const xAxis = scatterAxisDefinition(xKey);
+    const yAxis = scatterAxisDefinition(yKey);
+    const rows = sortedRows();
+
+    scatterChart.data.datasets = scatterDatasets(rows, xKey, yKey);
+    scatterChart.options.scales.x.title.text = xAxis.label;
+    scatterChart.options.scales.x.ticks.callback = (value) => scatterTickLabel(xKey, value);
+    scatterChart.options.scales.y.title.text = yAxis.label;
+    scatterChart.options.scales.y.ticks.callback = (value) => scatterTickLabel(yKey, value);
+    scatterChart.update();
+  }
+
+  function configureScatterControls() {
+    const xSelect = document.getElementById("scatter-x-axis");
+    const ySelect = document.getElementById("scatter-y-axis");
+    populateScatterAxisSelect(xSelect, "params");
+    populateScatterAxisSelect(ySelect, "score");
+    xSelect?.addEventListener("change", updateScatterChart);
+    ySelect?.addEventListener("change", updateScatterChart);
   }
 
   function chartRows(chartType) {
@@ -1877,6 +2331,8 @@
   }
 
   function refreshAllChartPanels() {
+    updateComparisonChart();
+    updateScatterChart();
     syncChartPanel("cp");
     syncChartPanel("velocity");
   }
@@ -1893,7 +2349,28 @@
   function configureCharts() {
     if (!window.Chart) return;
 
+    configureComparisonControls();
+    configureScatterControls();
     configureChartControls();
+
+    const comparisonCanvas = document.getElementById("comparison-chart");
+    if (comparisonCanvas) {
+      comparisonChart = new Chart(comparisonCanvas, {
+        type: "bar",
+        data: { labels: [], datasets: [] },
+        options: comparisonChartOptions(),
+        plugins: [comparisonValueLabelPlugin],
+      });
+    }
+
+    const scatterCanvas = document.getElementById("scatter-chart");
+    if (scatterCanvas) {
+      scatterChart = new Chart(scatterCanvas, {
+        type: "scatter",
+        data: { datasets: [] },
+        options: scatterChartOptions(),
+      });
+    }
 
     const cpCanvas = document.getElementById("cp-chart");
     if (cpCanvas) {
@@ -1928,153 +2405,95 @@
     refreshAllChartPanels();
   }
 
-  function formValue(form, name) {
-    return form.elements[name]?.value?.trim() || "";
+  function appendDetailField(container, label, value) {
+    const wrapper = document.createElement("div");
+    const term = document.createElement("dt");
+    const description = document.createElement("dd");
+
+    term.textContent = label;
+    description.textContent = value || "Not provided";
+    wrapper.append(term, description);
+    container.appendChild(wrapper);
   }
 
-  function numberFormValue(form, name) {
-    return Number(formValue(form, name));
+  function appendDetailLink(container, label, url) {
+    const safeUrl = safeExternalUrl(url);
+    if (!safeUrl) return;
+
+    const link = document.createElement("a");
+    link.href = safeUrl;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = label;
+    container.appendChild(link);
   }
 
-  function setSubmitStatus(message, isError) {
-    const status = document.getElementById("submission-form-status");
-    if (!status) return;
-    status.textContent = message;
-    status.classList.toggle("error", Boolean(isError));
-  }
+  function openDetailsDialog(row) {
+    const dialog = document.getElementById("details-dialog");
+    const title = document.getElementById("details-dialog-title");
+    const subtitle = document.getElementById("details-dialog-subtitle");
+    const body = document.getElementById("details-dialog-body");
+    if (!dialog || !title || !subtitle || !body) return;
 
-  function submissionPayload(form) {
-    return {
-      model: formValue(form, "model"),
-      model_type: formValue(form, "model_type"),
-      dataset: formValue(form, "dataset"),
-      split: normalizeSplit(formValue(form, "split"), formValue(form, "dataset")),
-      parameter_count: numberFormValue(form, "parameter_count"),
-      surface_pressure_l2: numberFormValue(form, "surface_pressure_l2"),
-      surface_pressure_l1: numberFormValue(form, "surface_pressure_l1"),
-      surface_tau_l2: numberFormValue(form, "surface_tau_l2"),
-      surface_tau_l1: numberFormValue(form, "surface_tau_l1"),
-      volume_velocity_l2: numberFormValue(form, "volume_velocity_l2"),
-      volume_velocity_l1: numberFormValue(form, "volume_velocity_l1"),
-      volume_pressure_l2: numberFormValue(form, "volume_pressure_l2"),
-      volume_pressure_l1: numberFormValue(form, "volume_pressure_l1"),
-      r2_cd: numberFormValue(form, "r2_cd"),
-      r2_cl: numberFormValue(form, "r2_cl"),
-      velocity_profile_r2: numberFormValue(form, "velocity_profile_r2"),
-      cp_cut_r2: numberFormValue(form, "cp_cut_r2"),
-      submitter_name: formValue(form, "submitter_name"),
-      contact_email: formValue(form, "contact_email"),
-      institution: formValue(form, "institution"),
-      paper_url: formValue(form, "paper_url"),
-      code_url: formValue(form, "code_url"),
-    };
-  }
+    title.textContent = row.model;
+    subtitle.textContent = `${row.dataset} / ${row.split}`;
+    body.textContent = "";
 
-  async function uploadTrace(uploadUrl, file) {
-    const response = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": "application/zip" },
-      body: file,
-    });
-    if (!response.ok) throw new Error(`trace upload failed with HTTP ${response.status}`);
-  }
+    const note = document.createElement("p");
+    note.className = "details-note";
+    note.textContent = row.note || "No additional notes have been provided for this submission.";
+    body.appendChild(note);
 
-  async function submitResult(event) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const submitButton = form.querySelector('button[type="submit"]');
-    const traceFile = form.elements.trace_file?.files?.[0];
-    if (!traceFile) {
-      setSubmitStatus("Choose a .zip trace file before submitting.", true);
-      return;
-    }
+    const details = document.createElement("dl");
+    details.className = "details-grid";
+    appendDetailField(details, "Submitted by", row.submittedBy);
+    appendDetailField(details, "Model type", row.type);
+    appendDetailField(details, "Dataset", row.dataset);
+    appendDetailField(details, "Split", row.split);
+    appendDetailField(details, "Field score (50%)", formatNumber(row.fieldScore, 1));
+    appendDetailField(details, "Force score (25%)", formatNumber(row.forceScore, 1));
+    appendDetailField(details, "Diagnostic score (25%)", formatNumber(row.diagnosticScore, 1));
+    appendDetailField(details, "Overall score", formatNumber(row.score, 1));
+    appendDetailField(details, "Cd R2", formatNumber(row.r2Cd, 3));
+    appendDetailField(details, "Cl R2", formatNumber(row.r2Cl, 3));
+    appendDetailField(details, "Velocity profiles R2", formatNumber(row.velocityProfileR2, 3));
+    appendDetailField(details, "Cp cuts R2", formatNumber(row.cpCutR2, 3));
+    appendDetailField(details, "Params (M)", formatNumber(row.params, 2));
+    appendDetailField(details, "Submission date", row.date);
+    body.appendChild(details);
 
-    submitButton.disabled = true;
-    setSubmitStatus("Submitting metadata...", false);
+    const links = document.createElement("p");
+    links.className = "details-links";
+    appendDetailLink(links, "Paper", row.paperUrl);
+    appendDetailLink(links, "Code", row.codeUrl);
+    if (links.childElementCount > 0) body.appendChild(links);
 
-    try {
-      const response = await fetch(submitUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submissionPayload(form)),
-      });
-      const responseBody = await response.json().catch(() => ({}));
-      if (response.status !== 201) {
-        throw new Error(responseBody.error || `metadata submission failed with HTTP ${response.status}`);
-      }
-
-      setSubmitStatus("Uploading trace archive...", false);
-      await uploadTrace(responseBody.upload_url, traceFile);
-      setSubmitStatus(`Submission ${responseBody.submission_id} received. It will appear in the table after approval.`, false);
-      form.reset();
-    } catch (error) {
-      setSubmitStatus(error.message, true);
-    } finally {
-      submitButton.disabled = false;
+    if (dialog.showModal) {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute("open", "open");
     }
   }
 
-  function configureSubmissionForm() {
-    const openButton = document.getElementById("open-submission-form");
-    const dialog = document.getElementById("submission-dialog");
-    const closeButton = document.getElementById("close-submission-form");
-    const form = document.getElementById("leaderboard-submission-form");
-
-    openButton?.addEventListener("click", () => {
-      setSubmitStatus("", false);
-      if (form?.elements.dataset && datasetProfiles[selectedDatasetForCharts()]) {
-        form.elements.dataset.value = selectedDatasetForCharts();
-      }
-      const splitFilter = currentFilters().splits;
-      const selectedSplit = splitFilter.all ? chartSelections.cp.split : Array.from(splitFilter.values)[0];
-      if (form?.elements.split) {
-        form.elements.split.value = selectedSplit || defaultSplit;
-      }
-      if (dialog?.showModal) {
-        dialog.showModal();
-      } else {
-        dialog?.setAttribute("open", "open");
-      }
-    });
+  function configureDetailsDialog() {
+    const dialog = document.getElementById("details-dialog");
+    const closeButton = document.getElementById("close-details-dialog");
 
     closeButton?.addEventListener("click", () => dialog?.close());
-    form?.addEventListener("submit", submitResult);
-  }
-
-  function renderDetails() {
-    const container = document.getElementById("submission-detail-grid");
-    if (!container) return;
-    container.textContent = "";
-
-    sortedRows().forEach((row) => {
-      const card = document.createElement("section");
-      card.className = "submission-card";
-      card.id = row.href.replace("#", "");
-      const links = [
-        row.paperUrl ? `<a href="${row.paperUrl}" target="_blank" rel="noopener">Paper</a>` : "",
-        row.codeUrl ? `<a href="${row.codeUrl}" target="_blank" rel="noopener">Code</a>` : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
-      card.innerHTML = `
-        <h4>${row.model}</h4>
-        <p>${row.note}</p>
-        ${links ? `<p class="submission-card-links">${links}</p>` : ""}
-      `;
-      container.appendChild(card);
+    dialog?.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
     });
   }
 
   async function initLeaderboard() {
-    renderBackendStatus();
+    renderApprovedSubmissionStatus();
     configureSort();
     configurePrimaryRanking();
     configureFilters();
-    configureSubmissionForm();
-    await loadBackendSubmissions();
-    renderBackendStatus();
+    configureDetailsDialog();
+    await loadApprovedSubmissions();
+    renderApprovedSubmissionStatus();
     renderTable();
-    renderDetails();
     configureCharts();
   }
 

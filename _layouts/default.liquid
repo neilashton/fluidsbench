@@ -21,7 +21,7 @@
     {% include header.liquid %}
     <div class="header-background"><div class="img"></div></div>
     <!-- Content -->
-    <div class="container mt-5" role="main">
+    <div class="container mt-5{% if page.wide %} container-wide{% endif %}" role="main">
       {% if page.toc and page.toc.sidebar %}
         {% if page.toc.sidebar == 'right' %}
           <div class="row">

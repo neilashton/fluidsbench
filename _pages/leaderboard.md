@@ -6,14 +6,21 @@ description:
 nav: true
 nav_order: 5
 hide_header: true
+wide: true
 chart:
   chartjs: true
 ---
 
 <div class="leaderboard-page">
-  <div class="leaderboard-backend-row">
-    <p id="leaderboard-backend-status">Loading approved submissions from the leaderboard backend...</p>
-    <button id="open-submission-form" class="leaderboard-submit-button" type="button">Submit result</button>
+  <div class="leaderboard-source-row">
+    <p id="leaderboard-source-status">Loading approved submissions from approved_submissions.json...</p>
+    <a
+      id="open-submission-repo"
+      class="leaderboard-submit-button"
+      href="https://github.com/neilashton/fluidsbench-submission"
+      target="_blank"
+      rel="noopener"
+    >Submit result</a>
   </div>
 
   <section class="leaderboard-controls" aria-label="Leaderboard filters">
@@ -188,19 +195,22 @@ chart:
       <label for="score-sort">Primary ranking</label>
       <select id="score-sort">
         <option value="score" selected>Weighted overall score</option>
+        <option value="fieldScore">Field score (50%)</option>
+        <option value="forceScore">Force score (25%)</option>
+        <option value="diagnosticScore">Diagnostic score (25%)</option>
         <option value="forceR2">Force R² (Cd/Cl mean)</option>
         <option value="r2Cd">Cd R²</option>
         <option value="r2Cl">Cl R²</option>
         <option value="velocityProfileR2">Velocity profiles R²</option>
         <option value="cpCutR2">Cp cuts R²</option>
-        <option value="surfacePressure">Surface pressure dim. rel L2</option>
-        <option value="surfacePressureL1">Surface pressure dim. rel L1</option>
-        <option value="surfaceTau">Surface tau wall dim. rel L2</option>
-        <option value="surfaceTauL1">Surface tau wall dim. rel L1</option>
-        <option value="volumeVelocity">Volume velocity dim. rel L2</option>
-        <option value="volumeVelocityL1">Volume velocity dim. rel L1</option>
-        <option value="volumePressure">Volume pressure dim. rel L2</option>
-        <option value="volumePressureL1">Volume pressure dim. rel L1</option>
+        <option value="surfacePressure">Surface pressure rel L2</option>
+        <option value="surfacePressureL1">Surface pressure rel L1</option>
+        <option value="surfaceTau">Surface tau wall rel L2</option>
+        <option value="surfaceTauL1">Surface tau wall rel L1</option>
+        <option value="volumeVelocity">Volume velocity rel L2</option>
+        <option value="volumeVelocityL1">Volume velocity rel L1</option>
+        <option value="volumePressure">Volume pressure rel L2</option>
+        <option value="volumePressureL1">Volume pressure rel L1</option>
       </select>
     </div>
   </section>
@@ -211,29 +221,86 @@ chart:
         <tr>
           <th data-sort="rank">Rank</th>
           <th data-sort="model">Model</th>
+          <th data-sort="submittedBy">Submitted by</th>
           <th data-sort="type">Type</th>
           <th data-sort="dataset">Dataset</th>
           <th data-sort="split">Split</th>
-          <th data-sort="surfacePressure">Surface pressure<br>dim. rel L2 (%)</th>
-          <th data-sort="surfacePressureL1">Surface pressure<br>dim. rel L1 (%)</th>
-          <th data-sort="surfaceTau">Surface tau wall<br>dim. rel L2 (%)</th>
-          <th data-sort="surfaceTauL1">Surface tau wall<br>dim. rel L1 (%)</th>
-          <th data-sort="volumeVelocity">Volume velocity<br>dim. rel L2 (%)</th>
-          <th data-sort="volumeVelocityL1">Volume velocity<br>dim. rel L1 (%)</th>
-          <th data-sort="volumePressure">Volume pressure<br>dim. rel L2 (%)</th>
-          <th data-sort="volumePressureL1">Volume pressure<br>dim. rel L1 (%)</th>
+          <th data-sort="surfacePressure">Surface pressure<br>rel L2 (%)</th>
+          <th data-sort="surfacePressureL1">Surface pressure<br>rel L1 (%)</th>
+          <th data-sort="surfaceTau">Surface tau wall<br>rel L2 (%)</th>
+          <th data-sort="surfaceTauL1">Surface tau wall<br>rel L1 (%)</th>
+          <th data-sort="volumeVelocity">Volume velocity<br>rel L2 (%)</th>
+          <th data-sort="volumeVelocityL1">Volume velocity<br>rel L1 (%)</th>
+          <th data-sort="volumePressure">Volume pressure<br>rel L2 (%)</th>
+          <th data-sort="volumePressureL1">Volume pressure<br>rel L1 (%)</th>
           <th data-sort="r2Cd">C<sub>d</sub> R<sup>2</sup></th>
           <th data-sort="r2Cl">C<sub>l</sub> R<sup>2</sup></th>
           <th data-sort="velocityProfileR2">Velocity profiles<br>R<sup>2</sup></th>
           <th data-sort="cpCutR2">Cp cuts<br>R<sup>2</sup></th>
           <th data-sort="params">Params (M)</th>
           <th data-sort="date">Submission date</th>
+          <th data-sort="fieldScore">Field score<br>(50%)</th>
+          <th data-sort="forceScore">Force score<br>(25%)</th>
+          <th data-sort="diagnosticScore">Diagnostic score<br>(25%)</th>
           <th data-sort="score">Overall score</th>
           <th>Details</th>
         </tr>
       </thead>
       <tbody id="leaderboard-body"></tbody>
     </table>
+  </section>
+
+  <section class="leaderboard-panel leaderboard-comparison-panel">
+    <div class="comparison-header">
+      <div>
+        <h3>Metric comparison</h3>
+        <p>Normalized view of the currently visible leaderboard rows, where higher is better for every metric.</p>
+      </div>
+      <div class="comparison-control-row" aria-label="Metric comparison controls">
+        <div class="chart-control">
+          <label class="chart-control-title" for="comparison-metric-group">Metric group</label>
+          <select id="comparison-metric-group">
+            <option value="summary" selected>Summary scores</option>
+            <option value="l2">L2 errors</option>
+            <option value="l1">L1 errors</option>
+            <option value="r2">R2 metrics</option>
+          </select>
+        </div>
+        <div class="chart-control">
+          <label class="chart-control-title" for="comparison-row-count">Rows</label>
+          <select id="comparison-row-count">
+            <option value="5" selected>Top 5</option>
+            <option value="10">Top 10</option>
+            <option value="15">Top 15</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="chart-frame comparison-chart-frame">
+      <canvas id="comparison-chart" aria-label="Normalized leaderboard metric comparison chart"></canvas>
+    </div>
+  </section>
+
+  <section class="leaderboard-panel leaderboard-scatter-panel">
+    <div class="comparison-header">
+      <div>
+        <h3>Scatter explorer</h3>
+        <p>Plot any numeric leaderboard column against another for the currently visible rows.</p>
+      </div>
+      <div class="scatter-control-row" aria-label="Scatter axis controls">
+        <div class="chart-control">
+          <label class="chart-control-title" for="scatter-x-axis">X axis</label>
+          <select id="scatter-x-axis"></select>
+        </div>
+        <div class="chart-control">
+          <label class="chart-control-title" for="scatter-y-axis">Y axis</label>
+          <select id="scatter-y-axis"></select>
+        </div>
+      </div>
+    </div>
+    <div class="chart-frame scatter-chart-frame">
+      <canvas id="scatter-chart" aria-label="Leaderboard metric scatter chart"></canvas>
+    </div>
   </section>
 
   <section class="leaderboard-panel">
@@ -525,19 +592,14 @@ chart:
     </div>
   </section>
 
-  <section class="submission-details">
-    <h3>Submission details</h3>
-    <div class="submission-grid" id="submission-detail-grid"></div>
-  </section>
-
   <section class="metric-definitions">
     <h3>Metric definitions</h3>
     <dl>
       <div>
         <dt>Weighted overall score</dt>
         <dd>
-          0-100 score combining field accuracy (50%), integrated force R<sup>2</sup> (25%), and diagnostic cut
-          R<sup>2</sup> (25%).
+          0-100 score combining the field score (50%), force score (25%), and diagnostic score (25%). Each component is
+          also shown in the main table.
         </dd>
       </div>
       <div>
@@ -546,6 +608,26 @@ chart:
           Relative L2 and L1 errors for surface pressure, surface wall shear, volume velocity, and volume pressure after
           mapping predictions and targets back to dimensional physical space. Lower is better. The prototype L1 values are
           illustrative until evaluator exports are available.
+        </dd>
+      </div>
+      <div>
+        <dt>Field score</dt>
+        <dd>
+          0-100 score from the four L2 field-error columns, contributing 50% of the weighted overall score.
+        </dd>
+      </div>
+      <div>
+        <dt>Force score</dt>
+        <dd>
+          0-100 weighted blend of C<sub>d</sub> R<sup>2</sup> and C<sub>l</sub> R<sup>2</sup>, contributing 25% of the
+          weighted overall score.
+        </dd>
+      </div>
+      <div>
+        <dt>Diagnostic score</dt>
+        <dd>
+          0-100 weighted blend of velocity-profile R<sup>2</sup> and Cp-cut R<sup>2</sup>, contributing 25% of the
+          weighted overall score.
         </dd>
       </div>
       <div>
@@ -570,141 +652,22 @@ chart:
     </dl>
   </section>
 
-  <dialog class="submission-dialog" id="submission-dialog">
-    <form class="submission-form" id="leaderboard-submission-form" method="dialog">
-      <div class="submission-form-header">
-        <h3>Submit benchmark result</h3>
-        <button id="close-submission-form" type="button" aria-label="Close submission form">×</button>
+  <dialog class="details-dialog" id="details-dialog" aria-labelledby="details-dialog-title">
+    <article class="details-dialog-card">
+      <div class="details-dialog-header">
+        <div>
+          <p id="details-dialog-subtitle" class="details-dialog-subtitle"></p>
+          <h3 id="details-dialog-title">Submission details</h3>
+        </div>
+        <button id="close-details-dialog" class="details-dialog-close" type="button" aria-label="Close details">×</button>
       </div>
-
-      <div class="submission-form-grid">
-        <label>
-          Model name
-          <input name="model" required type="text" />
-        </label>
-        <label>
-          Model type
-          <select name="model_type" required>
-            <option value="">Select...</option>
-            <option>Transformer</option>
-            <option>GNN</option>
-            <option>Neural operator</option>
-            <option>Implicit field</option>
-            <option>MLP</option>
-            <option>Point cloud</option>
-            <option>CNN</option>
-            <option>Other</option>
-          </select>
-        </label>
-        <label>
-          Dataset
-          <select name="dataset" required>
-            <option>AhmedML</option>
-            <option>DrivAerML</option>
-            <option>DrivAerNet++</option>
-            <option>WindsorML</option>
-            <option>HiLiftAeroML</option>
-            <option>AirfRANS</option>
-          </select>
-        </label>
-        <label>
-          Split
-          <select name="split" required>
-            <option>Default</option>
-            <option>Full</option>
-            <option>AoA 4</option>
-            <option>AoA 12</option>
-            <option>AoA 22</option>
-            <option>Scarce</option>
-            <option>Reynolds extrapolation</option>
-            <option>AoA extrapolation</option>
-          </select>
-        </label>
-        <label>
-          Parameters (M)
-          <input min="0" name="parameter_count" required step="any" type="number" />
-        </label>
-        <label>
-          Surface pressure L2 (%)
-          <input min="0" name="surface_pressure_l2" required step="any" type="number" />
-        </label>
-        <label>
-          Surface pressure L1 (%)
-          <input min="0" name="surface_pressure_l1" required step="any" type="number" />
-        </label>
-        <label>
-          Surface tau wall L2 (%)
-          <input min="0" name="surface_tau_l2" required step="any" type="number" />
-        </label>
-        <label>
-          Surface tau wall L1 (%)
-          <input min="0" name="surface_tau_l1" required step="any" type="number" />
-        </label>
-        <label>
-          Volume velocity L2 (%)
-          <input min="0" name="volume_velocity_l2" required step="any" type="number" />
-        </label>
-        <label>
-          Volume velocity L1 (%)
-          <input min="0" name="volume_velocity_l1" required step="any" type="number" />
-        </label>
-        <label>
-          Volume pressure L2 (%)
-          <input min="0" name="volume_pressure_l2" required step="any" type="number" />
-        </label>
-        <label>
-          Volume pressure L1 (%)
-          <input min="0" name="volume_pressure_l1" required step="any" type="number" />
-        </label>
-        <label>
-          C<sub>d</sub> R<sup>2</sup>
-          <input max="1" name="r2_cd" required step="any" type="number" />
-        </label>
-        <label>
-          C<sub>l</sub> R<sup>2</sup>
-          <input max="1" name="r2_cl" required step="any" type="number" />
-        </label>
-        <label>
-          Velocity profiles R<sup>2</sup>
-          <input max="1" name="velocity_profile_r2" required step="any" type="number" />
-        </label>
-        <label>
-          Cp cuts R<sup>2</sup>
-          <input max="1" name="cp_cut_r2" required step="any" type="number" />
-        </label>
-        <label>
-          Submitter name
-          <input name="submitter_name" required type="text" />
-        </label>
-        <label>
-          Contact email
-          <input name="contact_email" required type="email" />
-        </label>
-        <label>
-          Institution
-          <input name="institution" type="text" />
-        </label>
-        <label>
-          Paper URL
-          <input name="paper_url" type="url" />
-        </label>
-        <label>
-          Code URL
-          <input name="code_url" type="url" />
-        </label>
-        <label>
-          Trace archive (.zip)
-          <input accept=".zip,application/zip" name="trace_file" required type="file" />
-        </label>
-      </div>
-
-      <p id="submission-form-status" class="submission-form-status"></p>
-      <div class="submission-form-footer">
-        <button type="submit">Submit metadata and upload trace</button>
-      </div>
-    </form>
-
+      <div id="details-dialog-body" class="details-dialog-body"></div>
+    </article>
   </dialog>
+
 </div>
 
+<script>
+  window.FluidsBenchApprovedSubmissionsUrl = "{{ '/leaderboard/approved_submissions.json' | relative_url }}";
+</script>
 <script defer src="{{ '/assets/js/leaderboard.js' | relative_url | bust_file_cache }}"></script>
