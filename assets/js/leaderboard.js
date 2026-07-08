@@ -863,7 +863,7 @@
 
   function currentFilters() {
     return {
-      datasets: checkedFilterValues("dataset-filter"),
+      datasets: selectedFilterValue("dataset-filter", "AhmedML"),
       types: checkedFilterValues("type-filter"),
       splits: checkedFilterValues("split-filter"),
     };
@@ -977,7 +977,8 @@
   }
 
   function configureFilters() {
-    ["dataset-filter", "type-filter", "split-filter"].forEach(configureFilterGroup);
+    configureDatasetFilter();
+    ["type-filter", "split-filter"].forEach(configureFilterGroup);
     syncSplitFilterOptions();
     document.addEventListener("click", (event) => {
       const activeDropdown = event.target instanceof Element ? event.target.closest(".leaderboard-filter-dropdown") : null;
@@ -996,6 +997,14 @@
     return {
       all: !allInput || allInput.checked || selected.length === 0,
       values: new Set(selected),
+    };
+  }
+
+  function selectedFilterValue(containerId, fallback) {
+    const value = selectedRadioValue(containerId, fallback);
+    return {
+      all: false,
+      values: new Set([value]),
     };
   }
 
@@ -1030,7 +1039,7 @@
     const splitContainer = document.getElementById("split-filter");
     if (!splitContainer) return;
 
-    const datasetFilter = checkedFilterValues("dataset-filter");
+    const datasetFilter = selectedFilterValue("dataset-filter", "AhmedML");
     splitContainer.querySelectorAll("[data-split-datasets]").forEach((label) => {
       const datasets = (label.dataset.splitDatasets || "").split(/\s+/).filter(Boolean);
       const visible = datasetFilter.all || datasets.some((dataset) => datasetFilter.values.has(dataset));
@@ -1119,13 +1128,27 @@
     container.addEventListener("change", (event) => {
       if (!(event.target instanceof HTMLInputElement)) return;
       updateFilterGroup(containerId, event.target);
-      if (containerId === "dataset-filter") {
-        syncSplitFilterOptions();
-      }
       updateFilterSummary(containerId);
       void refreshLeaderboardForCurrentState();
     });
     updateFilterSummary(containerId);
+  }
+
+  function configureDatasetFilter() {
+    const containerId = "dataset-filter";
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    configureDropdownShell(container);
+    updateSingleFilterSummary(containerId);
+
+    container.addEventListener("change", (event) => {
+      if (!(event.target instanceof HTMLInputElement) || event.target.type !== "radio") return;
+      syncSplitFilterOptions();
+      updateSingleFilterSummary(containerId);
+      void refreshLeaderboardForCurrentState();
+      setFilterDropdownOpen(container, false);
+    });
   }
 
   function selectedRadioInput(containerId) {

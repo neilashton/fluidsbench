@@ -25,7 +25,7 @@ chart:
   <section class="leaderboard-controls" aria-label="Leaderboard filters">
     <div class="leaderboard-control">
       <span class="leaderboard-control-title" id="dataset-filter-label">Dataset</span>
-      <div class="leaderboard-filter-dropdown" id="dataset-filter" data-all-label="All datasets">
+      <div class="leaderboard-filter-dropdown" id="dataset-filter">
         <button
           class="leaderboard-filter-toggle"
           type="button"
@@ -34,43 +34,39 @@ chart:
           aria-haspopup="true"
           data-filter-toggle
         >
-          <span data-filter-summary>All datasets</span>
+          <span data-filter-summary>AhmedML</span>
           <span class="leaderboard-filter-caret" aria-hidden="true"></span>
         </button>
         <div
           class="leaderboard-filter-menu"
           id="dataset-filter-menu"
-          role="group"
+          role="radiogroup"
           aria-labelledby="dataset-filter-label"
           data-filter-menu
           hidden
         >
           <label class="leaderboard-filter-option">
-            <input data-filter-all type="checkbox" value="all" checked />
-            All datasets
-          </label>
-          <label class="leaderboard-filter-option">
-            <input type="checkbox" value="AhmedML" />
+            <input name="dataset-filter-value" type="radio" value="AhmedML" checked />
             AhmedML
           </label>
           <label class="leaderboard-filter-option">
-            <input type="checkbox" value="DrivAerML" />
+            <input name="dataset-filter-value" type="radio" value="DrivAerML" />
             DrivAerML
           </label>
           <label class="leaderboard-filter-option">
-            <input type="checkbox" value="DrivAerNet++" />
+            <input name="dataset-filter-value" type="radio" value="DrivAerNet++" />
             DrivAerNet++
           </label>
           <label class="leaderboard-filter-option">
-            <input type="checkbox" value="WindsorML" />
+            <input name="dataset-filter-value" type="radio" value="WindsorML" />
             WindsorML
           </label>
           <label class="leaderboard-filter-option">
-            <input type="checkbox" value="HiLiftAeroML" />
+            <input name="dataset-filter-value" type="radio" value="HiLiftAeroML" />
             HiLiftAeroML
           </label>
           <label class="leaderboard-filter-option">
-            <input type="checkbox" value="AirfRANS" />
+            <input name="dataset-filter-value" type="radio" value="AirfRANS" />
             AirfRANS
           </label>
         </div>
