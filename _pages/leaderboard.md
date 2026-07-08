@@ -253,9 +253,17 @@ chart:
     <div class="comparison-header">
       <div>
         <h3>Metric comparison</h3>
-        <p>Normalized view of the currently visible leaderboard rows, where higher is better for every metric.</p>
+        <p>Compare selected metric groups for a chosen dataset and split.</p>
       </div>
       <div class="comparison-control-row" aria-label="Metric comparison controls">
+        <div class="chart-control">
+          <label class="chart-control-title" for="comparison-dataset-filter">Dataset</label>
+          <select id="comparison-dataset-filter"></select>
+        </div>
+        <div class="chart-control">
+          <label class="chart-control-title" for="comparison-split-filter">Split</label>
+          <select id="comparison-split-filter"></select>
+        </div>
         <div class="chart-control">
           <label class="chart-control-title" for="comparison-metric-group">Metric group</label>
           <select id="comparison-metric-group">
@@ -276,7 +284,7 @@ chart:
       </div>
     </div>
     <div class="chart-frame comparison-chart-frame">
-      <canvas id="comparison-chart" aria-label="Normalized leaderboard metric comparison chart"></canvas>
+      <canvas id="comparison-chart" aria-label="Leaderboard metric comparison chart"></canvas>
     </div>
   </section>
 
@@ -284,9 +292,17 @@ chart:
     <div class="comparison-header">
       <div>
         <h3>Scatter explorer</h3>
-        <p>Plot any numeric leaderboard column against another for the currently visible rows.</p>
+        <p>Plot any numeric leaderboard column against another for a chosen dataset and split.</p>
       </div>
       <div class="scatter-control-row" aria-label="Scatter axis controls">
+        <div class="chart-control">
+          <label class="chart-control-title" for="scatter-dataset-filter">Dataset</label>
+          <select id="scatter-dataset-filter"></select>
+        </div>
+        <div class="chart-control">
+          <label class="chart-control-title" for="scatter-split-filter">Split</label>
+          <select id="scatter-split-filter"></select>
+        </div>
         <div class="chart-control">
           <label class="chart-control-title" for="scatter-x-axis">X axis</label>
           <select id="scatter-x-axis"></select>

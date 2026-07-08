@@ -90,6 +90,20 @@
     r2: ["r2Cd", "r2Cl", "forceR2", "velocityProfileR2", "cpCutR2"],
   };
 
+  const allChartDatasetsValue = "__all_datasets__";
+  const allChartSplitsValue = "__all_splits__";
+
+  const predefinedSplitOptions = [
+    { value: defaultSplit, label: "Default", datasets: ["AhmedML", "DrivAerML", "DrivAerNet++", "WindsorML"] },
+    { value: "Full", label: "Full", datasets: ["HiLiftAeroML", "AirfRANS"] },
+    { value: "Scarce", label: "Scarce", datasets: ["AirfRANS"] },
+    { value: "Reynolds extrapolation", label: "Reynolds extrapolation", datasets: ["AirfRANS"] },
+    { value: "AoA extrapolation", label: "AoA extrapolation", datasets: ["AirfRANS"] },
+    { value: "AoA 4", label: "AoA 4", datasets: ["HiLiftAeroML"] },
+    { value: "AoA 12", label: "AoA 12", datasets: ["HiLiftAeroML"] },
+    { value: "AoA 22", label: "AoA 22", datasets: ["HiLiftAeroML"] },
+  ];
+
   const comparisonColors = ["#2563eb", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
   const datasetColors = ["#2563eb", "#10b981", "#8b5cf6", "#f59e0b", "#ec4899", "#06b6d4", "#64748b", "#1e40af"];
 
@@ -1225,6 +1239,10 @@
     cp: { dataset: "AhmedML", split: defaultSplit },
     velocity: { dataset: "AhmedML", split: defaultSplit },
   };
+  const chartScopeSelections = {
+    comparison: { dataset: allChartDatasetsValue, split: allChartSplitsValue },
+    scatter: { dataset: allChartDatasetsValue, split: allChartSplitsValue },
+  };
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -1378,6 +1396,15 @@
     return Number.isFinite(number) ? number : null;
   }
 
+  function uniqueInOrder(values) {
+    const seen = new Set();
+    return values.filter((value) => {
+      if (!value || seen.has(value)) return false;
+      seen.add(value);
+      return true;
+    });
+  }
+
   function slug(value) {
     return String(value)
       .toLowerCase()
@@ -1437,6 +1464,62 @@
 
     const aoaMatch = id.match(/aoa(\d+)/i) || model.match(/AoA\s*(\d+)/i);
     return aoaMatch ? `AoA ${aoaMatch[1]}` : defaultSplit;
+  }
+
+  function knownDatasetNames() {
+    return uniqueInOrder([
+      ...Object.keys(datasetProfiles),
+      ...leaderboardDatasetNames(),
+      ...submissions.map((row) => row.dataset),
+    ]);
+  }
+
+  function knownSplitOptions() {
+    const optionsByValue = new Map();
+
+    const addOption = (value, label, datasets = []) => {
+      if (!value) return;
+      const normalizedValue = normalizeSplit(value);
+      if (!optionsByValue.has(normalizedValue)) {
+        optionsByValue.set(normalizedValue, {
+          value: normalizedValue,
+          label: label || normalizedValue,
+          datasets: new Set(),
+        });
+      }
+
+      const option = optionsByValue.get(normalizedValue);
+      datasets.filter(Boolean).forEach((dataset) => option.datasets.add(dataset));
+    };
+
+    predefinedSplitOptions.forEach((option) => {
+      addOption(option.value, option.label, option.datasets);
+    });
+    submissions.forEach((row) => {
+      addOption(rowSplit(row), rowSplit(row), [row.dataset]);
+    });
+
+    const splitOrder = new Map(predefinedSplitOptions.map((option, index) => [option.value, index]));
+    return Array.from(optionsByValue.values())
+      .map((option) => ({ ...option, datasets: Array.from(option.datasets) }))
+      .sort((a, b) => {
+        const aOrder = splitOrder.has(a.value) ? splitOrder.get(a.value) : 999;
+        const bOrder = splitOrder.has(b.value) ? splitOrder.get(b.value) : 999;
+        return aOrder - bOrder || a.label.localeCompare(b.label);
+      });
+  }
+
+  function chartScopeRows(scope) {
+    const selection = chartScopeSelections[scope];
+    const rows = enrichedRows().filter((row) => {
+      const datasetMatch = !selection || selection.dataset === allChartDatasetsValue || row.dataset === selection.dataset;
+      const splitMatch = !selection || selection.split === allChartSplitsValue || row.split === selection.split;
+      return datasetMatch && splitMatch;
+    });
+
+    return rows
+      .sort((a, b) => compareRows(a, b, primaryRankingKey, defaultSortDirection(primaryRankingKey)))
+      .map((row, index) => ({ ...row, rank: index + 1 }));
   }
 
   function chartProfile(chartType) {
@@ -1583,6 +1666,12 @@
     return loadPromise;
   }
 
+  function datasetsForChartScope(scope) {
+    const selection = chartScopeSelections[scope];
+    if (!selection || selection.dataset === allChartDatasetsValue) return leaderboardDatasetNames();
+    return [selection.dataset];
+  }
+
   function datasetsForCurrentState() {
     const filters = currentFilters();
     const datasets = new Set();
@@ -1595,6 +1684,9 @@
 
     ["cp", "velocity"].forEach((chartType) => {
       if (chartSelections[chartType]?.dataset) datasets.add(chartSelections[chartType].dataset);
+    });
+    ["comparison", "scatter"].forEach((scope) => {
+      datasetsForChartScope(scope).forEach((datasetName) => datasets.add(datasetName));
     });
 
     return Array.from(datasets).filter((datasetName) => Boolean(leaderboardDatasetEntry(datasetName)));
@@ -1658,6 +1750,22 @@
     }
     renderApprovedSubmissionStatus();
     syncChartPanel(chartType);
+  }
+
+  async function refreshScopedMetricChart(scope) {
+    try {
+      await loadLeaderboardManifest();
+      await ensureDatasetRows(datasetsForChartScope(scope));
+    } catch (error) {
+      approvedSubmissionStatusMessage =
+        `Could not load ${approvedSubmissionsSourceLabel} for ${scope} chart (${error.message}). Showing currently cached rows.`;
+    }
+
+    renderApprovedSubmissionStatus();
+    populateChartScopeDatasetSelect(scope);
+    syncChartScopeSplitSelect(scope);
+    if (scope === "comparison") updateComparisonChart();
+    if (scope === "scatter") updateScatterChart();
   }
 
   function tableCell(label, value, className) {
@@ -2149,6 +2257,94 @@
     if (element) element.textContent = text;
   }
 
+  function chartScopeDatasetSelect(scope) {
+    return document.getElementById(`${scope}-dataset-filter`);
+  }
+
+  function chartScopeSplitSelect(scope) {
+    return document.getElementById(`${scope}-split-filter`);
+  }
+
+  function populateChartScopeDatasetSelect(scope) {
+    const select = chartScopeDatasetSelect(scope);
+    if (!select) return;
+
+    const currentValue = chartScopeSelections[scope]?.dataset || allChartDatasetsValue;
+    select.textContent = "";
+
+    const allOption = document.createElement("option");
+    allOption.value = allChartDatasetsValue;
+    allOption.textContent = "All datasets";
+    select.appendChild(allOption);
+
+    knownDatasetNames().forEach((datasetName) => {
+      const option = document.createElement("option");
+      option.value = datasetName;
+      option.textContent = datasetName;
+      select.appendChild(option);
+    });
+
+    select.value = Array.from(select.options).some((option) => option.value === currentValue)
+      ? currentValue
+      : allChartDatasetsValue;
+    chartScopeSelections[scope].dataset = select.value;
+  }
+
+  function syncChartScopeSplitSelect(scope) {
+    const select = chartScopeSplitSelect(scope);
+    if (!select) return;
+
+    const selection = chartScopeSelections[scope];
+    const selectedDataset = selection?.dataset || allChartDatasetsValue;
+    const currentValue = selection?.split || allChartSplitsValue;
+    select.textContent = "";
+
+    const allOption = document.createElement("option");
+    allOption.value = allChartSplitsValue;
+    allOption.textContent = "All splits";
+    select.appendChild(allOption);
+
+    knownSplitOptions()
+      .filter((option) => {
+        return (
+          selectedDataset === allChartDatasetsValue ||
+          option.datasets.length === 0 ||
+          option.datasets.includes(selectedDataset)
+        );
+      })
+      .forEach((splitOption) => {
+        const option = document.createElement("option");
+        option.value = splitOption.value;
+        option.textContent = splitOption.label;
+        select.appendChild(option);
+      });
+
+    select.value = Array.from(select.options).some((option) => option.value === currentValue)
+      ? currentValue
+      : allChartSplitsValue;
+    chartScopeSelections[scope].split = select.value;
+  }
+
+  function configureChartScopeControls(scope) {
+    const datasetSelect = chartScopeDatasetSelect(scope);
+    const splitSelect = chartScopeSplitSelect(scope);
+    if (!datasetSelect || !splitSelect || !chartScopeSelections[scope]) return;
+
+    populateChartScopeDatasetSelect(scope);
+    syncChartScopeSplitSelect(scope);
+
+    datasetSelect.addEventListener("change", () => {
+      chartScopeSelections[scope].dataset = datasetSelect.value || allChartDatasetsValue;
+      syncChartScopeSplitSelect(scope);
+      void refreshScopedMetricChart(scope);
+    });
+
+    splitSelect.addEventListener("change", () => {
+      chartScopeSelections[scope].split = splitSelect.value || allChartSplitsValue;
+      void refreshScopedMetricChart(scope);
+    });
+  }
+
   function comparisonMetricGroup() {
     const selected = document.getElementById("comparison-metric-group")?.value || "summary";
     return comparisonMetricGroups[selected] ? selected : "summary";
@@ -2257,7 +2453,7 @@
     if (!comparisonChart) return;
 
     const group = comparisonMetricGroup();
-    const rows = sortedRows().slice(0, comparisonRowCount());
+    const rows = chartScopeRows("comparison").slice(0, comparisonRowCount());
     const metricKeys = comparisonMetricGroups[group];
     comparisonChartRowsCache = rows;
     comparisonChart.data.labels = rows.map(comparisonRowLabel);
@@ -2269,6 +2465,7 @@
   }
 
   function configureComparisonControls() {
+    configureChartScopeControls("comparison");
     ["comparison-metric-group", "comparison-row-count"].forEach((id) => {
       document.getElementById(id)?.addEventListener("change", updateComparisonChart);
     });
@@ -2401,7 +2598,7 @@
     const yKey = selectedScatterAxis("scatter-y-axis", "score");
     const xAxis = scatterAxisDefinition(xKey);
     const yAxis = scatterAxisDefinition(yKey);
-    const rows = sortedRows();
+    const rows = chartScopeRows("scatter");
 
     scatterChart.data.datasets = scatterDatasets(rows, xKey, yKey);
     scatterChart.options.scales.x.title.text = xAxis.label;
@@ -2414,6 +2611,7 @@
   function configureScatterControls() {
     const xSelect = document.getElementById("scatter-x-axis");
     const ySelect = document.getElementById("scatter-y-axis");
+    configureChartScopeControls("scatter");
     populateScatterAxisSelect(xSelect, "params");
     populateScatterAxisSelect(ySelect, "score");
     xSelect?.addEventListener("change", updateScatterChart);
@@ -2515,6 +2713,10 @@
   }
 
   function refreshAllChartPanels() {
+    ["comparison", "scatter"].forEach((scope) => {
+      populateChartScopeDatasetSelect(scope);
+      syncChartScopeSplitSelect(scope);
+    });
     updateComparisonChart();
     updateScatterChart();
     syncChartPanel("cp");
