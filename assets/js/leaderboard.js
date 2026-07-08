@@ -187,29 +187,6 @@
     },
   };
 
-  const palette = {
-    "ab-upt": "#2563eb",
-    transformer: "#10b981",
-    transolver: "#8b5cf6",
-    oformer: "#ec4899",
-    upt: "#f59e0b",
-    "graph-u-net": "#64748b",
-    pointnet: "#94a3b8",
-    gino: "#06b6d4",
-    lno: "#1e40af",
-    "hiliftaeroml-geot-full": "#1e40af",
-    "hiliftaeroml-geot-aoa4": "#2563eb",
-    "hiliftaeroml-transolver-aoa4": "#8b5cf6",
-    "hiliftaeroml-geot-aoa12": "#10b981",
-    "hiliftaeroml-transolver-aoa12": "#f59e0b",
-    "hiliftaeroml-geot-aoa22": "#ec4899",
-    "hiliftaeroml-transolver-aoa22": "#64748b",
-    "airfrans-mlp-full": "#64748b",
-    "airfrans-graphsage-full": "#2563eb",
-    "airfrans-pointnet-full": "#10b981",
-    "airfrans-graph-u-net-full": "#8b5cf6",
-  };
-
   let sortState = { key: "score", direction: "desc" };
   let primaryRankingKey = "score";
   let comparisonChart = null;
@@ -1288,8 +1265,7 @@
 
   function modelColor(modelId, index) {
     const fallbackColors = ["#0072b2", "#009e73", "#d55e00", "#cc79a7", "#f0a202", "#6f42c1"];
-    const fallbackPaletteId = String(modelId || "").replace(/^approved-/, "");
-    return palette[modelId] || palette[fallbackPaletteId] || fallbackColors[index % fallbackColors.length];
+    return fallbackColors[index % fallbackColors.length];
   }
 
   function hexToRgba(hex, alpha) {
@@ -1575,7 +1551,7 @@
   }
 
   function datasetColor(dataset, index) {
-    return palette[slug(dataset)] || datasetColors[index % datasetColors.length];
+    return datasetColors[index % datasetColors.length];
   }
 
   function scatterDatasets(rows, xKey, yKey) {
