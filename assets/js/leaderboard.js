@@ -201,7 +201,7 @@
     velocity: { dataset: "AhmedML", split: defaultSplit },
   };
   const chartScopeSelections = {
-    comparison: { dataset: allChartDatasetsValue, split: allChartSplitsValue },
+    comparison: { dataset: "AhmedML", split: allChartSplitsValue },
     scatter: { dataset: allChartDatasetsValue, split: allChartSplitsValue },
   };
 
@@ -515,6 +515,27 @@
     ]);
   }
 
+  function chartScopeAllowsAllDatasets(scope) {
+    return scope !== "comparison";
+  }
+
+  function defaultChartScopeDataset() {
+    return knownDatasetNames()[0] || "AhmedML";
+  }
+
+  function normalizeChartScopeDataset(scope, dataset) {
+    const knownDatasets = knownDatasetNames();
+    if (chartScopeAllowsAllDatasets(scope) && (!dataset || dataset === allChartDatasetsValue)) {
+      return allChartDatasetsValue;
+    }
+
+    if (dataset && dataset !== allChartDatasetsValue && knownDatasets.includes(dataset)) {
+      return dataset;
+    }
+
+    return knownDatasets[0] || "AhmedML";
+  }
+
   function knownSplitOptions() {
     const optionsByValue = new Map();
 
@@ -552,8 +573,11 @@
 
   function chartScopeRows(scope) {
     const selection = chartScopeSelections[scope];
+    const selectedDataset = normalizeChartScopeDataset(scope, selection?.dataset);
+    if (selection) selection.dataset = selectedDataset;
+
     const rows = enrichedRows().filter((row) => {
-      const datasetMatch = !selection || selection.dataset === allChartDatasetsValue || row.dataset === selection.dataset;
+      const datasetMatch = selectedDataset === allChartDatasetsValue || row.dataset === selectedDataset;
       const splitMatch = !selection || selection.split === allChartSplitsValue || row.split === selection.split;
       return datasetMatch && splitMatch;
     });
@@ -702,8 +726,10 @@
 
   function datasetsForChartScope(scope) {
     const selection = chartScopeSelections[scope];
-    if (!selection || selection.dataset === allChartDatasetsValue) return leaderboardDatasetNames();
-    return [selection.dataset];
+    const selectedDataset = normalizeChartScopeDataset(scope, selection?.dataset);
+    if (selection) selection.dataset = selectedDataset;
+    if (selectedDataset === allChartDatasetsValue) return leaderboardDatasetNames();
+    return [selectedDataset];
   }
 
   function datasetsForCurrentState() {
@@ -1294,13 +1320,16 @@
     const select = chartScopeDatasetSelect(scope);
     if (!select) return;
 
-    const currentValue = chartScopeSelections[scope]?.dataset || allChartDatasetsValue;
+    const allowAllDatasets = chartScopeAllowsAllDatasets(scope);
+    const currentValue = normalizeChartScopeDataset(scope, chartScopeSelections[scope]?.dataset);
     select.textContent = "";
 
-    const allOption = document.createElement("option");
-    allOption.value = allChartDatasetsValue;
-    allOption.textContent = "All datasets";
-    select.appendChild(allOption);
+    if (allowAllDatasets) {
+      const allOption = document.createElement("option");
+      allOption.value = allChartDatasetsValue;
+      allOption.textContent = "All datasets";
+      select.appendChild(allOption);
+    }
 
     knownDatasetNames().forEach((datasetName) => {
       const option = document.createElement("option");
@@ -1309,9 +1338,11 @@
       select.appendChild(option);
     });
 
+    const fallbackValue = allowAllDatasets ? allChartDatasetsValue : defaultChartScopeDataset();
     select.value = Array.from(select.options).some((option) => option.value === currentValue)
       ? currentValue
-      : allChartDatasetsValue;
+      : fallbackValue;
+    if (!select.value && select.options.length) select.value = select.options[0].value;
     chartScopeSelections[scope].dataset = select.value;
   }
 
@@ -1320,7 +1351,8 @@
     if (!select) return;
 
     const selection = chartScopeSelections[scope];
-    const selectedDataset = selection?.dataset || allChartDatasetsValue;
+    const selectedDataset = normalizeChartScopeDataset(scope, selection?.dataset);
+    if (selection) selection.dataset = selectedDataset;
     const currentValue = selection?.split || allChartSplitsValue;
     select.textContent = "";
 
@@ -1359,7 +1391,8 @@
     syncChartScopeSplitSelect(scope);
 
     datasetSelect.addEventListener("change", () => {
-      chartScopeSelections[scope].dataset = datasetSelect.value || allChartDatasetsValue;
+      chartScopeSelections[scope].dataset = normalizeChartScopeDataset(scope, datasetSelect.value);
+      datasetSelect.value = chartScopeSelections[scope].dataset;
       syncChartScopeSplitSelect(scope);
       void refreshScopedMetricChart(scope);
     });
