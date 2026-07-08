@@ -1606,6 +1606,10 @@
       .map((row, index) => ({ ...row, rank: index + 1 }));
   }
 
+  function submissionMatchKey(row) {
+    return [row.dataset, rowSplit(row), row.model].map((value) => String(value || "").toLowerCase()).join("::");
+  }
+
   function chartProfile(chartType) {
     return datasetProfiles[chartSelections[chartType]?.dataset] || datasetProfiles.AhmedML;
   }
@@ -1691,7 +1695,9 @@
 
   function refreshSubmissionsFromApprovedCache() {
     const approvedRows = Array.from(approvedDatasetRows.values()).flat();
-    submissions = [...approvedRows, ...exampleSubmissions];
+    const approvedKeys = new Set(approvedRows.map(submissionMatchKey));
+    const fallbackRows = exampleSubmissions.filter((row) => !approvedKeys.has(submissionMatchKey(row)));
+    submissions = [...approvedRows, ...fallbackRows];
   }
 
   function approvedSubmissionCount() {
@@ -2339,7 +2345,8 @@
 
   function modelColor(modelId, index) {
     const fallbackColors = ["#0072b2", "#009e73", "#d55e00", "#cc79a7", "#f0a202", "#6f42c1"];
-    return palette[modelId] || fallbackColors[index % fallbackColors.length];
+    const fallbackPaletteId = String(modelId || "").replace(/^approved-/, "");
+    return palette[modelId] || palette[fallbackPaletteId] || fallbackColors[index % fallbackColors.length];
   }
 
   function hexToRgba(hex, alpha) {
