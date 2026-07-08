@@ -942,9 +942,9 @@
       tr.appendChild(chipCell("Dataset", row.dataset, "leaderboard-dataset-cell", "leaderboard-dataset"));
       tr.appendChild(chipCell("Split", row.split, "leaderboard-split-cell", "leaderboard-split"));
       tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score"));
-      tr.appendChild(metricCell("Field score (50%)", row, "fieldScore", "leaderboard-component-score"));
-      tr.appendChild(metricCell("Force score (25%)", row, "forceScore", "leaderboard-component-score"));
-      tr.appendChild(metricCell("Diagnostic score (25%)", row, "diagnosticScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Field score", row, "fieldScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Force score", row, "forceScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Diagnostic score", row, "diagnosticScore", "leaderboard-component-score"));
       tr.appendChild(metricCell("Surface pressure rel L2 (%)", row, "surfacePressure"));
       tr.appendChild(metricCell("Surface pressure rel L1 (%)", row, "surfacePressureL1"));
       tr.appendChild(metricCell("Surface tau wall rel L2 (%)", row, "surfaceTau"));
