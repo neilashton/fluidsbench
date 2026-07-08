@@ -320,7 +320,7 @@ chart:
 
   <section class="leaderboard-panel">
     <h3 id="cp-panel-title">Centreline surface Cp</h3>
-    <p id="cp-panel-description">Ground truth versus selected submissions along the Ahmed body centreline.</p>
+    <p id="cp-panel-description">Submitted Cp diagnostic cuts for the selected dataset and split.</p>
     <div class="chart-control-row" aria-label="Cp plot filters">
       <div class="chart-control">
         <span class="chart-control-title" id="cp-dataset-filter-label">Dataset</span>
@@ -460,7 +460,7 @@ chart:
 
   <section class="leaderboard-panel">
     <h3 id="velocity-panel-title">Velocity profiles</h3>
-    <p><span id="velocity-panel-description">Wake velocity profiles for the selected AhmedML station.</span></p>
+    <p><span id="velocity-panel-description">Submitted velocity diagnostic profiles for the selected dataset and split.</span></p>
     <p><span id="velocity-station-label">x/H = 0.25 downstream</span></p>
     <div class="chart-control-row velocity-chart-controls" aria-label="Velocity plot filters">
       <div class="chart-control">
@@ -623,8 +623,8 @@ chart:
         <dt>Field relative L2 and L1</dt>
         <dd>
           Relative L2 and L1 errors for surface pressure, surface wall shear, volume velocity, and volume pressure after
-          mapping predictions and targets back to dimensional physical space. Lower is better. The prototype L1 values are
-          illustrative until evaluator exports are available.
+          mapping predictions and targets back to dimensional physical space. Lower is better. Values are read from the
+          approved submission files when evaluator exports are available.
           <br />
           <code>Lp_rel(%) = 100 ||y_pred - y_true||_p / ||y_true||_p</code>
         </dd>
