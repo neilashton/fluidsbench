@@ -247,6 +247,12 @@ html[data-theme="dark"] .leaderboard-page {
     white-space: nowrap;
   }
 
+  th.leaderboard-group-start,
+  td.leaderboard-group-start {
+    border-left: 1px solid var(--leaderboard-border);
+    padding-left: 0.85rem;
+  }
+
   th {
     background: var(--leaderboard-header-bg);
     color: var(--leaderboard-muted);
@@ -796,6 +802,11 @@ html[data-theme="dark"] .leaderboard-page {
     padding: 0.48rem 0;
     text-align: right;
     white-space: normal;
+  }
+
+  .leaderboard-table td.leaderboard-group-start {
+    border-left: 0;
+    padding-left: 0;
   }
 
   .leaderboard-table td::before {

@@ -219,13 +219,13 @@ chart:
           <th data-sort="submittedBy">Submitted by</th>
           <th data-sort="type">Type</th>
           <th data-sort="trainingRegimeLabel">Training</th>
-          <th data-sort="dataset">Dataset</th>
+          <th class="leaderboard-group-start" data-sort="dataset">Dataset</th>
           <th data-sort="split">Split</th>
-          <th data-sort="score">Overall score</th>
+          <th class="leaderboard-group-start" data-sort="score">Overall score</th>
           <th data-sort="fieldScore">Field score</th>
           <th data-sort="forceScore">Force score</th>
           <th data-sort="diagnosticScore">Diagnostic score</th>
-          <th data-sort="surfacePressure">Surface pressure<br>rel L2 (%)</th>
+          <th class="leaderboard-group-start" data-sort="surfacePressure">Surface pressure<br>rel L2 (%)</th>
           <th data-sort="surfacePressureL1">Surface pressure<br>rel L1 (%)</th>
           <th data-sort="surfaceTau">Surface tau wall<br>rel L2 (%)</th>
           <th data-sort="surfaceTauL1">Surface tau wall<br>rel L1 (%)</th>
@@ -239,7 +239,7 @@ chart:
           <th data-sort="cpCutR2">Cp cuts<br>R<sup>2</sup></th>
           <th data-sort="params">Params (M)</th>
           <th data-sort="date">Submission date</th>
-          <th>Details</th>
+          <th class="leaderboard-group-start">Details</th>
         </tr>
       </thead>
       <tbody id="leaderboard-body"></tbody>

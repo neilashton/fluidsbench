@@ -1011,13 +1011,13 @@
       tr.appendChild(tableCell("Submitted by", row.submittedBy, "leaderboard-submitter"));
       tr.appendChild(chipListCell("Type", row.modelTypes?.length ? row.modelTypes : [row.type], "leaderboard-type-cell", "leaderboard-type"));
       tr.appendChild(chipCell("Training", row.trainingRegimeLabel, "leaderboard-training-cell", "leaderboard-training"));
-      tr.appendChild(chipCell("Dataset", row.dataset, "leaderboard-dataset-cell", "leaderboard-dataset"));
+      tr.appendChild(chipCell("Dataset", row.dataset, "leaderboard-dataset-cell leaderboard-group-start", "leaderboard-dataset"));
       tr.appendChild(chipCell("Split", row.split, "leaderboard-split-cell", "leaderboard-split"));
-      tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score"));
+      tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score leaderboard-group-start"));
       tr.appendChild(metricCell("Field score", row, "fieldScore", "leaderboard-component-score"));
       tr.appendChild(metricCell("Force score", row, "forceScore", "leaderboard-component-score"));
       tr.appendChild(metricCell("Diagnostic score", row, "diagnosticScore", "leaderboard-component-score"));
-      tr.appendChild(metricCell("Surface pressure rel L2 (%)", row, "surfacePressure"));
+      tr.appendChild(metricCell("Surface pressure rel L2 (%)", row, "surfacePressure", "leaderboard-group-start"));
       tr.appendChild(metricCell("Surface pressure rel L1 (%)", row, "surfacePressureL1"));
       tr.appendChild(metricCell("Surface tau wall rel L2 (%)", row, "surfaceTau"));
       tr.appendChild(metricCell("Surface tau wall rel L1 (%)", row, "surfaceTauL1"));
@@ -1037,7 +1037,7 @@
       details.type = "button";
       details.textContent = "Details";
       details.addEventListener("click", () => openDetailsDialog(row));
-      tr.appendChild(tableCell("Details", details));
+      tr.appendChild(tableCell("Details", details, "leaderboard-group-start"));
 
       tbody.appendChild(tr);
     });
