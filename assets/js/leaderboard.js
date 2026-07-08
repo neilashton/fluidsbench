@@ -1466,6 +1466,90 @@
     return aoaMatch ? `AoA ${aoaMatch[1]}` : defaultSplit;
   }
 
+  function normalizeDiagnosticSeries(series, idKeys) {
+    if (!series || !Array.isArray(series.values)) return null;
+
+    const id = idKeys.map((key) => series[key]).find(Boolean) || "diagnostic_series";
+    return {
+      id,
+      caseId: series.case_id || "",
+      coordinateFrame: series.coordinate_frame || "",
+      quantity: series.quantity || "",
+      values: series.values.filter((value) => value && typeof value === "object"),
+    };
+  }
+
+  function normalizeDiagnostics(diagnostics) {
+    if (!diagnostics || typeof diagnostics !== "object") {
+      return { cpCuts: [], velocityProfiles: [] };
+    }
+
+    return {
+      cpCuts: (Array.isArray(diagnostics.cp_cuts) ? diagnostics.cp_cuts : [])
+        .map((series) => normalizeDiagnosticSeries(series, ["cut_id", "case_id"]))
+        .filter(Boolean),
+      velocityProfiles: (Array.isArray(diagnostics.velocity_profiles) ? diagnostics.velocity_profiles : [])
+        .map((series) => normalizeDiagnosticSeries(series, ["station_id", "case_id"]))
+        .filter(Boolean),
+    };
+  }
+
+  function diagnosticSummary(row, key, emptyText) {
+    const entries = row?.diagnostics?.[key] || [];
+    if (!entries.length) return emptyText;
+    return entries.map((entry) => entry.id).join(", ");
+  }
+
+  function firstNumericField(point, keys) {
+    for (const key of keys.filter(Boolean)) {
+      const value = parseNumber(point[key]);
+      if (value !== null) return value;
+    }
+    return null;
+  }
+
+  function diagnosticPointSeries(series, xKeys, yKeys) {
+    if (!series || !Array.isArray(series.values)) return null;
+
+    const quantityKeys = [series.quantity, ...yKeys].filter(Boolean);
+    const data = series.values
+      .map((point) => {
+        const x = firstNumericField(point, xKeys);
+        const y = firstNumericField(point, quantityKeys);
+        return x === null || y === null ? null : { x, y };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.x - b.x);
+
+    return data.length ? data : null;
+  }
+
+  function stationToken(value) {
+    return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  }
+
+  function diagnosticVelocitySeries(row, station) {
+    const profiles = row?.diagnostics?.velocityProfiles || [];
+    if (!profiles.length) return null;
+
+    const activeToken = stationToken(activeStation);
+    const matchedProfile =
+      profiles.find((profile) => stationToken(profile.id).includes(activeToken)) ||
+      profiles.find((profile) => stationToken(activeStation).includes(stationToken(profile.id))) ||
+      profiles[0];
+
+    return diagnosticPointSeries(matchedProfile, ["z", "y", "x", "s", "distance"], ["u_over_u_inf", "u", "velocity", "value"]);
+  }
+
+  function diagnosticCpSeries(row) {
+    const cut = row?.diagnostics?.cpCuts?.[0];
+    return diagnosticPointSeries(cut, ["x", "s", "arc_length"], ["cp", "pressure_coefficient", "value"]);
+  }
+
+  function xySeries(xValues, yValues) {
+    return yValues.map((y, index) => ({ x: xValues[index], y }));
+  }
+
   function knownDatasetNames() {
     return uniqueInOrder([
       ...Object.keys(datasetProfiles),
@@ -1568,6 +1652,7 @@
       paperUrl: entry.paper_url || "",
       codeUrl: entry.code_url || "",
       institution: entry.institution || "",
+      diagnostics: normalizeDiagnostics(entry.diagnostics),
       note: entry.note || (entry.institution ? `Approved submission from ${entry.institution}.` : "Approved submission."),
     };
   }
@@ -2182,14 +2267,28 @@
   }
 
   function cpSeries(modelId, chartType) {
+    const row = submissions.find((entry) => entry.id === modelId);
+    const diagnosticSeries = diagnosticCpSeries(row);
+    if (diagnosticSeries) return diagnosticSeries;
+
     const profile = chartProfile(chartType);
-    return profile.cp.groundTruth.map((value, index) => value + modelPerturbation(modelId, index, 0.22));
+    return profile.cp.groundTruth.map((value, index) => ({
+      x: profile.cp.x[index],
+      y: value + modelPerturbation(modelId, index, 0.22),
+    }));
   }
 
   function velocitySeries(modelId, station) {
+    const row = submissions.find((entry) => entry.id === modelId);
+    const diagnosticSeries = diagnosticVelocitySeries(row, station);
+    if (diagnosticSeries) return diagnosticSeries;
+
     return station.groundTruth.map((value, index) => {
       const wakeWeight = index < 6 ? 1.0 : 0.4;
-      return clamp(value + modelPerturbation(modelId, index, 0.18) * wakeWeight, 0, 1.15);
+      return {
+        x: station.z[index],
+        y: clamp(value + modelPerturbation(modelId, index, 0.18) * wakeWeight, 0, 1.15),
+      };
     });
   }
 
@@ -2629,14 +2728,15 @@
     if (!cpChart) return;
     const profile = chartProfile("cp");
     const models = checkedModels("cp-models");
-    cpChart.data.labels = profile.cp.x;
+    cpChart.data.labels = [];
     cpChart.data.datasets = [
-      lineDataset("Ground truth", profile.cp.groundTruth, palette.groundTruth, false),
+      lineDataset("Ground truth", xySeries(profile.cp.x, profile.cp.groundTruth), palette.groundTruth, false),
       ...models.map((modelId, index) => {
         const row = submissions.find((entry) => entry.id === modelId);
         return lineDataset(row?.model || modelId, cpSeries(modelId, "cp"), modelColor(modelId, index), true);
       }),
     ];
+    cpChart.options.scales.x.type = "linear";
     cpChart.options.scales.x.title.text = profile.cpXTitle;
     cpChart.update();
   }
@@ -2647,14 +2747,15 @@
     const station = profile.velocityStations[activeStation] || Object.values(profile.velocityStations)[0];
     const models = checkedModels("velocity-models");
     setText("velocity-station-label", station.label);
-    velocityChart.data.labels = station.z;
+    velocityChart.data.labels = [];
     velocityChart.data.datasets = [
-      lineDataset("Ground truth", station.groundTruth, palette.groundTruth, false),
+      lineDataset("Ground truth", xySeries(station.z, station.groundTruth), palette.groundTruth, false),
       ...models.map((modelId, index) => {
         const row = submissions.find((entry) => entry.id === modelId);
         return lineDataset(row?.model || modelId, velocitySeries(modelId, station), modelColor(modelId, index), true);
       }),
     ];
+    velocityChart.options.scales.x.type = "linear";
     velocityChart.options.scales.x.title.text = profile.velocityXTitle || "z/H";
     velocityChart.update();
   }
@@ -2844,6 +2945,8 @@
     appendDetailField(details, "Cl R2", formatNumber(row.r2Cl, 3));
     appendDetailField(details, "Velocity profiles R2", formatNumber(row.velocityProfileR2, 3));
     appendDetailField(details, "Cp cuts R2", formatNumber(row.cpCutR2, 3));
+    appendDetailField(details, "Cp diagnostic cuts", diagnosticSummary(row, "cpCuts", "Not provided"));
+    appendDetailField(details, "Velocity diagnostic profiles", diagnosticSummary(row, "velocityProfiles", "Not provided"));
     appendDetailField(details, "Params (M)", formatNumber(row.params, 2));
     appendDetailField(details, "Submission date", row.date);
     body.appendChild(details);
