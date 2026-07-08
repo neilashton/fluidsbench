@@ -884,6 +884,10 @@
       tr.appendChild(chipCell("Type", row.type, "leaderboard-type-cell", "leaderboard-type"));
       tr.appendChild(chipCell("Dataset", row.dataset, "leaderboard-dataset-cell", "leaderboard-dataset"));
       tr.appendChild(chipCell("Split", row.split, "leaderboard-split-cell", "leaderboard-split"));
+      tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score"));
+      tr.appendChild(metricCell("Field score (50%)", row, "fieldScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Force score (25%)", row, "forceScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Diagnostic score (25%)", row, "diagnosticScore", "leaderboard-component-score"));
       tr.appendChild(metricCell("Surface pressure rel L2 (%)", row, "surfacePressure"));
       tr.appendChild(metricCell("Surface pressure rel L1 (%)", row, "surfacePressureL1"));
       tr.appendChild(metricCell("Surface tau wall rel L2 (%)", row, "surfaceTau"));
@@ -898,10 +902,6 @@
       tr.appendChild(metricCell("Cp cuts R2", row, "cpCutR2"));
       tr.appendChild(tableCell("Params (M)", formatNumber(row.params, 2)));
       tr.appendChild(tableCell("Submission date", row.date));
-      tr.appendChild(metricCell("Field score (50%)", row, "fieldScore", "leaderboard-component-score"));
-      tr.appendChild(metricCell("Force score (25%)", row, "forceScore", "leaderboard-component-score"));
-      tr.appendChild(metricCell("Diagnostic score (25%)", row, "diagnosticScore", "leaderboard-component-score"));
-      tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score"));
 
       const details = document.createElement("button");
       details.className = "leaderboard-detail-button";

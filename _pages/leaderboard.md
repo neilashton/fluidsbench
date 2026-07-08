@@ -224,6 +224,10 @@ chart:
           <th data-sort="type">Type</th>
           <th data-sort="dataset">Dataset</th>
           <th data-sort="split">Split</th>
+          <th data-sort="score">Overall score</th>
+          <th data-sort="fieldScore">Field score<br>(50%)</th>
+          <th data-sort="forceScore">Force score<br>(25%)</th>
+          <th data-sort="diagnosticScore">Diagnostic score<br>(25%)</th>
           <th data-sort="surfacePressure">Surface pressure<br>rel L2 (%)</th>
           <th data-sort="surfacePressureL1">Surface pressure<br>rel L1 (%)</th>
           <th data-sort="surfaceTau">Surface tau wall<br>rel L2 (%)</th>
@@ -238,10 +242,6 @@ chart:
           <th data-sort="cpCutR2">Cp cuts<br>R<sup>2</sup></th>
           <th data-sort="params">Params (M)</th>
           <th data-sort="date">Submission date</th>
-          <th data-sort="fieldScore">Field score<br>(50%)</th>
-          <th data-sort="forceScore">Force score<br>(25%)</th>
-          <th data-sort="diagnosticScore">Diagnostic score<br>(25%)</th>
-          <th data-sort="score">Overall score</th>
           <th>Details</th>
         </tr>
       </thead>
