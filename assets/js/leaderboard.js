@@ -335,7 +335,8 @@
 
   function rowMatchesFilters(row, filters) {
     const datasetMatch = filters.datasets.all || filters.datasets.values.has(row.dataset);
-    const typeMatch = filters.types.all || filters.types.values.has(row.type);
+    const rowTypes = row.modelTypes?.length ? row.modelTypes : [row.type];
+    const typeMatch = filters.types.all || rowTypes.some((type) => filters.types.values.has(type));
     const splitMatch = filters.splits.all || filters.splits.values.has(row.split);
     return datasetMatch && typeMatch && splitMatch;
   }
@@ -507,6 +508,22 @@
     return diagnosticPointSeries(cut, ["x", "s", "arc_length"], ["cp", "pressure_coefficient", "value"]);
   }
 
+  function normalizeModelTypes(entry) {
+    const rawTypes = Array.isArray(entry.model_types)
+      ? entry.model_types
+      : Array.isArray(entry.modelTypes)
+        ? entry.modelTypes
+        : [entry.model_type ?? entry.modelType ?? entry.type];
+    const splitTypes = rawTypes.flatMap((type) => String(type || "").split(/[;,|]/));
+    const types = uniqueInOrder(splitTypes.map((type) => type.trim()).filter(Boolean));
+    return types.length ? types : ["Other"];
+  }
+
+  function modelTypesLabel(row) {
+    const types = row.modelTypes?.length ? row.modelTypes : [row.type || "Other"];
+    return types.join(", ");
+  }
+
   function knownDatasetNames() {
     return uniqueInOrder([
       ...Object.keys(datasetProfiles),
@@ -611,10 +628,12 @@
     const model = entry.model || "Unnamed model";
     const dataset = entry.dataset || "AhmedML";
     const id = `approved-${entry.submission_id || slug(`${dataset}-${rowSplit(entry)}-${model}`)}`;
+    const modelTypes = normalizeModelTypes(entry);
     return {
       id,
       model,
-      type: entry.model_type || "Other",
+      type: modelTypes[0],
+      modelTypes,
       dataset,
       split: normalizeSplit(entry.split ?? entry.dataset_split ?? entry.benchmark_split, dataset),
       ...metrics,
@@ -847,6 +866,18 @@
     return tableCell(label, chip, cellClassName);
   }
 
+  function chipListCell(label, values, cellClassName, chipClassName) {
+    const wrapper = document.createElement("span");
+    wrapper.className = "leaderboard-chip-list";
+    values.forEach((value) => {
+      const chip = document.createElement("span");
+      chip.className = chipClassName;
+      chip.textContent = value;
+      wrapper.appendChild(chip);
+    });
+    return tableCell(label, wrapper, cellClassName);
+  }
+
   function metricCell(label, row, key, className) {
     const metric = metricDefinitions[key];
     const value = Number(row[key]);
@@ -907,7 +938,7 @@
 
       tr.appendChild(tableCell("Model", row.model, "leaderboard-model"));
       tr.appendChild(tableCell("Submitted by", row.submittedBy, "leaderboard-submitter"));
-      tr.appendChild(chipCell("Type", row.type, "leaderboard-type-cell", "leaderboard-type"));
+      tr.appendChild(chipListCell("Type", row.modelTypes?.length ? row.modelTypes : [row.type], "leaderboard-type-cell", "leaderboard-type"));
       tr.appendChild(chipCell("Dataset", row.dataset, "leaderboard-dataset-cell", "leaderboard-dataset"));
       tr.appendChild(chipCell("Split", row.split, "leaderboard-split-cell", "leaderboard-split"));
       tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score"));
@@ -1910,7 +1941,7 @@
     const details = document.createElement("dl");
     details.className = "details-grid";
     appendDetailField(details, "Submitted by", row.submittedBy);
-    appendDetailField(details, "Model type", row.type);
+    appendDetailField(details, "Model types", modelTypesLabel(row));
     appendDetailField(details, "Dataset", row.dataset);
     appendDetailField(details, "Split", row.split);
     appendDetailField(details, "Field score (50%)", formatNumber(row.fieldScore, 1));

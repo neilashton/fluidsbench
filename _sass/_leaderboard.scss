@@ -337,6 +337,12 @@ html[data-theme="dark"] .leaderboard-page {
   font-weight: 700;
 }
 
+.leaderboard-chip-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
 .leaderboard-type,
 .leaderboard-dataset,
 .leaderboard-split {
