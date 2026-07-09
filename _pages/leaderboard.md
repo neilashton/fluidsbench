@@ -22,6 +22,11 @@ chart:
     >Submit result</a>
   </div>
 
+  <p class="leaderboard-subnav">
+    Looking for the CarBench (DrivAerNet++ surface-pressure) benchmark?
+    <a href="{{ '/leaderboards/carbench/' | relative_url }}">View the CarBench leaderboard →</a>
+  </p>
+
   <section class="leaderboard-controls" aria-label="Leaderboard filters">
     <div class="leaderboard-control">
       <span class="leaderboard-control-title" id="dataset-filter-label">Dataset</span>
