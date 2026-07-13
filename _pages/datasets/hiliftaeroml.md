@@ -59,6 +59,160 @@ nav: false
   </section>
 
   <section class="dataset-panel">
+    <h3>Official benchmark splits</h3>
+    <p>
+      HiLiftAeroML submissions should set <code>split</code> to one of the benchmark split names below. The split
+      manifest covers the 1,800 complete LHC cases: 180 geometries across 10 angles of attack from 4 to 22 degrees.
+      The raw Hugging Face manifest IDs are accepted as aliases by the leaderboard, but the table below shows the
+      readable names used on FluidsBench.
+    </p>
+
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead>
+          <tr>
+            <th>Split</th>
+            <th>Manifest ID</th>
+            <th>Type</th>
+            <th>Purpose</th>
+            <th>Train</th>
+            <th>Validation</th>
+            <th>Test</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Full</code></td>
+            <td><code>full</code></td>
+            <td>In-dist</td>
+            <td>Random case-level baseline split.</td>
+            <td>1260</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>Medium</code></td>
+            <td><code>medium</code></td>
+            <td>In-dist</td>
+            <td>Intermediate data-efficiency split between Full and Scarce.</td>
+            <td>510</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>Scarce</code></td>
+            <td><code>scarce</code></td>
+            <td>In-dist</td>
+            <td>Data-efficiency split using one sixth of the Full training data.</td>
+            <td>210</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>Super scarce</code></td>
+            <td><code>super_scarce</code></td>
+            <td>In-dist</td>
+            <td>Extreme data-efficiency split using one thirty-sixth of the Full training data.</td>
+            <td>35</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>Geometry</code></td>
+            <td><code>geometry</code></td>
+            <td>In-dist</td>
+            <td>Generalization to unseen geometries, with all 10 AoAs per selected geometry.</td>
+            <td>1260</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>Geometry medium</code></td>
+            <td><code>geometry_medium</code></td>
+            <td>In-dist</td>
+            <td>Unseen-geometry generalization from 51 training geometries.</td>
+            <td>510</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>Geometry scarce</code></td>
+            <td><code>geometry_scarce</code></td>
+            <td>In-dist</td>
+            <td>Unseen-geometry generalization from 21 training geometries.</td>
+            <td>210</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>Geometry super scarce</code></td>
+            <td><code>geometry_super_scarce</code></td>
+            <td>In-dist</td>
+            <td>Unseen-geometry generalization from 4 training geometries.</td>
+            <td>40</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>AoA 4</code></td>
+            <td><code>single_aoa_4</code></td>
+            <td>In-dist</td>
+            <td>Single-AoA geometry generalization at 4 degrees, representative of pre-stall flow.</td>
+            <td>126</td>
+            <td>18</td>
+            <td>36</td>
+          </tr>
+          <tr>
+            <td><code>AoA 12</code></td>
+            <td><code>single_aoa_12</code></td>
+            <td>In-dist</td>
+            <td>Single-AoA geometry generalization at 12 degrees, representative of mid-range flow.</td>
+            <td>126</td>
+            <td>18</td>
+            <td>36</td>
+          </tr>
+          <tr>
+            <td><code>AoA 22</code></td>
+            <td><code>single_aoa_22</code></td>
+            <td>In-dist</td>
+            <td>Single-AoA geometry generalization at 22 degrees, representative of post-stall flow.</td>
+            <td>126</td>
+            <td>18</td>
+            <td>36</td>
+          </tr>
+          <tr>
+            <td><code>AoA extrapolation</code></td>
+            <td><code>aoa</code></td>
+            <td>OOD</td>
+            <td>Train and validate on AoA &lt;= 12 degrees, then test on AoA &gt;= 14 degrees.</td>
+            <td>788</td>
+            <td>112</td>
+            <td>900</td>
+          </tr>
+          <tr>
+            <td><code>Deflection</code></td>
+            <td><code>deflection</code></td>
+            <td>OOD</td>
+            <td>Geometry extrapolation from low mean deflection to high deflection settings.</td>
+            <td>1260</td>
+            <td>180</td>
+            <td>360</td>
+          </tr>
+          <tr>
+            <td><code>Stall</code></td>
+            <td><code>stall</code></td>
+            <td>OOD</td>
+            <td>Flow-regime extrapolation from pre-stall training cases to post-stall test cases.</td>
+            <td>942</td>
+            <td>135</td>
+            <td>723</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="dataset-panel">
     <h3>Leaderboard submission package</h3>
     <p>
       Submit one compressed archive per model. Prediction files should use the benchmark case identifiers and point order
@@ -79,7 +233,7 @@ nav: false
         <tbody>
           <tr>
             <td><code>metadata.json</code></td>
-            <td><code>model_name</code>, <code>model_type</code>, <code>dataset</code>, <code>parameter_count</code>, <code>submission_date</code></td>
+            <td><code>model_name</code>, <code>model_type</code>, <code>model_types</code>, <code>dataset</code>, <code>split</code>, <code>parameter_count</code>, <code>submission_date</code></td>
             <td>Leaderboard display and filtering.</td>
           </tr>
           <tr>
@@ -284,6 +438,7 @@ S_overall  = sum(weight_q * S_q)</code></pre>
       <li><a href="https://caemldatasets.org/hiliftaeroml/">HiLiftAeroML dataset page</a></li>
       <li><a href="https://arxiv.org/abs/2605.19565">HiLiftAeroML paper</a></li>
       <li><a href="https://huggingface.co/datasets/nvidia/HiLiftAeroML">HiLiftAeroML Hugging Face dataset</a></li>
+      <li><a href="https://huggingface.co/datasets/nvidia/HiLiftAeroML/blob/main/splits/README.md">HiLiftAeroML split README</a></li>
       <li><a href="{{ '/' | relative_url }}">CFD leaderboard prototype</a></li>
     </ul>
   </section>

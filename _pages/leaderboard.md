@@ -159,21 +159,33 @@ chart:
             <input type="checkbox" value="Full" />
             Full
           </label>
-          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
             <input type="checkbox" value="Medium" />
             Medium
           </label>
-          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML AirfRANS">
+          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML AirfRANS">
             <input type="checkbox" value="Scarce" />
             Scarce
           </label>
-          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
             <input type="checkbox" value="Super scarce" />
             Super scarce
           </label>
-          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+          <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
             <input type="checkbox" value="Geometry" />
             Geometry
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+            <input type="checkbox" value="Geometry medium" />
+            Geometry medium
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+            <input type="checkbox" value="Geometry scarce" />
+            Geometry scarce
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+            <input type="checkbox" value="Geometry super scarce" />
+            Geometry super scarce
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
             <input type="checkbox" value="High drag" />
@@ -195,9 +207,17 @@ chart:
             <input type="checkbox" value="Reynolds extrapolation" />
             Reynolds extrapolation
           </label>
-          <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML AirfRANS">
             <input type="checkbox" value="AoA extrapolation" />
             AoA extrapolation
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+            <input type="checkbox" value="Deflection" />
+            Deflection
+          </label>
+          <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+            <input type="checkbox" value="Stall" />
+            Stall
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
             <input type="checkbox" value="AoA 4" />
@@ -426,21 +446,33 @@ chart:
               <input name="cp-split-filter-value" type="radio" value="Full" checked />
               Full
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
               <input name="cp-split-filter-value" type="radio" value="Medium" />
               Medium
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML AirfRANS">
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML AirfRANS">
               <input name="cp-split-filter-value" type="radio" value="Scarce" />
               Scarce
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
               <input name="cp-split-filter-value" type="radio" value="Super scarce" />
               Super scarce
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
               <input name="cp-split-filter-value" type="radio" value="Geometry" />
               Geometry
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="cp-split-filter-value" type="radio" value="Geometry medium" />
+              Geometry medium
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="cp-split-filter-value" type="radio" value="Geometry scarce" />
+              Geometry scarce
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="cp-split-filter-value" type="radio" value="Geometry super scarce" />
+              Geometry super scarce
             </label>
             <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
               <input name="cp-split-filter-value" type="radio" value="High drag" />
@@ -462,9 +494,17 @@ chart:
               <input name="cp-split-filter-value" type="radio" value="Reynolds extrapolation" />
               Reynolds extrapolation
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML AirfRANS">
               <input name="cp-split-filter-value" type="radio" value="AoA extrapolation" />
               AoA extrapolation
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="cp-split-filter-value" type="radio" value="Deflection" />
+              Deflection
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="cp-split-filter-value" type="radio" value="Stall" />
+              Stall
             </label>
             <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
               <input name="cp-split-filter-value" type="radio" value="AoA 4" />
@@ -595,21 +635,33 @@ chart:
               <input name="velocity-split-filter-value" type="radio" value="Full" checked />
               Full
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
               <input name="velocity-split-filter-value" type="radio" value="Medium" />
               Medium
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML AirfRANS">
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML AirfRANS">
               <input name="velocity-split-filter-value" type="radio" value="Scarce" />
               Scarce
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
               <input name="velocity-split-filter-value" type="radio" value="Super scarce" />
               Super scarce
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
+            <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
               <input name="velocity-split-filter-value" type="radio" value="Geometry" />
               Geometry
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="velocity-split-filter-value" type="radio" value="Geometry medium" />
+              Geometry medium
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="velocity-split-filter-value" type="radio" value="Geometry scarce" />
+              Geometry scarce
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="velocity-split-filter-value" type="radio" value="Geometry super scarce" />
+              Geometry super scarce
             </label>
             <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
               <input name="velocity-split-filter-value" type="radio" value="High drag" />
@@ -631,9 +683,17 @@ chart:
               <input name="velocity-split-filter-value" type="radio" value="Reynolds extrapolation" />
               Reynolds extrapolation
             </label>
-            <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML AirfRANS">
               <input name="velocity-split-filter-value" type="radio" value="AoA extrapolation" />
               AoA extrapolation
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="velocity-split-filter-value" type="radio" value="Deflection" />
+              Deflection
+            </label>
+            <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
+              <input name="velocity-split-filter-value" type="radio" value="Stall" />
+              Stall
             </label>
             <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
               <input name="velocity-split-filter-value" type="radio" value="AoA 4" />
