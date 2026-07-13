@@ -25,6 +25,7 @@
   };
 
   const defaultSplit = "Default";
+  const fullSplit = "Full";
 
   const leaderboardBaseUrl =
     window.FluidsBenchLeaderboardBaseUrl || new URL("/", window.location.origin).href;
@@ -106,10 +107,39 @@
     other: "Other",
   };
 
+  const splitAliases = new Map([
+    ["full", "Full"],
+    ["medium", "Medium"],
+    ["scarce", "Scarce"],
+    ["super_scarce", "Super scarce"],
+    ["super-scarce", "Super scarce"],
+    ["super scarce", "Super scarce"],
+    ["geometry", "Geometry"],
+    ["high_drag", "High drag"],
+    ["high-drag", "High drag"],
+    ["high drag", "High drag"],
+    ["low_drag", "Low drag"],
+    ["low-drag", "Low drag"],
+    ["low drag", "Low drag"],
+    ["image_wake", "Image wake"],
+    ["image-wake", "Image wake"],
+    ["image wake", "Image wake"],
+    ["rear_separation", "Rear separation"],
+    ["rear-separation", "Rear separation"],
+    ["rear separation", "Rear separation"],
+  ]);
+
   const predefinedSplitOptions = [
-    { value: defaultSplit, label: "Default", datasets: ["AhmedML", "DrivAerML", "DrivAerNet++", "WindsorML"] },
-    { value: "Full", label: "Full", datasets: ["HiLiftAeroML", "AirfRANS"] },
-    { value: "Scarce", label: "Scarce", datasets: ["AirfRANS"] },
+    { value: defaultSplit, label: "Default", datasets: ["DrivAerNet++", "WindsorML"] },
+    { value: fullSplit, label: "Full", datasets: ["AhmedML", "DrivAerML", "HiLiftAeroML", "AirfRANS"] },
+    { value: "Medium", label: "Medium", datasets: ["AhmedML", "DrivAerML"] },
+    { value: "Scarce", label: "Scarce", datasets: ["AhmedML", "DrivAerML", "AirfRANS"] },
+    { value: "Super scarce", label: "Super scarce", datasets: ["AhmedML", "DrivAerML"] },
+    { value: "Geometry", label: "Geometry", datasets: ["AhmedML", "DrivAerML"] },
+    { value: "High drag", label: "High drag", datasets: ["AhmedML", "DrivAerML"] },
+    { value: "Low drag", label: "Low drag", datasets: ["AhmedML", "DrivAerML"] },
+    { value: "Image wake", label: "Image wake", datasets: ["AhmedML"] },
+    { value: "Rear separation", label: "Rear separation", datasets: ["DrivAerML"] },
     { value: "Reynolds extrapolation", label: "Reynolds extrapolation", datasets: ["AirfRANS"] },
     { value: "AoA extrapolation", label: "AoA extrapolation", datasets: ["AirfRANS"] },
     { value: "AoA 4", label: "AoA 4", datasets: ["HiLiftAeroML"] },
@@ -210,8 +240,8 @@
   let velocityChart = null;
   let activeStation = "0.25L";
   const chartSelections = {
-    cp: { dataset: "AhmedML", split: defaultSplit },
-    velocity: { dataset: "AhmedML", split: defaultSplit },
+    cp: { dataset: "AhmedML", split: fullSplit },
+    velocity: { dataset: "AhmedML", split: fullSplit },
   };
   const chartScopeSelections = {
     comparison: { dataset: "AhmedML", split: allChartSplitsValue },
@@ -423,7 +453,7 @@
 
     const lowerValue = rawValue.toLowerCase();
     if (lowerValue === "default") return defaultSplit;
-    if (lowerValue === "full") return "Full";
+    if (splitAliases.has(lowerValue)) return splitAliases.get(lowerValue);
 
     const aoaMatch = rawValue.match(/(?:aoa\s*)?(\d+)/i);
     if (dataset === "HiLiftAeroML" && aoaMatch) return `AoA ${aoaMatch[1]}`;
@@ -632,6 +662,12 @@
 
     predefinedSplitOptions.forEach((option) => {
       addOption(option.value, option.label, option.datasets);
+    });
+    leaderboardDatasetEntries().forEach((entry) => {
+      (Array.isArray(entry.splits) ? entry.splits : []).forEach((split) => {
+        const splitValue = split.name || split.label || split.id;
+        addOption(splitValue, split.name || split.label || splitValue, [entry.name]);
+      });
     });
     submissions.forEach((row) => {
       addOption(rowSplit(row), rowSplit(row), [row.dataset]);

@@ -55,6 +55,86 @@ nav: false
   </section>
 
   <section class="dataset-panel">
+    <h3>Official benchmark splits</h3>
+    <p>
+      AhmedML submissions should set <code>split</code> to one of the benchmark split names below. The split files are
+      distributed as a flat manifest with train, validation, and test run IDs for each split.
+    </p>
+
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead>
+          <tr>
+            <th>Split</th>
+            <th>Purpose</th>
+            <th>Train</th>
+            <th>Validation</th>
+            <th>Test</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>Full</code></td>
+            <td>Seed-42 random public baseline split.</td>
+            <td>400</td>
+            <td>50</td>
+            <td>50</td>
+          </tr>
+          <tr>
+            <td><code>Medium</code></td>
+            <td>Nested data-efficiency subset with fixed validation and test cases.</td>
+            <td>133</td>
+            <td>50</td>
+            <td>50</td>
+          </tr>
+          <tr>
+            <td><code>Scarce</code></td>
+            <td>Smaller nested data-efficiency subset with fixed validation and test cases.</td>
+            <td>67</td>
+            <td>50</td>
+            <td>50</td>
+          </tr>
+          <tr>
+            <td><code>Super scarce</code></td>
+            <td>Minimum-data nested training subset with fixed validation and test cases.</td>
+            <td>11</td>
+            <td>50</td>
+            <td>50</td>
+          </tr>
+          <tr>
+            <td><code>Geometry</code></td>
+            <td>STL-Chamfer geometry out-of-distribution split.</td>
+            <td>350</td>
+            <td>50</td>
+            <td>100</td>
+          </tr>
+          <tr>
+            <td><code>High drag</code></td>
+            <td>High-drag force-regime out-of-distribution split.</td>
+            <td>350</td>
+            <td>50</td>
+            <td>100</td>
+          </tr>
+          <tr>
+            <td><code>Low drag</code></td>
+            <td>Low-drag force-regime out-of-distribution split.</td>
+            <td>350</td>
+            <td>50</td>
+            <td>100</td>
+          </tr>
+          <tr>
+            <td><code>Image wake</code></td>
+            <td>Image-derived UxMean wake out-of-distribution split.</td>
+            <td>350</td>
+            <td>50</td>
+            <td>100</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="dataset-panel">
     <h3>Leaderboard submission package</h3>
     <p>
       Submit one compressed archive per model. Prediction files should use the benchmark case identifiers and point order
@@ -75,7 +155,7 @@ nav: false
         <tbody>
           <tr>
             <td><code>metadata.json</code></td>
-            <td><code>model_name</code>, <code>model_type</code>, <code>dataset</code>, <code>parameter_count</code>, <code>submission_date</code></td>
+            <td><code>model_name</code>, <code>model_type</code>, <code>model_types</code>, <code>dataset</code>, <code>split</code>, <code>parameter_count</code>, <code>submission_date</code></td>
             <td>Leaderboard display and filtering.</td>
           </tr>
           <tr>
