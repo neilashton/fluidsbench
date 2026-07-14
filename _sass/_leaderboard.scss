@@ -70,13 +70,7 @@ html[data-theme="dark"] .leaderboard-page {
   align-items: center;
   display: flex;
   gap: 1rem;
-  justify-content: space-between;
-
-  p {
-    color: var(--leaderboard-muted);
-    font-size: 0.9rem;
-    margin: 0;
-  }
+  justify-content: flex-end;
 }
 
 .leaderboard-submit-button {
@@ -332,6 +326,75 @@ html[data-theme="dark"] .leaderboard-page {
   }
 }
 
+.leaderboard-column-help-trigger {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: currentColor;
+  cursor: help;
+  display: inline-flex;
+  font-size: 0.7rem;
+  height: 1.25rem;
+  justify-content: center;
+  margin-left: 0.3rem;
+  opacity: 0.58;
+  padding: 0;
+  vertical-align: middle;
+  width: 1.25rem;
+}
+
+.leaderboard-column-help-trigger:hover,
+.leaderboard-column-help-trigger:focus-visible,
+.leaderboard-column-help-trigger[aria-expanded="true"] {
+  color: var(--leaderboard-primary);
+  opacity: 1;
+}
+
+.leaderboard-column-help-trigger:focus-visible {
+  outline: 2px solid var(--leaderboard-primary);
+  outline-offset: 1px;
+}
+
+.leaderboard-column-help-popover {
+  background: var(--global-bg-color);
+  border: 1px solid var(--leaderboard-border);
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  color: var(--global-text-color);
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  line-height: 1.45;
+  max-width: min(360px, calc(100vw - 16px));
+  padding: 0.8rem;
+  position: fixed;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  width: max-content;
+  z-index: 3000;
+
+  p {
+    margin: 0.35rem 0 0;
+  }
+
+  a {
+    color: var(--leaderboard-primary);
+    display: inline-block;
+    font-weight: 700;
+    margin-top: 0.55rem;
+  }
+}
+
+.leaderboard-column-help-title {
+  display: block;
+  font-size: 0.86rem;
+}
+
+.leaderboard-column-help-options {
+  color: var(--leaderboard-muted);
+}
+
 .leaderboard-rank {
   align-items: center;
   background: var(--leaderboard-chip-bg);
@@ -426,6 +489,7 @@ html[data-theme="dark"] .leaderboard-page {
   border: 1px solid var(--leaderboard-border);
   border-radius: 8px;
   padding: 1rem;
+  scroll-margin-top: 5rem;
 }
 
 .leaderboard-panel h3,

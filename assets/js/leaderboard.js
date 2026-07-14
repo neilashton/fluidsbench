@@ -84,15 +84,139 @@
     score: { label: "Overall score", digits: 1, scoreKind: "score" },
   };
 
+  const columnHelpDefinitions = {
+    rank: {
+      title: "Rank",
+      description: "Position within the selected dataset and split, ordered by weighted overall score.",
+    },
+    model: {
+      title: "Model",
+      description: "The model name supplied by the submitter. This is a free-text value.",
+    },
+    submittedBy: {
+      title: "Submitted by",
+      description: "The person, research group, institution, or company that submitted the result.",
+    },
+    type: {
+      title: "Model type",
+      description: "One or more broad architecture categories supplied with the submission.",
+      options: ["Transformer", "GNN", "Neural operator", "Implicit field", "MLP", "Point cloud", "Other"],
+    },
+    trainingRegimeLabel: {
+      title: "Training",
+      description: "How the model used external pretraining and the official benchmark training data.",
+      options: ["Scratch", "Zero-shot", "Pretrained + official train", "Other"],
+    },
+    dataset: {
+      title: "Dataset",
+      description: "The FluidsBench benchmark dataset used for evaluation.",
+      options: ["AhmedML", "DrivAerML", "DrivAerNet++", "WindsorML", "HiLiftAeroML", "AirfRANS"],
+    },
+    split: {
+      title: "Split",
+      description: "The official benchmark split evaluated. Available choices depend on the selected dataset.",
+      options: () => predefinedSplitOptions.map((option) => option.label),
+    },
+    score: {
+      title: "Overall score",
+      description: "A 0-100 weighted score: 50% field, 25% force, and 25% diagnostic performance. Higher is better.",
+      metricsLink: true,
+    },
+    fieldScore: {
+      title: "Field score",
+      description: "A 0-100 score derived from the four relative L2 field errors. Higher is better.",
+      metricsLink: true,
+    },
+    forceScore: {
+      title: "Force score",
+      description: "A 0-100 weighted blend of drag and lift R2. Higher is better.",
+      metricsLink: true,
+    },
+    diagnosticScore: {
+      title: "Diagnostic score",
+      description: "A 0-100 weighted blend of velocity-profile and Cp-cut R2. Higher is better.",
+      metricsLink: true,
+    },
+    surfacePressure: {
+      title: "Surface pressure relative L2",
+      description: "Relative L2 error for predicted surface pressure in dimensional physical space. Lower is better.",
+      metricsLink: true,
+    },
+    surfacePressureL1: {
+      title: "Surface pressure relative L1",
+      description: "Relative L1 error for predicted surface pressure in dimensional physical space. Lower is better.",
+      metricsLink: true,
+    },
+    surfaceTau: {
+      title: "Surface wall shear relative L2",
+      description: "Relative L2 error for predicted surface wall shear in dimensional physical space. Lower is better.",
+      metricsLink: true,
+    },
+    surfaceTauL1: {
+      title: "Surface wall shear relative L1",
+      description: "Relative L1 error for predicted surface wall shear in dimensional physical space. Lower is better.",
+      metricsLink: true,
+    },
+    volumeVelocity: {
+      title: "Volume velocity relative L2",
+      description: "Relative L2 error for the predicted volume velocity field. Lower is better.",
+      metricsLink: true,
+    },
+    volumeVelocityL1: {
+      title: "Volume velocity relative L1",
+      description: "Relative L1 error for the predicted volume velocity field. Lower is better.",
+      metricsLink: true,
+    },
+    volumePressure: {
+      title: "Volume pressure relative L2",
+      description: "Relative L2 error for the predicted volume pressure field. Lower is better.",
+      metricsLink: true,
+    },
+    volumePressureL1: {
+      title: "Volume pressure relative L1",
+      description: "Relative L1 error for the predicted volume pressure field. Lower is better.",
+      metricsLink: true,
+    },
+    r2Cd: {
+      title: "Drag coefficient R2",
+      description: "Coefficient of determination for predicted drag coefficient across evaluated cases. Higher is better.",
+      metricsLink: true,
+    },
+    r2Cl: {
+      title: "Lift coefficient R2",
+      description: "Coefficient of determination for predicted lift coefficient across evaluated cases. Higher is better.",
+      metricsLink: true,
+    },
+    velocityProfileR2: {
+      title: "Velocity profiles R2",
+      description: "Coefficient of determination for the required velocity-profile diagnostics. Higher is better.",
+      metricsLink: true,
+    },
+    cpCutR2: {
+      title: "Cp cuts R2",
+      description: "Coefficient of determination for the required surface-pressure coefficient cuts. Higher is better.",
+      metricsLink: true,
+    },
+    params: {
+      title: "Parameters",
+      description: "The submitter-reported model parameter count, displayed in millions.",
+    },
+    date: {
+      title: "Submission date",
+      description: "The date associated with the approved leaderboard submission.",
+    },
+    details: {
+      title: "Details",
+      description: "Opens submission metadata, training information, diagnostic coverage, and paper or code links.",
+    },
+  };
+
   const comparisonMetricGroups = {
     summary: ["score", "fieldScore", "forceScore", "diagnosticScore"],
     l2: ["surfacePressure", "surfaceTau", "volumeVelocity", "volumePressure"],
     l1: ["surfacePressureL1", "surfaceTauL1", "volumeVelocityL1", "volumePressureL1"],
     r2: ["r2Cd", "r2Cl", "forceR2", "velocityProfileR2", "cpCutR2"],
   };
-
-  const allChartDatasetsValue = "__all_datasets__";
-  const allChartSplitsValue = "__all_splits__";
 
   const trainingRegimeLabels = {
     from_scratch: "Scratch",
@@ -257,7 +381,7 @@
   };
 
   let sortState = { key: "score", direction: "desc" };
-  let primaryRankingKey = "score";
+  const rankMetricKey = "score";
   let comparisonChart = null;
   let comparisonChartRowsCache = [];
   let scatterChart = null;
@@ -265,13 +389,17 @@
   let cpChart = null;
   let velocityChart = null;
   let activeStation = "0.25L";
+  let columnHelpPopover = null;
+  let activeColumnHelpTrigger = null;
+  let columnHelpHideTimer = null;
+  const sharedSelection = { dataset: "AhmedML", split: fullSplit };
   const chartSelections = {
     cp: { dataset: "AhmedML", split: fullSplit },
     velocity: { dataset: "AhmedML", split: fullSplit },
   };
   const chartScopeSelections = {
-    comparison: { dataset: "AhmedML", split: allChartSplitsValue },
-    scatter: { dataset: allChartDatasetsValue, split: allChartSplitsValue },
+    comparison: { dataset: "AhmedML", split: fullSplit },
+    scatter: { dataset: "AhmedML", split: fullSplit },
   };
 
   function clamp(value, min, max) {
@@ -415,7 +543,7 @@
     const filters = currentFilters();
     return enrichedRows()
       .filter((row) => rowMatchesFilters(row, filters))
-      .sort((a, b) => compareRows(a, b, primaryRankingKey, defaultSortDirection(primaryRankingKey)))
+      .sort((a, b) => compareRows(a, b, rankMetricKey, defaultSortDirection(rankMetricKey)))
       .map((row, index) => ({ ...row, rank: index + 1 }));
   }
 
@@ -647,21 +775,9 @@
     ]);
   }
 
-  function chartScopeAllowsAllDatasets(scope) {
-    return scope !== "comparison";
-  }
-
-  function defaultChartScopeDataset() {
-    return knownDatasetNames()[0] || "AhmedML";
-  }
-
-  function normalizeChartScopeDataset(scope, dataset) {
+  function normalizeDatasetSelection(dataset) {
     const knownDatasets = knownDatasetNames();
-    if (chartScopeAllowsAllDatasets(scope) && (!dataset || dataset === allChartDatasetsValue)) {
-      return allChartDatasetsValue;
-    }
-
-    if (dataset && dataset !== allChartDatasetsValue && knownDatasets.includes(dataset)) {
+    if (dataset && knownDatasets.includes(dataset)) {
       return dataset;
     }
 
@@ -711,17 +827,17 @@
 
   function chartScopeRows(scope) {
     const selection = chartScopeSelections[scope];
-    const selectedDataset = normalizeChartScopeDataset(scope, selection?.dataset);
+    const selectedDataset = normalizeDatasetSelection(selection?.dataset);
     if (selection) selection.dataset = selectedDataset;
 
     const rows = enrichedRows().filter((row) => {
-      const datasetMatch = selectedDataset === allChartDatasetsValue || row.dataset === selectedDataset;
-      const splitMatch = !selection || selection.split === allChartSplitsValue || row.split === selection.split;
+      const datasetMatch = row.dataset === selectedDataset;
+      const splitMatch = !selection || row.split === selection.split;
       return datasetMatch && splitMatch;
     });
 
     return rows
-      .sort((a, b) => compareRows(a, b, primaryRankingKey, defaultSortDirection(primaryRankingKey)))
+      .sort((a, b) => compareRows(a, b, rankMetricKey, defaultSortDirection(rankMetricKey)))
       .map((row, index) => ({ ...row, rank: index + 1 }));
   }
 
@@ -876,32 +992,8 @@
     return loadPromise;
   }
 
-  function datasetsForChartScope(scope) {
-    const selection = chartScopeSelections[scope];
-    const selectedDataset = normalizeChartScopeDataset(scope, selection?.dataset);
-    if (selection) selection.dataset = selectedDataset;
-    if (selectedDataset === allChartDatasetsValue) return leaderboardDatasetNames();
-    return [selectedDataset];
-  }
-
   function datasetsForCurrentState() {
-    const filters = currentFilters();
-    const datasets = new Set();
-
-    if (filters.datasets.all) {
-      leaderboardDatasetNames().forEach((datasetName) => datasets.add(datasetName));
-    } else {
-      filters.datasets.values.forEach((datasetName) => datasets.add(datasetName));
-    }
-
-    ["cp", "velocity"].forEach((chartType) => {
-      if (chartSelections[chartType]?.dataset) datasets.add(chartSelections[chartType].dataset);
-    });
-    ["comparison", "scatter"].forEach((scope) => {
-      datasetsForChartScope(scope).forEach((datasetName) => datasets.add(datasetName));
-    });
-
-    return Array.from(datasets).filter((datasetName) => Boolean(leaderboardDatasetEntry(datasetName)));
+    return leaderboardDatasetEntry(sharedSelection.dataset) ? [sharedSelection.dataset] : [];
   }
 
   async function ensureDatasetRows(datasetNames) {
@@ -953,33 +1045,6 @@
     refreshAllChartPanels();
   }
 
-  async function refreshChartPanelForSelection(chartType) {
-    try {
-      await ensureDatasetRows([chartSelections[chartType].dataset]);
-    } catch (error) {
-      approvedSubmissionStatusMessage =
-        `Could not load ${chartSelections[chartType].dataset} from ${approvedSubmissionsSourceLabel} (${error.message}).`;
-    }
-    renderApprovedSubmissionStatus();
-    syncChartPanel(chartType);
-  }
-
-  async function refreshScopedMetricChart(scope) {
-    try {
-      await loadLeaderboardManifest();
-      await ensureDatasetRows(datasetsForChartScope(scope));
-    } catch (error) {
-      approvedSubmissionStatusMessage =
-        `Could not load ${approvedSubmissionsSourceLabel} for ${scope} chart (${error.message}). Showing currently cached rows.`;
-    }
-
-    renderApprovedSubmissionStatus();
-    populateChartScopeDatasetSelect(scope);
-    syncChartScopeSplitSelect(scope);
-    if (scope === "comparison") updateComparisonChart();
-    if (scope === "scatter") updateScatterChart();
-  }
-
   function tableCell(label, value, className) {
     const td = document.createElement("td");
     td.setAttribute("data-label", label);
@@ -1027,9 +1092,9 @@
 
   function currentFilters() {
     return {
-      datasets: selectedFilterValue("dataset-filter", "AhmedML"),
+      datasets: selectedFilterValue("dataset-filter", sharedSelection.dataset),
       types: checkedFilterValues("type-filter"),
-      splits: checkedFilterValues("split-filter"),
+      splits: selectedFilterValue("split-filter", sharedSelection.split),
     };
   }
 
@@ -1042,6 +1107,151 @@
     return rows.sort((a, b) => compareRows(a, b, sortState.key, sortState.direction));
   }
 
+  function clearColumnHelpHideTimer() {
+    if (columnHelpHideTimer) window.clearTimeout(columnHelpHideTimer);
+    columnHelpHideTimer = null;
+  }
+
+  function hideColumnHelp() {
+    clearColumnHelpHideTimer();
+    if (activeColumnHelpTrigger) activeColumnHelpTrigger.setAttribute("aria-expanded", "false");
+    activeColumnHelpTrigger = null;
+    if (columnHelpPopover) columnHelpPopover.hidden = true;
+  }
+
+  function scheduleColumnHelpHide() {
+    clearColumnHelpHideTimer();
+    columnHelpHideTimer = window.setTimeout(hideColumnHelp, 160);
+  }
+
+  function ensureColumnHelpPopover() {
+    if (columnHelpPopover) return columnHelpPopover;
+
+    columnHelpPopover = document.createElement("aside");
+    columnHelpPopover.id = "leaderboard-column-help-popover";
+    columnHelpPopover.className = "leaderboard-column-help-popover";
+    columnHelpPopover.setAttribute("role", "dialog");
+    columnHelpPopover.setAttribute("aria-label", "Leaderboard column information");
+    columnHelpPopover.hidden = true;
+    columnHelpPopover.addEventListener("pointerenter", clearColumnHelpHideTimer);
+    columnHelpPopover.addEventListener("pointerleave", scheduleColumnHelpHide);
+    columnHelpPopover.addEventListener("focusin", clearColumnHelpHideTimer);
+    columnHelpPopover.addEventListener("focusout", scheduleColumnHelpHide);
+    document.body.appendChild(columnHelpPopover);
+    return columnHelpPopover;
+  }
+
+  function positionColumnHelpPopover(trigger) {
+    if (!columnHelpPopover || columnHelpPopover.hidden) return;
+
+    const margin = 8;
+    const gap = 8;
+    const triggerRect = trigger.getBoundingClientRect();
+    const popoverRect = columnHelpPopover.getBoundingClientRect();
+    let left = triggerRect.left + triggerRect.width / 2 - popoverRect.width / 2;
+    let top = triggerRect.bottom + gap;
+
+    left = clamp(left, margin, window.innerWidth - popoverRect.width - margin);
+    if (top + popoverRect.height > window.innerHeight - margin) {
+      top = triggerRect.top - popoverRect.height - gap;
+    }
+    top = Math.max(margin, top);
+
+    columnHelpPopover.style.left = `${left}px`;
+    columnHelpPopover.style.top = `${top}px`;
+  }
+
+  function renderColumnHelp(definition) {
+    const popover = ensureColumnHelpPopover();
+    popover.textContent = "";
+
+    const title = document.createElement("strong");
+    title.className = "leaderboard-column-help-title";
+    title.textContent = definition.title;
+    popover.appendChild(title);
+
+    const description = document.createElement("p");
+    description.textContent = definition.description;
+    popover.appendChild(description);
+
+    const options = typeof definition.options === "function" ? definition.options() : definition.options;
+    if (options?.length) {
+      const optionText = document.createElement("p");
+      optionText.className = "leaderboard-column-help-options";
+      optionText.textContent = `Options: ${uniqueInOrder(options).join(", ")}.`;
+      popover.appendChild(optionText);
+    }
+
+    if (definition.metricsLink) {
+      const link = document.createElement("a");
+      link.href = "#metric-definitions";
+      link.textContent = "Metric definitions and equations";
+      link.addEventListener("click", hideColumnHelp);
+      popover.appendChild(link);
+    }
+  }
+
+  function showColumnHelp(trigger, definition) {
+    clearColumnHelpHideTimer();
+    if (activeColumnHelpTrigger && activeColumnHelpTrigger !== trigger) {
+      activeColumnHelpTrigger.setAttribute("aria-expanded", "false");
+    }
+
+    activeColumnHelpTrigger = trigger;
+    trigger.setAttribute("aria-expanded", "true");
+    renderColumnHelp(definition);
+    columnHelpPopover.hidden = false;
+    window.requestAnimationFrame(() => positionColumnHelpPopover(trigger));
+  }
+
+  function configureColumnHelp() {
+    ensureColumnHelpPopover();
+
+    document.querySelectorAll(".leaderboard-table th").forEach((th) => {
+      const key = th.dataset.columnHelp || th.dataset.sort;
+      const definition = columnHelpDefinitions[key];
+      if (!definition || th.querySelector(".leaderboard-column-help-trigger")) return;
+
+      const trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.className = "leaderboard-column-help-trigger";
+      trigger.setAttribute("aria-label", `About ${definition.title}`);
+      trigger.setAttribute("aria-controls", "leaderboard-column-help-popover");
+      trigger.setAttribute("aria-expanded", "false");
+
+      const icon = document.createElement("i");
+      icon.className = "fa-solid fa-circle-info";
+      icon.setAttribute("aria-hidden", "true");
+      trigger.appendChild(icon);
+      th.appendChild(trigger);
+
+      trigger.addEventListener("pointerenter", () => showColumnHelp(trigger, definition));
+      trigger.addEventListener("pointerleave", scheduleColumnHelpHide);
+      trigger.addEventListener("focus", () => showColumnHelp(trigger, definition));
+      trigger.addEventListener("blur", scheduleColumnHelpHide);
+      trigger.addEventListener("click", (event) => {
+        event.stopPropagation();
+        showColumnHelp(trigger, definition);
+      });
+      trigger.addEventListener("keydown", (event) => {
+        event.stopPropagation();
+        if (event.key === "Escape") {
+          event.preventDefault();
+          hideColumnHelp();
+        }
+      });
+    });
+
+    document.addEventListener("pointerdown", (event) => {
+      if (event.target instanceof Element && event.target.closest(".leaderboard-column-help-trigger, .leaderboard-column-help-popover")) {
+        return;
+      }
+      hideColumnHelp();
+    });
+    window.addEventListener("resize", hideColumnHelp);
+    window.addEventListener("scroll", hideColumnHelp, true);
+  }
+
   function updateSortIndicators() {
     document.querySelectorAll(".leaderboard-table th[data-sort]").forEach((th) => {
       const key = th.getAttribute("data-sort");
@@ -1049,9 +1259,9 @@
       th.classList.toggle("sort-asc", isActive && sortState.direction === "asc");
       th.classList.toggle("sort-desc", isActive && sortState.direction === "desc");
       th.setAttribute("aria-sort", isActive ? (sortState.direction === "asc" ? "ascending" : "descending") : "none");
-      th.title = isActive
+      th.setAttribute("aria-label", isActive
         ? `Sorted ${sortState.direction === "asc" ? "ascending" : "descending"}; click to reverse`
-        : `Sort by ${th.textContent.replace(/\s+/g, " ").trim()}`;
+        : `Sort by ${th.textContent.replace(/\s+/g, " ").trim()}`);
     });
   }
 
@@ -1107,7 +1317,8 @@
 
   function configureSort() {
     document.querySelectorAll(".leaderboard-table th[data-sort]").forEach((th) => {
-      const sortColumn = () => {
+      const sortColumn = (event) => {
+        if (event?.target instanceof Element && event.target.closest(".leaderboard-column-help-trigger")) return;
         const key = th.getAttribute("data-sort");
         if (sortState.key === key) {
           sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
@@ -1123,6 +1334,7 @@
       th.setAttribute("role", "button");
       th.addEventListener("click", sortColumn);
       th.addEventListener("keydown", (event) => {
+        if (event.target !== th) return;
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
         sortColumn();
@@ -1130,21 +1342,11 @@
     });
   }
 
-  function configurePrimaryRanking() {
-    const select = document.getElementById("score-sort");
-    if (!select) return;
-    select.addEventListener("change", () => {
-      primaryRankingKey = select.value;
-      sortState = { key: primaryRankingKey, direction: defaultSortDirection(primaryRankingKey) };
-      renderTable();
-      refreshAllChartPanels();
-    });
-  }
-
   function configureFilters() {
-    configureDatasetFilter();
-    ["type-filter", "split-filter"].forEach(configureFilterGroup);
-    syncSplitFilterOptions();
+    configureLinkedSingleFilter("dataset-filter", "dataset");
+    configureLinkedSingleFilter("split-filter", "split");
+    configureFilterGroup("type-filter");
+    syncLinkedSelectionControls();
     document.addEventListener("click", (event) => {
       const activeDropdown = event.target instanceof Element ? event.target.closest(".leaderboard-filter-dropdown") : null;
       closeFilterDropdowns(activeDropdown);
@@ -1198,27 +1400,6 @@
     if (!optionInputs.some((input) => input.checked)) {
       allInput.checked = true;
     }
-  }
-
-  function syncSplitFilterOptions() {
-    const splitContainer = document.getElementById("split-filter");
-    if (!splitContainer) return;
-
-    const datasetFilter = selectedFilterValue("dataset-filter", "AhmedML");
-    splitContainer.querySelectorAll("[data-split-datasets]").forEach((label) => {
-      const datasets = (label.dataset.splitDatasets || "").split(/\s+/).filter(Boolean);
-      const visible = datasetFilter.all || datasets.some((dataset) => datasetFilter.values.has(dataset));
-      const input = label.querySelector('input[type="checkbox"]');
-
-      label.hidden = !visible;
-      if (input) {
-        input.disabled = !visible;
-        if (!visible) input.checked = false;
-      }
-    });
-
-    updateFilterGroup("split-filter");
-    updateFilterSummary("split-filter");
   }
 
   function filterOptionLabel(input) {
@@ -1299,23 +1480,6 @@
     updateFilterSummary(containerId);
   }
 
-  function configureDatasetFilter() {
-    const containerId = "dataset-filter";
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    configureDropdownShell(container);
-    updateSingleFilterSummary(containerId);
-
-    container.addEventListener("change", (event) => {
-      if (!(event.target instanceof HTMLInputElement) || event.target.type !== "radio") return;
-      syncSplitFilterOptions();
-      updateSingleFilterSummary(containerId);
-      void refreshLeaderboardForCurrentState();
-      setFilterDropdownOpen(container, false);
-    });
-  }
-
   function selectedRadioInput(containerId) {
     return document.querySelector(`#${containerId} input[type="radio"]:checked:not(:disabled)`);
   }
@@ -1331,14 +1495,29 @@
     if (summary && selected) summary.textContent = filterOptionLabel(selected);
   }
 
-  function syncChartSplitOptions(chartType) {
-    const containerId = `${chartType}-split-filter`;
+  function availableSplitsForDataset(dataset) {
+    return knownSplitOptions().filter((option) => option.datasets.length === 0 || option.datasets.includes(dataset));
+  }
+
+  function validSplitForDataset(dataset, requestedSplit) {
+    const options = availableSplitsForDataset(dataset);
+    const normalizedRequested = normalizeSplit(requestedSplit, dataset);
+    if (options.some((option) => option.value === normalizedRequested)) return normalizedRequested;
+    if (options.some((option) => option.value === fullSplit)) return fullSplit;
+    if (options.some((option) => option.value === defaultSplit)) return defaultSplit;
+    return options[0]?.value || normalizedRequested || defaultSplit;
+  }
+
+  function setRadioFilterValue(containerId, value) {
+    const inputs = Array.from(document.querySelectorAll(`#${containerId} input[type="radio"]`));
+    const selected = inputs.find((input) => input.value === value && !input.disabled);
+    if (selected) selected.checked = true;
+    updateSingleFilterSummary(containerId);
+  }
+
+  function syncSplitRadioOptions(containerId, dataset, split) {
     const splitContainer = document.getElementById(containerId);
     if (!splitContainer) return;
-
-    const dataset = chartSelections[chartType].dataset;
-    let firstVisibleInput = null;
-    let selectedVisible = false;
 
     splitContainer.querySelectorAll("[data-split-datasets]").forEach((label) => {
       const datasets = (label.dataset.splitDatasets || "").split(/\s+/).filter(Boolean);
@@ -1349,41 +1528,61 @@
       if (input) {
         input.disabled = !visible;
         if (!visible) input.checked = false;
-        if (visible && !firstVisibleInput) firstVisibleInput = input;
-        if (visible && input.checked) selectedVisible = true;
       }
     });
 
-    if (!selectedVisible && firstVisibleInput) {
-      firstVisibleInput.checked = true;
-    }
-
-    chartSelections[chartType].split = normalizeSplit(selectedRadioValue(containerId, defaultSplit), dataset);
+    setRadioFilterValue(containerId, split);
     updateSingleFilterSummary(containerId);
   }
 
-  function configureChartSingleFilter(containerId, chartType, key) {
+  function syncLinkedSelectionControls() {
+    const dataset = normalizeDatasetSelection(sharedSelection.dataset);
+    const split = validSplitForDataset(dataset, sharedSelection.split);
+    sharedSelection.dataset = dataset;
+    sharedSelection.split = split;
+
+    Object.values(chartSelections).forEach((selection) => {
+      selection.dataset = dataset;
+      selection.split = split;
+    });
+    Object.values(chartScopeSelections).forEach((selection) => {
+      selection.dataset = dataset;
+      selection.split = split;
+    });
+
+    ["dataset-filter", "cp-dataset-filter", "velocity-dataset-filter"].forEach((containerId) => {
+      setRadioFilterValue(containerId, dataset);
+    });
+    ["split-filter", "cp-split-filter", "velocity-split-filter"].forEach((containerId) => {
+      syncSplitRadioOptions(containerId, dataset, split);
+    });
+    ["comparison", "scatter"].forEach((scope) => {
+      populateChartScopeDatasetSelect(scope);
+      syncChartScopeSplitSelect(scope);
+    });
+  }
+
+  function setLinkedSelection(dataset, split) {
+    sharedSelection.dataset = normalizeDatasetSelection(dataset);
+    sharedSelection.split = validSplitForDataset(sharedSelection.dataset, split);
+    syncLinkedSelectionControls();
+    void refreshLeaderboardForCurrentState();
+  }
+
+  function configureLinkedSingleFilter(containerId, key) {
     const container = document.getElementById(containerId);
     if (!container) return;
+    if (container.dataset.linkedFilterConfigured === "true") return;
+    container.dataset.linkedFilterConfigured = "true";
 
     configureDropdownShell(container);
-
-    const selectedValue = selectedRadioValue(containerId, key === "split" ? defaultSplit : "AhmedML");
-    chartSelections[chartType][key] = key === "split" ? normalizeSplit(selectedValue, chartSelections[chartType].dataset) : selectedValue;
     updateSingleFilterSummary(containerId);
 
     container.addEventListener("change", (event) => {
       if (!(event.target instanceof HTMLInputElement) || event.target.type !== "radio") return;
-
-      if (key === "dataset") {
-        chartSelections[chartType].dataset = event.target.value;
-        syncChartSplitOptions(chartType);
-      } else {
-        chartSelections[chartType].split = normalizeSplit(event.target.value, chartSelections[chartType].dataset);
-      }
-
-      updateSingleFilterSummary(containerId);
-      void refreshChartPanelForSelection(chartType);
+      const dataset = key === "dataset" ? event.target.value : sharedSelection.dataset;
+      const split = key === "split" ? event.target.value : sharedSelection.split;
+      setLinkedSelection(dataset, split);
       setFilterDropdownOpen(container, false);
     });
   }
@@ -1508,16 +1707,8 @@
     const select = chartScopeDatasetSelect(scope);
     if (!select) return;
 
-    const allowAllDatasets = chartScopeAllowsAllDatasets(scope);
-    const currentValue = normalizeChartScopeDataset(scope, chartScopeSelections[scope]?.dataset);
+    const currentValue = normalizeDatasetSelection(chartScopeSelections[scope]?.dataset);
     select.textContent = "";
-
-    if (allowAllDatasets) {
-      const allOption = document.createElement("option");
-      allOption.value = allChartDatasetsValue;
-      allOption.textContent = "All datasets";
-      select.appendChild(allOption);
-    }
 
     knownDatasetNames().forEach((datasetName) => {
       const option = document.createElement("option");
@@ -1526,10 +1717,9 @@
       select.appendChild(option);
     });
 
-    const fallbackValue = allowAllDatasets ? allChartDatasetsValue : defaultChartScopeDataset();
     select.value = Array.from(select.options).some((option) => option.value === currentValue)
       ? currentValue
-      : fallbackValue;
+      : sharedSelection.dataset;
     if (!select.value && select.options.length) select.value = select.options[0].value;
     chartScopeSelections[scope].dataset = select.value;
   }
@@ -1539,24 +1729,12 @@
     if (!select) return;
 
     const selection = chartScopeSelections[scope];
-    const selectedDataset = normalizeChartScopeDataset(scope, selection?.dataset);
+    const selectedDataset = normalizeDatasetSelection(selection?.dataset);
     if (selection) selection.dataset = selectedDataset;
-    const currentValue = selection?.split || allChartSplitsValue;
+    const currentValue = validSplitForDataset(selectedDataset, selection?.split);
     select.textContent = "";
 
-    const allOption = document.createElement("option");
-    allOption.value = allChartSplitsValue;
-    allOption.textContent = "All splits";
-    select.appendChild(allOption);
-
-    knownSplitOptions()
-      .filter((option) => {
-        return (
-          selectedDataset === allChartDatasetsValue ||
-          option.datasets.length === 0 ||
-          option.datasets.includes(selectedDataset)
-        );
-      })
+    availableSplitsForDataset(selectedDataset)
       .forEach((splitOption) => {
         const option = document.createElement("option");
         option.value = splitOption.value;
@@ -1566,7 +1744,8 @@
 
     select.value = Array.from(select.options).some((option) => option.value === currentValue)
       ? currentValue
-      : allChartSplitsValue;
+      : sharedSelection.split;
+    if (!select.value && select.options.length) select.value = select.options[0].value;
     chartScopeSelections[scope].split = select.value;
   }
 
@@ -1579,15 +1758,11 @@
     syncChartScopeSplitSelect(scope);
 
     datasetSelect.addEventListener("change", () => {
-      chartScopeSelections[scope].dataset = normalizeChartScopeDataset(scope, datasetSelect.value);
-      datasetSelect.value = chartScopeSelections[scope].dataset;
-      syncChartScopeSplitSelect(scope);
-      void refreshScopedMetricChart(scope);
+      setLinkedSelection(datasetSelect.value, sharedSelection.split);
     });
 
     splitSelect.addEventListener("change", () => {
-      chartScopeSelections[scope].split = splitSelect.value || allChartSplitsValue;
-      void refreshScopedMetricChart(scope);
+      setLinkedSelection(sharedSelection.dataset, splitSelect.value);
     });
   }
 
@@ -1868,7 +2043,7 @@
     const selection = chartSelections[chartType];
     return enrichedRows()
       .filter((row) => row.dataset === selection.dataset && row.split === selection.split)
-      .sort((a, b) => compareRows(a, b, primaryRankingKey, defaultSortDirection(primaryRankingKey)));
+      .sort((a, b) => compareRows(a, b, rankMetricKey, defaultSortDirection(rankMetricKey)));
   }
 
   function updateCpChart() {
@@ -1956,10 +2131,7 @@
   }
 
   function refreshAllChartPanels() {
-    ["comparison", "scatter"].forEach((scope) => {
-      populateChartScopeDatasetSelect(scope);
-      syncChartScopeSplitSelect(scope);
-    });
+    syncLinkedSelectionControls();
     updateComparisonChart();
     updateScatterChart();
     syncChartPanel("cp");
@@ -1968,11 +2140,11 @@
 
   function configureChartControls() {
     ["cp", "velocity"].forEach((chartType) => {
-      configureChartSingleFilter(`${chartType}-dataset-filter`, chartType, "dataset");
-      configureChartSingleFilter(`${chartType}-split-filter`, chartType, "split");
+      configureLinkedSingleFilter(`${chartType}-dataset-filter`, "dataset");
+      configureLinkedSingleFilter(`${chartType}-split-filter`, "split");
       configureChartModelFilter(`${chartType}-models-filter`, `${chartType}-models`, chartType);
-      syncChartSplitOptions(chartType);
     });
+    syncLinkedSelectionControls();
   }
 
   function configureCharts() {
@@ -2122,7 +2294,7 @@
   async function initLeaderboard() {
     renderApprovedSubmissionStatus();
     configureSort();
-    configurePrimaryRanking();
+    configureColumnHelp();
     configureFilters();
     configureDetailsDialog();
     await loadApprovedSubmissions();

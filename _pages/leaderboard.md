@@ -12,7 +12,6 @@ chart:
 
 <div class="leaderboard-page">
   <div class="leaderboard-source-row">
-    <p id="leaderboard-source-status">Loading approved submissions from fluidsbench-submission dev manifest...</p>
     <a
       id="open-submission-repo"
       class="leaderboard-submit-button"
@@ -127,7 +126,7 @@ chart:
     </div>
     <div class="leaderboard-control">
       <span class="leaderboard-control-title" id="split-filter-label">Split</span>
-      <div class="leaderboard-filter-dropdown" id="split-filter" data-all-label="All splits">
+      <div class="leaderboard-filter-dropdown" id="split-filter">
         <button
           class="leaderboard-filter-toggle"
           type="button"
@@ -136,125 +135,99 @@ chart:
           aria-haspopup="true"
           data-filter-toggle
         >
-          <span data-filter-summary>All splits</span>
+          <span data-filter-summary>Full</span>
           <span class="leaderboard-filter-caret" aria-hidden="true"></span>
         </button>
         <div
           class="leaderboard-filter-menu"
           id="split-filter-menu"
-          role="group"
+          role="radiogroup"
           aria-labelledby="split-filter-label"
           data-filter-menu
           hidden
         >
-          <label class="leaderboard-filter-option">
-            <input data-filter-all type="checkbox" value="all" checked />
-            All splits
-          </label>
           <label class="leaderboard-filter-option" data-split-datasets="DrivAerNet++ WindsorML">
-            <input type="checkbox" value="Default" />
+            <input name="split-filter-value" type="radio" value="Default" />
             Default
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML AirfRANS">
-            <input type="checkbox" value="Full" />
+            <input name="split-filter-value" type="radio" value="Full" checked />
             Full
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
-            <input type="checkbox" value="Medium" />
+            <input name="split-filter-value" type="radio" value="Medium" />
             Medium
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML AirfRANS">
-            <input type="checkbox" value="Scarce" />
+            <input name="split-filter-value" type="radio" value="Scarce" />
             Scarce
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
-            <input type="checkbox" value="Super scarce" />
+            <input name="split-filter-value" type="radio" value="Super scarce" />
             Super scarce
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML HiLiftAeroML">
-            <input type="checkbox" value="Geometry" />
+            <input name="split-filter-value" type="radio" value="Geometry" />
             Geometry
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
-            <input type="checkbox" value="Geometry medium" />
+            <input name="split-filter-value" type="radio" value="Geometry medium" />
             Geometry medium
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
-            <input type="checkbox" value="Geometry scarce" />
+            <input name="split-filter-value" type="radio" value="Geometry scarce" />
             Geometry scarce
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
-            <input type="checkbox" value="Geometry super scarce" />
+            <input name="split-filter-value" type="radio" value="Geometry super scarce" />
             Geometry super scarce
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
-            <input type="checkbox" value="High drag" />
+            <input name="split-filter-value" type="radio" value="High drag" />
             High drag
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML DrivAerML">
-            <input type="checkbox" value="Low drag" />
+            <input name="split-filter-value" type="radio" value="Low drag" />
             Low drag
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AhmedML">
-            <input type="checkbox" value="Image wake" />
+            <input name="split-filter-value" type="radio" value="Image wake" />
             Image wake
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="DrivAerML">
-            <input type="checkbox" value="Rear separation" />
+            <input name="split-filter-value" type="radio" value="Rear separation" />
             Rear separation
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="AirfRANS">
-            <input type="checkbox" value="Reynolds extrapolation" />
+            <input name="split-filter-value" type="radio" value="Reynolds extrapolation" />
             Reynolds extrapolation
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML AirfRANS">
-            <input type="checkbox" value="AoA extrapolation" />
+            <input name="split-filter-value" type="radio" value="AoA extrapolation" />
             AoA extrapolation
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
-            <input type="checkbox" value="Deflection" />
+            <input name="split-filter-value" type="radio" value="Deflection" />
             Deflection
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
-            <input type="checkbox" value="Stall" />
+            <input name="split-filter-value" type="radio" value="Stall" />
             Stall
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
-            <input type="checkbox" value="AoA 4" />
+            <input name="split-filter-value" type="radio" value="AoA 4" />
             AoA 4
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
-            <input type="checkbox" value="AoA 12" />
+            <input name="split-filter-value" type="radio" value="AoA 12" />
             AoA 12
           </label>
           <label class="leaderboard-filter-option" data-split-datasets="HiLiftAeroML">
-            <input type="checkbox" value="AoA 22" />
+            <input name="split-filter-value" type="radio" value="AoA 22" />
             AoA 22
           </label>
         </div>
       </div>
-    </div>
-    <div class="leaderboard-control">
-      <label for="score-sort">Primary ranking</label>
-      <select id="score-sort">
-        <option value="score" selected>Weighted overall score</option>
-        <option value="fieldScore">Field score (50%)</option>
-        <option value="forceScore">Force score (25%)</option>
-        <option value="diagnosticScore">Diagnostic score (25%)</option>
-        <option value="forceR2">Force R² (Cd/Cl mean)</option>
-        <option value="r2Cd">Cd R²</option>
-        <option value="r2Cl">Cl R²</option>
-        <option value="velocityProfileR2">Velocity profiles R²</option>
-        <option value="cpCutR2">Cp cuts R²</option>
-        <option value="surfacePressure">Surface pressure rel L2</option>
-        <option value="surfacePressureL1">Surface pressure rel L1</option>
-        <option value="surfaceTau">Surface tau wall rel L2</option>
-        <option value="surfaceTauL1">Surface tau wall rel L1</option>
-        <option value="volumeVelocity">Volume velocity rel L2</option>
-        <option value="volumeVelocityL1">Volume velocity rel L1</option>
-        <option value="volumePressure">Volume pressure rel L2</option>
-        <option value="volumePressureL1">Volume pressure rel L1</option>
-      </select>
     </div>
   </section>
 
@@ -287,7 +260,7 @@ chart:
           <th data-sort="cpCutR2">Cp cuts<br>R<sup>2</sup></th>
           <th data-sort="params">Params (M)</th>
           <th data-sort="date">Submission date</th>
-          <th class="leaderboard-group-start">Details</th>
+          <th class="leaderboard-group-start" data-column-help="details">Details</th>
         </tr>
       </thead>
       <tbody id="leaderboard-body"></tbody>
@@ -748,7 +721,7 @@ chart:
     </div>
   </section>
 
-  <section class="metric-definitions">
+  <section class="metric-definitions" id="metric-definitions">
     <h3>Metric definitions</h3>
     <dl>
       <div>
