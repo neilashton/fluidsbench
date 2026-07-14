@@ -345,7 +345,7 @@ chart:
   <section class="leaderboard-panel">
     <h3 id="cp-panel-title">Centreline surface Cp</h3>
     <p id="cp-panel-description">Submitted Cp diagnostic cuts for the selected dataset and split.</p>
-    <div class="chart-control-row" aria-label="Cp plot filters">
+    <div class="chart-control-row cp-chart-controls" aria-label="Cp plot filters">
       <div class="chart-control">
         <span class="chart-control-title" id="cp-dataset-filter-label">Dataset</span>
         <div class="leaderboard-filter-dropdown" id="cp-dataset-filter">
@@ -499,6 +499,10 @@ chart:
             </label>
           </div>
         </div>
+      </div>
+      <div class="chart-control chart-model-control">
+        <label class="chart-control-title" for="cp-station-select">Station</label>
+        <select id="cp-station-select" aria-label="Cp station"></select>
       </div>
       <div class="chart-control chart-model-control">
         <span class="chart-control-title" id="cp-models-label">Submissions</span>

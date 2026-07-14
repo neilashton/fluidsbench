@@ -374,7 +374,7 @@
 
   const datasetProfiles = {
     AhmedML: {
-      cpTitle: "Centreline surface Cp",
+      cpTitle: "AhmedML surface Cp",
       cpDescription: "Submitted Cp diagnostic cuts for the selected AhmedML rows.",
       cpXTitle: "x/L along Ahmed body centreline",
       velocityTitle: "Velocity profiles",
@@ -382,7 +382,7 @@
       velocityXTitle: "Diagnostic coordinate",
     },
     DrivAerML: {
-      cpTitle: "DrivAer centreline Cp",
+      cpTitle: "DrivAerML surface Cp",
       cpDescription: "Submitted Cp diagnostic cuts for the selected DrivAerML rows.",
       cpXTitle: "x/L along DrivAer centreline",
       velocityTitle: "DrivAer wake velocity profiles",
@@ -398,7 +398,7 @@
       velocityXTitle: "Diagnostic coordinate",
     },
     WindsorML: {
-      cpTitle: "Windsor body centreline Cp",
+      cpTitle: "WindsorML surface Cp",
       cpDescription: "Submitted Cp diagnostic cuts for the selected WindsorML rows.",
       cpXTitle: "x/L along Windsor body centreline",
       velocityTitle: "Windsor wake velocity profiles",
@@ -437,6 +437,7 @@
   let columnHelpHideTimer = null;
   let columnHelpGlobalEventsConfigured = false;
   let columnVisibility = loadColumnVisibility();
+  const cpStationSelections = new Map();
   const sharedSelection = { dataset: "AhmedML", split: fullSplit };
   const chartSelections = {
     cp: { dataset: "AhmedML", split: fullSplit },
@@ -687,6 +688,8 @@
     const id = idKeys.map((key) => series[key]).find(Boolean) || "diagnostic_series";
     return {
       id,
+      stationId: series.station_id || "",
+      stationLabel: series.station_label || "",
       caseId: series.case_id || "",
       coordinateFrame: series.coordinate_frame || "",
       quantity: series.quantity || "",
@@ -756,8 +759,9 @@
     return diagnosticPointSeries(matchedProfile, ["z", "y", "x", "s", "distance"], ["u_over_u_inf", "u", "velocity", "value"]);
   }
 
-  function diagnosticCpSeries(row) {
-    const cut = row?.diagnostics?.cpCuts?.[0];
+  function diagnosticCpSeries(row, stationId) {
+    const cuts = row?.diagnostics?.cpCuts || [];
+    const cut = cuts.find((series) => series.stationId === stationId) || cuts[0];
     return diagnosticPointSeries(cut, ["x", "s", "arc_length"], ["cp", "pressure_coefficient", "value"]);
   }
 
@@ -1954,9 +1958,9 @@
     });
   }
 
-  function cpSeries(modelId) {
+  function cpSeries(modelId, stationId) {
     const row = submissions.find((entry) => entry.id === modelId);
-    return diagnosticCpSeries(row);
+    return diagnosticCpSeries(row, stationId);
   }
 
   function velocitySeries(modelId) {
@@ -2462,20 +2466,57 @@
       .sort((a, b) => compareRows(a, b, rankMetricKey, defaultSortDirection(rankMetricKey)));
   }
 
+  function cpStationDefinitions(datasetName = chartSelections.cp.dataset) {
+    const stations = leaderboardDatasetEntry(datasetName)?.diagnostics?.cp_stations;
+    return Array.isArray(stations) ? stations : [];
+  }
+
+  function currentCpStationDefinition() {
+    const datasetName = chartSelections.cp.dataset;
+    const definitions = cpStationDefinitions(datasetName);
+    const requestedId = cpStationSelections.get(datasetName);
+    const definition = definitions.find((station) => station.id === requestedId) || definitions[0] || null;
+    if (definition) cpStationSelections.set(datasetName, definition.id);
+    return definition;
+  }
+
+  function syncCpStationControl() {
+    const select = document.getElementById("cp-station-select");
+    if (!select) return;
+
+    const definitions = cpStationDefinitions();
+    const activeDefinition = currentCpStationDefinition();
+    select.textContent = "";
+    definitions.forEach((station) => {
+      const option = document.createElement("option");
+      option.value = station.id;
+      option.textContent = station.label || station.id;
+      select.appendChild(option);
+    });
+    select.disabled = definitions.length === 0;
+    if (activeDefinition) {
+      select.value = activeDefinition.id;
+      select.title = activeDefinition.description || activeDefinition.label || activeDefinition.id;
+    } else {
+      select.removeAttribute("title");
+    }
+  }
+
   function updateCpChart() {
     if (!cpChart) return;
     const profile = chartProfile("cp");
+    const station = currentCpStationDefinition();
     const models = checkedModels("cp-models");
     cpChart.data.labels = [];
     cpChart.data.datasets = models
       .map((modelId, index) => {
         const row = submissions.find((entry) => entry.id === modelId);
-        const series = cpSeries(modelId);
+        const series = cpSeries(modelId, station?.id);
         return series ? lineDataset(row?.model || modelId, series, modelColor(modelId, index), true) : null;
       })
       .filter(Boolean);
     cpChart.options.scales.x.type = "linear";
-    cpChart.options.scales.x.title.text = profile.cpXTitle;
+    cpChart.options.scales.x.title.text = station?.x_label || profile.cpXTitle;
     cpChart.update();
   }
 
@@ -2532,6 +2573,7 @@
     if (chartType === "cp") {
       setText("cp-panel-title", profile.cpTitle);
       setText("cp-panel-description", profile.cpDescription);
+      syncCpStationControl();
       renderModelToggles("cp-models", chartType);
       updateCpChart();
       return;
@@ -2559,6 +2601,11 @@
       configureLinkedSingleFilter(`${chartType}-dataset-filter`, "dataset");
       configureLinkedSingleFilter(`${chartType}-split-filter`, "split");
       configureChartModelFilter(`${chartType}-models-filter`, `${chartType}-models`, chartType);
+    });
+    document.getElementById("cp-station-select")?.addEventListener("change", (event) => {
+      cpStationSelections.set(chartSelections.cp.dataset, event.target.value);
+      syncCpStationControl();
+      updateCpChart();
     });
     syncLinkedSelectionControls();
   }

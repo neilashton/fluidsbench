@@ -102,7 +102,7 @@ nav: false
           </tr>
           <tr>
             <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>x_over_c</code>, <code>cp_pred</code></td>
+            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>x_over_c</code>, <code>cp_pred</code></td>
             <td>Cp cut R<sup>2</sup> and airfoil surface Cp plots.</td>
           </tr>
           <tr>
@@ -114,6 +114,23 @@ nav: false
       </table>
     </div>
 
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Cp stations</h3>
+    <p>
+      The <a href="https://arxiv.org/abs/2212.07564">AirfRANS paper</a> evaluates pressure distributions on the two
+      airfoil sides separately. Use the exact ID in <code>station_id</code>.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead><tr><th>Station ID</th><th>Displayed station</th></tr></thead>
+        <tbody>
+          <tr><td><code>upper_surface</code></td><td>Upper surface (extrados).</td></tr>
+          <tr><td><code>lower_surface</code></td><td>Lower surface (intrados).</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="dataset-panel">
@@ -168,7 +185,7 @@ nav: false
         <dt>Cp cut R<sup>2</sup></dt>
         <dd>
           One global R<sup>2</sup> over all selected airfoil surface pressure coefficient samples from held-out cases,
-          flattened across <code>case_id</code>, <code>cut_id</code>, and chordwise sample locations.
+          flattened across <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and chordwise sample locations.
         </dd>
       </div>
       <div>

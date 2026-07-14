@@ -175,8 +175,8 @@ nav: false
           </tr>
           <tr>
             <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
-            <td>Cp cut R<sup>2</sup> and DrivAer centreline Cp plots.</td>
+            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
+            <td>Cp cut R<sup>2</sup> and selectable DrivAer surface Cp plots.</td>
           </tr>
           <tr>
             <td><code>velocity_profiles.csv</code></td>
@@ -187,6 +187,26 @@ nav: false
       </table>
     </div>
 
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Cp stations</h3>
+    <p>
+      These stations reproduce the surface-pressure probe traces in the
+      <a href="https://arxiv.org/abs/2408.11969">DrivAerML validation study</a>. Use the exact ID in
+      <code>station_id</code>.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead><tr><th>Station ID</th><th>Published trace</th></tr></thead>
+        <tbody>
+          <tr><td><code>upperbody_centerline</code></td><td>Upper-body centreline, y = 0 m (Figure 17a).</td></tr>
+          <tr><td><code>underbody_centerline</code></td><td>Underbody centreline, y = 0 m (Figure 17b).</td></tr>
+          <tr><td><code>sidewall_z_0_15</code></td><td>Sidewall, z = 0.15 m (Figure 22a).</td></tr>
+          <tr><td><code>front_left_wheelhouse_y_neg_0_6</code></td><td>Front-left wheelhouse, y = -0.6 m (Figure 22b).</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="dataset-panel">
@@ -271,8 +291,8 @@ nav: false
         <dd>
           One global R<sup>2</sup> over all selected surface pressure coefficient samples from the held-out test cases.
           The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
-          <code>case_id</code>, <code>cut_id</code>, and cut sample locations before computing R<sup>2</sup>. The first
-          plotted cut is the DrivAer centreline Cp trace.
+          <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and cut sample locations before computing
+          R<sup>2</sup>. The plotted trace is chosen with the leaderboard station selector.
         </dd>
       </div>
       <div>

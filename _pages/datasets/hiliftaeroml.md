@@ -253,7 +253,7 @@ nav: false
           </tr>
           <tr>
             <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>x_over_c</code>, <code>cp_pred</code></td>
+            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>x_over_c</code>, <code>cp_pred</code></td>
             <td>Cp cut R<sup>2</sup> and CRM-HL wing section Cp plots.</td>
           </tr>
           <tr>
@@ -265,6 +265,26 @@ nav: false
       </table>
     </div>
 
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Cp stations</h3>
+    <p>
+      These spanwise stations use the CRM-HL pressure belts plotted in Figure 15 of the
+      <a href="https://arxiv.org/abs/2605.19565">HiLiftAeroML paper</a>. Belts run progressively from inboard to outboard.
+      Use the exact ID in <code>station_id</code>.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead><tr><th>Station ID</th><th>Published trace</th></tr></thead>
+        <tbody>
+          <tr><td><code>pressure_belt_a</code></td><td>Pressure belt A, inboard wing section.</td></tr>
+          <tr><td><code>pressure_belt_d</code></td><td>Pressure belt D.</td></tr>
+          <tr><td><code>pressure_belt_g</code></td><td>Pressure belt G.</td></tr>
+          <tr><td><code>pressure_belt_i</code></td><td>Pressure belt I, outboard wing section.</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="dataset-panel">
@@ -343,8 +363,8 @@ nav: false
         <dd>
           One global R<sup>2</sup> over all selected wing-section surface pressure coefficient samples from the held-out
           test cases. The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
-          <code>case_id</code>, <code>cut_id</code>, and section sample locations before computing R<sup>2</sup>. The
-          first plotted cut is a representative CRM-HL wing section Cp trace.
+          <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and section sample locations before computing
+          R<sup>2</sup>. The plotted pressure belt is chosen with the leaderboard station selector.
         </dd>
       </div>
       <div>

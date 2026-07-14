@@ -99,8 +99,8 @@ nav: false
           </tr>
           <tr>
             <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
-            <td>Cp cut R<sup>2</sup> and Windsor body centreline Cp plots.</td>
+            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
+            <td>Cp cut R<sup>2</sup> and selectable Windsor surface Cp plots.</td>
           </tr>
           <tr>
             <td><code>velocity_profiles.csv</code></td>
@@ -111,6 +111,23 @@ nav: false
       </table>
     </div>
 
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Cp stations</h3>
+    <p>
+      These stations reproduce the mean surface-pressure cuts in the supplementary validation of the
+      <a href="https://arxiv.org/abs/2407.19320">WindsorML paper</a>. Use the exact ID in <code>station_id</code>.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead><tr><th>Station ID</th><th>Published trace</th></tr></thead>
+        <tbody>
+          <tr><td><code>symmetry_plane_z_0</code></td><td>Symmetry-plane trace, z = 0 m (Figure 18).</td></tr>
+          <tr><td><code>horizontal_cut_y_0_2595</code></td><td>Horizontal trace, y = 0.2595 m (Figure 19).</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="dataset-panel">
@@ -195,8 +212,8 @@ nav: false
         <dd>
           One global R<sup>2</sup> over all selected surface pressure coefficient samples from the held-out test cases.
           The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
-          <code>case_id</code>, <code>cut_id</code>, and cut sample locations before computing R<sup>2</sup>. The first
-          plotted cut is the Windsor body centreline Cp trace.
+          <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and cut sample locations before computing
+          R<sup>2</sup>. The plotted trace is chosen with the leaderboard station selector.
         </dd>
       </div>
       <div>

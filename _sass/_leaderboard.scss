@@ -779,6 +779,7 @@ html[data-theme="dark"] .leaderboard-data-warning {
   margin: 0.35rem 0 0.85rem;
 }
 
+.cp-chart-controls,
 .velocity-chart-controls {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -976,6 +977,7 @@ html[data-theme="dark"] .leaderboard-data-warning {
 @media (max-width: 900px) {
   .leaderboard-controls,
   .chart-control-row,
+  .cp-chart-controls,
   .velocity-chart-controls,
   .comparison-header,
   .comparison-control-row,

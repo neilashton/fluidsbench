@@ -101,7 +101,7 @@ nav: false
           </tr>
           <tr>
             <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
+            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
             <td>Cp cut R<sup>2</sup> and representative surface pressure plots.</td>
           </tr>
           <tr>
@@ -113,6 +113,26 @@ nav: false
       </table>
     </div>
 
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Cp stations</h3>
+    <p>
+      DrivAerNet++ publishes surface pressure over annotated vehicle components but not a canonical set of one-dimensional
+      Cp traces. FluidsBench defines the following benchmark traces using regions described in the
+      <a href="https://arxiv.org/abs/2406.09624">DrivAerNet++ paper</a>. Use the exact ID in <code>station_id</code>.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead><tr><th>Station ID</th><th>Displayed station</th></tr></thead>
+        <tbody>
+          <tr><td><code>upper_body_centerline</code></td><td>Upper-body component centreline.</td></tr>
+          <tr><td><code>underbody_centerline</code></td><td>Smooth or detailed underbody centreline.</td></tr>
+          <tr><td><code>front_wheelhouse</code></td><td>Annotated front-wheel region.</td></tr>
+          <tr><td><code>rear_body_centerline</code></td><td>Fastback, notchback, or estateback rear-body centreline.</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="dataset-panel">
@@ -158,7 +178,7 @@ nav: false
         <dt>Cp cut R<sup>2</sup></dt>
         <dd>
           One global R<sup>2</sup> over all selected surface pressure coefficient samples from held-out test cases,
-          flattened across <code>case_id</code>, <code>cut_id</code>, and sample locations.
+          flattened across <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and sample locations.
         </dd>
       </div>
       <div>

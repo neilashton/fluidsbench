@@ -175,8 +175,8 @@ nav: false
           </tr>
           <tr>
             <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
-            <td>Cp cut R<sup>2</sup> and centreline Cp plots.</td>
+            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>s_over_l</code>, <code>cp_pred</code></td>
+            <td>Cp cut R<sup>2</sup> and selectable surface Cp plots.</td>
           </tr>
           <tr>
             <td><code>velocity_profiles.csv</code></td>
@@ -187,6 +187,25 @@ nav: false
       </table>
     </div>
 
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Cp stations</h3>
+    <p>
+      AhmedML does not publish a canonical set of one-dimensional pressure traces. FluidsBench therefore defines the
+      following symmetry-plane benchmark traces, informed by the body regions described in the
+      <a href="https://arxiv.org/abs/2407.20801">AhmedML paper</a>. Use the exact ID in <code>station_id</code>.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead><tr><th>Station ID</th><th>Displayed station</th></tr></thead>
+        <tbody>
+          <tr><td><code>upper_body_centerline</code></td><td>Upper-body centreline over the roof and rear slant.</td></tr>
+          <tr><td><code>underbody_centerline</code></td><td>Underbody centreline along the underfloor.</td></tr>
+          <tr><td><code>rear_slant_centerline</code></td><td>Centreline across the pressure-sensitive rear slant.</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="dataset-panel">
@@ -270,8 +289,8 @@ nav: false
         <dd>
           One global R<sup>2</sup> over all selected surface pressure coefficient samples from the held-out test cases.
           The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
-          <code>case_id</code>, <code>cut_id</code>, and cut sample locations before computing R<sup>2</sup>. The first
-          plotted cut is the Ahmed body centreline Cp trace.
+          <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and cut sample locations before computing
+          R<sup>2</sup>. The plotted trace is chosen with the leaderboard station selector.
         </dd>
       </div>
       <div>
