@@ -218,6 +218,49 @@
     r2: ["r2Cd", "r2Cl", "forceR2", "velocityProfileR2", "cpCutR2"],
   };
 
+  const dynamicComparisonGroups = new Set(["dimensional-mae", "dimensional-rmse", "coefficient-mae"]);
+
+  const columnGroups = [
+    "component-scores",
+    "relative-errors",
+    "absolute-errors",
+    "r2-metrics",
+    "model-details",
+  ];
+  const columnVisibilityStorageKey = "fluidsbench-leaderboard-column-groups";
+
+  const tableColumnsBeforeDynamic = [
+    { key: "rank", label: "Rank" },
+    { key: "model", label: "Model" },
+    { key: "submittedBy", label: "Submitted by" },
+    { key: "type", label: "Type" },
+    { key: "trainingRegimeLabel", label: "Training" },
+    { key: "dataset", label: "Dataset", groupStart: true },
+    { key: "split", label: "Split" },
+    { key: "score", label: "Overall score", groupStart: true },
+    { key: "fieldScore", label: "Field score", group: "component-scores", groupStart: true },
+    { key: "forceScore", label: "Force score", group: "component-scores", groupStart: true },
+    { key: "diagnosticScore", label: "Diagnostic score", group: "component-scores", groupStart: true },
+    { key: "surfacePressure", label: "Surface pressure<br>rel L2 (%)", group: "relative-errors", groupStart: true, html: true },
+    { key: "surfacePressureL1", label: "Surface pressure<br>rel L1 (%)", group: "relative-errors", html: true },
+    { key: "surfaceTau", label: "Surface tau wall<br>rel L2 (%)", group: "relative-errors", groupStart: true, html: true },
+    { key: "surfaceTauL1", label: "Surface tau wall<br>rel L1 (%)", group: "relative-errors", html: true },
+    { key: "volumeVelocity", label: "Volume velocity<br>rel L2 (%)", group: "relative-errors", groupStart: true, html: true },
+    { key: "volumeVelocityL1", label: "Volume velocity<br>rel L1 (%)", group: "relative-errors", html: true },
+    { key: "volumePressure", label: "Volume pressure<br>rel L2 (%)", group: "relative-errors", groupStart: true, html: true },
+    { key: "volumePressureL1", label: "Volume pressure<br>rel L1 (%)", group: "relative-errors", html: true },
+  ];
+
+  const tableColumnsAfterDynamic = [
+    { key: "r2Cd", label: "C<sub>d</sub> R<sup>2</sup>", group: "r2-metrics", groupStart: true, html: true },
+    { key: "r2Cl", label: "C<sub>l</sub> R<sup>2</sup>", group: "r2-metrics", html: true },
+    { key: "velocityProfileR2", label: "Velocity profiles<br>R<sup>2</sup>", group: "r2-metrics", groupStart: true, html: true },
+    { key: "cpCutR2", label: "Cp cuts<br>R<sup>2</sup>", group: "r2-metrics", html: true },
+    { key: "params", label: "Params (M)", group: "model-details", groupStart: true },
+    { key: "date", label: "Submission date", group: "model-details" },
+    { key: "details", label: "Details", groupStart: true, sortable: false },
+  ];
+
   const trainingRegimeLabels = {
     from_scratch: "Scratch",
     pretrained_zero_shot: "Zero-shot",
@@ -301,25 +344,25 @@
   const datasetColors = ["#2563eb", "#10b981", "#8b5cf6", "#f59e0b", "#ec4899", "#06b6d4", "#64748b", "#1e40af"];
 
   const scatterAxisDefinitions = [
-    { key: "rank", label: "Rank", digits: 0 },
-    { key: "surfacePressure", label: "Surface pressure L2 (%)", digits: 2 },
-    { key: "surfacePressureL1", label: "Surface pressure L1 (%)", digits: 2 },
-    { key: "surfaceTau", label: "Surface tau wall L2 (%)", digits: 2 },
-    { key: "surfaceTauL1", label: "Surface tau wall L1 (%)", digits: 2 },
-    { key: "volumeVelocity", label: "Volume velocity L2 (%)", digits: 2 },
-    { key: "volumeVelocityL1", label: "Volume velocity L1 (%)", digits: 2 },
-    { key: "volumePressure", label: "Volume pressure L2 (%)", digits: 2 },
-    { key: "volumePressureL1", label: "Volume pressure L1 (%)", digits: 2 },
-    { key: "r2Cd", label: "Cd R2", digits: 3 },
-    { key: "r2Cl", label: "Cl R2", digits: 3 },
-    { key: "velocityProfileR2", label: "Velocity profiles R2", digits: 3 },
-    { key: "cpCutR2", label: "Cp cuts R2", digits: 3 },
+    { key: "rank", label: "Rank", digits: 0, direction: "lower" },
+    { key: "surfacePressure", label: "Surface pressure L2 (%)", digits: 2, direction: "lower" },
+    { key: "surfacePressureL1", label: "Surface pressure L1 (%)", digits: 2, direction: "lower" },
+    { key: "surfaceTau", label: "Surface tau wall L2 (%)", digits: 2, direction: "lower" },
+    { key: "surfaceTauL1", label: "Surface tau wall L1 (%)", digits: 2, direction: "lower" },
+    { key: "volumeVelocity", label: "Volume velocity L2 (%)", digits: 2, direction: "lower" },
+    { key: "volumeVelocityL1", label: "Volume velocity L1 (%)", digits: 2, direction: "lower" },
+    { key: "volumePressure", label: "Volume pressure L2 (%)", digits: 2, direction: "lower" },
+    { key: "volumePressureL1", label: "Volume pressure L1 (%)", digits: 2, direction: "lower" },
+    { key: "r2Cd", label: "Cd R2", digits: 3, direction: "higher" },
+    { key: "r2Cl", label: "Cl R2", digits: 3, direction: "higher" },
+    { key: "velocityProfileR2", label: "Velocity profiles R2", digits: 3, direction: "higher" },
+    { key: "cpCutR2", label: "Cp cuts R2", digits: 3, direction: "higher" },
     { key: "params", label: "Params (M)", digits: 2 },
     { key: "date", label: "Submission date", kind: "date" },
-    { key: "fieldScore", label: "Field score (50%)", digits: 1 },
-    { key: "forceScore", label: "Force score (25%)", digits: 1 },
-    { key: "diagnosticScore", label: "Diagnostic score (25%)", digits: 1 },
-    { key: "score", label: "Overall score", digits: 1 },
+    { key: "fieldScore", label: "Field score (50%)", digits: 1, direction: "higher" },
+    { key: "forceScore", label: "Force score (25%)", digits: 1, direction: "higher" },
+    { key: "diagnosticScore", label: "Diagnostic score (25%)", digits: 1, direction: "higher" },
+    { key: "score", label: "Overall score", digits: 1, direction: "higher" },
   ];
 
   let submissions = [];
@@ -392,6 +435,8 @@
   let columnHelpPopover = null;
   let activeColumnHelpTrigger = null;
   let columnHelpHideTimer = null;
+  let columnHelpGlobalEventsConfigured = false;
+  let columnVisibility = loadColumnVisibility();
   const sharedSelection = { dataset: "AhmedML", split: fullSplit };
   const chartSelections = {
     cp: { dataset: "AhmedML", split: fullSplit },
@@ -431,12 +476,14 @@
     if (!metric || !Number.isFinite(value)) return "N/A";
 
     const formatted = formatNumber(value, metric.digits);
-    return metric.unit ? `${formatted}${metric.unit}` : formatted;
+    if (!metric.unit) return formatted;
+    return `${formatted}${metric.unit === "%" ? "" : " "}${metric.unit}`;
   }
 
   function comparisonValueDigits(metric) {
     if (!metric) return 1;
     if (metric.scoreKind === "r2") return 2;
+    if (metric.scoreKind === "absoluteError") return metric.digits;
     return 1;
   }
 
@@ -447,7 +494,10 @@
 
     if (metric.scoreKind === "score") return `${formatNumber(value, 1)} pts`;
     if (metric.scoreKind === "r2") return formatNumber(value, comparisonValueDigits(metric));
-    if (metric.unit) return `${formatNumber(value, comparisonValueDigits(metric))}${metric.unit}`;
+    if (metric.unit) {
+      const spacer = metric.unit === "%" ? "" : " ";
+      return `${formatNumber(value, comparisonValueDigits(metric))}${spacer}${metric.unit}`;
+    }
     return formatNumber(value, comparisonValueDigits(metric));
   }
 
@@ -511,7 +561,12 @@
     if (typeof a[key] === "string") {
       return a[key].localeCompare(b[key]) * multiplier;
     }
-    return (a[key] - b[key]) * multiplier;
+    const aValue = Number(a[key]);
+    const bValue = Number(b[key]);
+    if (!Number.isFinite(aValue) && !Number.isFinite(bValue)) return 0;
+    if (!Number.isFinite(aValue)) return 1;
+    if (!Number.isFinite(bValue)) return -1;
+    return (aValue - bValue) * multiplier;
   }
 
   function enrichedRows() {
@@ -864,6 +919,7 @@
 
     const model = entry.model || "Unnamed model";
     const dataset = entry.dataset || "AhmedML";
+    const dynamicMetrics = normalizedDynamicMetricValues(entry, dataset);
     const id = `approved-${entry.submission_id || slug(`${dataset}-${rowSplit(entry)}-${model}`)}`;
     const modelTypes = normalizeModelTypes(entry);
     const trainingRegime = normalizeTrainingRegime(entry.training_regime ?? entry.trainingRegime);
@@ -886,6 +942,7 @@
       dataset,
       split: normalizeSplit(entry.split ?? entry.dataset_split ?? entry.benchmark_split, dataset),
       ...metrics,
+      ...dynamicMetrics,
       params: parseNumber(entry.parameter_count ?? entry.num_parameters) ?? 0,
       date: displayDate(entry),
       submittedBy: displaySubmitter(entry, "Approved submission"),
@@ -928,6 +985,132 @@
 
   function leaderboardDatasetEntry(datasetName) {
     return leaderboardDatasetEntries().find((entry) => entry.name === datasetName);
+  }
+
+  function metricCatalogDefinitions(group) {
+    const definitions = leaderboardManifest?.metric_catalog?.[group];
+    return Array.isArray(definitions) ? definitions : [];
+  }
+
+  function enabledDatasetMetricDefinitions(datasetName, group) {
+    const enabledIds = leaderboardDatasetEntry(datasetName)?.metrics?.[group];
+    if (!Array.isArray(enabledIds)) return [];
+    const catalog = new Map(metricCatalogDefinitions(group).map((definition) => [definition.id, definition]));
+    return enabledIds.map((metricId) => catalog.get(metricId)).filter(Boolean);
+  }
+
+  function dimensionalMetricKey(metricId, statistic) {
+    return `dimensional:${metricId}:${statistic}`;
+  }
+
+  function coefficientMetricKey(metricId) {
+    return `coefficient:${metricId}:mae`;
+  }
+
+  function unitSuffix(unit) {
+    return unit ? ` (${unit})` : "";
+  }
+
+  function activeDynamicMetricDefinitions(datasetName = sharedSelection.dataset) {
+    const fields = [];
+    enabledDatasetMetricDefinitions(datasetName, "dimensional_fields").forEach((definition) => {
+      const statistics = Array.isArray(definition.statistics) ? definition.statistics : [];
+      statistics.forEach((statistic) => {
+        const statisticLabel = statistic.toUpperCase();
+        const key = dimensionalMetricKey(definition.id, statistic);
+        const weighting = definition.weighting === "face_area" ? "face-area-weighted" : "cell-volume-weighted";
+        const metric = {
+          key,
+          id: definition.id,
+          category: "dimensional-field",
+          statistic,
+          label: `${definition.label} ${statisticLabel}${unitSuffix(definition.unit)}`,
+          tableLines: [definition.label, `${statisticLabel}${unitSuffix(definition.unit)}`],
+          digits: Number.isInteger(definition.digits) ? definition.digits : 2,
+          unit: definition.unit || "",
+          scoreKind: "absoluteError",
+          direction: "lower",
+        };
+        metricDefinitions[key] = metric;
+        columnHelpDefinitions[key] = {
+          title: metric.label,
+          description:
+            `${statisticLabel} for ${definition.label.toLowerCase()} in dimensional SI units, using ${weighting} ` +
+            "errors with equal weighting across evaluated cases. Lower is better.",
+          metricsLink: true,
+        };
+        lowerIsBetterMetrics.add(key);
+        fields.push(metric);
+      });
+    });
+
+    const coefficients = enabledDatasetMetricDefinitions(datasetName, "coefficient_errors").map((definition) => {
+      const key = coefficientMetricKey(definition.id);
+      const metric = {
+        key,
+        id: definition.id,
+        category: "coefficient-error",
+        statistic: definition.statistic || "mae",
+        label: `${definition.label} MAE${unitSuffix(definition.unit)}`,
+        tableLines: [definition.label, `MAE${unitSuffix(definition.unit)}`],
+        digits: Number.isInteger(definition.digits) ? definition.digits : 4,
+        unit: definition.unit || "",
+        scoreKind: "absoluteError",
+        direction: "lower",
+      };
+      metricDefinitions[key] = metric;
+      columnHelpDefinitions[key] = {
+        title: metric.label,
+        description:
+          `Mean absolute difference between predicted and reference ${definition.label} across evaluated cases. ` +
+          "Lower is better.",
+        metricsLink: true,
+      };
+      lowerIsBetterMetrics.add(key);
+      return metric;
+    });
+
+    return { fields, coefficients, all: [...fields, ...coefficients] };
+  }
+
+  function normalizedDynamicMetricValues(entry, datasetName) {
+    const values = {};
+    const dynamic = activeDynamicMetricDefinitions(datasetName);
+    dynamic.fields.forEach((definition) => {
+      values[definition.key] = parseNumber(
+        entry.dimensional_field_errors?.[definition.id]?.[definition.statistic]
+      );
+    });
+    dynamic.coefficients.forEach((definition) => {
+      values[definition.key] = parseNumber(entry.absolute_coefficient_errors?.[definition.id]);
+    });
+    return values;
+  }
+
+  function dynamicTableColumns(datasetName = sharedSelection.dataset) {
+    const dynamic = activeDynamicMetricDefinitions(datasetName);
+    return [
+      ...dynamic.fields.map((metric) => ({
+        key: metric.key,
+        labelLines: metric.tableLines,
+        group: "absolute-errors",
+        groupStart: metric.statistic === "mae",
+      })),
+      ...dynamic.coefficients.map((metric) => ({
+        key: metric.key,
+        labelLines: metric.tableLines,
+        group: "absolute-errors",
+        groupStart: true,
+      })),
+    ];
+  }
+
+  function activeTableColumns() {
+    return [
+      ...tableColumnsBeforeDynamic,
+      ...dynamicTableColumns(sharedSelection.dataset),
+      ...tableColumnsAfterDynamic,
+    ];
   }
 
   function refreshSubmissionsFromApprovedCache() {
@@ -1041,6 +1224,7 @@
     }
 
     renderApprovedSubmissionStatus();
+    renderTableHeader();
     renderTable();
     refreshAllChartPanels();
   }
@@ -1085,6 +1269,8 @@
     td.classList.add("leaderboard-metric-cell");
     if (score !== null) {
       td.title = `${metric?.label || label}: ${formatMetricValue(row, key)}; normalized score ${formatNumber(score, 1)} / 100`;
+    } else if (Number.isFinite(value)) {
+      td.title = `${metric?.label || label}: ${formatMetricValue(row, key)}`;
     }
 
     return td;
@@ -1242,6 +1428,9 @@
       });
     });
 
+    if (columnHelpGlobalEventsConfigured) return;
+    columnHelpGlobalEventsConfigured = true;
+
     document.addEventListener("pointerdown", (event) => {
       if (event.target instanceof Element && event.target.closest(".leaderboard-column-help-trigger, .leaderboard-column-help-popover")) {
         return;
@@ -1250,6 +1439,52 @@
     });
     window.addEventListener("resize", hideColumnHelp);
     window.addEventListener("scroll", hideColumnHelp, true);
+  }
+
+  function appendTableHeaderLabel(th, column) {
+    if (column.labelLines) {
+      column.labelLines.forEach((line, index) => {
+        if (index > 0) th.appendChild(document.createElement("br"));
+        th.appendChild(document.createTextNode(line));
+      });
+      return;
+    }
+
+    if (column.html) {
+      th.innerHTML = column.label;
+    } else {
+      th.textContent = column.label;
+    }
+  }
+
+  function renderTableHeader() {
+    const headerRow = document.getElementById("leaderboard-header-row");
+    if (!headerRow) return;
+    hideColumnHelp();
+    activeColumnHelpTrigger = null;
+
+    const columns = activeTableColumns();
+    const sortableKeys = new Set(columns.filter((column) => column.sortable !== false).map((column) => column.key));
+    if (!sortableKeys.has(sortState.key)) sortState = { key: rankMetricKey, direction: "desc" };
+
+    headerRow.textContent = "";
+    columns.forEach((column) => {
+      const th = document.createElement("th");
+      if (column.groupStart) th.classList.add("leaderboard-group-start");
+      if (column.group) th.dataset.columnGroup = column.group;
+      if (column.sortable === false) {
+        th.dataset.columnHelp = column.key;
+      } else {
+        th.dataset.sort = column.key;
+      }
+      appendTableHeaderLabel(th, column);
+      headerRow.appendChild(th);
+    });
+
+    configureSort();
+    configureColumnHelp();
+    updateSortIndicators();
+    applyColumnVisibility();
   }
 
   function updateSortIndicators() {
@@ -1271,6 +1506,7 @@
     updateSortIndicators();
     tbody.textContent = "";
 
+    const columns = activeTableColumns();
     sortedRows().forEach((row) => {
       const tr = document.createElement("tr");
 
@@ -1286,22 +1522,36 @@
       tr.appendChild(chipCell("Dataset", row.dataset, "leaderboard-dataset-cell leaderboard-group-start", "leaderboard-dataset"));
       tr.appendChild(chipCell("Split", row.split, "leaderboard-split-cell", "leaderboard-split"));
       tr.appendChild(metricCell("Overall score", row, "score", "leaderboard-score leaderboard-group-start"));
-      tr.appendChild(metricCell("Field score", row, "fieldScore", "leaderboard-component-score"));
-      tr.appendChild(metricCell("Force score", row, "forceScore", "leaderboard-component-score"));
-      tr.appendChild(metricCell("Diagnostic score", row, "diagnosticScore", "leaderboard-component-score"));
+      tr.appendChild(metricCell("Field score", row, "fieldScore", "leaderboard-component-score leaderboard-group-start"));
+      tr.appendChild(metricCell("Force score", row, "forceScore", "leaderboard-component-score leaderboard-group-start"));
+      tr.appendChild(metricCell("Diagnostic score", row, "diagnosticScore", "leaderboard-component-score leaderboard-group-start"));
       tr.appendChild(metricCell("Surface pressure rel L2 (%)", row, "surfacePressure", "leaderboard-group-start"));
       tr.appendChild(metricCell("Surface pressure rel L1 (%)", row, "surfacePressureL1"));
-      tr.appendChild(metricCell("Surface tau wall rel L2 (%)", row, "surfaceTau"));
+      tr.appendChild(metricCell("Surface tau wall rel L2 (%)", row, "surfaceTau", "leaderboard-group-start"));
       tr.appendChild(metricCell("Surface tau wall rel L1 (%)", row, "surfaceTauL1"));
-      tr.appendChild(metricCell("Volume velocity rel L2 (%)", row, "volumeVelocity"));
+      tr.appendChild(metricCell("Volume velocity rel L2 (%)", row, "volumeVelocity", "leaderboard-group-start"));
       tr.appendChild(metricCell("Volume velocity rel L1 (%)", row, "volumeVelocityL1"));
-      tr.appendChild(metricCell("Volume pressure rel L2 (%)", row, "volumePressure"));
+      tr.appendChild(metricCell("Volume pressure rel L2 (%)", row, "volumePressure", "leaderboard-group-start"));
       tr.appendChild(metricCell("Volume pressure rel L1 (%)", row, "volumePressureL1"));
-      tr.appendChild(metricCell("Cd R2", row, "r2Cd"));
+
+      const dynamicMetrics = activeDynamicMetricDefinitions(row.dataset);
+      dynamicMetrics.fields.forEach((metric) => {
+        tr.appendChild(metricCell(
+          metric.label,
+          row,
+          metric.key,
+          metric.statistic === "mae" ? "leaderboard-group-start" : ""
+        ));
+      });
+      dynamicMetrics.coefficients.forEach((metric) => {
+        tr.appendChild(metricCell(metric.label, row, metric.key, "leaderboard-group-start"));
+      });
+
+      tr.appendChild(metricCell("Cd R2", row, "r2Cd", "leaderboard-group-start"));
       tr.appendChild(metricCell("Cl R2", row, "r2Cl"));
-      tr.appendChild(metricCell("Velocity profiles R2", row, "velocityProfileR2"));
+      tr.appendChild(metricCell("Velocity profiles R2", row, "velocityProfileR2", "leaderboard-group-start"));
       tr.appendChild(metricCell("Cp cuts R2", row, "cpCutR2"));
-      tr.appendChild(tableCell("Params (M)", formatNumber(row.params, 2)));
+      tr.appendChild(tableCell("Params (M)", formatNumber(row.params, 2), "leaderboard-group-start"));
       tr.appendChild(tableCell("Submission date", row.date));
 
       const details = document.createElement("button");
@@ -1311,8 +1561,14 @@
       details.addEventListener("click", () => openDetailsDialog(row));
       tr.appendChild(tableCell("Details", details, "leaderboard-group-start"));
 
+      Array.from(tr.children).forEach((cell, index) => {
+        const columnGroup = columns[index]?.group;
+        if (columnGroup) cell.dataset.columnGroup = columnGroup;
+      });
+
       tbody.appendChild(tr);
     });
+    applyColumnVisibility();
   }
 
   function configureSort() {
@@ -1351,6 +1607,82 @@
       const activeDropdown = event.target instanceof Element ? event.target.closest(".leaderboard-filter-dropdown") : null;
       closeFilterDropdowns(activeDropdown);
     });
+  }
+
+  function defaultColumnVisibility() {
+    return Object.fromEntries(columnGroups.map((group) => [group, true]));
+  }
+
+  function loadColumnVisibility() {
+    const defaults = defaultColumnVisibility();
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(columnVisibilityStorageKey));
+      if (!saved || typeof saved !== "object") return defaults;
+      columnGroups.forEach((group) => {
+        if (typeof saved[group] === "boolean") defaults[group] = saved[group];
+      });
+    } catch (_error) {
+      return defaults;
+    }
+    return defaults;
+  }
+
+  function saveColumnVisibility() {
+    try {
+      window.localStorage.setItem(columnVisibilityStorageKey, JSON.stringify(columnVisibility));
+    } catch (_error) {
+      // The controls still work when browser storage is disabled.
+    }
+  }
+
+  function updateColumnControls() {
+    const controls = document.getElementById("leaderboard-column-controls");
+    if (!controls) return;
+
+    controls.querySelectorAll("[data-column-group-toggle]").forEach((button) => {
+      const isVisible = columnVisibility[button.dataset.columnGroupToggle] !== false;
+      button.classList.toggle("is-active", isVisible);
+      button.setAttribute("aria-pressed", String(isVisible));
+    });
+  }
+
+  function applyColumnVisibility() {
+    document.querySelectorAll(".leaderboard-table [data-column-group]").forEach((element) => {
+      const group = element.dataset.columnGroup;
+      element.classList.toggle("leaderboard-column-hidden", columnVisibility[group] === false);
+    });
+    const hasHiddenColumns = columnGroups.some((group) => columnVisibility[group] === false);
+    document.querySelector(".leaderboard-table")?.classList.toggle("leaderboard-columns-reduced", hasHiddenColumns);
+    updateColumnControls();
+  }
+
+  function resetHiddenSort() {
+    const sortedColumn = activeTableColumns().find((column) => column.key === sortState.key);
+    if (sortedColumn?.group && columnVisibility[sortedColumn.group] === false) {
+      sortState = { key: rankMetricKey, direction: "desc" };
+    }
+  }
+
+  function refreshColumnVisibility() {
+    saveColumnVisibility();
+    resetHiddenSort();
+    renderTable();
+    updateComparisonChart();
+    updateScatterChart();
+  }
+
+  function configureColumnControls() {
+    const controls = document.getElementById("leaderboard-column-controls");
+    if (!controls) return;
+
+    controls.addEventListener("click", (event) => {
+      const button = event.target instanceof Element ? event.target.closest("[data-column-group-toggle]") : null;
+      if (!button) return;
+      const group = button.dataset.columnGroupToggle;
+      columnVisibility[group] = columnVisibility[group] === false;
+      refreshColumnVisibility();
+    });
+    applyColumnVisibility();
   }
 
   function filterInputs(containerId) {
@@ -1560,6 +1892,7 @@
       populateChartScopeDatasetSelect(scope);
       syncChartScopeSplitSelect(scope);
     });
+    syncScatterAxisControls();
   }
 
   function setLinkedSelection(dataset, split) {
@@ -1768,7 +2101,24 @@
 
   function comparisonMetricGroup() {
     const selected = document.getElementById("comparison-metric-group")?.value || "summary";
-    return comparisonMetricGroups[selected] ? selected : "summary";
+    return (comparisonMetricGroups[selected] || dynamicComparisonGroups.has(selected)) ? selected : "summary";
+  }
+
+  function comparisonMetricKeys(group) {
+    if (group === "dimensional-mae") {
+      return activeDynamicMetricDefinitions().fields
+        .filter((metric) => metric.statistic === "mae")
+        .map((metric) => metric.key);
+    }
+    if (group === "dimensional-rmse") {
+      return activeDynamicMetricDefinitions().fields
+        .filter((metric) => metric.statistic === "rmse")
+        .map((metric) => metric.key);
+    }
+    if (group === "coefficient-mae") {
+      return activeDynamicMetricDefinitions().coefficients.map((metric) => metric.key);
+    }
+    return comparisonMetricGroups[group] || comparisonMetricGroups.summary;
   }
 
   function comparisonRowCount() {
@@ -1785,15 +2135,29 @@
     if (group === "l2") return "Relative L2 error (%) - lower is better";
     if (group === "l1") return "Relative L1 error (%) - lower is better";
     if (group === "r2") return "R2 - higher is better";
+    if (group === "dimensional-mae") return "Dimensional MAE - lower is better";
+    if (group === "dimensional-rmse") return "Dimensional RMSE - lower is better";
+    if (group === "coefficient-mae") return "Coefficient MAE - lower is better";
     return "Score (points) - higher is better";
   }
 
   function comparisonMetricValue(row, metricKey) {
     const value = Number(row[metricKey]);
-    return Number.isFinite(value) ? Number(value.toFixed(3)) : null;
+    const digits = metricDefinitions[metricKey]?.digits ?? 3;
+    return Number.isFinite(value) ? Number(value.toFixed(digits)) : null;
   }
 
-  function comparisonDatasets(metricKeys, rows) {
+  function comparisonMetricUnits(metricKeys) {
+    return uniqueInOrder(metricKeys.map((key) => metricDefinitions[key]?.unit || "").filter(Boolean));
+  }
+
+  function comparisonMetricAxisId(metricKey, metricKeys, group) {
+    if (!group.startsWith("dimensional-")) return "y";
+    const units = comparisonMetricUnits(metricKeys);
+    return units.indexOf(metricDefinitions[metricKey]?.unit || "") > 0 ? "y1" : "y";
+  }
+
+  function comparisonDatasets(metricKeys, rows, group) {
     return metricKeys.map((metricKey, index) => {
       const metric = metricDefinitions[metricKey];
       const color = comparisonColors[index % comparisonColors.length];
@@ -1806,6 +2170,7 @@
         borderRadius: 4,
         borderWidth: 1,
         maxBarThickness: 28,
+        yAxisID: comparisonMetricAxisId(metricKey, metricKeys, group),
       };
     });
   }
@@ -1875,13 +2240,37 @@
 
     const group = comparisonMetricGroup();
     const rows = chartScopeRows("comparison").slice(0, comparisonRowCount());
-    const metricKeys = comparisonMetricGroups[group];
+    const metricKeys = comparisonMetricKeys(group);
     comparisonChartRowsCache = rows;
     comparisonChart.data.labels = rows.map(comparisonRowLabel);
-    comparisonChart.data.datasets = comparisonDatasets(metricKeys, rows);
-    comparisonChart.options.scales.y.title.text = comparisonAxisTitle(group);
-    comparisonChart.options.scales.y.min = 0;
-    comparisonChart.options.scales.y.max = group === "r2" ? 1 : group === "summary" ? 100 : undefined;
+    comparisonChart.data.datasets = comparisonDatasets(metricKeys, rows, group);
+
+    const yScale = comparisonChart.options.scales.y;
+    const units = comparisonMetricUnits(metricKeys);
+    yScale.position = "left";
+    yScale.title.text = units[0]
+      ? `${group === "dimensional-rmse" ? "RMSE" : "MAE"} (${units[0]}) - lower is better`
+      : comparisonAxisTitle(group);
+    yScale.min = 0;
+    if (group === "r2") yScale.max = 1;
+    else if (group === "summary") yScale.max = 100;
+    else delete yScale.max;
+
+    delete comparisonChart.options.scales.y1;
+    if (units.length > 1) {
+      comparisonChart.options.scales.y1 = {
+        type: "linear",
+        position: "right",
+        min: 0,
+        title: {
+          display: true,
+          text: `${group === "dimensional-rmse" ? "RMSE" : "MAE"} (${units[1]}) - lower is better`,
+          color: chartTextColor(),
+        },
+        ticks: { color: chartTextColor() },
+        grid: { drawOnChartArea: false, color: gridColor() },
+      };
+    }
     comparisonChart.update();
   }
 
@@ -1893,19 +2282,33 @@
   }
 
   function scatterAxisDefinition(key) {
-    return scatterAxisDefinitions.find((axis) => axis.key === key) || scatterAxisDefinitions[0];
+    const definitions = activeScatterAxisDefinitions();
+    return definitions.find((axis) => axis.key === key) || definitions[0];
+  }
+
+  function activeScatterAxisDefinitions() {
+    const dynamicAxes = activeDynamicMetricDefinitions().all.map((metric) => ({
+      key: metric.key,
+      label: metric.label,
+      digits: metric.digits,
+      unit: metric.unit,
+      direction: metric.direction,
+    }));
+    return [...scatterAxisDefinitions, ...dynamicAxes];
   }
 
   function populateScatterAxisSelect(select, defaultKey) {
     if (!select) return;
+    const requestedKey = select.value || defaultKey;
+    const definitions = activeScatterAxisDefinitions();
     select.textContent = "";
-    scatterAxisDefinitions.forEach((axis) => {
+    definitions.forEach((axis) => {
       const option = document.createElement("option");
       option.value = axis.key;
       option.textContent = axis.label;
-      option.selected = axis.key === defaultKey;
       select.appendChild(option);
     });
+    select.value = definitions.some((axis) => axis.key === requestedKey) ? requestedKey : defaultKey;
   }
 
   function selectedScatterAxis(id, fallback) {
@@ -1936,7 +2339,9 @@
 
     const value = Number(row[key]);
     if (!Number.isFinite(value)) return "N/A";
-    return formatNumber(value, axis.digits ?? 2);
+    const formatted = formatNumber(value, axis.digits ?? 2);
+    if (!axis.unit) return formatted;
+    return `${formatted}${axis.unit === "%" ? "" : " "}${axis.unit}`;
   }
 
   function scatterTickLabel(key, value) {
@@ -1944,6 +2349,12 @@
     if (axis.kind === "date") return formatDateValue(Number(value));
     if (!Number.isFinite(Number(value))) return value;
     return formatNumber(Number(value), axis.digits ?? 2);
+  }
+
+  function scatterAxisTitle(axis) {
+    if (axis.direction === "lower") return `${axis.label} - lower is better`;
+    if (axis.direction === "higher") return `${axis.label} - higher is better`;
+    return axis.label;
   }
 
   function datasetColor(dataset, index) {
@@ -2022,9 +2433,9 @@
     const rows = chartScopeRows("scatter");
 
     scatterChart.data.datasets = scatterDatasets(rows, xKey, yKey);
-    scatterChart.options.scales.x.title.text = xAxis.label;
+    scatterChart.options.scales.x.title.text = scatterAxisTitle(xAxis);
     scatterChart.options.scales.x.ticks.callback = (value) => scatterTickLabel(xKey, value);
-    scatterChart.options.scales.y.title.text = yAxis.label;
+    scatterChart.options.scales.y.title.text = scatterAxisTitle(yAxis);
     scatterChart.options.scales.y.ticks.callback = (value) => scatterTickLabel(yKey, value);
     scatterChart.update();
   }
@@ -2037,6 +2448,11 @@
     populateScatterAxisSelect(ySelect, "score");
     xSelect?.addEventListener("change", updateScatterChart);
     ySelect?.addEventListener("change", updateScatterChart);
+  }
+
+  function syncScatterAxisControls() {
+    populateScatterAxisSelect(document.getElementById("scatter-x-axis"), "params");
+    populateScatterAxisSelect(document.getElementById("scatter-y-axis"), "score");
   }
 
   function chartRows(chartType) {
@@ -2258,6 +2674,9 @@
     appendDetailField(details, "Force score (25%)", formatNumber(row.forceScore, 1));
     appendDetailField(details, "Diagnostic score (25%)", formatNumber(row.diagnosticScore, 1));
     appendDetailField(details, "Overall score", formatNumber(row.score, 1));
+    activeDynamicMetricDefinitions(row.dataset).all.forEach((metric) => {
+      appendDetailField(details, metric.label, formatMetricValue(row, metric.key));
+    });
     appendDetailField(details, "Cd R2", formatNumber(row.r2Cd, 3));
     appendDetailField(details, "Cl R2", formatNumber(row.r2Cl, 3));
     appendDetailField(details, "Velocity profiles R2", formatNumber(row.velocityProfileR2, 3));
@@ -2293,12 +2712,13 @@
 
   async function initLeaderboard() {
     renderApprovedSubmissionStatus();
-    configureSort();
-    configureColumnHelp();
+    renderTableHeader();
     configureFilters();
+    configureColumnControls();
     configureDetailsDialog();
     await loadApprovedSubmissions();
     renderApprovedSubmissionStatus();
+    renderTableHeader();
     renderTable();
     configureCharts();
   }

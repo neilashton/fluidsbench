@@ -231,41 +231,44 @@ chart:
     </div>
   </section>
 
-  <section class="leaderboard-table-wrap" aria-label="CFD leaderboard table">
-    <table class="leaderboard-table">
-      <thead>
-        <tr>
-          <th data-sort="rank">Rank</th>
-          <th data-sort="model">Model</th>
-          <th data-sort="submittedBy">Submitted by</th>
-          <th data-sort="type">Type</th>
-          <th data-sort="trainingRegimeLabel">Training</th>
-          <th class="leaderboard-group-start" data-sort="dataset">Dataset</th>
-          <th data-sort="split">Split</th>
-          <th class="leaderboard-group-start" data-sort="score">Overall score</th>
-          <th data-sort="fieldScore">Field score</th>
-          <th data-sort="forceScore">Force score</th>
-          <th data-sort="diagnosticScore">Diagnostic score</th>
-          <th class="leaderboard-group-start" data-sort="surfacePressure">Surface pressure<br>rel L2 (%)</th>
-          <th data-sort="surfacePressureL1">Surface pressure<br>rel L1 (%)</th>
-          <th data-sort="surfaceTau">Surface tau wall<br>rel L2 (%)</th>
-          <th data-sort="surfaceTauL1">Surface tau wall<br>rel L1 (%)</th>
-          <th data-sort="volumeVelocity">Volume velocity<br>rel L2 (%)</th>
-          <th data-sort="volumeVelocityL1">Volume velocity<br>rel L1 (%)</th>
-          <th data-sort="volumePressure">Volume pressure<br>rel L2 (%)</th>
-          <th data-sort="volumePressureL1">Volume pressure<br>rel L1 (%)</th>
-          <th data-sort="r2Cd">C<sub>d</sub> R<sup>2</sup></th>
-          <th data-sort="r2Cl">C<sub>l</sub> R<sup>2</sup></th>
-          <th data-sort="velocityProfileR2">Velocity profiles<br>R<sup>2</sup></th>
-          <th data-sort="cpCutR2">Cp cuts<br>R<sup>2</sup></th>
-          <th data-sort="params">Params (M)</th>
-          <th data-sort="date">Submission date</th>
-          <th class="leaderboard-group-start" data-column-help="details">Details</th>
-        </tr>
-      </thead>
-      <tbody id="leaderboard-body"></tbody>
-    </table>
-  </section>
+  <aside class="leaderboard-data-warning" role="note" aria-label="Leaderboard data status">
+    <strong>Work in progress:</strong> this leaderboard currently displays dummy data with illustrative split assignments.
+  </aside>
+
+  <div class="leaderboard-table-area">
+    <div class="leaderboard-table-toolbar" id="leaderboard-column-controls" role="group" aria-label="Visible table column groups">
+      <span class="leaderboard-column-controls-label">
+        <i class="fa-solid fa-table-columns" aria-hidden="true"></i>
+        Columns
+      </span>
+      <div class="leaderboard-column-toggles">
+        <button type="button" class="leaderboard-column-toggle" data-column-group-toggle="component-scores" aria-pressed="true">
+          Component scores
+        </button>
+        <button type="button" class="leaderboard-column-toggle" data-column-group-toggle="relative-errors" aria-pressed="true">
+          Relative errors
+        </button>
+        <button type="button" class="leaderboard-column-toggle" data-column-group-toggle="absolute-errors" aria-pressed="true">
+          Absolute errors
+        </button>
+        <button type="button" class="leaderboard-column-toggle" data-column-group-toggle="r2-metrics" aria-pressed="true">
+          R² metrics
+        </button>
+        <button type="button" class="leaderboard-column-toggle" data-column-group-toggle="model-details" aria-pressed="true">
+          Model details
+        </button>
+      </div>
+    </div>
+
+    <section class="leaderboard-table-wrap" aria-label="CFD leaderboard table">
+      <table class="leaderboard-table">
+        <thead>
+          <tr id="leaderboard-header-row"></tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </section>
+  </div>
 
   <section class="leaderboard-panel leaderboard-comparison-panel">
     <div class="comparison-header">
@@ -289,6 +292,9 @@ chart:
             <option value="l2">L2 errors</option>
             <option value="l1">L1 errors</option>
             <option value="r2">R2 metrics</option>
+            <option value="dimensional-mae">Dimensional MAE</option>
+            <option value="dimensional-rmse">Dimensional RMSE</option>
+            <option value="coefficient-mae">Coefficient MAE</option>
           </select>
         </div>
         <div class="chart-control">
@@ -741,6 +747,28 @@ chart:
           approved submission files when evaluator exports are available.
           <br />
           <code>Lp_rel(%) = 100 ||y_pred - y_true||_p / ||y_true||_p</code>
+        </dd>
+      </div>
+      <div>
+        <dt>Dimensional field MAE and RMSE</dt>
+        <dd>
+          Errors are evaluated after reversing model normalization and converting predictions and targets to the SI unit
+          shown in the column header. Surface quantities use face-area weights, volume quantities use cell-volume
+          weights, and each test case contributes equally. For vector fields, the point error is the Euclidean vector
+          magnitude. Lower is better.
+          <br />
+          <code>MAE(q) = (1/N) sum_i [sum_j w_ij ||qhat_ij - q_ij|| / sum_j w_ij]</code>
+          <br />
+          <code>RMSE(q) = sqrt((1/N) sum_i [sum_j w_ij ||qhat_ij - q_ij||^2 / sum_j w_ij])</code>
+        </dd>
+      </div>
+      <div>
+        <dt>Absolute force and moment coefficient error</dt>
+        <dd>
+          Mean absolute difference between the predicted and reference coefficient over all evaluated cases. Coefficients
+          are dimensionless and the available force or moment components depend on the selected dataset. Lower is better.
+          <br />
+          <code>MAE(C) = (1/N) sum_i |Chat_i - C_i|</code>
         </dd>
       </div>
       <div>
