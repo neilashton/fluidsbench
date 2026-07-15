@@ -34,6 +34,13 @@
     new URL("/leaderboard/manifest.json", window.location.origin).href;
   const approvedSubmissionsSourceLabel =
     window.FluidsBenchApprovedSubmissionsSourceLabel || "leaderboard manifest";
+  const diagnosticGroundTruthBaseUrl =
+    window.FluidsBenchDiagnosticGroundTruthBaseUrl ||
+    new URL("/assets/data/diagnostic-ground-truth/", window.location.origin).href;
+  const diagnosticGroundTruthManifestUrl =
+    window.FluidsBenchDiagnosticGroundTruthManifestUrl ||
+    new URL("manifest.json", diagnosticGroundTruthBaseUrl).href;
+  const velocityGroundTruthStationIds = ["prototype_0_25l", "prototype_0_50l", "prototype_1_00l"];
 
   const lowerIsBetterMetrics = new Set([
     "surfacePressure",
@@ -369,6 +376,9 @@
   let leaderboardManifest = null;
   let approvedDatasetRows = new Map();
   let datasetLoadPromises = new Map();
+  let diagnosticGroundTruthManifest = null;
+  const diagnosticGroundTruthByDataset = new Map();
+  const diagnosticGroundTruthLoadPromises = new Map();
   let dataRefreshToken = 0;
   let approvedSubmissionStatusMessage = `Loading approved submissions from ${approvedSubmissionsSourceLabel}...`;
 
@@ -691,6 +701,7 @@
       stationId: series.station_id || "",
       stationLabel: series.station_label || "",
       caseId: series.case_id || "",
+      xLabel: series.x_label || "",
       coordinateFrame: series.coordinate_frame || "",
       quantity: series.quantity || "",
       values: series.values.filter((value) => value && typeof value === "object"),
@@ -746,17 +757,21 @@
     return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
   }
 
-  function diagnosticVelocitySeries(row, station) {
+  function matchingVelocityProfile(row, station) {
     const profiles = row?.diagnostics?.velocityProfiles || [];
     if (!profiles.length) return null;
 
-    const activeToken = stationToken(activeStation);
-    const matchedProfile =
+    const activeToken = stationToken(station);
+    return (
       profiles.find((profile) => stationToken(profile.id).includes(activeToken)) ||
-      profiles.find((profile) => stationToken(activeStation).includes(stationToken(profile.id))) ||
-      profiles[0];
+      profiles.find((profile) => activeToken.includes(stationToken(profile.id))) ||
+      profiles[0]
+    );
+  }
 
-    return diagnosticPointSeries(matchedProfile, ["z", "y", "x", "s", "distance"], ["u_over_u_inf", "u", "velocity", "value"]);
+  function diagnosticVelocitySeries(row, station = activeStation) {
+    const profile = matchingVelocityProfile(row, station);
+    return diagnosticPointSeries(profile, ["z", "y", "x", "s", "distance"], ["u_over_u_inf", "u", "velocity", "value"]);
   }
 
   function diagnosticCpSeries(row, stationId) {
@@ -973,10 +988,125 @@
     return new URL(file, normalizedLeaderboardBaseUrl()).href;
   }
 
+  function normalizedDiagnosticGroundTruthBaseUrl() {
+    return diagnosticGroundTruthBaseUrl.endsWith("/")
+      ? diagnosticGroundTruthBaseUrl
+      : `${diagnosticGroundTruthBaseUrl}/`;
+  }
+
+  function diagnosticGroundTruthFileUrl(file) {
+    return new URL(file, normalizedDiagnosticGroundTruthBaseUrl()).href;
+  }
+
   async function fetchLeaderboardJson(url, label) {
     const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
     return response.json();
+  }
+
+  async function loadDiagnosticGroundTruthManifest() {
+    if (diagnosticGroundTruthManifest) return diagnosticGroundTruthManifest;
+
+    const manifest = await fetchLeaderboardJson(
+      diagnosticGroundTruthManifestUrl,
+      "diagnostic ground-truth manifest"
+    );
+    if (!manifest || !Array.isArray(manifest.datasets)) {
+      throw new Error("diagnostic ground-truth manifest must contain a datasets array");
+    }
+    diagnosticGroundTruthManifest = manifest;
+    return diagnosticGroundTruthManifest;
+  }
+
+  function diagnosticGroundTruthEntry(datasetName) {
+    const entries = Array.isArray(diagnosticGroundTruthManifest?.datasets)
+      ? diagnosticGroundTruthManifest.datasets
+      : [];
+    return entries.find((entry) => entry.name === datasetName);
+  }
+
+  function validateDiagnosticStationCoverage(datasetName, kind, series, expectedIds) {
+    const stationIds = series.map((entry) => entry.stationId).filter(Boolean);
+    const uniqueStationIds = new Set(stationIds);
+    const missing = expectedIds.filter((stationId) => !uniqueStationIds.has(stationId));
+    const unknown = Array.from(uniqueStationIds).filter((stationId) => !expectedIds.includes(stationId));
+    const hasDuplicates = uniqueStationIds.size !== stationIds.length;
+    const invalidValues = series.some((entry) => !entry.values.length);
+
+    if (missing.length || unknown.length || hasDuplicates || invalidValues) {
+      const details = [
+        missing.length ? `missing ${missing.join(", ")}` : "",
+        unknown.length ? `unknown ${unknown.join(", ")}` : "",
+        hasDuplicates ? "duplicate station IDs" : "",
+        invalidValues ? "empty value arrays" : "",
+      ].filter(Boolean).join("; ");
+      throw new Error(`${datasetName} ${kind} ground truth has invalid station coverage (${details})`);
+    }
+  }
+
+  function validateDiagnosticGroundTruth(datasetName, groundTruth) {
+    const expectedCpStationIds = (
+      leaderboardDatasetEntry(datasetName)?.diagnostics?.cp_stations || []
+    ).map((station) => station.id);
+    validateDiagnosticStationCoverage(
+      datasetName,
+      "Cp",
+      groundTruth.diagnostics.cpCuts,
+      expectedCpStationIds
+    );
+    validateDiagnosticStationCoverage(
+      datasetName,
+      "velocity",
+      groundTruth.diagnostics.velocityProfiles,
+      velocityGroundTruthStationIds
+    );
+  }
+
+  async function loadDiagnosticGroundTruth(datasetName) {
+    if (diagnosticGroundTruthByDataset.has(datasetName)) {
+      return diagnosticGroundTruthByDataset.get(datasetName);
+    }
+    if (diagnosticGroundTruthLoadPromises.has(datasetName)) {
+      return diagnosticGroundTruthLoadPromises.get(datasetName);
+    }
+
+    const loadPromise = (async () => {
+      await loadDiagnosticGroundTruthManifest();
+      const entry = diagnosticGroundTruthEntry(datasetName);
+      if (!entry?.file) throw new Error(`no diagnostic ground-truth file is configured for ${datasetName}`);
+
+      const payload = await fetchLeaderboardJson(
+        diagnosticGroundTruthFileUrl(entry.file),
+        `${datasetName} diagnostic ground truth`
+      );
+      if (!payload || payload.dataset !== datasetName) {
+        throw new Error(`${entry.file} must declare dataset ${datasetName}`);
+      }
+
+      const groundTruth = {
+        dataset: datasetName,
+        status: payload.status || diagnosticGroundTruthManifest.status || "",
+        diagnostics: normalizeDiagnostics(payload.diagnostics),
+      };
+      validateDiagnosticGroundTruth(datasetName, groundTruth);
+      diagnosticGroundTruthByDataset.set(datasetName, groundTruth);
+      return groundTruth;
+    })().catch((error) => {
+      diagnosticGroundTruthLoadPromises.delete(datasetName);
+      throw error;
+    });
+
+    diagnosticGroundTruthLoadPromises.set(datasetName, loadPromise);
+    return loadPromise;
+  }
+
+  async function ensureDiagnosticGroundTruth(datasetName) {
+    try {
+      return await loadDiagnosticGroundTruth(datasetName);
+    } catch (error) {
+      console.warn(`Could not load ${datasetName} diagnostic ground truth:`, error);
+      return null;
+    }
   }
 
   function leaderboardDatasetEntries() {
@@ -1204,7 +1334,10 @@
 
   async function ensureDatasetsForCurrentState() {
     await loadLeaderboardManifest();
-    await ensureDatasetRows(datasetsForCurrentState());
+    await Promise.all([
+      ensureDatasetRows(datasetsForCurrentState()),
+      ensureDiagnosticGroundTruth(sharedSelection.dataset),
+    ]);
   }
 
   async function loadApprovedSubmissions() {
@@ -1965,7 +2098,23 @@
 
   function velocitySeries(modelId) {
     const row = submissions.find((entry) => entry.id === modelId);
-    return diagnosticVelocitySeries(row);
+    return diagnosticVelocitySeries(row, activeStation);
+  }
+
+  function diagnosticGroundTruth(datasetName) {
+    return diagnosticGroundTruthByDataset.get(datasetName) || null;
+  }
+
+  function cpGroundTruthSeries(datasetName, stationId) {
+    return diagnosticCpSeries(diagnosticGroundTruth(datasetName), stationId);
+  }
+
+  function velocityGroundTruthProfile(datasetName) {
+    return matchingVelocityProfile(diagnosticGroundTruth(datasetName), activeStation);
+  }
+
+  function velocityGroundTruthSeries(datasetName) {
+    return diagnosticVelocitySeries(diagnosticGroundTruth(datasetName), activeStation);
   }
 
   function chartTextColor() {
@@ -2011,6 +2160,13 @@
       pointRadius: dashed ? 0 : 2,
       tension: 0.35,
     };
+  }
+
+  function groundTruthLineDataset(data) {
+    const dataset = lineDataset("Ground truth", data, chartTextColor(), false);
+    dataset.borderWidth = 3;
+    dataset.pointRadius = 0;
+    return dataset;
   }
 
   function modelColor(modelId, index) {
@@ -2182,7 +2338,7 @@
   const comparisonValueLabelPlugin = {
     id: "comparisonValueLabels",
     afterDatasetsDraw(chart) {
-      const { ctx, chartArea } = chart;
+      const { ctx } = chart;
       ctx.save();
       ctx.fillStyle = chartTextColor();
       ctx.font = "600 10px Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -2199,7 +2355,7 @@
           if (!row || !dataset.metricKey || !Number.isFinite(value)) return;
 
           const label = formatComparisonValue(row, dataset.metricKey);
-          const y = Math.max(chartArea.top + 10, bar.y - 4);
+          const y = Math.max(12, bar.y - 6);
           ctx.fillText(label, bar.x, y);
         });
       });
@@ -2211,7 +2367,7 @@
   function comparisonChartOptions() {
     const options = baseChartOptions("Normalized score (higher is better)", "Submission");
     options.interaction = { mode: "index", intersect: false };
-    options.layout = { padding: { top: 24 } };
+    options.layout = { padding: { top: 30 } };
     options.plugins.tooltip = {
       callbacks: {
         title(items) {
@@ -2507,14 +2663,19 @@
     const profile = chartProfile("cp");
     const station = currentCpStationDefinition();
     const models = checkedModels("cp-models");
+    const groundTruth = cpGroundTruthSeries(chartSelections.cp.dataset, station?.id);
     cpChart.data.labels = [];
-    cpChart.data.datasets = models
+    const predictionDatasets = models
       .map((modelId, index) => {
         const row = submissions.find((entry) => entry.id === modelId);
         const series = cpSeries(modelId, station?.id);
         return series ? lineDataset(row?.model || modelId, series, modelColor(modelId, index), true) : null;
       })
       .filter(Boolean);
+    cpChart.data.datasets = [
+      ...(groundTruth ? [groundTruthLineDataset(groundTruth)] : []),
+      ...predictionDatasets,
+    ];
     cpChart.options.scales.x.type = "linear";
     cpChart.options.scales.x.title.text = station?.x_label || profile.cpXTitle;
     cpChart.update();
@@ -2523,18 +2684,24 @@
   function updateVelocityChart() {
     if (!velocityChart) return;
     const profile = chartProfile("velocity");
+    const groundTruthProfile = velocityGroundTruthProfile(chartSelections.velocity.dataset);
+    const groundTruth = velocityGroundTruthSeries(chartSelections.velocity.dataset);
     const models = checkedModels("velocity-models");
-    setText("velocity-station-label", activeStation);
+    setText("velocity-station-label", groundTruthProfile?.stationLabel || activeStation);
     velocityChart.data.labels = [];
-    velocityChart.data.datasets = models
+    const predictionDatasets = models
       .map((modelId, index) => {
         const row = submissions.find((entry) => entry.id === modelId);
         const series = velocitySeries(modelId);
         return series ? lineDataset(row?.model || modelId, series, modelColor(modelId, index), true) : null;
       })
       .filter(Boolean);
+    velocityChart.data.datasets = [
+      ...(groundTruth ? [groundTruthLineDataset(groundTruth)] : []),
+      ...predictionDatasets,
+    ];
     velocityChart.options.scales.x.type = "linear";
-    velocityChart.options.scales.x.title.text = profile.velocityXTitle || "z/H";
+    velocityChart.options.scales.x.title.text = groundTruthProfile?.xLabel || profile.velocityXTitle || "z/H";
     velocityChart.update();
   }
 

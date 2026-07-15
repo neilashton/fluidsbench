@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.1.0",
+  "status": "prototype_dummy_data",
+  "datasets": [
+    {"name": "AhmedML", "file": "datasets/ahmedml.json"},
+    {"name": "AirfRANS", "file": "datasets/airfrans.json"},
+    {"name": "DrivAerML", "file": "datasets/drivaerml.json"},
+    {"name": "DrivAerNet++", "file": "datasets/drivaernetplusplus.json"},
+    {"name": "HiLiftAeroML", "file": "datasets/hiliftaeroml.json"},
+    {"name": "WindsorML", "file": "datasets/windsorml.json"}
+  ]
+}

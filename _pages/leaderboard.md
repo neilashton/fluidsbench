@@ -865,5 +865,7 @@ chart:
   window.FluidsBenchLeaderboardManifestUrl =
     "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/leaderboard/manifest.json";
   window.FluidsBenchApprovedSubmissionsSourceLabel = "fluidsbench-submission dev manifest";
+  window.FluidsBenchDiagnosticGroundTruthBaseUrl =
+    new URL("{{ '/assets/data/diagnostic-ground-truth/' | relative_url }}", window.location.origin).href;
 </script>
 <script defer src="{{ '/assets/js/leaderboard.js' | relative_url | bust_file_cache }}"></script>

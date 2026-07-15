@@ -1,0 +1,74 @@
+{
+  "schema_version": "0.1.0",
+  "dataset": "DrivAerNet++",
+  "status": "prototype_dummy_data",
+  "diagnostics": {
+    "cp_cuts": [
+      {
+        "case_id": "prototype_ground_truth_case",
+        "cut_id": "ground_truth_upper_body_centerline",
+        "station_id": "upper_body_centerline",
+        "station_label": "Upper-body centreline",
+        "coordinate_frame": "vehicle_normalized",
+        "quantity": "cp",
+        "values": [{"x": 0.0, "cp": 0.29}, {"x": 0.17, "cp": -0.14}, {"x": 0.33, "cp": -0.4}, {"x": 0.5, "cp": -0.32}, {"x": 0.67, "cp": -0.15}, {"x": 0.83, "cp": 0.07}, {"x": 1.0, "cp": -0.09}]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "cut_id": "ground_truth_underbody_centerline",
+        "station_id": "underbody_centerline",
+        "station_label": "Underbody centreline",
+        "coordinate_frame": "vehicle_normalized",
+        "quantity": "cp",
+        "values": [{"x": 0.0, "cp": 0.39}, {"x": 0.17, "cp": 0.18}, {"x": 0.33, "cp": -0.09}, {"x": 0.5, "cp": -0.25}, {"x": 0.67, "cp": -0.16}, {"x": 0.83, "cp": 0.04}, {"x": 1.0, "cp": 0.22}]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "cut_id": "ground_truth_front_wheelhouse",
+        "station_id": "front_wheelhouse",
+        "station_label": "Front wheelhouse",
+        "coordinate_frame": "vehicle_normalized",
+        "quantity": "cp",
+        "values": [{"x": 0.0, "cp": 0.33}, {"x": 0.17, "cp": -0.21}, {"x": 0.33, "cp": -0.48}, {"x": 0.5, "cp": -0.09}, {"x": 0.67, "cp": 0.2}, {"x": 0.83, "cp": -0.14}, {"x": 1.0, "cp": 0.06}]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "cut_id": "ground_truth_rear_body_centerline",
+        "station_id": "rear_body_centerline",
+        "station_label": "Rear-body centreline",
+        "coordinate_frame": "vehicle_normalized",
+        "quantity": "cp",
+        "values": [{"x": 0.0, "cp": -0.08}, {"x": 0.17, "cp": -0.23}, {"x": 0.33, "cp": -0.45}, {"x": 0.5, "cp": -0.57}, {"x": 0.67, "cp": -0.37}, {"x": 0.83, "cp": -0.16}, {"x": 1.0, "cp": 0.01}]
+      }
+    ],
+    "velocity_profiles": [
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "prototype_0_25l",
+        "station_label": "0.25L",
+        "x_label": "z/L",
+        "coordinate_frame": "vehicle_normalized",
+        "quantity": "u_over_u_inf",
+        "values": [{"x": 0.0, "u_over_u_inf": 0.27}, {"x": 0.2, "u_over_u_inf": 0.36}, {"x": 0.4, "u_over_u_inf": 0.51}, {"x": 0.6, "u_over_u_inf": 0.69}, {"x": 0.8, "u_over_u_inf": 0.85}, {"x": 1.0, "u_over_u_inf": 0.96}, {"x": 1.2, "u_over_u_inf": 1.0}]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "prototype_0_50l",
+        "station_label": "0.50L",
+        "x_label": "z/L",
+        "coordinate_frame": "vehicle_normalized",
+        "quantity": "u_over_u_inf",
+        "values": [{"x": 0.0, "u_over_u_inf": 0.4}, {"x": 0.2, "u_over_u_inf": 0.48}, {"x": 0.4, "u_over_u_inf": 0.61}, {"x": 0.6, "u_over_u_inf": 0.76}, {"x": 0.8, "u_over_u_inf": 0.89}, {"x": 1.0, "u_over_u_inf": 0.98}, {"x": 1.2, "u_over_u_inf": 1.0}]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "prototype_1_00l",
+        "station_label": "1.00L",
+        "x_label": "z/L",
+        "coordinate_frame": "vehicle_normalized",
+        "quantity": "u_over_u_inf",
+        "values": [{"x": 0.0, "u_over_u_inf": 0.56}, {"x": 0.2, "u_over_u_inf": 0.62}, {"x": 0.4, "u_over_u_inf": 0.72}, {"x": 0.6, "u_over_u_inf": 0.83}, {"x": 0.8, "u_over_u_inf": 0.93}, {"x": 1.0, "u_over_u_inf": 0.99}, {"x": 1.2, "u_over_u_inf": 1.0}]
+      }
+    ]
+  }
+}
