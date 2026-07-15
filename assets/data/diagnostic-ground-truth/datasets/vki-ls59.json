@@ -1,0 +1,196 @@
+{
+  "dataset": "VKI-LS59",
+  "status": "prototype_dummy_data",
+  "note": "Illustrative FluidsBench reference traces for interface testing; not experimental LS59 measurements.",
+  "diagnostics": {
+    "surface_profiles": [
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "pressure_side",
+        "quantity_id": "m_iso",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "m_iso": 0.62
+          },
+          {
+            "x_over_c": 0.08333,
+            "m_iso": 0.68404
+          },
+          {
+            "x_over_c": 0.16667,
+            "m_iso": 0.74667
+          },
+          {
+            "x_over_c": 0.25,
+            "m_iso": 0.80657
+          },
+          {
+            "x_over_c": 0.33333,
+            "m_iso": 0.86262
+          },
+          {
+            "x_over_c": 0.41667,
+            "m_iso": 0.91394
+          },
+          {
+            "x_over_c": 0.5,
+            "m_iso": 0.96
+          },
+          {
+            "x_over_c": 0.58333,
+            "m_iso": 1.00061
+          },
+          {
+            "x_over_c": 0.66667,
+            "m_iso": 1.03595
+          },
+          {
+            "x_over_c": 0.75,
+            "m_iso": 1.06657
+          },
+          {
+            "x_over_c": 0.83333,
+            "m_iso": 1.09333
+          },
+          {
+            "x_over_c": 0.91667,
+            "m_iso": 1.11737
+          },
+          {
+            "x_over_c": 1.0,
+            "m_iso": 1.14
+          }
+        ]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "suction_side",
+        "quantity_id": "m_iso",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "m_iso": 0.48
+          },
+          {
+            "x_over_c": 0.08333,
+            "m_iso": 0.85732
+          },
+          {
+            "x_over_c": 0.16667,
+            "m_iso": 1.09341
+          },
+          {
+            "x_over_c": 0.25,
+            "m_iso": 1.27521
+          },
+          {
+            "x_over_c": 0.33333,
+            "m_iso": 1.40987
+          },
+          {
+            "x_over_c": 0.41667,
+            "m_iso": 1.49825
+          },
+          {
+            "x_over_c": 0.5,
+            "m_iso": 1.54
+          },
+          {
+            "x_over_c": 0.58333,
+            "m_iso": 1.53491
+          },
+          {
+            "x_over_c": 0.66667,
+            "m_iso": 1.4832
+          },
+          {
+            "x_over_c": 0.75,
+            "m_iso": 1.38521
+          },
+          {
+            "x_over_c": 0.83333,
+            "m_iso": 1.24008
+          },
+          {
+            "x_over_c": 0.91667,
+            "m_iso": 1.04066
+          },
+          {
+            "x_over_c": 1.0,
+            "m_iso": 0.7
+          }
+        ]
+      }
+    ],
+    "flow_profiles": [
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "outlet_plane_2",
+        "quantity_id": "velocity_ratio",
+        "values": [
+          {
+            "pitch_fraction": 0.0,
+            "velocity_ratio": 1.01
+          },
+          {
+            "pitch_fraction": 0.07143,
+            "velocity_ratio": 1.01
+          },
+          {
+            "pitch_fraction": 0.14286,
+            "velocity_ratio": 1.01
+          },
+          {
+            "pitch_fraction": 0.21429,
+            "velocity_ratio": 1.00986
+          },
+          {
+            "pitch_fraction": 0.28571,
+            "velocity_ratio": 1.00704
+          },
+          {
+            "pitch_fraction": 0.35714,
+            "velocity_ratio": 0.98181
+          },
+          {
+            "pitch_fraction": 0.42857,
+            "velocity_ratio": 0.88597
+          },
+          {
+            "pitch_fraction": 0.5,
+            "velocity_ratio": 0.75776
+          },
+          {
+            "pitch_fraction": 0.57143,
+            "velocity_ratio": 0.77286
+          },
+          {
+            "pitch_fraction": 0.64286,
+            "velocity_ratio": 0.90694
+          },
+          {
+            "pitch_fraction": 0.71429,
+            "velocity_ratio": 0.98929
+          },
+          {
+            "pitch_fraction": 0.78571,
+            "velocity_ratio": 1.00808
+          },
+          {
+            "pitch_fraction": 0.85714,
+            "velocity_ratio": 1.00992
+          },
+          {
+            "pitch_fraction": 0.92857,
+            "velocity_ratio": 1.01
+          },
+          {
+            "pitch_fraction": 1.0,
+            "velocity_ratio": 1.01
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -5,7 +5,7 @@ permalink: /about/
 nav: true
 nav_order: 2
 page_title: "FluidsBench"
-page_subtitle: A benchmark for the next generation of Computational Fluid Dynamics (CFD) AI models 
+page_subtitle: A benchmark for the next generation of Computational Fluid Dynamics (CFD) AI models
 
 news: true # includes a list of news items
 ---
@@ -14,8 +14,8 @@ news: true # includes a list of news items
 
 <script type="text/javascript" src="https://app.mailjet.com/pas-nc-pop-in-v1.js"></script>
 
-<h3>Aims and Scope </h3>
-FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, designed to accelerate progress in the development of foundational AI models for fluids. Motivated by similar efforts in weather ([WeatherBench 2](https://doi.org/10.1029/2023MS004019)) and early work on task specific efforts ([CarBench](https://doi.org/10.48550/arXiv.2512.07847)), FluidsBench consists of an open-source evaluation framework, training and ground truth data available via external model hubs (e.g., HuggingFace), and a continuously updated website hosting the latest metrics and state-of-the-art leaderboards that will allow for testing of AI surrogate models. In-person and virtual workshops are planned (subject to acceptance) at popular fluids and ML events (e.g NeurIPS, ICML, ML4Fluids) to discuss the latest work and get community direction for this benchmarking effort. This effort is guided by a scientific and industrial advisory board, ensuring our benchmarks remain relevant across all fluid dynamics sectors, for both academia and industry.
+<h3>Aims and Scope</h3>
+FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, designed to accelerate progress in the development of foundational AI models for fluids. Motivated by similar efforts in weather ([WeatherBench 2](https://doi.org/10.1029/2023MS004019)) and early task-specific work ([CarBench](https://doi.org/10.48550/arXiv.2512.07847)), FluidsBench consists of an open-source evaluation framework, training and ground-truth data available through external model hubs (e.g., Hugging Face), and a continuously updated website hosting the latest metrics and state-of-the-art leaderboards for testing AI surrogate models. In-person and virtual workshops are planned, subject to acceptance, at fluids and machine-learning events (e.g., NeurIPS, ICML, and ML4Fluids) to discuss the latest work and gather community direction for the benchmark. A scientific and industrial advisory board guides the effort to keep the benchmarks relevant across fluid-dynamics sectors in academia and industry.
 
 <h3>Organizing Committee</h3>
 
@@ -37,12 +37,12 @@ FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, de
 * Nathan Kutz (Autodesk)
 * Michalis Michaelides (PhysicsX)
 * Oriol Lehmkuhl (BSC)
-* Cristan Bodnar (Promethus)
+* Cristian Bodnar (Project Prometheus)
 * Fabien Casenave (Safran)
 * Adam Clarke (Boeing)
 * Dirk Hartmann (Siemens/TU Darmstadt)
-* Sina Hassanli (Arup) 
+* Sina Hassanli (Arup)
 * Simon Dodman (Cadillac F1)
 * Daniel Morales Brotons (Neural Concept)
 <h3>Questions</h3>
-For any questions please e-mail [admin@fluidsbench.org](admin@fluidsbench.org) and/or join the mailing list for updates.
+For questions, email [admin@fluidsbench.org](mailto:admin@fluidsbench.org) or join the mailing list for updates.

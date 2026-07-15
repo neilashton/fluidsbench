@@ -85,5 +85,38 @@ nav_order: 6
       </div>
       <a href="{{ '/datasets/airfrans/' | relative_url }}">View dataset spec</a>
     </article>
+    <article class="dataset-card">
+      <div>
+        <p class="dataset-kicker">Blended-wing-body aerodynamics</p>
+        <h3>BlendedNet</h3>
+        <p>
+          High-fidelity RANS surface aerodynamics for parametrically generated blended-wing-body aircraft, with
+          geometry-disjoint evaluation of pressure, skin friction, and integrated aerodynamic coefficients.
+        </p>
+      </div>
+      <a href="{{ '/datasets/blendednet/' | relative_url }}">View dataset spec</a>
+    </article>
+    <article class="dataset-card">
+      <div>
+        <p class="dataset-kicker">Turbine-cascade aerodynamics</p>
+        <h3>VKI-LS59</h3>
+        <p>
+          Two-dimensional LS59 turbine-cascade simulations across inlet incidence and outlet Mach number, with official
+          PLAID data-efficiency splits and field/scalar RRMSE ranking.
+        </p>
+      </div>
+      <a href="{{ '/datasets/vki-ls59/' | relative_url }}">View dataset spec</a>
+    </article>
+    <article class="dataset-card">
+      <div>
+        <p class="dataset-kicker">Compressor aerodynamics</p>
+        <h3>Rotor37</h3>
+        <p>
+          Three-dimensional Rotor 37 compressor simulations with density, pressure, temperature, mass-flow,
+          compression-ratio, and efficiency targets across official PLAID data-efficiency splits.
+        </p>
+      </div>
+      <a href="{{ '/datasets/rotor37/' | relative_url }}">View dataset spec</a>
+    </article>
   </section>
 </div>

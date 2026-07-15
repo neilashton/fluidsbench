@@ -253,13 +253,13 @@ nav: false
           </tr>
           <tr>
             <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>x_over_c</code>, <code>cp_pred</code></td>
+            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>x_in</code>, <code>cp_pred</code></td>
             <td>Cp cut R<sup>2</sup> and CRM-HL wing section Cp plots.</td>
           </tr>
           <tr>
             <td><code>velocity_profiles.csv</code></td>
-            <td><code>case_id</code>, <code>station_id</code>, <code>sdf_distance_over_lref</code>, <code>u_parallel_pred</code></td>
-            <td>Velocity profile R<sup>2</sup> and near-wall profile plots.</td>
+            <td><code>case_id</code>, <code>station_id</code>, <code>z_offset_in</code>, <code>u_over_u_inf_pred</code></td>
+            <td>Velocity profile R<sup>2</sup> and streamwise <code>u/Uinf</code> plots at the HLPW-5 locations.</td>
           </tr>
         </tbody>
       </table>
@@ -270,18 +270,68 @@ nav: false
   <section class="dataset-panel">
     <h3>Cp stations</h3>
     <p>
-      These spanwise stations use the CRM-HL pressure belts plotted in Figure 15 of the
-      <a href="https://arxiv.org/abs/2605.19565">HiLiftAeroML paper</a>. Belts run progressively from inboard to outboard.
-      Use the exact ID in <code>station_id</code>.
+      Submit all ten CRM-HL wing pressure rows A through J defined by the official HLPW-5 postprocessing instructions.
+      Figure 15 of the <a href="https://arxiv.org/abs/2605.19565">HiLiftAeroML paper</a> plots A, D, G, and I as a
+      validation subset; those four examples are not the complete workshop station set. Rows run progressively from
+      inboard to outboard. Use the exact ID below and provide full-scale <code>x</code> coordinates in inches.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">
-        <thead><tr><th>Station ID</th><th>Published trace</th></tr></thead>
+        <thead>
+          <tr><th>Station ID</th><th>Row</th><th>Wing dog-leg x (in)</th><th>Case 2 elements</th></tr>
+        </thead>
         <tbody>
-          <tr><td><code>pressure_belt_a</code></td><td>Pressure belt A, inboard wing section.</td></tr>
-          <tr><td><code>pressure_belt_d</code></td><td>Pressure belt D.</td></tr>
-          <tr><td><code>pressure_belt_g</code></td><td>Pressure belt G.</td></tr>
-          <tr><td><code>pressure_belt_i</code></td><td>Pressure belt I, outboard wing section.</td></tr>
+          <tr><td><code>pressure_belt_a</code></td><td>A</td><td>1126.61</td><td>Slat, main wing, flap</td></tr>
+          <tr><td><code>pressure_belt_b</code></td><td>B</td><td>1199.86</td><td>Slat, main wing, flap</td></tr>
+          <tr><td><code>pressure_belt_c</code></td><td>C</td><td>1266.16</td><td>Main wing, flap; no Case 2 slat cut</td></tr>
+          <tr><td><code>pressure_belt_d</code></td><td>D</td><td>1332.41</td><td>Slat, main wing, flap</td></tr>
+          <tr><td><code>pressure_belt_e</code></td><td>E</td><td>1402.17</td><td>Slat, main wing, flap</td></tr>
+          <tr><td><code>pressure_belt_f</code></td><td>F</td><td>1478.90</td><td>Slat, main wing, flap</td></tr>
+          <tr><td><code>pressure_belt_g</code></td><td>G</td><td>1555.64</td><td>Slat, main wing, flap</td></tr>
+          <tr><td><code>pressure_belt_h</code></td><td>H</td><td>1621.91</td><td>Slat and main wing; no flap row</td></tr>
+          <tr><td><code>pressure_belt_i</code></td><td>I</td><td>1709.11</td><td>Slat and main wing; no flap row</td></tr>
+          <tr><td><code>pressure_belt_j</code></td><td>J</td><td>1778.87</td><td>Slat and main wing; no flap row</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The exact HLPW-5 cutting-plane equations and element-specific extraction macros are available in the
+      <a href="https://aiaa-hlpw.org/HLPW/index-workshop5.html">workshop archive</a>. The leaderboard curves are currently
+      illustrative dummy data, but their station coverage and coordinate convention match the workshop format.
+    </p>
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Velocity stations</h3>
+    <p>
+      Use all 16 locations from the official HLPW-5 Case 2.4 velocity-profile template. Each trace is extracted vertically
+      at fixed full-scale <code>x,y</code> coordinates, with <code>z_offset_in = z - z_surface</code>. Coordinates are in
+      inches and station IDs must match the values below. The prototype leaderboard values are dummy data; the locations
+      and coordinate convention are taken from the
+      <a href="https://aiaa-hlpw.org/HLPW/index-workshop5.html">HLPW-5 workshop archive</a>.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead>
+          <tr><th>Station ID</th><th>HLPW-5 label</th><th>x (in)</th><th>y (in)</th><th>z surface (in)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>hlpw5_a_1</code></td><td>A.1</td><td>1034.9500</td><td>137.9135</td><td>191.7500</td></tr>
+          <tr><td><code>hlpw5_a_2</code></td><td>A.2</td><td>1071.2212</td><td>160.9808</td><td>195.4808</td></tr>
+          <tr><td><code>hlpw5_a_3</code></td><td>A.3</td><td>1365.5096</td><td>227.1058</td><td>183.1173</td></tr>
+          <tr><td><code>hlpw5_a_4</code></td><td>A.4</td><td>1385.4231</td><td>128.3423</td><td>156.9615</td></tr>
+          <tr><td><code>hlpw5_a_5</code></td><td>A.5</td><td>1421.5757</td><td>129.1298</td><td>148.0621</td></tr>
+          <tr><td><code>hlpw5_a_6</code></td><td>A.6</td><td>1444.4584</td><td>225.9062</td><td>167.1960</td></tr>
+          <tr><td><code>hlpw5_b_1</code></td><td>B.1</td><td>1163.5769</td><td>379.9615</td><td>190.8654</td></tr>
+          <tr><td><code>hlpw5_b_2</code></td><td>B.2</td><td>1203.7442</td><td>374.8077</td><td>208.4231</td></tr>
+          <tr><td><code>hlpw5_b_3</code></td><td>B.3</td><td>1398.1731</td><td>360.8769</td><td>205.5577</td></tr>
+          <tr><td><code>hlpw5_b_4</code></td><td>B.4</td><td>1493.6878</td><td>361.0165</td><td>173.5348</td></tr>
+          <tr><td><code>hlpw5_c_1</code></td><td>C.1</td><td>1699.5212</td><td>964.3962</td><td>258.4827</td></tr>
+          <tr><td><code>hlpw5_c_2</code></td><td>C.2</td><td>1730.9519</td><td>956.0558</td><td>258.5019</td></tr>
+          <tr><td><code>hlpw5_c_3</code></td><td>C.3</td><td>1762.3500</td><td>949.1462</td><td>255.5058</td></tr>
+          <tr><td><code>hlpw5_d_1</code></td><td>D.1</td><td>1799.3942</td><td>1152.4692</td><td>268.0192</td></tr>
+          <tr><td><code>hlpw5_d_2</code></td><td>D.2</td><td>1821.0673</td><td>1152.2827</td><td>270.1462</td></tr>
+          <tr><td><code>hlpw5_d_3</code></td><td>D.3</td><td>1842.7404</td><td>1152.2058</td><td>271.0212</td></tr>
         </tbody>
       </table>
     </div>
@@ -378,8 +428,8 @@ nav: false
       <div>
         <dt>Velocity profile R<sup>2</sup></dt>
         <dd>
-          R<sup>2</sup> over selected near-wall profile samples. Unless the benchmark package states otherwise, the score
-          is computed on <code>u_parallel_pred</code> flattened across profile windows, cases, and sample locations.
+          R<sup>2</sup> over the HLPW-5 A.1-D.3 profile samples. The leaderboard score is computed on
+          <code>u_over_u_inf_pred</code>, flattened across evaluated cases, all 16 stations, and vertical sample locations.
         </dd>
       </div>
     </dl>
@@ -459,6 +509,8 @@ S_overall  = sum(weight_q * S_q)</code></pre>
       <li><a href="https://arxiv.org/abs/2605.19565">HiLiftAeroML paper</a></li>
       <li><a href="https://huggingface.co/datasets/nvidia/HiLiftAeroML">HiLiftAeroML Hugging Face dataset</a></li>
       <li><a href="https://huggingface.co/datasets/nvidia/HiLiftAeroML/blob/main/splits/README.md">HiLiftAeroML split README</a></li>
+      <li><a href="https://aiaa-hlpw.org/HLPW/index-workshop5.html">HLPW-5 workshop archive and submission templates</a></li>
+      <li><a href="https://ntrs.nasa.gov/citations/20240014255">NASA HLPW-5 workshop summary</a></li>
       <li><a href="{{ '/' | relative_url }}">CFD leaderboard prototype</a></li>
     </ul>
   </section>

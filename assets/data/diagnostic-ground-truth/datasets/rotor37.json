@@ -1,0 +1,542 @@
+{
+  "dataset": "Rotor37",
+  "status": "prototype_dummy_data",
+  "note": "Illustrative FluidsBench reference traces for interface testing; not Rotor37 measurements or solver exports.",
+  "diagnostics": {
+    "blade_profiles": [
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_10",
+        "quantity_id": "pressure_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "pressure_ratio": 0.88
+          },
+          {
+            "x_over_c": 0.08333,
+            "pressure_ratio": 0.91464
+          },
+          {
+            "x_over_c": 0.16667,
+            "pressure_ratio": 0.95407
+          },
+          {
+            "x_over_c": 0.25,
+            "pressure_ratio": 0.99691
+          },
+          {
+            "x_over_c": 0.33333,
+            "pressure_ratio": 1.04228
+          },
+          {
+            "x_over_c": 0.41667,
+            "pressure_ratio": 1.08958
+          },
+          {
+            "x_over_c": 0.5,
+            "pressure_ratio": 1.13838
+          },
+          {
+            "x_over_c": 0.58333,
+            "pressure_ratio": 1.18847
+          },
+          {
+            "x_over_c": 0.66667,
+            "pressure_ratio": 1.23982
+          },
+          {
+            "x_over_c": 0.75,
+            "pressure_ratio": 1.29257
+          },
+          {
+            "x_over_c": 0.83333,
+            "pressure_ratio": 1.34702
+          },
+          {
+            "x_over_c": 0.91667,
+            "pressure_ratio": 1.40359
+          },
+          {
+            "x_over_c": 1.0,
+            "pressure_ratio": 1.4628
+          }
+        ]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_50",
+        "quantity_id": "pressure_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "pressure_ratio": 0.88
+          },
+          {
+            "x_over_c": 0.08333,
+            "pressure_ratio": 0.91627
+          },
+          {
+            "x_over_c": 0.16667,
+            "pressure_ratio": 0.95768
+          },
+          {
+            "x_over_c": 0.25,
+            "pressure_ratio": 1.00279
+          },
+          {
+            "x_over_c": 0.33333,
+            "pressure_ratio": 1.05071
+          },
+          {
+            "x_over_c": 0.41667,
+            "pressure_ratio": 1.1008
+          },
+          {
+            "x_over_c": 0.5,
+            "pressure_ratio": 1.15264
+          },
+          {
+            "x_over_c": 0.58333,
+            "pressure_ratio": 1.206
+          },
+          {
+            "x_over_c": 0.66667,
+            "pressure_ratio": 1.26085
+          },
+          {
+            "x_over_c": 0.75,
+            "pressure_ratio": 1.31733
+          },
+          {
+            "x_over_c": 0.83333,
+            "pressure_ratio": 1.37571
+          },
+          {
+            "x_over_c": 0.91667,
+            "pressure_ratio": 1.43644
+          },
+          {
+            "x_over_c": 1.0,
+            "pressure_ratio": 1.5
+          }
+        ]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_90",
+        "quantity_id": "pressure_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "pressure_ratio": 0.88
+          },
+          {
+            "x_over_c": 0.08333,
+            "pressure_ratio": 0.91791
+          },
+          {
+            "x_over_c": 0.16667,
+            "pressure_ratio": 0.96129
+          },
+          {
+            "x_over_c": 0.25,
+            "pressure_ratio": 1.00867
+          },
+          {
+            "x_over_c": 0.33333,
+            "pressure_ratio": 1.05913
+          },
+          {
+            "x_over_c": 0.41667,
+            "pressure_ratio": 1.11202
+          },
+          {
+            "x_over_c": 0.5,
+            "pressure_ratio": 1.1669
+          },
+          {
+            "x_over_c": 0.58333,
+            "pressure_ratio": 1.22354
+          },
+          {
+            "x_over_c": 0.66667,
+            "pressure_ratio": 1.28189
+          },
+          {
+            "x_over_c": 0.75,
+            "pressure_ratio": 1.34208
+          },
+          {
+            "x_over_c": 0.83333,
+            "pressure_ratio": 1.40441
+          },
+          {
+            "x_over_c": 0.91667,
+            "pressure_ratio": 1.46928
+          },
+          {
+            "x_over_c": 1.0,
+            "pressure_ratio": 1.5372
+          }
+        ]
+      }
+    ],
+    "blade_thermo_profiles": [
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_10",
+        "quantity_id": "temperature_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "temperature_ratio": 0.99
+          },
+          {
+            "x_over_c": 0.08333,
+            "temperature_ratio": 0.99589
+          },
+          {
+            "x_over_c": 0.16667,
+            "temperature_ratio": 1.00609
+          },
+          {
+            "x_over_c": 0.25,
+            "temperature_ratio": 1.01896
+          },
+          {
+            "x_over_c": 0.33333,
+            "temperature_ratio": 1.03396
+          },
+          {
+            "x_over_c": 0.41667,
+            "temperature_ratio": 1.05075
+          },
+          {
+            "x_over_c": 0.5,
+            "temperature_ratio": 1.06913
+          },
+          {
+            "x_over_c": 0.58333,
+            "temperature_ratio": 1.08895
+          },
+          {
+            "x_over_c": 0.66667,
+            "temperature_ratio": 1.11009
+          },
+          {
+            "x_over_c": 0.75,
+            "temperature_ratio": 1.13246
+          },
+          {
+            "x_over_c": 0.83333,
+            "temperature_ratio": 1.15598
+          },
+          {
+            "x_over_c": 0.91667,
+            "temperature_ratio": 1.18057
+          },
+          {
+            "x_over_c": 1.0,
+            "temperature_ratio": 1.2062
+          }
+        ]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_10",
+        "quantity_id": "density_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "density_ratio": 0.96
+          },
+          {
+            "x_over_c": 0.08333,
+            "density_ratio": 0.968
+          },
+          {
+            "x_over_c": 0.16667,
+            "density_ratio": 0.97902
+          },
+          {
+            "x_over_c": 0.25,
+            "density_ratio": 0.99157
+          },
+          {
+            "x_over_c": 0.33333,
+            "density_ratio": 1.00524
+          },
+          {
+            "x_over_c": 0.41667,
+            "density_ratio": 1.01979
+          },
+          {
+            "x_over_c": 0.5,
+            "density_ratio": 1.03509
+          },
+          {
+            "x_over_c": 0.58333,
+            "density_ratio": 1.05105
+          },
+          {
+            "x_over_c": 0.66667,
+            "density_ratio": 1.06759
+          },
+          {
+            "x_over_c": 0.75,
+            "density_ratio": 1.08465
+          },
+          {
+            "x_over_c": 0.83333,
+            "density_ratio": 1.1022
+          },
+          {
+            "x_over_c": 0.91667,
+            "density_ratio": 1.12019
+          },
+          {
+            "x_over_c": 1.0,
+            "density_ratio": 1.1386
+          }
+        ]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_50",
+        "quantity_id": "temperature_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "temperature_ratio": 0.99
+          },
+          {
+            "x_over_c": 0.08333,
+            "temperature_ratio": 0.99626
+          },
+          {
+            "x_over_c": 0.16667,
+            "temperature_ratio": 1.00712
+          },
+          {
+            "x_over_c": 0.25,
+            "temperature_ratio": 1.02081
+          },
+          {
+            "x_over_c": 0.33333,
+            "temperature_ratio": 1.03676
+          },
+          {
+            "x_over_c": 0.41667,
+            "temperature_ratio": 1.05463
+          },
+          {
+            "x_over_c": 0.5,
+            "temperature_ratio": 1.07418
+          },
+          {
+            "x_over_c": 0.58333,
+            "temperature_ratio": 1.09527
+          },
+          {
+            "x_over_c": 0.66667,
+            "temperature_ratio": 1.11776
+          },
+          {
+            "x_over_c": 0.75,
+            "temperature_ratio": 1.14155
+          },
+          {
+            "x_over_c": 0.83333,
+            "temperature_ratio": 1.16657
+          },
+          {
+            "x_over_c": 0.91667,
+            "temperature_ratio": 1.19274
+          },
+          {
+            "x_over_c": 1.0,
+            "temperature_ratio": 1.22
+          }
+        ]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_50",
+        "quantity_id": "density_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "density_ratio": 0.96
+          },
+          {
+            "x_over_c": 0.08333,
+            "density_ratio": 0.96851
+          },
+          {
+            "x_over_c": 0.16667,
+            "density_ratio": 0.98023
+          },
+          {
+            "x_over_c": 0.25,
+            "density_ratio": 0.99359
+          },
+          {
+            "x_over_c": 0.33333,
+            "density_ratio": 1.00812
+          },
+          {
+            "x_over_c": 0.41667,
+            "density_ratio": 1.0236
+          },
+          {
+            "x_over_c": 0.5,
+            "density_ratio": 1.03989
+          },
+          {
+            "x_over_c": 0.58333,
+            "density_ratio": 1.05686
+          },
+          {
+            "x_over_c": 0.66667,
+            "density_ratio": 1.07446
+          },
+          {
+            "x_over_c": 0.75,
+            "density_ratio": 1.09261
+          },
+          {
+            "x_over_c": 0.83333,
+            "density_ratio": 1.11128
+          },
+          {
+            "x_over_c": 0.91667,
+            "density_ratio": 1.13042
+          },
+          {
+            "x_over_c": 1.0,
+            "density_ratio": 1.15
+          }
+        ]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_90",
+        "quantity_id": "temperature_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "temperature_ratio": 0.99
+          },
+          {
+            "x_over_c": 0.08333,
+            "temperature_ratio": 0.99664
+          },
+          {
+            "x_over_c": 0.16667,
+            "temperature_ratio": 1.00814
+          },
+          {
+            "x_over_c": 0.25,
+            "temperature_ratio": 1.02266
+          },
+          {
+            "x_over_c": 0.33333,
+            "temperature_ratio": 1.03957
+          },
+          {
+            "x_over_c": 0.41667,
+            "temperature_ratio": 1.05851
+          },
+          {
+            "x_over_c": 0.5,
+            "temperature_ratio": 1.07924
+          },
+          {
+            "x_over_c": 0.58333,
+            "temperature_ratio": 1.10159
+          },
+          {
+            "x_over_c": 0.66667,
+            "temperature_ratio": 1.12543
+          },
+          {
+            "x_over_c": 0.75,
+            "temperature_ratio": 1.15065
+          },
+          {
+            "x_over_c": 0.83333,
+            "temperature_ratio": 1.17716
+          },
+          {
+            "x_over_c": 0.91667,
+            "temperature_ratio": 1.2049
+          },
+          {
+            "x_over_c": 1.0,
+            "temperature_ratio": 1.2338
+          }
+        ]
+      },
+      {
+        "case_id": "prototype_ground_truth_case",
+        "station_id": "span_90",
+        "quantity_id": "density_ratio",
+        "values": [
+          {
+            "x_over_c": 0.0,
+            "density_ratio": 0.96
+          },
+          {
+            "x_over_c": 0.08333,
+            "density_ratio": 0.96902
+          },
+          {
+            "x_over_c": 0.16667,
+            "density_ratio": 0.98145
+          },
+          {
+            "x_over_c": 0.25,
+            "density_ratio": 0.9956
+          },
+          {
+            "x_over_c": 0.33333,
+            "density_ratio": 1.01101
+          },
+          {
+            "x_over_c": 0.41667,
+            "density_ratio": 1.02742
+          },
+          {
+            "x_over_c": 0.5,
+            "density_ratio": 1.04468
+          },
+          {
+            "x_over_c": 0.58333,
+            "density_ratio": 1.06267
+          },
+          {
+            "x_over_c": 0.66667,
+            "density_ratio": 1.08132
+          },
+          {
+            "x_over_c": 0.75,
+            "density_ratio": 1.10057
+          },
+          {
+            "x_over_c": 0.83333,
+            "density_ratio": 1.12036
+          },
+          {
+            "x_over_c": 0.91667,
+            "density_ratio": 1.14064
+          },
+          {
+            "x_over_c": 1.0,
+            "density_ratio": 1.1614
+          }
+        ]
+      }
+    ]
+  }
+}
