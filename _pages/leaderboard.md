@@ -12,13 +12,14 @@ chart:
 
 <div class="leaderboard-page">
   <div class="leaderboard-source-row">
-    <a
+    <span id="submission-status" class="leaderboard-submit-status">Submissions are not yet open.</span>
+    <button
       id="open-submission-repo"
       class="leaderboard-submit-button"
-      href="https://github.com/neilashton/fluidsbench-submission"
-      target="_blank"
-      rel="noopener noreferrer"
-    >Submit a result</a>
+      type="button"
+      aria-describedby="submission-status"
+      disabled
+    >Submit a result - coming soon</button>
   </div>
 
   <aside class="leaderboard-data-warning" role="note" aria-label="Leaderboard data status">

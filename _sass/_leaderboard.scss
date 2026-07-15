@@ -124,6 +124,11 @@ html[data-theme="dark"] .leaderboard-page {
   justify-content: flex-end;
 }
 
+.leaderboard-submit-status {
+  color: var(--leaderboard-muted);
+  font-size: 0.86rem;
+}
+
 .leaderboard-submit-button {
   align-items: center;
   background: var(--leaderboard-primary);
@@ -139,11 +144,19 @@ html[data-theme="dark"] .leaderboard-page {
   padding: 0.45rem 0.8rem;
 }
 
-.leaderboard-submit-button:hover {
+.leaderboard-submit-button:not(:disabled):hover {
   background: var(--leaderboard-primary-strong);
   border-color: var(--leaderboard-primary-strong);
   color: var(--global-hover-text-color);
   text-decoration: none;
+}
+
+.leaderboard-submit-button:disabled {
+  background: var(--leaderboard-details-bg);
+  border-color: var(--leaderboard-details-border);
+  color: var(--leaderboard-muted);
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .leaderboard-controls {
