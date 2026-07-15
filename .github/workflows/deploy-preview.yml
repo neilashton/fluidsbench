@@ -1,0 +1,60 @@
+name: Deploy dev review site
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+env:
+  PREVIEW_FOLDER: review-x4n7q9m2vk6p
+  PREVIEW_BASEURL: /review-x4n7q9m2vk6p
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2.2"
+          bundler-cache: true
+
+      - name: Confirm preview path
+        run: |
+          CONFIG_BASEURL=$(ruby -ryaml -e 'puts YAML.load_file("_config_preview.yml")["baseurl"]')
+          test "$CONFIG_BASEURL" = "$PREVIEW_BASEURL"
+
+      - name: Install and build
+        run: |
+          pip3 install --upgrade jupyter
+          export JEKYLL_ENV=production
+          bundle exec jekyll build --lsi --config _config.yml,_config_preview.yml
+
+      - name: Purge unused CSS
+        run: |
+          npm install -g purgecss
+          purgecss -c purgecss.config.js
+
+      - name: Remove public discovery files and validate links
+        run: |
+          rm -f _site/CNAME _site/feed.xml _site/robots.txt _site/sitemap.xml
+          rm -rf _site/assets/html _site/assets/plotly _site/leaderboards
+          python3 bin/check_preview_build.py _site "$PREVIEW_BASEURL"
+
+      - name: Deploy preview
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: _site
+          target-folder: ${{ env.PREVIEW_FOLDER }}
+          clean: true
