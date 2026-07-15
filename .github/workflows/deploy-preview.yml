@@ -49,7 +49,7 @@ jobs:
       - name: Remove public discovery files and validate links
         run: |
           rm -f _site/CNAME _site/feed.xml _site/robots.txt _site/sitemap.xml
-          rm -rf _site/assets/html _site/assets/plotly _site/leaderboards
+          rm -rf _site/assets/html _site/assets/jupyter _site/assets/plotly _site/leaderboards
           python3 bin/check_preview_build.py _site "$PREVIEW_BASEURL"
 
       - name: Deploy preview
