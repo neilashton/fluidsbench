@@ -1,0 +1,1 @@
+{"schema_version":"1.0","dataset_id":"airfrans","case_set_id":"aoa_extrapolation","case_count":1,"case_id_status":"prototype_generated","chunks":[{"file":"chunk-000.json","case_ids":["airfrans_aoa_extrapolation_test_0001"],"sha256":"af821eca513f91911cc8aaefe023737f2446600258a10bf915d9d0d8a17f4bd8"}]}
