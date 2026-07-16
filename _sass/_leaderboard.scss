@@ -117,6 +117,24 @@ html[data-theme="dark"] .leaderboard-page {
   padding: 0.75rem 0 0.75rem 1rem;
 }
 
+.leaderboard-masthead {
+  align-items: center;
+  border-bottom: 1px solid var(--leaderboard-border);
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  min-height: 96px;
+  padding: 0.5rem 0 1rem;
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.15;
+    margin: 0;
+  }
+}
+
 .leaderboard-source-row {
   align-items: center;
   display: flex;
@@ -1238,6 +1256,16 @@ html[data-theme="dark"] .leaderboard-data-warning {
 }
 
 @media (max-width: 900px) {
+  .leaderboard-masthead {
+    gap: 0.75rem;
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .leaderboard-source-row {
+    justify-content: flex-start;
+  }
+
   .leaderboard-controls,
   .chart-control-row,
   .cp-chart-controls,
@@ -1274,6 +1302,10 @@ html[data-theme="dark"] .leaderboard-data-warning {
 }
 
 @media (max-width: 680px) {
+  .leaderboard-masthead h1 {
+    font-size: 1.75rem;
+  }
+
   .leaderboard-source-row {
     align-items: stretch;
     flex-direction: column;

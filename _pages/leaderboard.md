@@ -5,22 +5,26 @@ title: leaderboard
 description:
 nav: false
 hide_header: true
+hide_header_background: true
 wide: true
 chart:
   chartjs: true
 ---
 
 <div class="leaderboard-page">
-  <div class="leaderboard-source-row">
-    <span id="submission-status" class="leaderboard-submit-status">Submissions are not yet open.</span>
-    <button
-      id="open-submission-repo"
-      class="leaderboard-submit-button"
-      type="button"
-      aria-describedby="submission-status"
-      disabled
-    >Submit a result - coming soon</button>
-  </div>
+  <header class="leaderboard-masthead">
+    <h1>FluidsBench Leaderboard</h1>
+    <div class="leaderboard-source-row">
+      <span id="submission-status" class="leaderboard-submit-status">Submissions are not yet open.</span>
+      <button
+        id="open-submission-repo"
+        class="leaderboard-submit-button"
+        type="button"
+        aria-describedby="submission-status"
+        disabled
+      >Submit a result - coming soon</button>
+    </div>
+  </header>
 
   <aside class="leaderboard-data-warning" role="note" aria-label="Leaderboard data status">
     Work in progress: all results currently shown are illustrative dummy data.
