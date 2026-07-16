@@ -126,11 +126,26 @@ chart:
 
   <div id="leaderboard-diagnostic-panels" class="leaderboard-diagnostic-panels"></div>
 
-  <section class="metric-definitions" id="metric-definitions">
-    <h3>Metric definitions</h3>
-    <p id="metric-definitions-intro"></p>
-    <dl id="metric-definitions-list"></dl>
-  </section>
+  <div class="leaderboard-definitions" aria-label="Leaderboard definitions">
+    <section class="metric-definitions" id="metric-definitions">
+      <h3>Metric definitions</h3>
+      <p id="metric-definitions-intro"></p>
+      <dl id="metric-definitions-list"></dl>
+    </section>
+
+    <section class="metric-definitions" id="split-definitions">
+      <h3>Split definitions</h3>
+      <p id="split-definitions-intro"></p>
+      <dl id="split-definitions-list"></dl>
+    </section>
+
+    <section class="metric-definitions" id="training-definitions">
+      <h3>Training definitions</h3>
+      <p id="training-definitions-intro"></p>
+      <dl id="training-definitions-list"></dl>
+    </section>
+
+  </div>
 
   <dialog class="details-dialog" id="details-dialog" aria-labelledby="details-dialog-title">
     <article class="details-dialog-card">

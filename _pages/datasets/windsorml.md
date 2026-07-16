@@ -154,14 +154,14 @@ nav: false
         <dd>
           Relative L1 and L2 metrics are not computed on normalized, standardized, or non-dimensional training targets. If
           a model predicts normalized values, the submission/evaluator must undo that transform before scoring.
-          C<sub>d</sub>, C<sub>l</sub>, and Cp-cut diagnostics remain coefficient-based by definition.
+          C<sub>d</sub>, C<sub>l</sub>, and Cp-cut comparisons remain coefficient-based by definition.
         </dd>
       </div>
       <div>
         <dt>Surface pressure relative L1/L2</dt>
         <dd>
           Relative L1 and L2 error for dimensional surface pressure <code>p_surface_pred</code> against the evaluator
-          surface pressure values. Cp is used only for the Cp-cut diagnostic and plots.
+          surface pressure values. Cp is used only for the Cp-cut comparisons and plots.
         </dd>
       </div>
       <div>
@@ -217,9 +217,9 @@ nav: false
         </dd>
       </div>
       <div>
-        <dt>Cp cut diagnostics</dt>
+        <dt>Cp cut comparisons</dt>
         <dd>
-          Per-case and per-cut R<sup>2</sup> values can be reported as diagnostics, but the leaderboard ranking should use
+          Per-case and per-cut R<sup>2</sup> values can be reported as profile comparisons, but the leaderboard ranking should use
           the global held-out score so that cases with low Cp variance do not dominate through unstable per-case
           averages.
         </dd>
@@ -240,7 +240,7 @@ nav: false
       The leaderboard can be ranked by any individual metric. Its default ranking is a bounded 0-100 weighted score:
     </p>
     <p>
-      Relative L1 fields are reported and sortable diagnostics, but they are not included in this default score unless a
+      Relative L1 fields are reported as sortable supplementary metrics, but they are not included in this default score unless a
       future benchmark rule assigns them weights.
     </p>
     <pre><code>S_error(q) = 100 * max(0, 1 - E_q / cap_q)

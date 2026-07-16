@@ -835,13 +835,19 @@ html[data-theme="dark"] .leaderboard-data-warning {
   gap: 1.5rem;
 }
 
+.leaderboard-definitions {
+  display: grid;
+  gap: 1.5rem;
+}
+
 .leaderboard-panel h3,
 .metric-definitions h3 {
   font-size: 1.15rem;
   margin-bottom: 0.45rem;
 }
 
-.leaderboard-panel p {
+.leaderboard-panel p,
+.metric-definitions > p {
   color: var(--leaderboard-muted);
   margin-bottom: 0.75rem;
 }
@@ -916,29 +922,33 @@ html[data-theme="dark"] .leaderboard-data-warning {
   margin: 0;
 }
 
-.metric-definitions div {
+.metric-definitions dl > div {
   border-top: 1px solid var(--leaderboard-border);
   padding: 0.8rem 0;
 }
 
-.metric-definitions div[class^="metric-group-"] {
+.metric-definitions dl > div[class^="metric-group-"] {
   background: var(--column-group-bg);
   border-top-color: var(--column-group-border);
   padding: 0.8rem;
 }
 
-.metric-definitions div:nth-child(odd) {
+.metric-definitions dl > div:nth-child(odd) {
   padding-right: 1rem;
 }
 
-.metric-definitions div:nth-child(even) {
+.metric-definitions dl > div:nth-child(even) {
   padding-left: 1rem;
 }
 
 .metric-definitions dt {
+  align-items: center;
   color: var(--leaderboard-muted);
+  display: flex;
+  flex-wrap: wrap;
   font-size: 0.74rem;
   font-weight: 700;
+  gap: 0.45rem;
   text-transform: uppercase;
 }
 
@@ -946,6 +956,25 @@ html[data-theme="dark"] .leaderboard-data-warning {
   color: var(--global-text-color);
   font-size: 0.9rem;
   margin: 0.25rem 0 0;
+}
+
+.leaderboard-definition-status {
+  background: var(--leaderboard-chip-bg);
+  border: 1px solid var(--leaderboard-border);
+  border-radius: 999px;
+  color: var(--global-text-color);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  text-transform: none;
+}
+
+.leaderboard-definition-meta {
+  color: var(--leaderboard-muted);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
 }
 
 .leaderboard-metric-equation {
@@ -1221,8 +1250,8 @@ html[data-theme="dark"] .leaderboard-data-warning {
     grid-template-columns: 1fr;
   }
 
-  .metric-definitions div:nth-child(odd),
-  .metric-definitions div:nth-child(even),
+  .metric-definitions dl > div:nth-child(odd),
+  .metric-definitions dl > div:nth-child(even),
   .details-grid div:nth-child(odd),
   .details-grid div:nth-child(even) {
     padding-left: 0;

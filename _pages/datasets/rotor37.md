@@ -108,7 +108,7 @@ nav: false
       </table>
     </div>
 
-    <h3>Diagnostic arrays</h3>
+    <h3>Profile arrays</h3>
     <p>
       Supply one pressure-ratio series and two thermodynamic series at each of <code>span_10</code>,
       <code>span_50</code>, and <code>span_90</code>. Each series requires a non-empty <code>case_id</code>, the exact
@@ -174,11 +174,11 @@ nav: false
   </section>
 
   <section class="dataset-section">
-    <h2>Diagnostic profiles</h2>
+    <h2>Profile comparisons</h2>
     <p>
       The station IDs are <code>span_10</code>, <code>span_50</code>, and <code>span_90</code>. At each station,
       submissions provide pressure ratio <code>p/P</code> against normalized chord, plus normalized temperature and
-      density profiles. Rotor37 does not define a submitted velocity-profile diagnostic, so the leaderboard does not
+      density profiles. Rotor37 does not define a submitted velocity-profile comparison, so the leaderboard does not
       invent one.
     </p>
     <p>The current reference and prediction curves are illustrative dummy data for interface testing.</p>

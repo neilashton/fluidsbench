@@ -76,8 +76,8 @@ nav: false
 "submitted_at": "YYYY-MM-DD",
 "metric_values": { ... },
 "diagnostics": {
-  "cp_cuts": [ ... ],
-  "skin_friction_profiles": [ ... ]
+"cp_cuts": [ ... ],
+"skin_friction_profiles": [ ... ]
 }
 }</code></pre>
 
@@ -109,7 +109,7 @@ nav: false
       <code>blended_cfx_rel_l2</code>, and <code>blended_cfz_rel_l2</code>.
     </p>
 
-    <h3>Diagnostic arrays</h3>
+    <h3>Profile arrays</h3>
     <p>
       Each series requires a non-empty <code>case_id</code>, exact station and quantity IDs, and numeric
       <code>x_over_c1</code> points. The three current stations are deliberately prefixed <code>prototype_</code> because
@@ -130,8 +130,8 @@ nav: false
 "station_id": "prototype_midspan",
 "quantity_id": "cp",
 "values": [
-  {"x_over_c1": 0.0, "cp": -0.2},
-  {"x_over_c1": 1.0, "cp": 0.1}
+{"x_over_c1": 0.0, "cp": -0.2},
+{"x_over_c1": 1.0, "cp": 0.1}
 ]
 }</code></pre>
 
@@ -144,13 +144,14 @@ nav: false
       <li>confirmation that the geometry-disjoint split was preserved;</li>
       <li>the model checkpoint or reproducible code revision used to generate predictions;</li>
       <li>the evaluator output reproducing every submitted metric; and</li>
-      <li>confirmation that diagnostic curves came from the same evaluated predictions.</li>
+      <li>confirmation that profile curves came from the same evaluated predictions.</li>
     </ul>
     <p>
       Use
       <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/submissions/blendednet/dummy-blendednet-geometry-holdout.json">the complete prototype submission</a>
       as a structural example. Its values are illustrative only.
     </p>
+
   </section>
 
   <section class="dataset-section">
@@ -169,10 +170,10 @@ nav: false
   </section>
 
   <section class="dataset-section">
-    <h2>Diagnostic profiles</h2>
+    <h2>Profile comparisons</h2>
     <p>
       BlendedNet publishes surface coefficient fields rather than full three-dimensional flow fields. The leaderboard
-      therefore shows pressure and skin-friction cuts, but does not invent a velocity-profile diagnostic.
+      therefore shows pressure and skin-friction cuts, but does not invent a velocity-profile comparison.
     </p>
     <p>
       Current ground-truth and submitted curves are clearly labelled illustrative dummy data. They must be replaced once

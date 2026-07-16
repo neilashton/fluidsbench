@@ -113,7 +113,7 @@ nav: false
       </table>
     </div>
 
-    <h3>Diagnostic arrays</h3>
+    <h3>Profile arrays</h3>
     <p>Each series requires a non-empty <code>case_id</code>, the exact station ID, a quantity ID, and numeric points.</p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">
@@ -145,7 +145,7 @@ nav: false
       <li>the official split ID and confirmation that the published index sequence was used;</li>
       <li>the model checkpoint or reproducible code revision used to generate predictions;</li>
       <li>the evaluator output or log reproducing every submitted metric; and</li>
-      <li>confirmation that the diagnostic arrays came from the same evaluated prediction set.</li>
+      <li>confirmation that the profile arrays came from the same evaluated prediction set.</li>
     </ul>
     <p>
       Use
@@ -176,7 +176,7 @@ nav: false
   </section>
 
   <section class="dataset-section">
-    <h2>Diagnostic profiles</h2>
+    <h2>Profile comparisons</h2>
     <p>Approved submissions provide the following station IDs and quantities:</p>
     <ul>
       <li><code>pressure_side</code> and <code>suction_side</code>: <code>M_iso</code> against normalized chord.</li>

@@ -106,6 +106,15 @@
     return state.metrics.get(metricId);
   }
 
+  function trainingRegimeDefinitions() {
+    return Array.isArray(state.manifest?.training_regimes) ? state.manifest.training_regimes : [];
+  }
+
+  function trainingRegimeDefinition(regimeId) {
+    const normalizedId = regimeId === "zero_shot" ? "pretrained_zero_shot" : regimeId;
+    return trainingRegimeDefinitions().find((definition) => definition.id === normalizedId);
+  }
+
   function activeMetricDefinitions() {
     return (activeDataset()?.metric_ids || []).map(metricDefinition).filter(Boolean);
   }
@@ -177,7 +186,7 @@
 
   async function ensureGroundTruthManifest() {
     if (state.groundTruthManifest) return state.groundTruthManifest;
-    state.groundTruthManifest = await fetchJson(fileUrl("manifest.json", groundTruthBaseUrl), "diagnostic ground-truth manifest");
+    state.groundTruthManifest = await fetchJson(fileUrl("manifest.json", groundTruthBaseUrl), "profile ground-truth manifest");
     return state.groundTruthManifest;
   }
 
@@ -256,18 +265,18 @@
   }
 
   function staticHelp(key) {
-    const splitNames = splitOptions()
-      .map((split) => split.label || split.name)
-      .join(", ");
     const types = Array.from(new Set((state.rows.get(state.dataset) || []).flatMap((row) => row.modelTypes))).join(", ");
     const rankMetric = metricDefinition(ranking().metric_id);
+    const trainingLabels = trainingRegimeDefinitions()
+      .map((definition) => definition.label)
+      .join(", ");
     const definitions = {
       rank: `Official position for this dataset and split, ordered by ${rankMetric?.label || "the ranking metric"}.`,
       model: "Free-text model name supplied with the approved submission.",
       submitter: "Person, research group, institution, or company submitting the result.",
-      split: `Official split selected for evaluation. Available here: ${splitNames}.`,
+      split: `Official ${state.dataset} benchmark split used for training and evaluation.`,
       modelTypes: `One or more submitted architecture categories. Available here: ${types || "none"}.`,
-      training: "Training regime. Supported values are Scratch, Zero-shot, Pretrained + official train, and Other.",
+      training: `How the model was initialized and whether target-dataset training data were used. Supported values: ${trainingLabels}.`,
       parameters: "Submitter-reported trainable parameter count in millions.",
       date: "Date associated with the approved submission.",
       details: "Opens submission metadata, links, and the complete metric list.",
@@ -371,7 +380,16 @@
     help.setAttribute("aria-expanded", "false");
     help.dataset.helpTitle = column.label;
     help.dataset.helpText = column.definition ? metricHelp(column.definition) : staticHelp(column.key);
-    help.dataset.metricsLink = column.definition ? "true" : "false";
+    if (column.definition) {
+      help.dataset.definitionHref = "#metric-definitions";
+      help.dataset.definitionLabel = "Metric definitions";
+    } else if (column.key === "split") {
+      help.dataset.definitionHref = "#split-definitions";
+      help.dataset.definitionLabel = "Split definitions";
+    } else if (column.key === "training") {
+      help.dataset.definitionHref = "#training-definitions";
+      help.dataset.definitionLabel = "Training definitions";
+    }
     help.addEventListener("click", () => showHelp(help));
     return help;
   }
@@ -446,14 +464,7 @@
   }
 
   function trainingLabel(row) {
-    const labels = {
-      from_scratch: "Scratch",
-      zero_shot: "Zero-shot",
-      pretrained_zero_shot: "Zero-shot",
-      pretrained_official_train: "Pretrained + official train",
-      other: "Other",
-    };
-    return labels[row.training_regime] || row.training_regime || "Not supplied";
+    return trainingRegimeDefinition(row.training_regime)?.label || row.training_regime || "Not supplied";
   }
 
   function cellValue(row, column) {
@@ -1051,6 +1062,80 @@
     else element("MathJax-script")?.addEventListener("load", typeset, { once: true });
   }
 
+  function definitionStatus(text) {
+    const status = document.createElement("span");
+    status.className = "leaderboard-definition-status";
+    status.textContent = text;
+    return status;
+  }
+
+  function splitCountsText(split) {
+    const counts = [
+      ["Train", split.train_count],
+      ["Validation", split.validation_count],
+      ["Test", split.test_count],
+    ]
+      .filter(([, value]) => finiteNumber(value) !== null)
+      .map(([label, value]) => `${label}: ${Number(value).toLocaleString()}`);
+    return counts.join(" / ");
+  }
+
+  function renderSplitDefinitions() {
+    const list = element("split-definitions-list");
+    list.replaceChildren();
+    element("split-definitions-intro").textContent =
+      `Splits available for ${state.dataset}. Changing any Split selector updates the table and every chart together.`;
+    splitOptions().forEach((split) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "metric-group-neutral";
+      const term = document.createElement("dt");
+      term.appendChild(document.createTextNode(split.label || split.name));
+      if (split.name === state.split) term.appendChild(definitionStatus("Selected"));
+      const description = document.createElement("dd");
+      description.appendChild(document.createTextNode(split.description || "No description supplied."));
+      const counts = splitCountsText(split);
+      if (counts) {
+        const meta = document.createElement("span");
+        meta.className = "leaderboard-definition-meta";
+        meta.textContent = counts;
+        description.appendChild(meta);
+      }
+      wrapper.append(term, description);
+      list.appendChild(wrapper);
+    });
+  }
+
+  function renderTrainingDefinitions() {
+    const list = element("training-definitions-list");
+    list.replaceChildren();
+    element("training-definitions-intro").textContent =
+      `Training values accepted by the submission format. Each status is based on the loaded ${state.dataset} data and the selected ${state.split} table.`;
+    const selectedRegimes = new Set(rowsForActiveSplit().map((row) => row.training_regime));
+    const datasetRegimes = new Set((state.rows.get(state.dataset) || []).map((row) => row.training_regime));
+    trainingRegimeDefinitions().forEach((definition) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "metric-group-neutral";
+      const term = document.createElement("dt");
+      term.appendChild(document.createTextNode(definition.label));
+      const status = selectedRegimes.has(definition.id)
+        ? "Shown in selected table"
+        : datasetRegimes.has(definition.id)
+          ? `Used in another ${state.dataset} split`
+          : "Accepted submission value";
+      term.appendChild(definitionStatus(status));
+      const description = document.createElement("dd");
+      description.textContent = definition.description;
+      wrapper.append(term, description);
+      list.appendChild(wrapper);
+    });
+  }
+
+  function renderDefinitions() {
+    renderMetricDefinitions();
+    renderSplitDefinitions();
+    renderTrainingDefinitions();
+  }
+
   function detailsMetricGroups(row) {
     const groups = new Map();
     activeMetricDefinitions().forEach((definition) => {
@@ -1102,10 +1187,12 @@
     if (activeHelpButton && activeHelpButton !== button) activeHelpButton.setAttribute("aria-expanded", "false");
     activeHelpButton = button;
     button.setAttribute("aria-expanded", "true");
-    const metricsLink = button.dataset.metricsLink === "true" ? ' <a href="#metric-definitions">Metric definitions</a>' : "";
+    const definitionLink = button.dataset.definitionHref
+      ? ` <a href="${escapeHtml(button.dataset.definitionHref)}">${escapeHtml(button.dataset.definitionLabel)}</a>`
+      : "";
     popover.innerHTML = `<strong>${formattedMetricLabelHtml(button.dataset.helpTitle)}</strong><p>${escapeHtml(
       button.dataset.helpText
-    )}${metricsLink}</p>`;
+    )}${definitionLink}</p>`;
     popover.hidden = false;
     const rect = button.getBoundingClientRect();
     const width = Math.min(320, window.innerWidth - 24);
@@ -1132,7 +1219,7 @@
     renderComparisonControls();
     renderScatterControls();
     renderDiagnosticPanels();
-    renderMetricDefinitions();
+    renderDefinitions();
     renderComparisonChart();
     renderScatterChart();
     (activeDataset()?.diagnostic_panels || []).forEach((_, index) => renderProfileChart(index));
@@ -1158,7 +1245,7 @@
   function showDiagnosticWarning(error) {
     const box = element("leaderboard-diagnostic-warning");
     box.hidden = false;
-    box.textContent = `Leaderboard results loaded, but reference diagnostic curves are unavailable: ${error.message}`;
+    box.textContent = `Leaderboard results loaded, but reference profile curves are unavailable: ${error.message}`;
   }
 
   async function setDataset(datasetName) {
@@ -1274,14 +1361,17 @@
     helpPopover?.addEventListener("mouseleave", scheduleHelpHide);
     helpPopover?.addEventListener("focusin", () => window.clearTimeout(helpHideTimer));
     helpPopover?.addEventListener("focusout", scheduleHelpHide);
+    helpPopover?.addEventListener("click", (event) => {
+      if (event.target.closest("a")) hideHelp();
+    });
   }
 
   async function initialize() {
     configureEvents();
     try {
       state.manifest = await fetchJson(manifestUrl, "leaderboard manifest");
-      if (!Array.isArray(state.manifest.metric_definitions) || !datasetEntries().length) {
-        throw new Error("manifest is missing dataset-driven metric definitions");
+      if (!Array.isArray(state.manifest.metric_definitions) || !Array.isArray(state.manifest.training_regimes) || !datasetEntries().length) {
+        throw new Error("manifest is missing dataset-driven leaderboard definitions");
       }
       state.metrics = new Map(state.manifest.metric_definitions.map((definition) => [definition.id, definition]));
       const initial = datasetEntries()[0];
