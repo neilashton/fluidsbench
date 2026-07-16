@@ -5,6 +5,8 @@ title: Rotor37 dataset
 page_title: Rotor37 dataset
 page_description: Dataset overview and leaderboard submission format for Rotor37.
 nav: false
+hide_header_background: true
+compact_masthead: true
 ---
 
 <div class="dataset-page">

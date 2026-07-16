@@ -4,11 +4,14 @@ title: about
 permalink: /about/
 nav: true
 nav_order: 2
-page_title: "FluidsBench"
+page_title: "About FluidsBench"
 page_subtitle: A benchmark for the next generation of Computational Fluid Dynamics (CFD) AI models
+hide_header_background: true
+compact_masthead: true
 
 news: true # includes a list of news items
 ---
+
 <iframe data-w-token="adf328a70c8f7ba6edbd" data-w-type="pop-in" frameborder="0" scrolling="yes" marginheight="0" marginwidth="0" src="https://1mrs5.mjt.lu/wgt/1mrs5/06mi/form?c=589f757a" width="100%" style="height: 0;"></iframe>
 <iframe data-w-token="adf328a70c8f7ba6edbd" data-w-type="trigger" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://1mrs5.mjt.lu/wgt/1mrs5/06mi/trigger?c=57078be4" width="100%" style="height: 0;"></iframe>
 

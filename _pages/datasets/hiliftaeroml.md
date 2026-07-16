@@ -6,6 +6,8 @@ page_title: HiLiftAeroML dataset
 page_description: Dataset overview and leaderboard submission format for HiLiftAeroML.
 description:
 nav: false
+hide_header_background: true
+compact_masthead: true
 ---
 
 <div class="dataset-page">

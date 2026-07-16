@@ -6,6 +6,8 @@ page_title: AirfRANS dataset
 page_description: Dataset overview and leaderboard submission format for AirfRANS.
 description:
 nav: false
+hide_header_background: true
+compact_masthead: true
 ---
 
 <div class="dataset-page">

@@ -2,9 +2,12 @@
 layout: page
 permalink: /datasets/
 title: datasets
+page_title: Datasets
 description:
 nav: true
 nav_order: 6
+hide_header_background: true
+compact_masthead: true
 ---
 
 <div class="datasets-page">

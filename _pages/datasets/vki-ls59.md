@@ -5,6 +5,8 @@ title: VKI-LS59 dataset
 page_title: VKI-LS59 dataset
 page_description: Dataset overview and leaderboard submission format for VKI-LS59.
 nav: false
+hide_header_background: true
+compact_masthead: true
 ---
 
 <div class="dataset-page">

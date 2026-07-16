@@ -6,6 +6,8 @@ page_title: AhmedML dataset
 page_description: Dataset overview and leaderboard submission format for AhmedML.
 description:
 nav: false
+hide_header_background: true
+compact_masthead: true
 ---
 
 <div class="dataset-page">

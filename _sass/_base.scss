@@ -241,6 +241,37 @@ ul.task-list input[type="checkbox"] {
   }
 }
 
+.compact-page-masthead {
+  border-bottom: 1px solid var(--global-divider-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  min-height: 96px;
+  padding: 0.5rem 0 1rem;
+
+  .post-title {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  .post-description {
+    color: var(--global-text-color-light);
+    font-size: 0.9rem;
+    margin: 0.35rem 0 0;
+    max-width: 900px;
+  }
+}
+
+@media (max-width: 680px) {
+  .compact-page-masthead .post-title {
+    font-size: 1.75rem;
+  }
+}
+
 // Navbar customization
 
 .navbar {
