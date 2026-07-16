@@ -1,0 +1,36 @@
+{% if include.heading == 2 %}
+<h2>Leaderboard submission package</h2>
+{% else %}
+<h3>Leaderboard submission package</h3>
+{% endif %}
+<p>
+  Submit a pull request to the
+  <a href="https://github.com/neilashton/fluidsbench-submission">FluidsBench submission repository</a>. Each result is one directory at
+  <code>submissions/{{ include.slug }}/&lt;submission-id&gt;/</code> containing:
+</p>
+<ul>
+  <li><code>submission.json</code> for model metadata and the required scalar metrics;</li>
+  <li><code>evaluation-evidence.json</code> linking those metrics to the recorded evaluation revision and profile-index checksum;</li>
+  <li><code>profiles/index.json</code> listing the lightweight profile chunks; and</li>
+  <li><code>profiles/chunk-*.json</code> containing profile coordinates and predictions for the declared test cases.</li>
+</ul>
+<p>
+  Contributors calculate the metrics and extract the profiles from their own predictions. No surface meshes or volume fields are submitted. Use the
+  <a href="https://github.com/neilashton/fluidsbench-submission/tree/dev/benchmark-specs/{{ include.slug }}"
+    >{{ include.dataset }} benchmark specification</a
+  >
+  for the exact split, metric, case, panel, station, and quantity IDs. The
+  <a href="https://github.com/neilashton/fluidsbench-submission/tree/dev/reference">reference equations and code</a>
+  define how the scalar values must be calculated, and the
+  <a href="https://github.com/neilashton/fluidsbench-submission/tree/dev/examples">worked examples</a> show the JSON structure.
+</p>
+<p>
+  Before opening a pull request, run
+  <code>python scripts/validate_submission.py submissions/{{ include.slug }}/&lt;submission-id&gt;</code>. The validator checks the schema, split
+  identity, derived-score arithmetic, profile coverage, array lengths, ordering, finite values, and chunk hashes. It checks the submitted package's
+  internal consistency; it does not run the contributor's model or independently recalculate base metrics from full fields.
+</p>
+<p>
+  <strong>Prototype notice:</strong> current test case IDs and profile values are illustrative until each dataset owner replaces the generated split
+  files with the official benchmark case lists.
+</p>

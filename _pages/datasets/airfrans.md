@@ -57,64 +57,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Leaderboard submission package</h3>
-    <p>
-      Submit one compressed archive per model and split. Prediction files should use the evaluator's case identifiers,
-      mesh point order, and surface point order. Field values used for relative L1 and L2 must be submitted in
-      dataset-native dimensional units after undoing any training normalization or non-dimensionalization.
-    </p>
-
-    <div class="dataset-table-wrap">
-      <table class="dataset-table">
-        <thead>
-          <tr>
-            <th>File</th>
-            <th>Required columns or fields</th>
-            <th>Used for</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>metadata.json</code></td>
-            <td>
-              <code>model_name</code>, <code>model_type</code>, <code>dataset</code>, <code>split</code>,
-              <code>parameter_count</code>, <code>submission_date</code>
-            </td>
-            <td>Leaderboard display and filtering.</td>
-          </tr>
-          <tr>
-            <td><code>surface_fields.parquet</code></td>
-            <td><code>case_id</code>, <code>point_id</code>, <code>p_surface_pred</code></td>
-            <td>Dimensional surface pressure relative L1/L2 and surface Cp diagnostics.</td>
-          </tr>
-          <tr>
-            <td><code>surface_wall_shear.parquet</code></td>
-            <td><code>case_id</code>, <code>point_id</code>, <code>tau_wall_x_pred</code>, <code>tau_wall_y_pred</code></td>
-            <td>Dimensional wall-shear relative L1/L2 and drag-sensitive boundary-layer diagnostics.</td>
-          </tr>
-          <tr>
-            <td><code>volume_fields.parquet</code></td>
-            <td><code>case_id</code>, <code>point_id</code>, <code>u_x_pred</code>, <code>u_y_pred</code>, <code>p_volume_pred</code>, <code>nu_t_pred</code></td>
-            <td>Dimensional velocity and pressure relative L1/L2, plus optional turbulent-viscosity diagnostics.</td>
-          </tr>
-          <tr>
-            <td><code>forces.csv</code></td>
-            <td><code>case_id</code>, <code>cd_pred</code>, <code>cl_pred</code></td>
-            <td>C<sub>d</sub> R<sup>2</sup>, C<sub>l</sub> R<sup>2</sup>, and force R<sup>2</sup>.</td>
-          </tr>
-          <tr>
-            <td><code>cp_cuts.csv</code></td>
-            <td><code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, <code>x_over_c</code>, <code>cp_pred</code></td>
-            <td>Cp cut R<sup>2</sup> and airfoil surface Cp plots.</td>
-          </tr>
-          <tr>
-            <td><code>velocity_profiles.csv</code></td>
-            <td><code>case_id</code>, <code>station_id</code>, <code>wall_distance_over_c</code>, <code>u_x_pred</code>, <code>u_y_pred</code></td>
-            <td>Boundary-layer velocity profile R<sup>2</sup> and velocity-profile plots.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    {% include dataset_submission_v1.html slug="airfrans" dataset="AirfRANS" %}
 
   </section>
 

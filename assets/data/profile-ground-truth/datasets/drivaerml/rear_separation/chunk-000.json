@@ -1,0 +1,5675 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "drivaerml_rear_separation_test_0001",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.312624,
+            -0.118592,
+            -0.416672,
+            -0.337184,
+            -0.158336,
+            0.091216,
+            -0.078848
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4171036,
+            0.198329,
+            -0.0709469,
+            -0.2821166,
+            -0.1815596,
+            0.0491645,
+            0.2579948
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5108296,
+            0.0301768,
+            -0.249524,
+            -0.1696328,
+            -0.0797552,
+            -0.2095784,
+            -0.0398096
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.357033,
+            -0.181806,
+            -0.523999,
+            -0.1113545,
+            0.2278715,
+            -0.161677,
+            0.078839
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2413022,
+            0.3416852,
+            0.502298,
+            0.6930257,
+            0.8536385,
+            0.9640598,
+            1.004213
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3822704,
+            0.4626488,
+            0.603311,
+            0.7640678,
+            0.8946827,
+            0.9851084,
+            1.005203
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5450535,
+            0.6045969,
+            0.7038359,
+            0.8229227,
+            0.9221617,
+            0.9817051,
+            0.991629
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2374126,
+            0.3366516,
+            0.495434,
+            0.6839881,
+            0.8427705,
+            0.9519334,
+            0.991629
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0002",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3074539,
+            -0.1213662,
+            -0.4232292,
+            -0.3427324,
+            -0.1616146,
+            0.0888201,
+            -0.0811178
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4188196,
+            0.199319,
+            -0.0703859,
+            -0.2808626,
+            -0.1806356,
+            0.0496595,
+            0.2591828
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5130195,
+            0.0306435,
+            -0.2482675,
+            -0.1686635,
+            -0.079109,
+            -0.2084655,
+            -0.039307
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3619274,
+            -0.1788268,
+            -0.5174022,
+            -0.1091201,
+            0.2313827,
+            -0.1589106,
+            0.0807542
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2421148,
+            0.3427368,
+            0.503732,
+            0.6949138,
+            0.855909,
+            0.9665932,
+            1.006842
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3768656,
+            0.4563432,
+            0.595429,
+            0.7543842,
+            0.8835353,
+            0.9729476,
+            0.992817
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.549324,
+            0.6092616,
+            0.7091576,
+            0.8290328,
+            0.9289288,
+            0.9888664,
+            0.998856
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2417476,
+            0.3422616,
+            0.503084,
+            0.6940606,
+            0.854883,
+            0.9654484,
+            1.005654
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0003",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3097335,
+            -0.120143,
+            -0.420338,
+            -0.340286,
+            -0.160169,
+            0.0898765,
+            -0.080117
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4173428,
+            0.198467,
+            -0.0708687,
+            -0.2819418,
+            -0.1814308,
+            0.0492335,
+            0.2581604
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5125376,
+            0.0305408,
+            -0.248544,
+            -0.1688768,
+            -0.0792512,
+            -0.2087104,
+            -0.0394176
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3578426,
+            -0.1813132,
+            -0.5229078,
+            -0.1109849,
+            0.2284523,
+            -0.1612194,
+            0.0791558
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2409248,
+            0.3411968,
+            0.501632,
+            0.6921488,
+            0.852584,
+            0.9628832,
+            1.002992
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3776336,
+            0.4572392,
+            0.596549,
+            0.7557602,
+            0.8851193,
+            0.9746756,
+            0.994577
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.548206,
+            0.6080404,
+            0.7077644,
+            0.8274332,
+            0.9271572,
+            0.9869916,
+            0.996964
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2393268,
+            0.3391288,
+            0.498812,
+            0.6884358,
+            0.848119,
+            0.9579012,
+            0.997822
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0004",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3087905,
+            -0.120649,
+            -0.421534,
+            -0.341298,
+            -0.160767,
+            0.0894395,
+            -0.080531
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4173636,
+            0.198479,
+            -0.0708619,
+            -0.2819266,
+            -0.1814196,
+            0.0492395,
+            0.2581748
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5053518,
+            0.0290094,
+            -0.252667,
+            -0.1720574,
+            -0.0813716,
+            -0.2123622,
+            -0.0410668
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.356619,
+            -0.182058,
+            -0.524557,
+            -0.1115435,
+            0.2275745,
+            -0.161911,
+            0.078677
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2399966,
+            0.3399956,
+            0.499994,
+            0.6899921,
+            0.8499905,
+            0.9599894,
+            0.999989
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3825824,
+            0.4630128,
+            0.603766,
+            0.7646268,
+            0.8953262,
+            0.9858104,
+            1.005918
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5454955,
+            0.6050797,
+            0.7043867,
+            0.8235551,
+            0.9228621,
+            0.9824463,
+            0.992377
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2391636,
+            0.3389176,
+            0.498524,
+            0.6880566,
+            0.847663,
+            0.9573924,
+            0.997294
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0005",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3069947,
+            -0.1216126,
+            -0.4238116,
+            -0.3432252,
+            -0.1619058,
+            0.0886073,
+            -0.0813194
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.417608,
+            0.19862,
+            -0.070782,
+            -0.281748,
+            -0.181288,
+            0.04931,
+            0.258344
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5095913,
+            0.0299129,
+            -0.2502345,
+            -0.1701809,
+            -0.0801206,
+            -0.2102077,
+            -0.0400938
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3619228,
+            -0.1788296,
+            -0.5174084,
+            -0.1091222,
+            0.2313794,
+            -0.1589132,
+            0.0807524
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2398776,
+            0.3398416,
+            0.499784,
+            0.6897156,
+            0.849658,
+            0.9596184,
+            0.999604
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.382064,
+            0.462408,
+            0.60301,
+            0.763698,
+            0.894257,
+            0.984644,
+            1.00473
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.546386,
+            0.6060524,
+            0.7054964,
+            0.8248292,
+            0.9242732,
+            0.9839396,
+            0.993884
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2418666,
+            0.3424156,
+            0.503294,
+            0.6943371,
+            0.8552155,
+            0.9658194,
+            1.006039
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0006",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3118655,
+            -0.118999,
+            -0.417634,
+            -0.337998,
+            -0.158817,
+            0.0908645,
+            -0.079181
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.420832,
+            0.20048,
+            -0.069728,
+            -0.279392,
+            -0.179552,
+            0.05024,
+            0.260576
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5127633,
+            0.0305889,
+            -0.2484145,
+            -0.1687769,
+            -0.0791846,
+            -0.2085957,
+            -0.0393658
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3566512,
+            -0.1820384,
+            -0.5245136,
+            -0.1115288,
+            0.2275976,
+            -0.1618928,
+            0.0786896
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2382116,
+            0.3376856,
+            0.496844,
+            0.6858446,
+            0.845003,
+            0.9544244,
+            0.994214
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3791504,
+            0.4590088,
+            0.598761,
+            0.7584778,
+            0.8882477,
+            0.9780884,
+            0.998053
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.553978,
+            0.6143452,
+            0.7149572,
+            0.8356916,
+            0.9363036,
+            0.9966708,
+            1.006732
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2384564,
+            0.3380024,
+            0.497276,
+            0.6864134,
+            0.845687,
+            0.9551876,
+            0.995006
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0007",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3115088,
+            -0.1191904,
+            -0.4180864,
+            -0.3383808,
+            -0.1590432,
+            0.0906992,
+            -0.0793376
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4193656,
+            0.199634,
+            -0.0702074,
+            -0.2804636,
+            -0.1803416,
+            0.049817,
+            0.2595608
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5087617,
+            0.0297361,
+            -0.2507105,
+            -0.1705481,
+            -0.0803654,
+            -0.2106293,
+            -0.0402842
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3617572,
+            -0.1789304,
+            -0.5176316,
+            -0.1091978,
+            0.2312606,
+            -0.1590068,
+            0.0806876
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.24,
+            0.34,
+            0.5,
+            0.69,
+            0.85,
+            0.96,
+            1.0
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3801776,
+            0.4602072,
+            0.600259,
+            0.7603182,
+            0.8903663,
+            0.9803996,
+            1.000407
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.548531,
+            0.6083954,
+            0.7081694,
+            0.8278982,
+            0.9276722,
+            0.9875366,
+            0.997514
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2386842,
+            0.3382972,
+            0.497678,
+            0.6869427,
+            0.8463235,
+            0.9558978,
+            0.995743
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0008",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3100492,
+            -0.1199736,
+            -0.4199376,
+            -0.3399472,
+            -0.1599688,
+            0.0900228,
+            -0.0799784
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4217784,
+            0.201026,
+            -0.0694186,
+            -0.2787004,
+            -0.1790424,
+            0.050513,
+            0.2612312
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5062058,
+            0.0291914,
+            -0.252177,
+            -0.1716794,
+            -0.0811196,
+            -0.2119282,
+            -0.0408708
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3620516,
+            -0.1787512,
+            -0.5172348,
+            -0.1090634,
+            0.2314718,
+            -0.1588404,
+            0.0808028
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2408228,
+            0.3410648,
+            0.501452,
+            0.6919118,
+            0.852299,
+            0.9625652,
+            1.002662
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3789632,
+            0.4587904,
+            0.598488,
+            0.7581424,
+            0.8878616,
+            0.9776672,
+            0.997624
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.547075,
+            0.606805,
+            0.706355,
+            0.825815,
+            0.925365,
+            0.985095,
+            0.99505
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2410778,
+            0.3413948,
+            0.501902,
+            0.6925043,
+            0.8530115,
+            0.9633602,
+            1.003487
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0009",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3090119,
+            -0.1205302,
+            -0.4212532,
+            -0.3410604,
+            -0.1606266,
+            0.0895421,
+            -0.0804338
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4162352,
+            0.197828,
+            -0.0712308,
+            -0.2827512,
+            -0.1820272,
+            0.048914,
+            0.2573936
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.512684,
+            0.030572,
+            -0.24846,
+            -0.168812,
+            -0.079208,
+            -0.208636,
+            -0.039384
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3587718,
+            -0.1807476,
+            -0.5216554,
+            -0.1105607,
+            0.2291189,
+            -0.1606942,
+            0.0795194
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2385958,
+            0.3381828,
+            0.497522,
+            0.6867373,
+            0.8460765,
+            0.9556222,
+            0.995457
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.378824,
+            0.458628,
+            0.598285,
+            0.757893,
+            0.8875745,
+            0.977354,
+            0.997305
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5538285,
+            0.6141819,
+            0.7147709,
+            0.8354777,
+            0.9360667,
+            0.9964201,
+            1.006479
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2413022,
+            0.3416852,
+            0.502298,
+            0.6930257,
+            0.8536385,
+            0.9640598,
+            1.004213
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0010",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3083108,
+            -0.1209064,
+            -0.4221424,
+            -0.3418128,
+            -0.1610712,
+            0.0892172,
+            -0.0807416
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4189288,
+            0.199382,
+            -0.0703502,
+            -0.2807828,
+            -0.1805768,
+            0.049691,
+            0.2592584
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5148373,
+            0.0310309,
+            -0.2472245,
+            -0.1678589,
+            -0.0785726,
+            -0.2075417,
+            -0.0388898
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3592502,
+            -0.1804564,
+            -0.5210106,
+            -0.1103423,
+            0.2294621,
+            -0.1604238,
+            0.0797066
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2378852,
+            0.3372632,
+            0.496268,
+            0.6850862,
+            0.844091,
+            0.9534068,
+            0.993158
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3803648,
+            0.4604256,
+            0.600532,
+            0.7606536,
+            0.8907524,
+            0.9808208,
+            1.000836
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5520995,
+            0.6122933,
+            0.7126163,
+            0.8330039,
+            0.9333269,
+            0.9935207,
+            1.003553
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2425466,
+            0.3432956,
+            0.504494,
+            0.6959171,
+            0.8571155,
+            0.9679394,
+            1.008239
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0011",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3086757,
+            -0.1207106,
+            -0.4216796,
+            -0.3414212,
+            -0.1608398,
+            0.0893863,
+            -0.0805814
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4182736,
+            0.199004,
+            -0.0705644,
+            -0.2812616,
+            -0.1809296,
+            0.049502,
+            0.2588048
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5114396,
+            0.0303068,
+            -0.249174,
+            -0.1693628,
+            -0.0795752,
+            -0.2092684,
+            -0.0396696
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3596596,
+            -0.1802072,
+            -0.5204588,
+            -0.1101554,
+            0.2297558,
+            -0.1601924,
+            0.0798668
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2386808,
+            0.3382928,
+            0.497672,
+            0.6869348,
+            0.846314,
+            0.9558872,
+            0.995732
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3802448,
+            0.4602856,
+            0.600357,
+            0.7604386,
+            0.8905049,
+            0.9805508,
+            1.000561
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.552951,
+            0.6132234,
+            0.7136774,
+            0.8342222,
+            0.9346762,
+            0.9949486,
+            1.004994
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2425704,
+            0.3433264,
+            0.504536,
+            0.6959724,
+            0.857182,
+            0.9680136,
+            1.008316
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0012",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3097909,
+            -0.1201122,
+            -0.4202652,
+            -0.3402244,
+            -0.1601326,
+            0.0899031,
+            -0.0800918
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4160168,
+            0.197702,
+            -0.0713022,
+            -0.2829108,
+            -0.1821448,
+            0.048851,
+            0.2572424
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5075356,
+            0.0294748,
+            -0.251414,
+            -0.1710908,
+            -0.0807272,
+            -0.2112524,
+            -0.0405656
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3564488,
+            -0.1821616,
+            -0.5247864,
+            -0.1116212,
+            0.2274524,
+            -0.1620072,
+            0.0786104
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2379566,
+            0.3373556,
+            0.496394,
+            0.6852521,
+            0.8442905,
+            0.9536294,
+            0.993389
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3837152,
+            0.4643344,
+            0.605418,
+            0.7666564,
+            0.8976626,
+            0.9883592,
+            1.008514
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5549205,
+            0.6153747,
+            0.7161317,
+            0.8370401,
+            0.9377971,
+            0.9982513,
+            1.008327
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.241156,
+            0.341496,
+            0.50204,
+            0.692686,
+            0.85323,
+            0.963604,
+            1.00374
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0013",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3070275,
+            -0.121595,
+            -0.42377,
+            -0.34319,
+            -0.161885,
+            0.0886225,
+            -0.081305
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4160428,
+            0.197717,
+            -0.0712937,
+            -0.2828918,
+            -0.1821308,
+            0.0488585,
+            0.2572604
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5059496,
+            0.0291368,
+            -0.252324,
+            -0.1717928,
+            -0.0811952,
+            -0.2120584,
+            -0.0409296
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3576448,
+            -0.1814336,
+            -0.5231744,
+            -0.1110752,
+            0.2283104,
+            -0.1613312,
+            0.0790784
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2373514,
+            0.3365724,
+            0.495326,
+            0.6838459,
+            0.8425995,
+            0.9517426,
+            0.991431
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3789104,
+            0.4587288,
+            0.598411,
+            0.7580478,
+            0.8877527,
+            0.9775484,
+            0.997503
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.552678,
+            0.6129252,
+            0.7133372,
+            0.8338316,
+            0.9342436,
+            0.9944908,
+            1.004532
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2410608,
+            0.3413728,
+            0.501872,
+            0.6924648,
+            0.852964,
+            0.9633072,
+            1.003432
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0014",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3122345,
+            -0.118801,
+            -0.417166,
+            -0.337602,
+            -0.158583,
+            0.0910355,
+            -0.079019
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4214768,
+            0.200852,
+            -0.0695172,
+            -0.2789208,
+            -0.1792048,
+            0.050426,
+            0.2610224
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5108357,
+            0.0301781,
+            -0.2495205,
+            -0.1696301,
+            -0.0797534,
+            -0.2095753,
+            -0.0398082
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3615824,
+            -0.1790368,
+            -0.5178672,
+            -0.1092776,
+            0.2311352,
+            -0.1591056,
+            0.0806192
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2414246,
+            0.3418436,
+            0.502514,
+            0.6933101,
+            0.8539805,
+            0.9644414,
+            1.004609
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.378512,
+            0.458264,
+            0.59783,
+            0.757334,
+            0.886931,
+            0.976652,
+            0.99659
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.547205,
+            0.606947,
+            0.706517,
+            0.826001,
+            0.925571,
+            0.985313,
+            0.99527
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.240595,
+            0.34077,
+            0.50105,
+            0.6913825,
+            0.8516625,
+            0.961855,
+            1.001925
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0015",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3101189,
+            -0.1199362,
+            -0.4198492,
+            -0.3398724,
+            -0.1599246,
+            0.0900551,
+            -0.0799478
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4230524,
+            0.201761,
+            -0.0690021,
+            -0.2777694,
+            -0.1783564,
+            0.0508805,
+            0.2621132
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5146299,
+            0.0309867,
+            -0.2473435,
+            -0.1679507,
+            -0.0786338,
+            -0.2076471,
+            -0.0389374
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3621436,
+            -0.1786952,
+            -0.5171108,
+            -0.1090214,
+            0.2315378,
+            -0.1587884,
+            0.0808388
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2391058,
+            0.3388428,
+            0.498422,
+            0.6879223,
+            0.8475015,
+            0.9572122,
+            0.997107
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3798848,
+            0.4598656,
+            0.599832,
+            0.7597936,
+            0.8897624,
+            0.9797408,
+            0.999736
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5517355,
+            0.6118957,
+            0.7121627,
+            0.8324831,
+            0.9327501,
+            0.9929103,
+            1.002937
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2375928,
+            0.3368848,
+            0.495752,
+            0.6844068,
+            0.843274,
+            0.9524952,
+            0.992212
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0016",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3068348,
+            -0.1216984,
+            -0.4240144,
+            -0.3433968,
+            -0.1620072,
+            0.0885332,
+            -0.0813896
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4204784,
+            0.200276,
+            -0.0698436,
+            -0.2796504,
+            -0.1797424,
+            0.050138,
+            0.2603312
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5115128,
+            0.0303224,
+            -0.249132,
+            -0.1693304,
+            -0.0795536,
+            -0.2092312,
+            -0.0396528
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3621712,
+            -0.1786784,
+            -0.5170736,
+            -0.1090088,
+            0.2315576,
+            -0.1587728,
+            0.0808496
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2379566,
+            0.3373556,
+            0.496394,
+            0.6852521,
+            0.8442905,
+            0.9536294,
+            0.993389
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.38216,
+            0.46252,
+            0.60315,
+            0.76387,
+            0.894455,
+            0.98486,
+            1.00495
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.545047,
+            0.6045898,
+            0.7038278,
+            0.8229134,
+            0.9221514,
+            0.9816942,
+            0.991618
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2394186,
+            0.3392476,
+            0.498974,
+            0.6886491,
+            0.8483755,
+            0.9581874,
+            0.998119
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0017",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3070398,
+            -0.1215884,
+            -0.4237544,
+            -0.3431768,
+            -0.1618772,
+            0.0886282,
+            -0.0812996
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4182684,
+            0.199001,
+            -0.0705661,
+            -0.2812654,
+            -0.1809324,
+            0.0495005,
+            0.2588012
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5074868,
+            0.0294644,
+            -0.251442,
+            -0.1711124,
+            -0.0807416,
+            -0.2112772,
+            -0.0405768
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3622632,
+            -0.1786224,
+            -0.5169496,
+            -0.1089668,
+            0.2316236,
+            -0.1587208,
+            0.0808856
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2378954,
+            0.3372764,
+            0.496286,
+            0.6851099,
+            0.8441195,
+            0.9534386,
+            0.993191
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3810032,
+            0.4611704,
+            0.601463,
+            0.7617974,
+            0.8920691,
+            0.9822572,
+            1.002299
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.551482,
+            0.6116188,
+            0.7118468,
+            0.8321204,
+            0.9323484,
+            0.9924852,
+            1.002508
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2405202,
+            0.3406732,
+            0.500918,
+            0.6912087,
+            0.8514535,
+            0.9616218,
+            1.001683
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0018",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3090242,
+            -0.1205236,
+            -0.4212376,
+            -0.3410472,
+            -0.1606188,
+            0.0895478,
+            -0.0804284
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4215704,
+            0.200906,
+            -0.0694866,
+            -0.2788524,
+            -0.1791544,
+            0.050453,
+            0.2610872
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5148007,
+            0.0310231,
+            -0.2472455,
+            -0.1678751,
+            -0.0785834,
+            -0.2075603,
+            -0.0388982
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3585556,
+            -0.1808792,
+            -0.5219468,
+            -0.1106594,
+            0.2289638,
+            -0.1608164,
+            0.0794348
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2392588,
+            0.3390408,
+            0.498692,
+            0.6882778,
+            0.847929,
+            0.9576892,
+            0.997602
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3773552,
+            0.4569144,
+            0.596143,
+            0.7552614,
+            0.8845451,
+            0.9740492,
+            0.993939
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.553276,
+            0.6135784,
+            0.7140824,
+            0.8346872,
+            0.9351912,
+            0.9954936,
+            1.005544
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2427166,
+            0.3435156,
+            0.504794,
+            0.6963121,
+            0.8575905,
+            0.9684694,
+            1.008789
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0019",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3082452,
+            -0.1209416,
+            -0.4222256,
+            -0.3418832,
+            -0.1611128,
+            0.0891868,
+            -0.0807704
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4211856,
+            0.200684,
+            -0.0696124,
+            -0.2791336,
+            -0.1793616,
+            0.050342,
+            0.2608208
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5088776,
+            0.0297608,
+            -0.250644,
+            -0.1704968,
+            -0.0803312,
+            -0.2105704,
+            -0.0402576
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3580634,
+            -0.1811788,
+            -0.5226102,
+            -0.1108841,
+            0.2286107,
+            -0.1610946,
+            0.0792422
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2382898,
+            0.3377868,
+            0.496982,
+            0.6860263,
+            0.8452215,
+            0.9546682,
+            0.994467
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3780128,
+            0.4576816,
+            0.597102,
+            0.7564396,
+            0.8859014,
+            0.9755288,
+            0.995446
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5467305,
+            0.6064287,
+            0.7059257,
+            0.8253221,
+            0.9248191,
+            0.9845173,
+            0.994467
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2424038,
+            0.3431108,
+            0.504242,
+            0.6955853,
+            0.8567165,
+            0.9674942,
+            1.007777
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0020",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.310082,
+            -0.119956,
+            -0.419896,
+            -0.339912,
+            -0.159948,
+            0.090038,
+            -0.079964
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.419194,
+            0.199535,
+            -0.0702635,
+            -0.280589,
+            -0.180434,
+            0.0497675,
+            0.259442
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.513233,
+            0.030689,
+            -0.248145,
+            -0.168569,
+            -0.079046,
+            -0.208357,
+            -0.039258
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3585786,
+            -0.1808652,
+            -0.5219158,
+            -0.1106489,
+            0.2289803,
+            -0.1608034,
+            0.0794438
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2389154,
+            0.3385964,
+            0.498086,
+            0.6874799,
+            0.8469695,
+            0.9566186,
+            0.996491
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3801056,
+            0.4601232,
+            0.600154,
+            0.7601892,
+            0.8902178,
+            0.9802376,
+            1.000242
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5479785,
+            0.6077919,
+            0.7074809,
+            0.8271077,
+            0.9267967,
+            0.9866101,
+            0.996579
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.237382,
+            0.336612,
+            0.49538,
+            0.683917,
+            0.842685,
+            0.951838,
+            0.99153
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0021",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3104838,
+            -0.1197404,
+            -0.4193864,
+            -0.3394808,
+            -0.1596932,
+            0.0902242,
+            -0.0797876
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4171296,
+            0.198344,
+            -0.0709384,
+            -0.2820976,
+            -0.1815456,
+            0.049172,
+            0.2580128
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5083835,
+            0.0296555,
+            -0.2509275,
+            -0.1707155,
+            -0.080477,
+            -0.2108215,
+            -0.040371
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3627048,
+            -0.1783536,
+            -0.5163544,
+            -0.1087652,
+            0.2319404,
+            -0.1584712,
+            0.0810584
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2385924,
+            0.3381784,
+            0.497516,
+            0.6867294,
+            0.846067,
+            0.9556116,
+            0.995446
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3824624,
+            0.4628728,
+            0.603591,
+            0.7644118,
+            0.8950787,
+            0.9855404,
+            1.005643
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5539715,
+            0.6143381,
+            0.7149491,
+            0.8356823,
+            0.9362933,
+            0.9966599,
+            1.006721
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2415232,
+            0.3419712,
+            0.502688,
+            0.6935392,
+            0.854256,
+            0.9647488,
+            1.004928
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0022",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3097909,
+            -0.1201122,
+            -0.4202652,
+            -0.3402244,
+            -0.1601326,
+            0.0899031,
+            -0.0800918
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4202652,
+            0.200153,
+            -0.0699133,
+            -0.2798062,
+            -0.1798572,
+            0.0500765,
+            0.2601836
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5087373,
+            0.0297309,
+            -0.2507245,
+            -0.1705589,
+            -0.0803726,
+            -0.2106417,
+            -0.0402898
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3581876,
+            -0.1811032,
+            -0.5224428,
+            -0.1108274,
+            0.2286998,
+            -0.1610244,
+            0.0792908
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2414994,
+            0.3419404,
+            0.502646,
+            0.6934839,
+            0.8541895,
+            0.9646746,
+            1.004851
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.381608,
+            0.461876,
+            0.602345,
+            0.762881,
+            0.8933165,
+            0.983618,
+            1.003685
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5542315,
+            0.6146221,
+            0.7152731,
+            0.8360543,
+            0.9367053,
+            0.9970959,
+            1.007161
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.239796,
+            0.339736,
+            0.49964,
+            0.689526,
+            0.84943,
+            0.959364,
+            0.99934
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0023",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3095982,
+            -0.1202156,
+            -0.4205096,
+            -0.3404312,
+            -0.1602548,
+            0.0898138,
+            -0.0801764
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4160272,
+            0.197708,
+            -0.0712988,
+            -0.2829032,
+            -0.1821392,
+            0.048854,
+            0.2572496
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5137759,
+            0.0308047,
+            -0.2478335,
+            -0.1683287,
+            -0.0788858,
+            -0.2080811,
+            -0.0391334
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.357355,
+            -0.18161,
+            -0.523565,
+            -0.1112075,
+            0.2281025,
+            -0.161495,
+            0.078965
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.237501,
+            0.336766,
+            0.49559,
+            0.6841935,
+            0.8430175,
+            0.952209,
+            0.991915
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3820112,
+            0.4623464,
+            0.602933,
+            0.7636034,
+            0.8941481,
+            0.9845252,
+            1.004609
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.549922,
+            0.6099148,
+            0.7099028,
+            0.8298884,
+            0.9298764,
+            0.9898692,
+            0.999868
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2383782,
+            0.3379012,
+            0.497138,
+            0.6862317,
+            0.8454685,
+            0.9549438,
+            0.994753
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0024",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3078721,
+            -0.1211418,
+            -0.4226988,
+            -0.3422836,
+            -0.1613494,
+            0.0890139,
+            -0.0809342
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4236244,
+            0.202091,
+            -0.0688151,
+            -0.2773514,
+            -0.1780484,
+            0.0510455,
+            0.2625092
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.510915,
+            0.030195,
+            -0.249475,
+            -0.169595,
+            -0.07973,
+            -0.209535,
+            -0.03979
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3622724,
+            -0.1786168,
+            -0.5169372,
+            -0.1089626,
+            0.2316302,
+            -0.1587156,
+            0.0808892
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2412784,
+            0.3416544,
+            0.502256,
+            0.6929704,
+            0.853572,
+            0.9639856,
+            1.004136
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3763136,
+            0.4556992,
+            0.594624,
+            0.7533952,
+            0.8823968,
+            0.9717056,
+            0.991552
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5480955,
+            0.6079197,
+            0.7076267,
+            0.8272751,
+            0.9269821,
+            0.9868063,
+            0.996777
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2378376,
+            0.3372016,
+            0.496184,
+            0.6849756,
+            0.843958,
+            0.9532584,
+            0.993004
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0025",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.311189,
+            -0.119362,
+            -0.418492,
+            -0.338724,
+            -0.159246,
+            0.090551,
+            -0.079478
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4208372,
+            0.200483,
+            -0.0697263,
+            -0.2793882,
+            -0.1795492,
+            0.0502415,
+            0.2605796
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5127145,
+            0.0305785,
+            -0.2484425,
+            -0.1687985,
+            -0.079199,
+            -0.2086205,
+            -0.039377
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3636478,
+            -0.1777796,
+            -0.5150834,
+            -0.1083347,
+            0.2326169,
+            -0.1579382,
+            0.0814274
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2400272,
+            0.3400352,
+            0.500048,
+            0.6900632,
+            0.850076,
+            0.9600848,
+            1.000088
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3837968,
+            0.4644296,
+            0.605537,
+            0.7668026,
+            0.8978309,
+            0.9885428,
+            1.008701
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.554043,
+            0.6144162,
+            0.7150382,
+            0.8357846,
+            0.9364066,
+            0.9967798,
+            1.006842
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2426928,
+            0.3434848,
+            0.504752,
+            0.6962568,
+            0.857524,
+            0.9683952,
+            1.008712
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0026",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3077491,
+            -0.1212078,
+            -0.4228548,
+            -0.3424156,
+            -0.1614274,
+            0.0889569,
+            -0.0809882
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4170516,
+            0.198299,
+            -0.0709639,
+            -0.2821546,
+            -0.1815876,
+            0.0491495,
+            0.2579588
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5107869,
+            0.0301677,
+            -0.2495485,
+            -0.1696517,
+            -0.0797678,
+            -0.2096001,
+            -0.0398194
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3595768,
+            -0.1802576,
+            -0.5205704,
+            -0.1101932,
+            0.2296964,
+            -0.1602392,
+            0.0798344
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2380484,
+            0.3374744,
+            0.496556,
+            0.6854654,
+            0.844547,
+            0.9539156,
+            0.993686
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.377408,
+            0.456976,
+            0.59622,
+            0.755356,
+            0.884654,
+            0.974168,
+            0.99406
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.54584,
+            0.605456,
+            0.704816,
+            0.824048,
+            0.923408,
+            0.983024,
+            0.99296
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2420774,
+            0.3426884,
+            0.503666,
+            0.6948269,
+            0.8558045,
+            0.9664766,
+            1.006721
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0027",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3071464,
+            -0.1215312,
+            -0.4236192,
+            -0.3430624,
+            -0.1618096,
+            0.0886776,
+            -0.0812528
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.416854,
+            0.198185,
+            -0.0710285,
+            -0.282299,
+            -0.181694,
+            0.0490925,
+            0.257822
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5078101,
+            0.0295333,
+            -0.2512565,
+            -0.1709693,
+            -0.0806462,
+            -0.2111129,
+            -0.0405026
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3594894,
+            -0.1803108,
+            -0.5206882,
+            -0.1102331,
+            0.2296337,
+            -0.1602886,
+            0.0798002
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2411662,
+            0.3415092,
+            0.502058,
+            0.6927097,
+            0.8532585,
+            0.9636358,
+            1.003773
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3835616,
+            0.4641552,
+            0.605194,
+            0.7663812,
+            0.8973458,
+            0.9880136,
+            1.008162
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.546685,
+            0.606379,
+            0.705869,
+            0.825257,
+            0.924747,
+            0.984441,
+            0.99439
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.238657,
+            0.338262,
+            0.49763,
+            0.6868795,
+            0.8462475,
+            0.955813,
+            0.995655
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0028",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3093563,
+            -0.1203454,
+            -0.4208164,
+            -0.3406908,
+            -0.1604082,
+            0.0897017,
+            -0.0802826
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4213312,
+            0.200768,
+            -0.0695648,
+            -0.2790272,
+            -0.1792832,
+            0.050384,
+            0.2609216
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5094022,
+            0.0298726,
+            -0.250343,
+            -0.1702646,
+            -0.0801764,
+            -0.2103038,
+            -0.0401372
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3601472,
+            -0.1799104,
+            -0.5198016,
+            -0.1099328,
+            0.2301056,
+            -0.1599168,
+            0.0800576
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.237926,
+            0.337316,
+            0.49634,
+            0.685181,
+            0.844205,
+            0.953534,
+            0.99329
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3781904,
+            0.4578888,
+            0.597361,
+            0.7567578,
+            0.8862677,
+            0.9759284,
+            0.995853
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.547829,
+            0.6076286,
+            0.7072946,
+            0.8268938,
+            0.9265598,
+            0.9863594,
+            0.996326
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.240714,
+            0.340924,
+            0.50126,
+            0.691659,
+            0.851995,
+            0.962226,
+            1.00231
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0029",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3118942,
+            -0.1189836,
+            -0.4175976,
+            -0.3379672,
+            -0.1587988,
+            0.0908778,
+            -0.0791684
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4197088,
+            0.199832,
+            -0.0700952,
+            -0.2802128,
+            -0.1801568,
+            0.049916,
+            0.2597984
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5123851,
+            0.0305083,
+            -0.2486315,
+            -0.1689443,
+            -0.0792962,
+            -0.2087879,
+            -0.0394526
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3580036,
+            -0.1812152,
+            -0.5226908,
+            -0.1109114,
+            0.2285678,
+            -0.1611284,
+            0.0792188
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2421012,
+            0.3427192,
+            0.503708,
+            0.6948822,
+            0.855871,
+            0.9665508,
+            1.006798
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.3832304,
+            0.4637688,
+            0.604711,
+            0.7657878,
+            0.8966627,
+            0.9872684,
+            1.007403
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.5486545,
+            0.6085303,
+            0.7083233,
+            0.8280749,
+            0.9278679,
+            0.9877437,
+            0.997723
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2396566,
+            0.3395556,
+            0.499394,
+            0.6892021,
+            0.8490405,
+            0.9589294,
+            0.998889
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "drivaerml_rear_separation_test_0030",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upperbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.3097745,
+            -0.120121,
+            -0.420286,
+            -0.340242,
+            -0.160143,
+            0.0898955,
+            -0.080099
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "underbody_centerline",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.4226052,
+            0.201503,
+            -0.0691483,
+            -0.2780962,
+            -0.1785972,
+            0.0507515,
+            0.2618036
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "sidewall_z_0_15",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.5129829,
+            0.0306357,
+            -0.2482885,
+            -0.1686797,
+            -0.0791198,
+            -0.2084841,
+            -0.0393154
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "front_left_wheelhouse_y_neg_0_6",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.17,
+            0.33,
+            0.5,
+            0.67,
+            0.83,
+            1.0
+          ],
+          "value": [
+            0.360529,
+            -0.179678,
+            -0.519287,
+            -0.1097585,
+            0.2303795,
+            -0.159701,
+            0.080207
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2384156,
+            0.3379496,
+            0.497204,
+            0.6863186,
+            0.845573,
+            0.9550604,
+            0.994874
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.381224,
+            0.461428,
+            0.601785,
+            0.762193,
+            0.8925245,
+            0.982754,
+            1.002805
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.545723,
+            0.6053282,
+            0.7046702,
+            0.8238806,
+            0.9232226,
+            0.9828278,
+            0.992762
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.2,
+            0.4,
+            0.6,
+            0.8,
+            1.0,
+            1.2
+          ],
+          "value": [
+            0.2384836,
+            0.3380376,
+            0.497324,
+            0.6864766,
+            0.845763,
+            0.9552724,
+            0.995094
+          ]
+        }
+      ]
+    }
+  ]
+}

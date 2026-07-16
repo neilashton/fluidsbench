@@ -30,6 +30,27 @@ chart:
     Work in progress: all results currently shown are illustrative dummy data.
   </aside>
 
+  <section class="leaderboard-release-bar" aria-label="Leaderboard data release">
+    <div class="leaderboard-release-summary">
+      <span class="leaderboard-release-label">Data release</span>
+      <strong id="leaderboard-release-id">Loading...</strong>
+      <span id="leaderboard-release-meta" class="leaderboard-release-meta"></span>
+      <a id="leaderboard-release-source" href="#" target="_blank" rel="noopener noreferrer" hidden>Source</a>
+    </div>
+    <div class="leaderboard-release-actions" aria-label="Research data actions">
+      <button id="export-leaderboard-csv" class="leaderboard-action-button" type="button" disabled>
+        <i class="fa-solid fa-file-csv" aria-hidden="true"></i><span>CSV</span>
+      </button>
+      <button id="export-leaderboard-json" class="leaderboard-action-button" type="button" disabled>
+        <i class="fa-solid fa-file-code" aria-hidden="true"></i><span>JSON</span>
+      </button>
+      <button id="open-citation-dialog" class="leaderboard-action-button" type="button" disabled>
+        <i class="fa-solid fa-quote-left" aria-hidden="true"></i><span>Cite</span>
+      </button>
+    </div>
+    <p id="leaderboard-release-action-status" class="leaderboard-sr-only" role="status"></p>
+  </section>
+
   <section class="leaderboard-controls" aria-label="Leaderboard filters">
     <div class="leaderboard-control">
       <label class="leaderboard-control-title" for="dataset-filter">Dataset</label>
@@ -47,7 +68,7 @@ chart:
 
   <div id="leaderboard-error" class="leaderboard-load-error" role="alert" hidden></div>
   <div id="leaderboard-load-status" class="leaderboard-load-status" role="status" hidden></div>
-  <div id="leaderboard-diagnostic-warning" class="leaderboard-diagnostic-warning" role="status" hidden></div>
+  <div id="leaderboard-profile-warning" class="leaderboard-profile-warning" role="status" hidden></div>
 
   <div class="leaderboard-table-area">
     <div class="leaderboard-table-toolbar" id="leaderboard-column-controls" role="group" aria-label="Visible table column groups">
@@ -128,7 +149,7 @@ chart:
     </div>
   </section>
 
-  <div id="leaderboard-diagnostic-panels" class="leaderboard-diagnostic-panels"></div>
+  <div id="leaderboard-profile-panels" class="leaderboard-profile-panels"></div>
 
   <div class="leaderboard-definitions" aria-label="Leaderboard definitions">
     <section class="metric-definitions" id="metric-definitions">
@@ -164,6 +185,39 @@ chart:
     </article>
   </dialog>
 
+  <dialog class="details-dialog citation-dialog" id="citation-dialog" aria-labelledby="citation-dialog-title">
+    <article class="details-dialog-card">
+      <div class="details-dialog-header">
+        <div>
+          <p class="details-dialog-subtitle">Current leaderboard view</p>
+          <h3 id="citation-dialog-title">Citation</h3>
+        </div>
+        <button id="close-citation-dialog" class="details-dialog-close" type="button" aria-label="Close citation">&times;</button>
+      </div>
+      <div class="citation-dialog-body">
+        <section>
+          <div class="citation-heading-row">
+            <h4>Plain text</h4>
+            <button id="copy-citation-text" class="leaderboard-action-button" type="button">
+              <i class="fa-solid fa-copy" aria-hidden="true"></i><span>Copy</span>
+            </button>
+          </div>
+          <p id="citation-text" class="citation-text"></p>
+        </section>
+        <section>
+          <div class="citation-heading-row">
+            <h4>BibTeX</h4>
+            <button id="copy-citation-bibtex" class="leaderboard-action-button" type="button">
+              <i class="fa-solid fa-copy" aria-hidden="true"></i><span>Copy</span>
+            </button>
+          </div>
+          <pre class="citation-bibtex"><code id="citation-bibtex"></code></pre>
+        </section>
+        <p id="citation-copy-status" class="leaderboard-copy-status" role="status"></p>
+      </div>
+    </article>
+  </dialog>
+
   <div id="column-help-popover" class="column-help-popover" role="dialog" aria-label="Column information" hidden></div>
 </div>
 
@@ -174,7 +228,7 @@ chart:
     : "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/";
   window.FluidsBenchLeaderboardManifestUrl =
     window.FluidsBenchLeaderboardBaseUrl + "leaderboard/manifest.json";
-  window.FluidsBenchDiagnosticGroundTruthBaseUrl =
-    new URL("{{ '/assets/data/diagnostic-ground-truth/' | relative_url }}", window.location.origin).href;
+  window.FluidsBenchProfileGroundTruthBaseUrl =
+    new URL("{{ '/assets/data/profile-ground-truth/' | relative_url }}", window.location.origin).href;
 </script>
 <script defer src="{{ '/assets/js/leaderboard.js' | relative_url | bust_file_cache }}"></script>

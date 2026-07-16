@@ -1,0 +1,26 @@
+name: Profile data contract
+
+on:
+  pull_request:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: fluidsbench
+      - uses: actions/checkout@v4
+        with:
+          repository: neilashton/fluidsbench-submission
+          ref: dev
+          path: fluidsbench-submission
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python fluidsbench/bin/check_profile_contract.py --submission-root fluidsbench-submission

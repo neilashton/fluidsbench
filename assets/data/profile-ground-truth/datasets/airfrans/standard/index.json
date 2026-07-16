@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "airfrans",
+  "case_set_id": "standard",
+  "case_count": 1,
+  "case_id_status": "prototype_generated",
+  "chunks": [
+    {
+      "file": "chunk-000.json",
+      "case_ids": [
+        "airfrans_standard_test_0001"
+      ],
+      "sha256": "aa4064650b7138808f327b26e8506b7a134d6a3cd47c3600b3381e76bbe25ee2"
+    }
+  ]
+}

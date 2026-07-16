@@ -3,7 +3,7 @@
 
   const baseUrl = window.FluidsBenchLeaderboardBaseUrl;
   const manifestUrl = window.FluidsBenchLeaderboardManifestUrl;
-  const groundTruthBaseUrl = window.FluidsBenchDiagnosticGroundTruthBaseUrl;
+  const groundTruthBaseUrl = window.FluidsBenchProfileGroundTruthBaseUrl;
   const palette = ["#2563eb", "#10b981", "#8b5cf6", "#f59e0b", "#ec4899", "#06b6d4", "#64748b", "#1e40af"];
   const columnGroups = [
     { id: "absolute", label: "Absolute", className: "metric-group-absolute" },
@@ -18,7 +18,10 @@
     metrics: new Map(),
     rows: new Map(),
     groundTruthManifest: null,
-    groundTruth: new Map(),
+    groundTruthIndexes: new Map(),
+    groundTruthChunks: new Map(),
+    profileIndexes: new Map(),
+    profileChunks: new Map(),
     dataset: "",
     split: "",
     modelType: "",
@@ -26,11 +29,17 @@
     sortDirection: "asc",
     visibleGroups: new Set(),
     comparisonMetric: "",
+    comparisonRowCount: 5,
     scatterX: "",
     scatterY: "",
     panelSelections: new Map(),
+    profileCaseIds: [],
+    profileCase: "",
+    groundTruthCase: null,
+    profileCases: new Map(),
     charts: {},
     loadVersion: 0,
+    profileLoadVersion: 0,
   };
   let helpHideTimer = null;
   let activeHelpButton = null;
@@ -86,6 +95,79 @@
   function fileUrl(file, root = baseUrl) {
     const normalizedRoot = root.endsWith("/") ? root : `${root}/`;
     return new URL(file, normalizedRoot).href;
+  }
+
+  function dataRelease() {
+    return state.manifest?.data_release || {};
+  }
+
+  function activeSplitDefinition() {
+    return splitOptions().find((split) => split.name === state.split);
+  }
+
+  function viewSearchParams() {
+    const params = new URLSearchParams();
+    const dataset = activeDataset();
+    const split = activeSplitDefinition();
+    if (dataset) params.set("dataset", slug(dataset.name));
+    if (split) params.set("split", split.id || slug(split.name));
+    if (state.modelType) params.set("model_type", state.modelType);
+    params.set("sort", state.sortKey);
+    params.set("direction", state.sortDirection);
+    params.set(
+      "columns",
+      columnGroups
+        .map(({ id }) => id)
+        .filter((id) => state.visibleGroups.has(id))
+        .join(",")
+    );
+    if (state.comparisonMetric) params.set("comparison", state.comparisonMetric);
+    params.set("comparison_count", String(state.comparisonRowCount));
+    if (state.scatterX) params.set("scatter_x", state.scatterX);
+    if (state.scatterY) params.set("scatter_y", state.scatterY);
+    if (state.profileCase) params.set("case", state.profileCase);
+    (dataset?.diagnostic_panels || []).forEach((panel) => {
+      const selection = panelSelection(panel);
+      if (selection.quantity) params.set(`quantity_${panel.id}`, selection.quantity);
+      if (selection.station) params.set(`station_${panel.id}`, selection.station);
+    });
+    return params;
+  }
+
+  function readUrlState() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      dataset: params.get("dataset") || "",
+      split: params.get("split") || "",
+      modelType: params.get("model_type") || "",
+      sortKey: params.get("sort") || "",
+      sortDirection: params.get("direction") || "",
+      visibleGroups: (params.get("columns") || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+      hasVisibleGroups: params.has("columns"),
+      comparisonMetric: params.get("comparison") || "",
+      comparisonRowCount: Number(params.get("comparison_count")),
+      scatterX: params.get("scatter_x") || "",
+      scatterY: params.get("scatter_y") || "",
+      profileCase: params.get("case") || "",
+      params,
+    };
+  }
+
+  function updateUrl() {
+    if (!state.dataset) return;
+    const query = viewSearchParams().toString();
+    window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
+  }
+
+  function currentViewUrl(canonical = false) {
+    const root = canonical && dataRelease().canonical_url ? dataRelease().canonical_url : window.location.href;
+    const url = new URL(root, window.location.href);
+    url.search = viewSearchParams().toString();
+    url.hash = "";
+    return url.href;
   }
 
   async function fetchJson(url, label) {
@@ -190,14 +272,39 @@
     return state.groundTruthManifest;
   }
 
-  async function ensureGroundTruth(datasetName) {
-    if (state.groundTruth.has(datasetName)) return state.groundTruth.get(datasetName);
+  async function groundTruthIndex(datasetName, splitName) {
     const manifest = await ensureGroundTruthManifest();
-    const entry = (manifest.datasets || []).find((candidate) => candidate.name === datasetName);
-    if (!entry?.file) return null;
-    const payload = await fetchJson(fileUrl(entry.file, groundTruthBaseUrl), `${datasetName} ground truth`);
-    state.groundTruth.set(datasetName, payload);
-    return payload;
+    const dataset = (manifest.datasets || []).find((candidate) => candidate.name === datasetName);
+    const split = (dataset?.splits || []).find((candidate) => candidate.label === splitName);
+    const caseSet = (dataset?.case_sets || []).find((candidate) => candidate.id === split?.case_set_id);
+    if (!caseSet?.index_file) throw new Error(`${datasetName} / ${splitName} has no profile ground-truth index`);
+    const indexUrl = fileUrl(caseSet.index_file, groundTruthBaseUrl);
+    if (!state.groundTruthIndexes.has(indexUrl)) {
+      state.groundTruthIndexes.set(indexUrl, await fetchJson(indexUrl, `${datasetName} profile ground-truth index`));
+    }
+    return { index: state.groundTruthIndexes.get(indexUrl), indexUrl };
+  }
+
+  async function submissionProfileIndex(row) {
+    const indexFile = row.profile_data?.index_file;
+    if (!indexFile) throw new Error(`${rowLabel(row)} has no profile index`);
+    const indexUrl = fileUrl(indexFile);
+    if (!state.profileIndexes.has(indexUrl)) {
+      state.profileIndexes.set(indexUrl, await fetchJson(indexUrl, `${rowLabel(row)} profile index`));
+    }
+    return { index: state.profileIndexes.get(indexUrl), indexUrl };
+  }
+
+  function caseIds(index) {
+    return (index?.chunks || []).flatMap((chunk) => chunk.case_ids || []);
+  }
+
+  async function indexedProfileCase(context, caseId, cache, label) {
+    const entry = (context.index?.chunks || []).find((chunk) => (chunk.case_ids || []).includes(caseId));
+    if (!entry) return null;
+    const chunkUrl = new URL(entry.file, context.indexUrl).href;
+    if (!cache.has(chunkUrl)) cache.set(chunkUrl, await fetchJson(chunkUrl, `${label} profile chunk`));
+    return (cache.get(chunkUrl)?.cases || []).find((candidate) => candidate.case_id === caseId) || null;
   }
 
   function ranking() {
@@ -262,6 +369,213 @@
     const formatted = formatNumber(value, definition?.digits ?? 2);
     if (formatted === "N/A" || !definition?.unit) return formatted;
     return `${formatted}${definition.unit === "%" ? "" : " "}${definition.unit}`;
+  }
+
+  function safeHttpUrl(value) {
+    if (!value) return "";
+    try {
+      const url = new URL(value, window.location.href);
+      return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+    } catch (_error) {
+      return "";
+    }
+  }
+
+  function humanize(value) {
+    return String(value || "")
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (character) => character.toUpperCase());
+  }
+
+  function formatReleaseDate(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.valueOf())) return value;
+    return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+  }
+
+  function releaseSourceUrl() {
+    const release = dataRelease();
+    const repository = String(release.source_repository || "").replace(/\/$/, "");
+    if (!repository) return "";
+    if (release.source_commit) return safeHttpUrl(`${repository}/commit/${release.source_commit}`);
+    if (release.source_ref) return safeHttpUrl(`${repository}/tree/${encodeURIComponent(release.source_ref)}`);
+    return safeHttpUrl(repository);
+  }
+
+  function renderReleaseMetadata() {
+    const release = dataRelease();
+    element("leaderboard-release-id").textContent = release.id || "Unversioned";
+    const details = [];
+    if (release.status) details.push(humanize(release.status));
+    if (release.generated_at) details.push(`generated ${formatReleaseDate(release.generated_at)}`);
+    if (release.feed_sha256) details.push(`SHA-256 ${release.feed_sha256.slice(0, 12)}...`);
+    const meta = element("leaderboard-release-meta");
+    meta.textContent = details.join(" | ");
+    if (release.feed_sha256) meta.title = `Feed SHA-256: ${release.feed_sha256}`;
+    const source = element("leaderboard-release-source");
+    const sourceUrl = releaseSourceUrl();
+    source.hidden = !sourceUrl;
+    if (sourceUrl) {
+      source.href = sourceUrl;
+      source.textContent = release.source_commit
+        ? `Source ${String(release.source_commit).slice(0, 7)}`
+        : `Source ${release.source_ref || "repository"}`;
+    }
+    ["export-leaderboard-csv", "export-leaderboard-json", "open-citation-dialog"].forEach((id) => {
+      const button = element(id);
+      if (button) button.disabled = !state.dataset;
+    });
+  }
+
+  function csvCell(value) {
+    if (value === null || value === undefined) return "";
+    const rendered = typeof value === "object" ? JSON.stringify(value) : String(value);
+    return /[",\r\n]/.test(rendered) ? `"${rendered.replaceAll('"', '""')}"` : rendered;
+  }
+
+  function exportMetadataColumns() {
+    return [
+      ["release_id", () => dataRelease().id],
+      ["feed_sha256", () => dataRelease().feed_sha256],
+      ["rank", (row) => row.rank],
+      ["submission_id", (row) => row.id],
+      ["dataset", (row) => row.dataset],
+      ["dataset_version", (row) => row.dataset_version],
+      ["split", (row) => row.split],
+      ["split_id", (row) => row.split_id],
+      ["model", (row) => row.model],
+      ["submitted_by", (row) => row.submitter],
+      ["institution", (row) => row.institution],
+      ["model_types", (row) => row.modelTypes],
+      ["training_regime", (row) => row.training_regime],
+      ["target_data_used", (row) => row.target_data_used],
+      ["external_pretraining", (row) => row.external_pretraining],
+      ["pretraining_data", (row) => row.pretraining_data],
+      ["training_regime_explanation", (row) => row.training_regime_explanation],
+      ["parameter_count_millions", (row) => row.parameter_count_millions ?? row.parameterCount],
+      ["submitted_at", (row) => row.date],
+      ["evaluation_reference_version", (row) => row.evaluation?.reference_version],
+      ["evaluation_code_revision", (row) => row.evaluation?.code_revision],
+      ["evaluation_command", (row) => row.evaluation?.command],
+      ["evaluation_evidence_file", (row) => row.evaluation?.evidence_file],
+      ["evaluation_evidence_sha256", (row) => row.evaluation?.evidence_sha256],
+      ["approval_status", (row) => row.approval?.status],
+      ["approved_by", (row) => row.approval?.approved_by],
+      ["approved_at", (row) => row.approval?.approved_at],
+      ["pull_request_url", (row) => row.approval?.pull_request_url],
+      ["paper_url", (row) => row.paper_url],
+      ["code_url", (row) => row.code_url],
+      ["profile_index_file", (row) => row.profile_data?.index_file],
+      ["note", (row) => row.note],
+    ];
+  }
+
+  function exportFilename(extension) {
+    const releaseId = slug(dataRelease().id || "unversioned");
+    return `fluidsbench-${slug(state.dataset)}-${slug(state.split)}-${releaseId}.${extension}`;
+  }
+
+  function downloadText(filename, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    element("leaderboard-release-action-status").textContent = `Downloaded ${filename}.`;
+  }
+
+  function exportCsv() {
+    const metadata = exportMetadataColumns();
+    const metrics = activeMetricDefinitions();
+    const header = [...metadata.map(([label]) => label), ...metrics.map((definition) => definition.id)];
+    const lines = [header.map(csvCell).join(",")];
+    filteredRows().forEach((row) => {
+      const values = [...metadata.map(([, value]) => value(row)), ...metrics.map((definition) => row.metricValues[definition.id])];
+      lines.push(values.map(csvCell).join(","));
+    });
+    downloadText(exportFilename("csv"), `${lines.join("\n")}\n`, "text/csv;charset=utf-8");
+  }
+
+  function sourceSubmission(row) {
+    const { id, rank, metricValues, modelTypes, parameterCount, submitter, date, ...source } = row;
+    return { rank, ...source };
+  }
+
+  function exportJson() {
+    const payload = {
+      schema_version: "fluidsbench-leaderboard-export-v1",
+      exported_at: new Date().toISOString(),
+      data_release: dataRelease(),
+      view: {
+        url: currentViewUrl(true),
+        dataset: state.dataset,
+        split: state.split,
+        split_id: activeSplitDefinition()?.id || null,
+        model_type: state.modelType || null,
+        ranking: ranking(),
+        sort: { key: state.sortKey, direction: state.sortDirection },
+        visible_column_groups: Array.from(state.visibleGroups),
+      },
+      metric_definitions: activeMetricDefinitions(),
+      submissions: filteredRows().map(sourceSubmission),
+    };
+    downloadText(exportFilename("json"), `${JSON.stringify(payload, null, 2)}\n`, "application/json;charset=utf-8");
+  }
+
+  function citationValues() {
+    const release = dataRelease();
+    const citation = release.citation || {};
+    const author = citation.author || "FluidsBench contributors";
+    const title = citation.title || "FluidsBench Leaderboard";
+    const publisher = citation.publisher || "FluidsBench";
+    const year = citation.year || new Date(release.generated_at || Date.now()).getUTCFullYear();
+    const releaseId = release.id || "unversioned";
+    const checksum = release.feed_sha256 || "not supplied";
+    const url = currentViewUrl(true);
+    const context = `${state.dataset}, ${state.split}`;
+    return {
+      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, data release ${releaseId}, feed SHA-256 ${checksum}. ${url}`,
+      bibtex: `@misc{fluidsbench_${slug(state.dataset).replaceAll(
+        "-",
+        "_"
+      )}_${year},\n  author = {${author}},\n  title = {${title}: ${context}},\n  year = {${year}},\n  publisher = {${publisher}},\n  url = {${url}},\n  note = {Data release ${releaseId}; feed SHA-256 ${checksum}}\n}`,
+    };
+  }
+
+  function openCitationDialog() {
+    const citation = citationValues();
+    element("citation-text").textContent = citation.plain;
+    element("citation-bibtex").textContent = citation.bibtex;
+    element("citation-copy-status").textContent = "";
+    const dialog = element("citation-dialog");
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+  }
+
+  async function copyCitation(kind) {
+    const value = citationValues()[kind];
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(value);
+      else {
+        const input = document.createElement("textarea");
+        input.value = value;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      element("citation-copy-status").textContent = `${kind === "bibtex" ? "BibTeX" : "Plain-text citation"} copied.`;
+    } catch (error) {
+      element("citation-copy-status").textContent = `Could not copy automatically: ${error.message}`;
+    }
   }
 
   function staticHelp(key) {
@@ -365,6 +679,7 @@
           else state.visibleGroups.add(group);
           renderColumnToggles();
           renderTable();
+          updateUrl();
         });
         container.appendChild(button);
       });
@@ -461,10 +776,38 @@
       state.sortDirection = defaultSortDirection(column);
     }
     renderTable();
+    updateUrl();
   }
 
   function trainingLabel(row) {
     return trainingRegimeDefinition(row.training_regime)?.label || row.training_regime || "Not supplied";
+  }
+
+  function targetDataLabel(value) {
+    const labels = {
+      none: "None",
+      official_train: "Official training data for this split",
+      other: "Other target-dataset data",
+    };
+    return labels[value] || value || "Not supplied";
+  }
+
+  function pretrainingDataLabel(items) {
+    if (!Array.isArray(items) || !items.length) return "None declared";
+    return items
+      .map((item) => {
+        if (typeof item === "string") return item;
+        const details = [
+          item?.type,
+          item?.samples ? `${item.samples} samples` : "",
+          item?.public === true ? "public" : item?.public === false ? "non-public" : "",
+        ]
+          .filter(Boolean)
+          .join(", ");
+        const name = item?.name || "Unnamed pretraining dataset";
+        return `${name}${details ? ` (${details})` : ""}${item?.notes ? `: ${item.notes}` : ""}`;
+      })
+      .join("; ");
   }
 
   function cellValue(row, column) {
@@ -586,6 +929,8 @@
       };
     });
     state.comparisonMetric = populateSelect(element("comparison-metric"), options, state.comparisonMetric);
+    const rowCountSelect = element("comparison-row-count");
+    if (rowCountSelect) rowCountSelect.value = String(state.comparisonRowCount);
   }
 
   function chartTextColor() {
@@ -603,6 +948,13 @@
 
   function comparisonLabel(value, definition) {
     return formatMetric(value, definition);
+  }
+
+  function topRowsForMetric(rows, definition, count) {
+    return rows
+      .filter((row) => finiteNumber(row.metricValues[definition.id]) !== null)
+      .sort((a, b) => compareNumbers(a.metricValues[definition.id], b.metricValues[definition.id], definition.direction))
+      .slice(0, count);
   }
 
   function setChartSummary(id, text) {
@@ -636,15 +988,13 @@
     destroyChart("comparison");
     const definition = comparisonDefinitions().find((candidate) => candidate.id === state.comparisonMetric);
     if (!definition) return;
-    const rowCount = Number(element("comparison-row-count")?.value || 5);
-    const rows = rowsForActiveSplit().slice(0, rowCount);
+    const rowCount = state.comparisonRowCount;
+    const rows = topRowsForMetric(rowsForActiveSplit(), definition, rowCount);
     const directionText = `${definition.direction === "lower" ? "Lower" : "Higher"} is better`;
     const unitText = definition.unit ? ` Values are shown in ${definition.unit}.` : "";
     element("comparison-description").textContent = `${plainMetricLabel(definition)}: ${directionText.toLowerCase()}.${unitText}`;
-    const rowsWithValues = rows.filter((row) => finiteNumber(row.metricValues[definition.id]) !== null);
-    const bestRow = rowsWithValues
-      .slice()
-      .sort((a, b) => compareNumbers(a.metricValues[definition.id], b.metricValues[definition.id], definition.direction))[0];
+    const rowsWithValues = rows;
+    const bestRow = rowsWithValues[0];
     const bestText = bestRow
       ? ` Best displayed value: ${rowLabel(bestRow)}, ${formatMetric(bestRow.metricValues[definition.id], definition)}.`
       : " No numeric values are available for this selection.";
@@ -823,6 +1173,27 @@
     return state.panelSelections.get(key);
   }
 
+  function profileCaseSelects() {
+    return document.querySelectorAll("[data-profile-case-select]");
+  }
+
+  function syncProfileCaseSelects() {
+    const options = state.profileCaseIds.map((caseId) => ({ value: caseId, label: caseId }));
+    profileCaseSelects().forEach((select) => {
+      populateSelect(select, options, state.profileCase);
+      select.disabled = options.length === 0;
+    });
+  }
+
+  function setProfileStatus(message) {
+    (activeDataset()?.diagnostic_panels || []).forEach((_, index) => {
+      const status = element(`profile-${index}-status`);
+      if (!status) return;
+      status.hidden = !message;
+      status.textContent = message;
+    });
+  }
+
   function renderPanelControls(index) {
     const panel = activeDataset()?.diagnostic_panels?.[index];
     const section = document.querySelector(`[data-profile-panel="${index}"]`);
@@ -856,11 +1227,12 @@
     );
     const quantityControl = element(`profile-${index}-quantity`)?.closest(".chart-control");
     if (quantityControl) quantityControl.hidden = (panel.quantities || []).length <= 1;
+    syncProfileCaseSelects();
   }
 
-  function diagnosticPanelElement(panel, index) {
+  function profilePanelElement(panel, index) {
     const section = document.createElement("section");
-    section.className = "leaderboard-panel diagnostic-panel";
+    section.className = "leaderboard-panel profile-panel";
     section.dataset.profilePanel = index;
     section.innerHTML = `
       <div class="leaderboard-panel-heading">
@@ -877,6 +1249,10 @@
             <label class="chart-control-title" for="profile-${index}-split">Split</label>
             <select id="profile-${index}-split" data-leaderboard-split-select></select>
           </div>
+          <div class="chart-control profile-case-control">
+            <label class="chart-control-title" for="profile-${index}-case">Test geometry</label>
+            <select id="profile-${index}-case" data-profile-case-select disabled></select>
+          </div>
           <div class="chart-control">
             <label class="chart-control-title" for="profile-${index}-quantity">Quantity</label>
             <select id="profile-${index}-quantity"></select>
@@ -888,6 +1264,7 @@
         </div>
       </div>
       <div class="chart-frame">
+        <p id="profile-${index}-status" class="profile-chart-status" role="status">Loading profile data...</p>
         <canvas id="profile-${index}-chart" role="img" aria-label="${escapeHtml(
           panel.title
         )}" aria-describedby="profile-${index}-chart-summary"></canvas>
@@ -900,52 +1277,103 @@
     Object.keys(state.charts)
       .filter((key) => key.startsWith("profile-"))
       .forEach(destroyChart);
-    const container = element("leaderboard-diagnostic-panels");
+    const container = element("leaderboard-profile-panels");
     if (!container) return;
     container.replaceChildren();
     const panels = activeDataset()?.diagnostic_panels || [];
     panels.forEach((panel, index) => {
-      container.appendChild(diagnosticPanelElement(panel, index));
+      container.appendChild(profilePanelElement(panel, index));
       renderPanelControls(index);
       element(`profile-${index}-quantity`)?.addEventListener("change", (event) => {
         panelSelection(panel).quantity = event.target.value;
         renderProfileChart(index);
+        updateUrl();
       });
       element(`profile-${index}-station`)?.addEventListener("change", (event) => {
         panelSelection(panel).station = event.target.value;
         renderProfileChart(index);
+        updateUrl();
       });
     });
     syncDatasetSelects();
     syncSplitSelects();
+    syncProfileCaseSelects();
   }
 
-  function firstNumeric(point, keys) {
-    for (const key of keys || []) {
-      const value = finiteNumber(point?.[key]);
-      if (value !== null) return value;
-    }
-    return null;
-  }
-
-  function seriesQuantityId(series, panel) {
-    const candidate = series?.quantity_id || series?.quantity;
-    if ((panel.quantities || []).some((quantity) => quantity.id === candidate)) return candidate;
-    return panel.quantities?.length === 1 ? panel.quantities[0].id : null;
-  }
-
-  function diagnosticSeries(source, panel, stationId, quantity) {
-    const series = source?.diagnostics?.[panel.data_key];
-    if (!Array.isArray(series)) return null;
-    const match = series.find((candidate) => {
-      return candidate.station_id === stationId && seriesQuantityId(candidate, panel) === quantity.id;
+  function profileSeries(source, panel, stationId, quantity) {
+    const match = (source?.series || []).find((candidate) => {
+      return candidate.panel_id === panel.id && candidate.station_id === stationId && candidate.quantity_id === quantity.id;
     });
     if (!match) return null;
-    const points = (match.values || [])
-      .map((point) => ({ x: firstNumeric(point, panel.x_keys), y: firstNumeric(point, quantity.y_keys) }))
+    const values = match.prediction || match.value || [];
+    const points = (match.coordinate || [])
+      .map((coordinate, index) => ({ x: finiteNumber(coordinate), y: finiteNumber(values[index]) }))
       .filter((point) => point.x !== null && point.y !== null)
       .sort((a, b) => a.x - b.x);
     return points.length ? points : null;
+  }
+
+  async function refreshProfileContext() {
+    const dataset = activeDataset();
+    if (!dataset || !state.split) return;
+    const version = ++state.profileLoadVersion;
+    const rows = rowsForActiveSplit().slice(0, 6);
+    setProfileStatus("Loading profile data...");
+    try {
+      let groundTruthContext = null;
+      let groundTruthError = null;
+      let availableCaseIds = [];
+      try {
+        groundTruthContext = await groundTruthIndex(state.dataset, state.split);
+        availableCaseIds = caseIds(groundTruthContext.index);
+      } catch (error) {
+        groundTruthError = error;
+        showProfileWarning(error);
+      }
+      if (!availableCaseIds.length && rows.length) {
+        const fallback = await submissionProfileIndex(rows[0]);
+        availableCaseIds = caseIds(fallback.index);
+      }
+      if (version !== state.profileLoadVersion) return;
+      state.profileCaseIds = availableCaseIds;
+      if (!availableCaseIds.includes(state.profileCase)) state.profileCase = availableCaseIds[0] || "";
+      syncProfileCaseSelects();
+      if (!state.profileCase) {
+        state.groundTruthCase = null;
+        state.profileCases = new Map();
+        setProfileStatus("No profile cases are available for this dataset and split.");
+        dataset.diagnostic_panels.forEach((_, index) => renderProfileChart(index));
+        return;
+      }
+
+      const groundTruthRequest = groundTruthContext
+        ? indexedProfileCase(groundTruthContext, state.profileCase, state.groundTruthChunks, `${state.dataset} ground truth`)
+        : Promise.resolve(null);
+      const rowRequests = rows.map(async (row) => {
+        try {
+          const context = await submissionProfileIndex(row);
+          const value = await indexedProfileCase(context, state.profileCase, state.profileChunks, rowLabel(row));
+          return [row.id, value];
+        } catch (error) {
+          console.error(error);
+          return [row.id, null];
+        }
+      });
+      const [groundTruthCase, rowCases] = await Promise.all([groundTruthRequest, Promise.all(rowRequests)]);
+      if (version !== state.profileLoadVersion) return;
+      state.groundTruthCase = groundTruthCase;
+      state.profileCases = new Map(rowCases);
+      if (!groundTruthError) element("leaderboard-profile-warning").hidden = true;
+      setProfileStatus("");
+      dataset.diagnostic_panels.forEach((_, index) => renderProfileChart(index));
+    } catch (error) {
+      if (version !== state.profileLoadVersion) return;
+      state.groundTruthCase = null;
+      state.profileCases = new Map();
+      setProfileStatus(`Profile data could not be loaded: ${error.message}`);
+      showProfileWarning(error);
+      console.error(error);
+    }
   }
 
   function renderProfileChart(index) {
@@ -959,8 +1387,7 @@
     if (!quantity || !station) return;
 
     const datasets = [];
-    const groundTruth = state.groundTruth.get(state.dataset);
-    const groundTruthPoints = diagnosticSeries(groundTruth, panel, station.id, quantity);
+    const groundTruthPoints = profileSeries(state.groundTruthCase, panel, station.id, quantity);
     if (groundTruthPoints) {
       datasets.push({
         label: "Ground truth",
@@ -975,7 +1402,7 @@
     rowsForActiveSplit()
       .slice(0, 6)
       .forEach((row, rowIndex) => {
-        const points = diagnosticSeries(row, panel, station.id, quantity);
+        const points = profileSeries(state.profileCases.get(row.id), panel, station.id, quantity);
         if (!points) return;
         datasets.push({
           label: rowLabel(row),
@@ -990,10 +1417,16 @@
       });
 
     const submissionCurveCount = datasets.length - (groundTruthPoints ? 1 : 0);
-    canvas.setAttribute("aria-label", `${panel.title}: ${quantity.label} at ${station.label}`);
+    const status = element(`profile-${index}-status`);
+    if (status) {
+      status.hidden = datasets.length > 0;
+      status.textContent = datasets.length ? "" : `No curves are available for ${state.profileCase || "the selected geometry"} at this station.`;
+    }
+    canvas.hidden = datasets.length === 0;
+    canvas.setAttribute("aria-label", `${panel.title}: ${quantity.label} at ${station.label} for ${state.profileCase}`);
     setChartSummary(
       `profile-${index}-chart-summary`,
-      `${panel.title} for ${state.dataset}, ${state.split}. Showing ${quantity.label} at ${station.label}. ${
+      `${panel.title} for ${state.dataset}, ${state.split}, geometry ${state.profileCase}. Showing ${quantity.label} at ${station.label}. ${
         groundTruthPoints ? "Ground truth is included." : "Ground truth is unavailable."
       } ${submissionCurveCount} submission curves are displayed.`
     );
@@ -1147,19 +1580,33 @@
 
   function detailsRow(label, value, formatMetricLabel = false) {
     const renderedLabel = formatMetricLabel ? formattedMetricLabelHtml(label) : escapeHtml(label);
-    return `<div><dt>${renderedLabel}</dt><dd>${escapeHtml(value || "Not supplied")}</dd></div>`;
+    const renderedValue = value === null || value === undefined || value === "" ? "Not supplied" : value;
+    return `<div><dt>${renderedLabel}</dt><dd>${escapeHtml(renderedValue)}</dd></div>`;
+  }
+
+  function detailsLink(label, value) {
+    const url = safeHttpUrl(value);
+    return url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` : "";
+  }
+
+  function evaluationEvidenceUrl(row) {
+    const indexFile = row.profile_data?.index_file;
+    const evidenceFile = row.evaluation?.evidence_file;
+    if (!indexFile || !evidenceFile) return "";
+    try {
+      return safeHttpUrl(new URL(`../${evidenceFile}`, fileUrl(indexFile)).href);
+    } catch (_error) {
+      return "";
+    }
   }
 
   function openDetails(row) {
     const dialog = element("details-dialog");
     element("details-dialog-title").textContent = row.model;
     element("details-dialog-subtitle").textContent = `${row.dataset} / ${row.split}`;
-    const links = [
-      row.paper_url ? `<a href="${escapeHtml(row.paper_url)}" target="_blank" rel="noopener noreferrer">Paper</a>` : "",
-      row.code_url ? `<a href="${escapeHtml(row.code_url)}" target="_blank" rel="noopener noreferrer">Code</a>` : "",
-    ]
-      .filter(Boolean)
-      .join(" &middot; ");
+    const links = [detailsLink("Paper", row.paper_url), detailsLink("Code", row.code_url)].filter(Boolean).join(" &middot; ");
+    const evaluationLinks = [detailsLink("Evaluation evidence", evaluationEvidenceUrl(row))].filter(Boolean).join(" &middot; ");
+    const approvalLinks = [detailsLink("Approval pull request", row.approval?.pull_request_url)].filter(Boolean).join(" &middot; ");
     const metricSections = Array.from(detailsMetricGroups(row).entries())
       .map(([group, metrics]) => {
         const values = metrics.map(({ definition, value }) => detailsRow(definition.label, formatMetric(value, definition), true)).join("");
@@ -1169,13 +1616,36 @@
     element("details-dialog-body").innerHTML = `
       <section><h4>Submission</h4><dl>
         ${detailsRow("Submission ID", row.id)}
+        ${detailsRow("Dataset version", row.dataset_version)}
+        ${detailsRow("Split ID", row.split_id)}
         ${detailsRow("Submitted by", row.submitter)}
         ${detailsRow("Institution", row.institution)}
         ${detailsRow("Model types", row.modelTypes.join(", "))}
-        ${detailsRow("Training", trainingLabel(row))}
         ${detailsRow("Parameters", `${formatNumber(row.parameterCount, 2)} M`)}
         ${detailsRow("Date", row.date)}
       </dl>${links ? `<p>${links}</p>` : ""}${row.note ? `<p>${escapeHtml(row.note)}</p>` : ""}</section>
+      <section><h4>Training</h4><dl>
+        ${detailsRow("Regime", trainingLabel(row))}
+        ${detailsRow("Target-dataset data", targetDataLabel(row.target_data_used))}
+        ${detailsRow("External pretraining", row.external_pretraining === true ? "Yes" : row.external_pretraining === false ? "No" : "Not supplied")}
+        ${detailsRow("Pretraining data", pretrainingDataLabel(row.pretraining_data))}
+        ${detailsRow("Protocol explanation", row.training_regime_explanation)}
+      </dl></section>
+      <section><h4>Evaluation provenance</h4><dl>
+        ${detailsRow("Reference version", row.evaluation?.reference_version)}
+        ${detailsRow("Code revision", row.evaluation?.code_revision)}
+        ${detailsRow("Evaluation command", row.evaluation?.command)}
+        ${detailsRow("Evidence file", row.evaluation?.evidence_file)}
+        ${detailsRow("Evidence SHA-256", row.evaluation?.evidence_sha256)}
+        ${detailsRow("Profile case set", row.profile_data?.case_set_id)}
+        ${detailsRow("Profile case count", row.profile_data?.case_count)}
+      </dl>${evaluationLinks ? `<p>${evaluationLinks}</p>` : ""}</section>
+      <section><h4>Approval</h4><dl>
+        ${detailsRow("Status", humanize(row.approval?.status))}
+        ${detailsRow("Reviewed by", row.approval?.approved_by)}
+        ${detailsRow("Approval date", row.approval?.approved_at)}
+        ${detailsRow("Approval note", row.approval?.note)}
+      </dl>${approvalLinks ? `<p>${approvalLinks}</p>` : ""}</section>
       ${metricSections}`;
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
@@ -1212,7 +1682,50 @@
     helpHideTimer = window.setTimeout(hideHelp, 160);
   }
 
+  function applyRestoredState(restored) {
+    if (!restored) return;
+    const split = splitOptions().find((candidate) => {
+      return candidate.id === restored.split || candidate.name === restored.split || slug(candidate.name) === restored.split;
+    });
+    if (split) state.split = split.name;
+
+    const modelTypes = new Set((state.rows.get(state.dataset) || []).flatMap((row) => row.modelTypes));
+    if (modelTypes.has(restored.modelType)) state.modelType = restored.modelType;
+
+    const sortKeys = new Set(
+      allColumns()
+        .map((column) => column.sortKey)
+        .filter(Boolean)
+    );
+    if (sortKeys.has(restored.sortKey)) state.sortKey = restored.sortKey;
+    if (["asc", "desc"].includes(restored.sortDirection)) state.sortDirection = restored.sortDirection;
+
+    if (restored.hasVisibleGroups) {
+      const availableGroups = new Set(activeMetricDefinitions().map(metricColumnGroup));
+      availableGroups.add("model-details");
+      state.visibleGroups = new Set(restored.visibleGroups.filter((group) => availableGroups.has(group)));
+    }
+
+    const metricIds = new Set(activeMetricDefinitions().map((definition) => definition.id));
+    if (metricIds.has(restored.comparisonMetric)) state.comparisonMetric = restored.comparisonMetric;
+    if ([3, 5, 10].includes(restored.comparisonRowCount)) state.comparisonRowCount = restored.comparisonRowCount;
+
+    const scatterIds = new Set(scatterDefinitions().map((definition) => definition.id));
+    if (scatterIds.has(restored.scatterX)) state.scatterX = restored.scatterX;
+    if (scatterIds.has(restored.scatterY)) state.scatterY = restored.scatterY;
+    state.profileCase = restored.profileCase;
+
+    (activeDataset()?.diagnostic_panels || []).forEach((panel) => {
+      const quantity = restored.params.get(`quantity_${panel.id}`);
+      const station = restored.params.get(`station_${panel.id}`);
+      const selection = panelSelection(panel);
+      if ((panel.quantities || []).some((candidate) => candidate.id === quantity)) selection.quantity = quantity;
+      if ((panel.stations || []).some((candidate) => candidate.id === station)) selection.station = station;
+    });
+  }
+
   function renderAll() {
+    renderReleaseMetadata();
     renderColumnToggles();
     renderTable();
     renderTypeFilter();
@@ -1223,6 +1736,7 @@
     renderComparisonChart();
     renderScatterChart();
     (activeDataset()?.diagnostic_panels || []).forEach((_, index) => renderProfileChart(index));
+    void refreshProfileContext();
   }
 
   function showError(error, message = "Could not load leaderboard data") {
@@ -1242,13 +1756,13 @@
     });
   }
 
-  function showDiagnosticWarning(error) {
-    const box = element("leaderboard-diagnostic-warning");
+  function showProfileWarning(error) {
+    const box = element("leaderboard-profile-warning");
     box.hidden = false;
     box.textContent = `Leaderboard results loaded, but reference profile curves are unavailable: ${error.message}`;
   }
 
-  async function setDataset(datasetName) {
+  async function setDataset(datasetName, restored = null, syncUrl = true) {
     const dataset = datasetEntries().find((candidate) => candidate.name === datasetName);
     if (!dataset) return;
     const version = ++state.loadVersion;
@@ -1256,12 +1770,8 @@
     syncDatasetSelects();
     syncSplitSelects();
     element("leaderboard-error").hidden = true;
-    element("leaderboard-diagnostic-warning").hidden = true;
+    element("leaderboard-profile-warning").hidden = true;
     setLoading(dataset.name);
-    const groundTruthRequest = ensureGroundTruth(dataset.name).then(
-      (data) => ({ data, error: null }),
-      (error) => ({ data: null, error })
-    );
     try {
       await ensureRows(dataset);
       if (version !== state.loadVersion) return;
@@ -1271,21 +1781,20 @@
       state.sortKey = "rank";
       state.sortDirection = "asc";
       state.comparisonMetric = dataset.ranking?.metric_id || "";
+      state.comparisonRowCount = 5;
       state.scatterX = "";
       state.scatterY = dataset.ranking?.metric_id || "";
+      state.profileCaseIds = [];
+      state.profileCase = "";
+      state.groundTruthCase = null;
+      state.profileCases = new Map();
       initializeVisibleGroups();
+      applyRestoredState(restored);
       syncDatasetSelects();
       syncSplitSelects();
       element("leaderboard-error").hidden = true;
       renderAll();
-      groundTruthRequest.then((result) => {
-        if (version !== state.loadVersion || state.dataset !== dataset.name) return;
-        if (result.error) showDiagnosticWarning(result.error);
-        else {
-          element("leaderboard-diagnostic-warning").hidden = true;
-          (activeDataset()?.diagnostic_panels || []).forEach((_, index) => renderProfileChart(index));
-        }
-      });
+      if (syncUrl) updateUrl();
     } catch (error) {
       if (version === state.loadVersion) {
         syncDatasetSelects();
@@ -1305,33 +1814,61 @@
     syncSplitSelects();
     state.sortKey = "rank";
     state.sortDirection = "asc";
+    state.profileCaseIds = [];
+    state.profileCase = "";
+    state.groundTruthCase = null;
+    state.profileCases = new Map();
     renderAll();
+    updateUrl();
   }
 
   function configureEvents() {
     document.addEventListener("change", (event) => {
       if (event.target.matches("[data-leaderboard-dataset-select]")) setDataset(event.target.value);
       else if (event.target.matches("[data-leaderboard-split-select]")) setSplit(event.target.value);
+      else if (event.target.matches("[data-profile-case-select]")) {
+        state.profileCase = event.target.value;
+        syncProfileCaseSelects();
+        void refreshProfileContext();
+        updateUrl();
+      }
     });
     element("type-filter")?.addEventListener("change", (event) => {
       state.modelType = event.target.value;
       renderTable();
+      updateUrl();
     });
     element("comparison-metric")?.addEventListener("change", (event) => {
       state.comparisonMetric = event.target.value;
       renderComparisonChart();
+      updateUrl();
     });
-    element("comparison-row-count")?.addEventListener("change", renderComparisonChart);
+    element("comparison-row-count")?.addEventListener("change", (event) => {
+      state.comparisonRowCount = Number(event.target.value);
+      renderComparisonChart();
+      updateUrl();
+    });
     element("scatter-x-axis")?.addEventListener("change", (event) => {
       state.scatterX = event.target.value;
       renderScatterChart();
+      updateUrl();
     });
     element("scatter-y-axis")?.addEventListener("change", (event) => {
       state.scatterY = event.target.value;
       renderScatterChart();
+      updateUrl();
     });
+    element("export-leaderboard-csv")?.addEventListener("click", exportCsv);
+    element("export-leaderboard-json")?.addEventListener("click", exportJson);
+    element("open-citation-dialog")?.addEventListener("click", openCitationDialog);
+    element("copy-citation-text")?.addEventListener("click", () => void copyCitation("plain"));
+    element("copy-citation-bibtex")?.addEventListener("click", () => void copyCitation("bibtex"));
     element("close-details-dialog")?.addEventListener("click", () => element("details-dialog").close());
     element("details-dialog")?.addEventListener("click", (event) => {
+      if (event.target === event.currentTarget) event.currentTarget.close();
+    });
+    element("close-citation-dialog")?.addEventListener("click", () => element("citation-dialog").close());
+    element("citation-dialog")?.addEventListener("click", (event) => {
       if (event.target === event.currentTarget) event.currentTarget.close();
     });
     document.addEventListener("mouseover", (event) => {
@@ -1374,8 +1911,9 @@
         throw new Error("manifest is missing dataset-driven leaderboard definitions");
       }
       state.metrics = new Map(state.manifest.metric_definitions.map((definition) => [definition.id, definition]));
-      const initial = datasetEntries()[0];
-      await setDataset(initial.name);
+      const restored = readUrlState();
+      const initial = datasetEntries().find((dataset) => slug(dataset.name) === restored.dataset) || datasetEntries()[0];
+      await setDataset(initial.name, restored, false);
     } catch (error) {
       showError(error);
       console.error(error);

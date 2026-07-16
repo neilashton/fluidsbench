@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "airfrans",
+  "case_set_id": "reynolds_extrapolation",
+  "case_count": 1,
+  "case_id_status": "prototype_generated",
+  "chunks": [
+    {
+      "file": "chunk-000.json",
+      "case_ids": [
+        "airfrans_reynolds_extrapolation_test_0001"
+      ],
+      "sha256": "1789463479d9740136cd82e96a8eb52893de1435294a5eaf0d28e277fbaa2cce"
+    }
+  ]
+}
