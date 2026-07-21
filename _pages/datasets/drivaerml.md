@@ -57,7 +57,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Official benchmark splits</h3>
+    <h3>Planned benchmark splits</h3>
     <p>
       DrivAerML submissions should set <code>split</code> to one of the benchmark split names below. The public split
       manifest excludes the 16 unavailable or author-held-back run IDs from every train, validation, and test partition.

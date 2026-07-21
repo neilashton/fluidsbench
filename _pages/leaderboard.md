@@ -9,13 +9,16 @@ hide_header_background: true
 wide: true
 chart:
   chartjs: true
+  vega_lite: true
 ---
 
 <div class="leaderboard-page">
   <header class="leaderboard-masthead">
     <h1>FluidsBench Leaderboard</h1>
     <div class="leaderboard-source-row">
-      <span id="submission-status" class="leaderboard-submit-status">Submissions are not yet open.</span>
+      <span id="submission-status" class="leaderboard-submit-status"
+        >Submissions remain closed while the open-reproducibility workflow is finalized.</span
+      >
       <button
         id="open-submission-repo"
         class="leaderboard-submit-button"
@@ -27,7 +30,9 @@ chart:
   </header>
 
   <aside class="leaderboard-data-warning" role="note" aria-label="Leaderboard data status">
-    Work in progress: all results currently shown are illustrative dummy data.
+    <strong>Prototype only:</strong> all results currently shown are illustrative dummy data. They are not official, independently replayed results and
+    must not be cited or promoted as leaderboard claims. FluidsBench's open reproducibility track will publish all scored ground truth and require open,
+    versioned code and model artifacts plus independent maintainer replay before a result becomes official.
   </aside>
 
   <section class="leaderboard-release-bar" aria-label="Leaderboard data release">
@@ -38,18 +43,26 @@ chart:
       <a id="leaderboard-release-source" href="#" target="_blank" rel="noopener noreferrer" hidden>Source</a>
     </div>
     <div class="leaderboard-release-actions" aria-label="Research data actions">
+      <label class="leaderboard-export-scope" for="leaderboard-export-scope">
+        <span>Table export rows</span>
+        <select id="leaderboard-export-scope">
+          <option value="current">Current filtered view</option>
+          <option value="full">Full selected split</option>
+        </select>
+      </label>
       <button id="export-leaderboard-csv" class="leaderboard-action-button" type="button" disabled>
-        <i class="fa-solid fa-file-csv" aria-hidden="true"></i><span>CSV</span>
+        <i class="fa-solid fa-file-csv" aria-hidden="true"></i><span>Table CSV</span>
       </button>
       <button id="export-leaderboard-json" class="leaderboard-action-button" type="button" disabled>
-        <i class="fa-solid fa-file-code" aria-hidden="true"></i><span>JSON</span>
+        <i class="fa-solid fa-file-code" aria-hidden="true"></i><span>Table JSON</span>
       </button>
       <button id="open-citation-dialog" class="leaderboard-action-button" type="button" disabled>
-        <i class="fa-solid fa-quote-left" aria-hidden="true"></i><span>Cite</span>
+        <i class="fa-solid fa-quote-left" aria-hidden="true"></i><span>Cite official release</span>
       </button>
     </div>
     <p id="leaderboard-release-action-status" class="leaderboard-sr-only" role="status"></p>
   </section>
+  <div id="leaderboard-release-warning" class="leaderboard-profile-warning" role="alert" hidden></div>
 
   <section class="leaderboard-controls" aria-label="Leaderboard filters">
     <div class="leaderboard-control">
@@ -65,6 +78,21 @@ chart:
       <select id="type-filter"><option value="">All model types</option></select>
     </div>
   </section>
+
+  <fieldset class="leaderboard-model-picker" aria-describedby="comparison-model-description">
+    <legend>Models shown in figures</legend>
+    <p id="comparison-model-description">
+      Request the same models for the comparison, scatter, and profile figures. The first five ranked rows are selected initially; each caption lists
+      any requested model that cannot be plotted because the required metric or profile is unavailable. This choice is independent of table-export
+      scope. Up to twelve models may be shown at once so colors remain consistent across screen and exported figures.
+    </p>
+    <div class="leaderboard-model-picker-actions">
+      <button id="select-all-comparison-models" class="leaderboard-action-button" type="button">Select up to 12</button>
+      <button id="clear-comparison-models" class="leaderboard-action-button" type="button">Clear</button>
+      <span id="comparison-model-count" role="status"></span>
+    </div>
+    <div id="comparison-model-options" class="leaderboard-model-options"></div>
+  </fieldset>
 
   <div id="leaderboard-error" class="leaderboard-load-error" role="alert" hidden></div>
   <div id="leaderboard-load-status" class="leaderboard-load-status" role="status" hidden></div>
@@ -102,20 +130,23 @@ chart:
           <label class="chart-control-title" for="comparison-metric">Metric</label>
           <select id="comparison-metric"></select>
         </div>
-        <div class="chart-control">
-          <label class="chart-control-title" for="comparison-row-count">Top submissions</label>
-          <select id="comparison-row-count">
-            <option value="3">3</option>
-            <option value="5" selected>5</option>
-            <option value="10">10</option>
-          </select>
-        </div>
       </div>
+    </div>
+    <div class="leaderboard-figure-toolbar" role="group" aria-label="Metric comparison figure actions">
+      <button class="leaderboard-action-button" type="button" data-figure-key="comparison" data-figure-format="svg">SVG</button>
+      <button class="leaderboard-action-button" type="button" data-figure-key="comparison" data-figure-format="png">High-res PNG</button>
+      <button class="leaderboard-action-button" type="button" data-figure-key="comparison" data-figure-format="print">Print / save PDF</button>
+      <button class="leaderboard-action-button" type="button" data-copy-caption="comparison">Copy caption</button>
     </div>
     <div class="chart-frame comparison-chart-frame">
       <canvas id="comparison-chart" role="img" aria-label="Leaderboard metric comparison chart" aria-describedby="comparison-chart-summary"></canvas>
       <p id="comparison-chart-summary" class="leaderboard-sr-only"></p>
     </div>
+    <p id="comparison-figure-caption" class="leaderboard-figure-caption"></p>
+    <details class="leaderboard-numeric-data">
+      <summary>View numeric figure data</summary>
+      <div id="comparison-data-table" class="leaderboard-data-table-wrap"></div>
+    </details>
   </section>
 
   <section class="leaderboard-panel leaderboard-scatter-panel">
@@ -143,10 +174,21 @@ chart:
         </div>
       </div>
     </div>
+    <div class="leaderboard-figure-toolbar" role="group" aria-label="Metric scatter figure actions">
+      <button class="leaderboard-action-button" type="button" data-figure-key="scatter" data-figure-format="svg">SVG</button>
+      <button class="leaderboard-action-button" type="button" data-figure-key="scatter" data-figure-format="png">High-res PNG</button>
+      <button class="leaderboard-action-button" type="button" data-figure-key="scatter" data-figure-format="print">Print / save PDF</button>
+      <button class="leaderboard-action-button" type="button" data-copy-caption="scatter">Copy caption</button>
+    </div>
     <div class="chart-frame scatter-chart-frame">
       <canvas id="scatter-chart" role="img" aria-label="Leaderboard metric scatter chart" aria-describedby="scatter-chart-summary"></canvas>
       <p id="scatter-chart-summary" class="leaderboard-sr-only"></p>
     </div>
+    <p id="scatter-figure-caption" class="leaderboard-figure-caption"></p>
+    <details class="leaderboard-numeric-data">
+      <summary>View numeric figure data</summary>
+      <div id="scatter-data-table" class="leaderboard-data-table-wrap"></div>
+    </details>
   </section>
 
   <div id="leaderboard-profile-panels" class="leaderboard-profile-panels"></div>

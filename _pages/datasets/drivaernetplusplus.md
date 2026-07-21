@@ -42,7 +42,10 @@ compact_masthead: true
       </div>
       <div>
         <dt>Default split</dt>
-        <dd>CarBench unseen test split. The first leaderboard split is named <code>Default</code>.</dd>
+        <dd>
+          CarBench geometry-disjoint evaluation split. The first leaderboard split is named <code>Default</code>; its scored case list and ground truth
+          are public under the FluidsBench open-reproducibility policy.
+        </dd>
       </div>
       <div>
         <dt>Reported CarBench metrics</dt>
@@ -101,7 +104,7 @@ compact_masthead: true
       <div>
         <dt>Surface pressure relative L2</dt>
         <dd>
-          CarBench reports this as relative L2 on the DrivAerNet++ unseen test set. FluidsBench displays the CarBench
+          CarBench reports this as relative L2 on the DrivAerNet++ geometry-disjoint evaluation set. FluidsBench displays the CarBench
           fractional values as percentages.
         </dd>
       </div>

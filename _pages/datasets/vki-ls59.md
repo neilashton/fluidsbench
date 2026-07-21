@@ -15,7 +15,8 @@ compact_masthead: true
     <p>
       VKI-LS59 contains 839 two-dimensional CFD simulations of the LS59 turbine cascade across inlet incidence and
       outlet Mach number. FluidsBench follows the PLAID release: 671 cases form the published training pool and 168
-      cases form the fixed hidden test set.
+      cases form the published evaluation set. Under the FluidsBench open-reproducibility policy, the scored case list
+      and ground truth are public.
     </p>
     <p>
       The model inputs are <code>angle_in</code>, <code>mach_out</code>, geometry, and signed-distance information.
@@ -28,7 +29,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-section">
-    <h2>Official splits</h2>
+    <h2>Planned benchmark splits</h2>
     <p>
       Set the submission <code>split</code> to the exact ID below. Reduced VKI-LS59 training sets use the first
       <em>N</em> entries of the published training index sequence; every split uses the same 168-case test set.
@@ -75,7 +76,7 @@ compact_masthead: true
 
   <section class="dataset-section">
     <h2>Profile comparisons</h2>
-    <p>Approved submissions provide the following station IDs and quantities:</p>
+    <p>The planned replay-verified result format provides the following station IDs and quantities:</p>
     <ul>
       <li><code>pressure_side</code> and <code>suction_side</code>: <code>M_iso</code> against normalized chord.</li>
       <li><code>outlet_plane_2</code>: normalized downstream velocity against pitch fraction.</li>

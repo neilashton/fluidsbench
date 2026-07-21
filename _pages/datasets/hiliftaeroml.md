@@ -61,7 +61,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Official benchmark splits</h3>
+    <h3>Planned benchmark splits</h3>
     <p>
       HiLiftAeroML submissions should set <code>split</code> to one of the benchmark split names below. The split
       manifest covers the 1,800 complete LHC cases: 180 geometries across 10 angles of attack from 4 to 22 degrees.

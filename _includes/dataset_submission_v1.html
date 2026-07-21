@@ -1,12 +1,12 @@
 {% if include.heading == 2 %}
-<h2>Leaderboard submission package</h2>
+<h2>Planned open-reproducibility submission</h2>
 {% else %}
-<h3>Leaderboard submission package</h3>
+<h3>Planned open-reproducibility submission</h3>
 {% endif %}
 <p>
-  Submit a pull request to the
-  <a href="https://github.com/neilashton/fluidsbench-submission">FluidsBench submission repository</a>. Each result is one directory at
-  <code>submissions/{{ include.slug }}/&lt;submission-id&gt;/</code> containing:
+  <strong>Submissions are currently closed.</strong> When they open, contributors will propose one result directory at
+  <code>submissions/{{ include.slug }}/&lt;submission-id&gt;/</code> in the
+  <a href="https://github.com/neilashton/fluidsbench-submission">FluidsBench submission repository</a>. The planned result package contains:
 </p>
 <ul>
   <li><code>submission.json</code> for model metadata and the required scalar metrics;</li>
@@ -15,7 +15,9 @@
   <li><code>profiles/chunk-*.json</code> containing profile coordinates and predictions for the declared test cases.</li>
 </ul>
 <p>
-  Contributors calculate the metrics and extract the profiles from their own predictions. No surface meshes or volume fields are submitted. Use the
+  FluidsBench uses an <strong>open reproducibility track</strong>. The declared evaluation partition, scored case lists, and ground truth are public.
+  Evaluation cases must not be used for fitting, hyperparameter selection, or preprocessing statistics. Contributors will calculate the metrics and
+  extract the profiles from their own predictions. No surface meshes or volume fields are submitted. Use the
   <a href="https://github.com/neilashton/fluidsbench-submission/tree/dev/benchmark-specs/{{ include.slug }}"
     >{{ include.dataset }} benchmark specification</a
   >
@@ -31,6 +33,12 @@
   internal consistency; it does not run the contributor's model or independently recalculate base metrics from full fields.
 </p>
 <p>
-  <strong>Prototype notice:</strong> current test case IDs and profile values are illustrative until each dataset owner replaces the generated split
-  files with the official benchmark case lists.
+  A passing validator or pull request will not make a result official. Official results will require openly accessible evaluation code pinned to an
+  immutable revision, an openly accessible versioned model artifact with a cryptographic digest and licence, a locked environment and replay
+  instructions, and an independent maintainer replay that reproduces the submitted metrics within published tolerances. FluidsBench will publish the
+  replay evidence with the result.
+</p>
+<p>
+  <strong>Prototype notice:</strong> current case IDs, ground truth, profile values, and leaderboard rows are illustrative dummy data. Dataset owners
+  must replace and approve these materials before submissions open; none of the current rows is an official or replay-verified result.
 </p>

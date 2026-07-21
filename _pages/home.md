@@ -18,34 +18,39 @@ news: true # includes a list of news items
 <script type="text/javascript" src="https://app.mailjet.com/pas-nc-pop-in-v1.js"></script>
 
 <h3>Aims and Scope</h3>
-FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, designed to accelerate progress in the development of foundational AI models for fluids. Motivated by similar efforts in weather ([WeatherBench 2](https://doi.org/10.1029/2023MS004019)) and early task-specific work ([CarBench](https://doi.org/10.48550/arXiv.2512.07847)), FluidsBench consists of an open-source evaluation framework, training and ground-truth data available through external model hubs (e.g., Hugging Face), and a continuously updated website hosting the latest metrics and state-of-the-art leaderboards for testing AI surrogate models. In-person and virtual workshops are planned, subject to acceptance, at fluids and machine-learning events (e.g., NeurIPS, ICML, and ML4Fluids) to discuss the latest work and gather community direction for the benchmark. A scientific and industrial advisory board guides the effort to keep the benchmarks relevant across fluid-dynamics sectors in academia and industry.
+FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, designed to accelerate progress in the development of foundational AI models for fluids. Motivated by similar efforts in weather ([WeatherBench 2](https://doi.org/10.1029/2023MS004019)) and early task-specific work ([CarBench](https://doi.org/10.48550/arXiv.2512.07847)), FluidsBench combines an open-source evaluation framework, public training and scored ground-truth data available through external model hubs (e.g., Hugging Face), and a website for versioned benchmark results. In-person and virtual workshops are planned, subject to acceptance, at fluids and machine-learning events (e.g., NeurIPS, ICML, and ML4Fluids) to discuss the latest work and gather community direction for the benchmark. A scientific and industrial advisory board guides the effort to keep the benchmarks relevant across fluid-dynamics sectors in academia and industry.
+
+<h3>Open reproducibility</h3>
+FluidsBench uses an open reproducibility track: declared evaluation partitions, scored case lists, ground truth, and evaluator definitions are public. Evaluation cases must not be used for model fitting, hyperparameter selection, or preprocessing statistics. An official result will require openly accessible code pinned to an immutable revision, an openly accessible versioned model artifact with a cryptographic digest and licence, a locked environment and replay instructions, and an independent maintainer replay within published tolerances. The replay evidence will be published with the result.
+
+The current leaderboard remains a prototype, submissions are closed, and all displayed rows and profile curves are illustrative dummy data. They are not official results and should not be cited or promoted as leaderboard claims.
 
 <h3>Organizing Committee</h3>
 
-* Neil Ashton (NVIDIA)
-* Paola Cinnella  (Sorbonne University)
-* Astrid Walle (Pasteur Labs)
-* Mohamed Elrefaie (MIT)
-* Jean Kossai (NVIDIA)
-* Ricardo Vinuesa (University of Michigan)
-* Daniel Leibovic (NVIDIA)
-* Richard Dwight (TU Delft)
-* Faez Ahmed (MIT)
-* Rishi Ranade (NVIDIA)
+- Neil Ashton (NVIDIA)
+- Paola Cinnella (Sorbonne University)
+- Astrid Walle (Pasteur Labs)
+- Mohamed Elrefaie (MIT)
+- Jean Kossai (NVIDIA)
+- Ricardo Vinuesa (University of Michigan)
+- Daniel Leibovic (NVIDIA)
+- Richard Dwight (TU Delft)
+- Faez Ahmed (MIT)
+- Rishi Ranade (NVIDIA)
 
 <h3>Advisory Board</h3>
 
-* Siddhartha Mishra (ETH)
-* Nils Thuerey (TUM)
-* Nathan Kutz (Autodesk)
-* Michalis Michaelides (PhysicsX)
-* Oriol Lehmkuhl (BSC)
-* Cristian Bodnar (Project Prometheus)
-* Fabien Casenave (Safran)
-* Adam Clarke (Boeing)
-* Dirk Hartmann (Siemens/TU Darmstadt)
-* Sina Hassanli (Arup)
-* Simon Dodman (Cadillac F1)
-* Daniel Morales Brotons (Neural Concept)
+- Siddhartha Mishra (ETH)
+- Nils Thuerey (TUM)
+- Nathan Kutz (Autodesk)
+- Michalis Michaelides (PhysicsX)
+- Oriol Lehmkuhl (BSC)
+- Cristian Bodnar (Project Prometheus)
+- Fabien Casenave (Safran)
+- Adam Clarke (Boeing)
+- Dirk Hartmann (Siemens/TU Darmstadt)
+- Sina Hassanli (Arup)
+- Simon Dodman (Cadillac F1)
+- Daniel Morales Brotons (Neural Concept)
 <h3>Questions</h3>
 For questions, email [admin@fluidsbench.org](mailto:admin@fluidsbench.org) or join the mailing list for updates.

@@ -35,7 +35,19 @@ def finite_numbers(values: Any) -> bool:
 def check(submission_root: Path) -> list[str]:
     errors: list[str] = []
     submission_manifest = load_json(submission_root / "leaderboard" / "manifest.json")
-    ground_truth_manifest = load_json(GROUND_TRUTH_ROOT / "manifest.json")
+    ground_truth_manifest_path = GROUND_TRUTH_ROOT / "manifest.json"
+    ground_truth_manifest = load_json(ground_truth_manifest_path)
+    scalar_release = submission_manifest.get("data_release", {})
+    expected_ground_truth = scalar_release.get("profile_ground_truth", {})
+    ground_truth_release = ground_truth_manifest.get("data_release", {})
+    if expected_ground_truth.get("release_id") != ground_truth_release.get("id"):
+        errors.append("scalar and profile-ground-truth release IDs differ")
+    if expected_ground_truth.get("manifest_sha256") != sha256_file(ground_truth_manifest_path):
+        errors.append("scalar release does not pin the current profile-ground-truth manifest SHA-256")
+    if scalar_release.get("status") == "official":
+        source_commit = ground_truth_release.get("source_commit", "")
+        if ground_truth_release.get("status") != "official" or len(source_commit) not in {40, 64}:
+            errors.append("official scalar data require official profile ground truth pinned to a full source commit")
     ground_truth_datasets = {dataset["id"]: dataset for dataset in ground_truth_manifest.get("datasets", [])}
     expected_dataset_ids = {dataset["slug"] for dataset in submission_manifest["datasets"]}
     if set(ground_truth_datasets) != expected_dataset_ids:
@@ -81,6 +93,8 @@ def check(submission_root: Path) -> list[str]:
             if not index_path.is_file():
                 errors.append(f"{dataset_id}/{case_set_id}: missing {case_set['index_file']}")
                 continue
+            if case_set.get("index_sha256") != sha256_file(index_path):
+                errors.append(f"{dataset_id}/{case_set_id}: release manifest index_sha256 mismatch")
             index = load_json(index_path)
             indexed_case_ids = [case_id for chunk in index.get("chunks", []) for case_id in chunk.get("case_ids", [])]
             if indexed_case_ids != expected_case_ids:
@@ -141,4 +155,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

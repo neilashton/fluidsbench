@@ -25,12 +25,12 @@ compact_masthead: true
     <p>
       The initial FluidsBench target follows the published surrogate: surface <code>Cp</code>, <code>Cfx</code>, and
       <code>Cfz</code>, plus integrated C<sub>D</sub>, C<sub>L</sub>, and C<sub>My</sub>. The archive also contains
-      <code>Cfy</code>, but it is not ranked until an approved evaluator adds it to the benchmark contract.
+      <code>Cfy</code>, but it is not ranked until a dataset-owner-approved evaluator adds it to the benchmark contract.
     </p>
   </section>
 
   <section class="dataset-section">
-    <h2>Official split</h2>
+    <h2>Planned benchmark split</h2>
     <p>
       Set the submission <code>split</code> to the exact ID below. Cases are grouped by geometry, and the fixed test
       geometries must not be used for model fitting, hyperparameter selection, or preprocessing statistics.

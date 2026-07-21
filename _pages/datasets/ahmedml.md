@@ -57,7 +57,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Official benchmark splits</h3>
+    <h3>Planned benchmark splits</h3>
     <p>
       AhmedML submissions should set <code>split</code> to one of the benchmark split names below. The split files are
       distributed as a flat manifest with train, validation, and test run IDs for each split.

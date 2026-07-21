@@ -4,7 +4,21 @@
   const baseUrl = window.FluidsBenchLeaderboardBaseUrl;
   const manifestUrl = window.FluidsBenchLeaderboardManifestUrl;
   const groundTruthBaseUrl = window.FluidsBenchProfileGroundTruthBaseUrl;
-  const palette = ["#2563eb", "#10b981", "#8b5cf6", "#f59e0b", "#ec4899", "#06b6d4", "#64748b", "#1e40af"];
+  const palette = [
+    "#0072b2",
+    "#d55e00",
+    "#009e73",
+    "#cc79a7",
+    "#e69f00",
+    "#56b4e9",
+    "#f0e442",
+    "#000000",
+    "#6f4e7c",
+    "#2f4b7c",
+    "#8c564b",
+    "#17becf",
+  ];
+  const maxFigureModels = palette.length;
   const columnGroups = [
     { id: "absolute", label: "Absolute", className: "metric-group-absolute" },
     { id: "relative", label: "Relative", className: "metric-group-relative" },
@@ -22,14 +36,20 @@
     groundTruthChunks: new Map(),
     profileIndexes: new Map(),
     profileChunks: new Map(),
+    feedRowsLoaded: false,
+    loadedFeedSha256: null,
+    feedVerified: false,
+    groundTruthManifestProvenance: null,
     dataset: "",
     split: "",
     modelType: "",
     sortKey: "rank",
     sortDirection: "asc",
     visibleGroups: new Set(),
+    exportScope: "current",
+    comparedModelIds: new Set(),
+    staleComparedModelIds: new Set(),
     comparisonMetric: "",
-    comparisonRowCount: 5,
     scatterX: "",
     scatterY: "",
     panelSelections: new Map(),
@@ -37,7 +57,15 @@
     profileCase: "",
     groundTruthCase: null,
     profileCases: new Map(),
+    profileCaseErrors: new Map(),
     charts: {},
+    figureSpecs: new Map(),
+    figureCaptions: new Map(),
+    resultId: "",
+    requestedReleaseId: "",
+    requestedResultId: "",
+    releaseMismatch: false,
+    resultUnavailable: false,
     loadVersion: 0,
     profileLoadVersion: 0,
   };
@@ -88,11 +116,26 @@
   }
 
   function finiteNumber(value) {
+    if (value === null || value === undefined || typeof value === "boolean") return null;
+    if (typeof value === "string" && !value.trim()) return null;
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   }
 
-  function fileUrl(file, root = baseUrl) {
+  function isLocalUrl(value) {
+    try {
+      return ["127.0.0.1", "localhost", "::1"].includes(new URL(value, window.location.href).hostname);
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function leaderboardAssetBaseUrl() {
+    if (isLocalUrl(baseUrl)) return baseUrl;
+    return safeHttpUrl(dataRelease().asset_base_url) || baseUrl;
+  }
+
+  function fileUrl(file, root = leaderboardAssetBaseUrl()) {
     const normalizedRoot = root.endsWith("/") ? root : `${root}/`;
     return new URL(file, normalizedRoot).href;
   }
@@ -105,10 +148,11 @@
     return splitOptions().find((split) => split.name === state.split);
   }
 
-  function viewSearchParams() {
+  function viewSearchParams(includeResult = true) {
     const params = new URLSearchParams();
     const dataset = activeDataset();
     const split = activeSplitDefinition();
+    if (dataRelease().id) params.set("release", dataRelease().id);
     if (dataset) params.set("dataset", slug(dataset.name));
     if (split) params.set("split", split.id || slug(split.name));
     if (state.modelType) params.set("model_type", state.modelType);
@@ -121,8 +165,8 @@
         .filter((id) => state.visibleGroups.has(id))
         .join(",")
     );
+    params.set("models", Array.from(state.comparedModelIds).join(","));
     if (state.comparisonMetric) params.set("comparison", state.comparisonMetric);
-    params.set("comparison_count", String(state.comparisonRowCount));
     if (state.scatterX) params.set("scatter_x", state.scatterX);
     if (state.scatterY) params.set("scatter_y", state.scatterY);
     if (state.profileCase) params.set("case", state.profileCase);
@@ -131,12 +175,14 @@
       if (selection.quantity) params.set(`quantity_${panel.id}`, selection.quantity);
       if (selection.station) params.set(`station_${panel.id}`, selection.station);
     });
+    if (includeResult && state.resultId) params.set("result", state.resultId);
     return params;
   }
 
   function readUrlState() {
     const params = new URLSearchParams(window.location.search);
     return {
+      releaseId: params.get("release") || "",
       dataset: params.get("dataset") || "",
       split: params.get("split") || "",
       modelType: params.get("model_type") || "",
@@ -147,11 +193,16 @@
         .map((value) => value.trim())
         .filter(Boolean),
       hasVisibleGroups: params.has("columns"),
+      comparedModelIds: (params.get("models") || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+      hasComparedModelIds: params.has("models"),
       comparisonMetric: params.get("comparison") || "",
-      comparisonRowCount: Number(params.get("comparison_count")),
       scatterX: params.get("scatter_x") || "",
       scatterY: params.get("scatter_y") || "",
       profileCase: params.get("case") || "",
+      resultId: params.get("result") || "",
       params,
     };
   }
@@ -162,10 +213,27 @@
     window.history.replaceState(null, "", `${window.location.pathname}?${query}${window.location.hash}`);
   }
 
-  function currentViewUrl(canonical = false) {
+  function currentViewUrl(canonical = false, includeResult = true) {
     const root = canonical && dataRelease().canonical_url ? dataRelease().canonical_url : window.location.href;
     const url = new URL(root, window.location.href);
-    url.search = viewSearchParams().toString();
+    url.search = viewSearchParams(includeResult).toString();
+    url.hash = "";
+    return url.href;
+  }
+
+  function resultUrl(row, canonical = false) {
+    const root = canonical && releaseArchiveUrl() ? releaseArchiveUrl() : window.location.href;
+    const url = new URL(root, window.location.href);
+    const params = viewSearchParams(false);
+    params.set("result", row.id);
+    url.search = params.toString();
+    url.hash = "";
+    return url.href;
+  }
+
+  function citedViewUrl() {
+    const url = new URL(releaseArchiveUrl() || window.location.href, window.location.href);
+    url.search = viewSearchParams(true).toString();
     url.hash = "";
     return url.href;
   }
@@ -174,6 +242,20 @@
     const response = await fetch(url, { cache: "no-store" });
     if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
     return response.json();
+  }
+
+  async function sha256Hex(value) {
+    if (!window.crypto?.subtle) return null;
+    const digest = await window.crypto.subtle.digest("SHA-256", value);
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  async function fetchJsonWithProvenance(url, label) {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
+    const bytes = await response.arrayBuffer();
+    const text = new TextDecoder("utf-8").decode(bytes);
+    return { data: JSON.parse(text), sha256: await sha256Hex(bytes) };
   }
 
   function datasetEntries() {
@@ -251,24 +333,58 @@
       model: entry.model || "Unnamed model",
       modelTypes,
       metricValues,
-      parameterCount: finiteNumber(entry.parameter_count) ?? 0,
+      parameterCount: finiteNumber(entry.parameter_count_millions ?? entry.parameter_count),
       submitter: entry.submitter_name || entry.institution || "Unknown submitter",
       date: entry.submitted_at || "",
+      approvalStatus: entry.approval?.status || "not_supplied",
     };
   }
 
   async function ensureRows(dataset) {
     if (state.rows.has(dataset.name)) return state.rows.get(dataset.name);
-    const payload = await fetchJson(fileUrl(dataset.file), `${dataset.name} leaderboard feed`);
-    if (!Array.isArray(payload)) throw new Error(`${dataset.name} leaderboard feed must be an array`);
-    const rows = payload.map(normalizeRow);
-    state.rows.set(dataset.name, rows);
-    return rows;
+    if (!state.feedRowsLoaded) {
+      if (!state.manifest?.all_file) throw new Error("manifest does not declare the complete scalar feed");
+      const loaded = await fetchJsonWithProvenance(fileUrl(state.manifest.all_file), "complete leaderboard feed");
+      if (!Array.isArray(loaded.data)) throw new Error("complete leaderboard feed must be an array");
+      if (!loaded.sha256) throw new Error("this browser cannot verify the leaderboard feed SHA-256 digest");
+      const expectedSha256 = dataRelease().feed_sha256;
+      if (!expectedSha256 || loaded.sha256 !== expectedSha256) {
+        throw new Error("complete leaderboard feed checksum does not match the selected data release");
+      }
+      datasetEntries().forEach((entry) => state.rows.set(entry.name, []));
+      loaded.data.map(normalizeRow).forEach((row) => {
+        if (state.rows.has(row.dataset)) state.rows.get(row.dataset).push(row);
+      });
+      state.loadedFeedSha256 = loaded.sha256;
+      state.feedVerified = true;
+      state.feedRowsLoaded = true;
+    }
+    return state.rows.get(dataset.name) || [];
   }
 
   async function ensureGroundTruthManifest() {
     if (state.groundTruthManifest) return state.groundTruthManifest;
-    state.groundTruthManifest = await fetchJson(fileUrl("manifest.json", groundTruthBaseUrl), "profile ground-truth manifest");
+    const loaded = await fetchJsonWithProvenance(fileUrl("manifest.json", groundTruthBaseUrl), "profile ground-truth manifest");
+    const expected = dataRelease().profile_ground_truth;
+    if (!loaded.sha256) throw new Error("this browser cannot verify the profile ground-truth manifest SHA-256 digest");
+    if (!expected?.manifest_sha256 || loaded.sha256 !== expected.manifest_sha256) {
+      throw new Error("profile ground-truth manifest checksum does not match the selected data release");
+    }
+    if (!expected.release_id || loaded.data?.data_release?.id !== expected.release_id) {
+      throw new Error("profile ground-truth release ID does not match the selected data release");
+    }
+    if (dataRelease().status === "official") {
+      const groundTruthRelease = loaded.data?.data_release || {};
+      if (groundTruthRelease.status !== "official" || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(groundTruthRelease.source_commit || "")) {
+        throw new Error("official results require profile ground truth pinned to an immutable source commit");
+      }
+    }
+    state.groundTruthManifestProvenance = {
+      url: fileUrl("manifest.json", groundTruthBaseUrl),
+      sha256: loaded.sha256,
+      release_id: loaded.data?.data_release?.id || null,
+    };
+    state.groundTruthManifest = loaded.data;
     return state.groundTruthManifest;
   }
 
@@ -280,9 +396,13 @@
     if (!caseSet?.index_file) throw new Error(`${datasetName} / ${splitName} has no profile ground-truth index`);
     const indexUrl = fileUrl(caseSet.index_file, groundTruthBaseUrl);
     if (!state.groundTruthIndexes.has(indexUrl)) {
-      state.groundTruthIndexes.set(indexUrl, await fetchJson(indexUrl, `${datasetName} profile ground-truth index`));
+      state.groundTruthIndexes.set(indexUrl, await fetchJsonWithProvenance(indexUrl, `${datasetName} profile ground-truth index`));
     }
-    return { index: state.groundTruthIndexes.get(indexUrl), indexUrl };
+    const cached = state.groundTruthIndexes.get(indexUrl);
+    if (!caseSet.index_sha256 || !cached.sha256 || cached.sha256 !== caseSet.index_sha256) {
+      throw new Error(`${datasetName} profile ground-truth index checksum does not match its release manifest`);
+    }
+    return { index: cached.data, indexUrl, indexSha256: cached.sha256 };
   }
 
   async function submissionProfileIndex(row) {
@@ -290,9 +410,13 @@
     if (!indexFile) throw new Error(`${rowLabel(row)} has no profile index`);
     const indexUrl = fileUrl(indexFile);
     if (!state.profileIndexes.has(indexUrl)) {
-      state.profileIndexes.set(indexUrl, await fetchJson(indexUrl, `${rowLabel(row)} profile index`));
+      state.profileIndexes.set(indexUrl, await fetchJsonWithProvenance(indexUrl, `${rowLabel(row)} profile index`));
     }
-    return { index: state.profileIndexes.get(indexUrl), indexUrl };
+    const cached = state.profileIndexes.get(indexUrl);
+    if (!row.profile_data?.index_sha256 || !cached.sha256 || cached.sha256 !== row.profile_data.index_sha256) {
+      throw new Error(`${rowLabel(row)} profile index checksum does not match the verified leaderboard feed`);
+    }
+    return { index: cached.data, indexUrl, indexSha256: cached.sha256 };
   }
 
   function caseIds(index) {
@@ -303,8 +427,23 @@
     const entry = (context.index?.chunks || []).find((chunk) => (chunk.case_ids || []).includes(caseId));
     if (!entry) return null;
     const chunkUrl = new URL(entry.file, context.indexUrl).href;
-    if (!cache.has(chunkUrl)) cache.set(chunkUrl, await fetchJson(chunkUrl, `${label} profile chunk`));
-    return (cache.get(chunkUrl)?.cases || []).find((candidate) => candidate.case_id === caseId) || null;
+    if (!cache.has(chunkUrl)) cache.set(chunkUrl, await fetchJsonWithProvenance(chunkUrl, `${label} profile chunk`));
+    const cached = cache.get(chunkUrl);
+    if (entry.sha256 && cached.sha256 && entry.sha256 !== cached.sha256) {
+      throw new Error(`${label} profile chunk checksum does not match its index`);
+    }
+    const profileCase = (cached.data?.cases || []).find((candidate) => candidate.case_id === caseId);
+    if (!profileCase) return null;
+    return {
+      ...profileCase,
+      _fluidsbenchProvenance: {
+        index_url: context.indexUrl,
+        index_sha256: context.indexSha256 || null,
+        chunk_url: chunkUrl,
+        chunk_declared_sha256: entry.sha256 || null,
+        chunk_downloaded_sha256: cached.sha256 || null,
+      },
+    };
   }
 
   function ranking() {
@@ -329,10 +468,16 @@
       .map((row, index) => ({ ...row, rank: index + 1 }));
   }
 
+  function rowsForCurrentModelType() {
+    return rowsForActiveSplit().filter((row) => !state.modelType || row.modelTypes.includes(state.modelType));
+  }
+
+  function figureRows() {
+    return rowsForCurrentModelType().filter((row) => state.comparedModelIds.has(row.id));
+  }
+
   function filteredRows() {
-    const ranked = rowsForActiveSplit().filter((row) => {
-      return !state.modelType || row.modelTypes.includes(state.modelType);
-    });
+    const ranked = rowsForCurrentModelType();
     if (state.sortKey === "rank") {
       return ranked.slice().sort((a, b) => (state.sortDirection === "asc" ? a.rank - b.rank : b.rank - a.rank));
     }
@@ -381,6 +526,46 @@
     }
   }
 
+  function releaseArchiveUrl() {
+    return safeHttpUrl(dataRelease().archive_url || dataRelease().doi_url);
+  }
+
+  function releaseLicenseMetadata() {
+    const license = dataRelease().license;
+    if (typeof license === "string" && license.trim()) {
+      return { label: license.trim(), spdxId: "", name: license.trim(), url: "", scope: "Not supplied" };
+    }
+    if (license && typeof license === "object") {
+      const spdxId = String(license.spdx_id || license.spdx || "").trim();
+      const name = String(license.name || "").trim();
+      const url = safeHttpUrl(license.url);
+      const scope = String(license.scope || "Not supplied").trim();
+      return {
+        label: [spdxId, name].filter(Boolean).join(" — ") || "Not supplied",
+        spdxId,
+        name,
+        url,
+        scope,
+      };
+    }
+    return {
+      label: "Not supplied by this data release",
+      spdxId: "",
+      name: "",
+      url: "",
+      scope: "Not supplied; consult each upstream dataset and model artifact licence",
+    };
+  }
+
+  function releaseStamp() {
+    const release = dataRelease();
+    const checksum = release.feed_sha256
+      ? `verified feed SHA-256 ${state.feedVerified ? state.loadedFeedSha256 : release.feed_sha256}`
+      : "feed checksum not supplied";
+    const archive = releaseArchiveUrl() ? `archive ${releaseArchiveUrl()}` : "no immutable archive URL supplied";
+    return `FluidsBench data release ${release.id || "unversioned"} (status: ${humanize(release.status || "not supplied")}; ${checksum}; ${archive})`;
+  }
+
   function humanize(value) {
     return String(value || "")
       .replaceAll("_", " ")
@@ -410,6 +595,11 @@
     if (release.status) details.push(humanize(release.status));
     if (release.generated_at) details.push(`generated ${formatReleaseDate(release.generated_at)}`);
     if (release.feed_sha256) details.push(`SHA-256 ${release.feed_sha256.slice(0, 12)}...`);
+    if (state.feedVerified) details.push("feed bytes verified");
+    if (release.reproducibility_contract_version) details.push(release.reproducibility_contract_version);
+    const license = releaseLicenseMetadata();
+    details.push(`licence ${license.label}`);
+    if (!releaseArchiveUrl()) details.push("no immutable archive");
     const meta = element("leaderboard-release-meta");
     meta.textContent = details.join(" | ");
     if (release.feed_sha256) meta.title = `Feed SHA-256: ${release.feed_sha256}`;
@@ -422,22 +612,106 @@
         ? `Source ${String(release.source_commit).slice(0, 7)}`
         : `Source ${release.source_ref || "repository"}`;
     }
-    ["export-leaderboard-csv", "export-leaderboard-json", "open-citation-dialog"].forEach((id) => {
+    ["export-leaderboard-csv", "export-leaderboard-json"].forEach((id) => {
       const button = element(id);
-      if (button) button.disabled = !state.dataset;
+      if (button) button.disabled = !state.dataset || !state.feedVerified;
     });
+    const citationButton = element("open-citation-dialog");
+    if (citationButton) {
+      const official = release.status === "official" && state.feedVerified;
+      citationButton.disabled = !state.dataset || !official;
+      citationButton.title = official
+        ? "Cite this verified official release or open result"
+        : "Citations are enabled only for verified official releases";
+    }
+    const warning = element("leaderboard-release-warning");
+    if (warning) {
+      warning.hidden = !state.releaseMismatch && !state.resultUnavailable;
+      warning.textContent = state.releaseMismatch
+        ? `This link requested data release ${state.requestedReleaseId}, but that release is not loaded. The page is showing ${
+            release.id || "an unversioned release"
+          }; the requested result has not been opened. Use the archived release URL to verify the original record.`
+        : state.resultUnavailable
+          ? `Result ${state.requestedResultId} is not present in data release ${
+              release.id || "unversioned"
+            }. The result link has not been silently redirected to another row.`
+          : "";
+    }
   }
 
   function csvCell(value) {
     if (value === null || value === undefined) return "";
-    const rendered = typeof value === "object" ? JSON.stringify(value) : String(value);
+    if (typeof value === "number") return Number.isFinite(value) ? String(value) : "";
+    let rendered = typeof value === "object" ? JSON.stringify(value) : String(value);
+    if (/^[\t ]*[=+\-@]/.test(rendered)) rendered = `'${rendered}`;
     return /[",\r\n]/.test(rendered) ? `"${rendered.replaceAll('"', '""')}"` : rendered;
   }
 
-  function exportMetadataColumns() {
+  function tableExportRows() {
+    return state.exportScope === "full" ? rowsForActiveSplit() : filteredRows();
+  }
+
+  function exportProvenance(rowCount) {
+    const license = releaseLicenseMetadata();
+    const currentView = state.exportScope === "current";
+    return {
+      export_scope: currentView ? "current_filtered_view" : "full_selected_split",
+      row_count: rowCount,
+      release_id: dataRelease().id || null,
+      release_status: dataRelease().status || null,
+      feed_sha256: dataRelease().feed_sha256 || null,
+      loaded_feed_sha256: state.loadedFeedSha256,
+      feed_verified: state.feedVerified,
+      archive_url: releaseArchiveUrl() || null,
+      asset_base_url: leaderboardAssetBaseUrl(),
+      profile_ground_truth: {
+        ...dataRelease().profile_ground_truth,
+        loaded_manifest_sha256: state.groundTruthManifestProvenance?.sha256 || null,
+        loaded_release_id: state.groundTruthManifestProvenance?.release_id || null,
+      },
+      source_repository: dataRelease().source_repository || null,
+      source_ref: dataRelease().source_ref || null,
+      source_commit: dataRelease().source_commit || null,
+      reproducibility_contract_version: dataRelease().reproducibility_contract_version || null,
+      license: {
+        spdx_id: license.spdxId || null,
+        name: license.name || null,
+        url: license.url || null,
+        scope: license.scope,
+        fallback_notice: license.spdxId ? null : license.label,
+      },
+      view_url: currentViewUrl(false, false),
+      filters: {
+        dataset: state.dataset,
+        split: state.split,
+        split_id: activeSplitDefinition()?.id || null,
+        model_type: currentView ? state.modelType || null : null,
+        sort: currentView ? { key: state.sortKey, direction: state.sortDirection } : { key: "rank", direction: "asc" },
+        visible_column_groups: Array.from(state.visibleGroups),
+        compared_model_ids: figureRows().map((row) => row.id),
+      },
+    };
+  }
+
+  function exportMetadataColumns(provenance) {
     return [
-      ["release_id", () => dataRelease().id],
-      ["feed_sha256", () => dataRelease().feed_sha256],
+      ["export_scope", () => provenance.export_scope],
+      ["export_row_count", () => provenance.row_count],
+      ["release_id", () => provenance.release_id],
+      ["release_status", () => provenance.release_status],
+      ["feed_sha256", () => provenance.feed_sha256],
+      ["loaded_feed_sha256", () => provenance.loaded_feed_sha256],
+      ["feed_verified", () => provenance.feed_verified],
+      ["release_reproducibility_contract", () => provenance.reproducibility_contract_version],
+      ["archive_url", () => provenance.archive_url],
+      ["asset_base_url", () => provenance.asset_base_url],
+      ["profile_ground_truth_json", () => provenance.profile_ground_truth],
+      ["view_url", () => provenance.view_url],
+      ["release_license_spdx", () => provenance.license.spdx_id],
+      ["release_license_name", () => provenance.license.name],
+      ["release_license_url", () => provenance.license.url],
+      ["release_license_scope", () => provenance.license.scope],
+      ["filters_json", () => provenance.filters],
       ["rank", (row) => row.rank],
       ["submission_id", (row) => row.id],
       ["dataset", (row) => row.dataset],
@@ -460,24 +734,51 @@
       ["evaluation_command", (row) => row.evaluation?.command],
       ["evaluation_evidence_file", (row) => row.evaluation?.evidence_file],
       ["evaluation_evidence_sha256", (row) => row.evaluation?.evidence_sha256],
+      ["reproducibility_contract", (row) => row.reproducibility?.contract_version],
+      ["reproducibility_access", (row) => row.reproducibility?.access],
+      ["public_test_data_use", (row) => row.reproducibility?.public_test_data_use],
+      ["result_data_license", (row) => row.reproducibility?.result_data_license_spdx],
+      ["reproducibility_code_repository", (row) => row.reproducibility?.code?.repository_url],
+      ["reproducibility_code_commit", (row) => row.reproducibility?.code?.commit],
+      ["reproducibility_code_license", (row) => row.reproducibility?.code?.license_spdx],
+      ["model_artifact_url", (row) => row.reproducibility?.model_artifact?.url],
+      ["model_artifact_sha256", (row) => row.reproducibility?.model_artifact?.sha256],
+      ["model_artifact_license", (row) => row.reproducibility?.model_artifact?.license_spdx],
+      ["environment_kind", (row) => row.reproducibility?.environment?.kind],
+      ["environment_url", (row) => row.reproducibility?.environment?.url],
+      ["environment_sha256", (row) => row.reproducibility?.environment?.sha256],
+      ["replay_instructions_url", (row) => row.reproducibility?.replay_instructions_url],
       ["approval_status", (row) => row.approval?.status],
       ["approved_by", (row) => row.approval?.approved_by],
       ["approved_at", (row) => row.approval?.approved_at],
       ["pull_request_url", (row) => row.approval?.pull_request_url],
+      ["maintainer_replay_status", (row) => maintainerReplay(row).status],
+      ["maintainer_replay_contract", (row) => maintainerReplay(row).contract_version],
+      ["maintainer_replay_reference", (row) => maintainerReplay(row).reference_version],
+      ["maintainer_replayed_by", (row) => maintainerReplay(row).replayed_by],
+      ["maintainer_replayed_at", (row) => maintainerReplay(row).replayed_at],
+      ["maintainer_replay_tolerance", (row) => maintainerReplay(row).metric_abs_tolerance],
+      ["reviewed_submission_sha256", (row) => maintainerReplay(row).reviewed_submission_sha256],
+      ["submitted_profile_index_sha256", (row) => maintainerReplay(row).submitted_profile_index_sha256],
+      ["replayed_profile_index_sha256", (row) => maintainerReplay(row).replayed_profile_index_sha256],
+      ["replay_independence_json", (row) => maintainerReplay(row).independence],
+      ["maintainer_replay_file", (row) => maintainerReplay(row).evidence_file],
+      ["maintainer_replay_sha256", (row) => maintainerReplay(row).evidence_sha256],
       ["paper_url", (row) => row.paper_url],
       ["code_url", (row) => row.code_url],
       ["profile_index_file", (row) => row.profile_data?.index_file],
+      ["profile_index_sha256", (row) => row.profile_data?.index_sha256],
+      ["result_permalink", (row) => resultUrl(row, Boolean(releaseArchiveUrl()))],
       ["note", (row) => row.note],
     ];
   }
 
   function exportFilename(extension) {
     const releaseId = slug(dataRelease().id || "unversioned");
-    return `fluidsbench-${slug(state.dataset)}-${slug(state.split)}-${releaseId}.${extension}`;
+    return `fluidsbench-${slug(state.dataset)}-${slug(state.split)}-${state.exportScope}-${releaseId}.${extension}`;
   }
 
-  function downloadText(filename, content, type) {
-    const blob = new Blob([content], { type });
+  function downloadBlob(filename, blob) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -489,12 +790,18 @@
     element("leaderboard-release-action-status").textContent = `Downloaded ${filename}.`;
   }
 
+  function downloadText(filename, content, type) {
+    downloadBlob(filename, new Blob([content], { type }));
+  }
+
   function exportCsv() {
-    const metadata = exportMetadataColumns();
+    const rows = tableExportRows();
+    const provenance = exportProvenance(rows.length);
+    const metadata = exportMetadataColumns(provenance);
     const metrics = activeMetricDefinitions();
     const header = [...metadata.map(([label]) => label), ...metrics.map((definition) => definition.id)];
     const lines = [header.map(csvCell).join(",")];
-    filteredRows().forEach((row) => {
+    rows.forEach((row) => {
       const values = [...metadata.map(([, value]) => value(row)), ...metrics.map((definition) => row.metricValues[definition.id])];
       lines.push(values.map(csvCell).join(","));
     });
@@ -503,26 +810,24 @@
 
   function sourceSubmission(row) {
     const { id, rank, metricValues, modelTypes, parameterCount, submitter, date, ...source } = row;
-    return { rank, ...source };
+    return {
+      rank,
+      ...source,
+      result_permalink: resultUrl(row, Boolean(releaseArchiveUrl())),
+    };
   }
 
   function exportJson() {
+    const rows = tableExportRows();
+    const provenance = exportProvenance(rows.length);
     const payload = {
-      schema_version: "fluidsbench-leaderboard-export-v1",
+      schema_version: "fluidsbench-leaderboard-export-v2",
       exported_at: new Date().toISOString(),
       data_release: dataRelease(),
-      view: {
-        url: currentViewUrl(true),
-        dataset: state.dataset,
-        split: state.split,
-        split_id: activeSplitDefinition()?.id || null,
-        model_type: state.modelType || null,
-        ranking: ranking(),
-        sort: { key: state.sortKey, direction: state.sortDirection },
-        visible_column_groups: Array.from(state.visibleGroups),
-      },
+      provenance,
+      ranking: ranking(),
       metric_definitions: activeMetricDefinitions(),
-      submissions: filteredRows().map(sourceSubmission),
+      submissions: rows.map(sourceSubmission),
     };
     downloadText(exportFilename("json"), `${JSON.stringify(payload, null, 2)}\n`, "application/json;charset=utf-8");
   }
@@ -536,14 +841,26 @@
     const year = citation.year || new Date(release.generated_at || Date.now()).getUTCFullYear();
     const releaseId = release.id || "unversioned";
     const checksum = release.feed_sha256 || "not supplied";
-    const url = currentViewUrl(true);
-    const context = `${state.dataset}, ${state.split}`;
+    const url = citedViewUrl();
+    const citedResult = state.resultId ? rowsForActiveSplit().find((row) => row.id === state.resultId) : null;
+    const replay = citedResult ? maintainerReplay(citedResult) : {};
+    const context = citedResult ? `${state.dataset}, ${state.split}, ${citedResult.model} (${citedResult.id})` : `${state.dataset}, ${state.split}`;
+    const status = humanize(release.status || "not supplied");
+    const resultNote = citedResult
+      ? ` Result status: ${humanize(citedResult.approvalStatus)}; maintainer replay ${replay.status || "not supplied"}, evidence SHA-256 ${
+          replay.evidence_sha256 || "not supplied"
+        }.`
+      : "";
+    const license = releaseLicenseMetadata();
+    const archiveNote = releaseArchiveUrl() ? `Archived release: ${releaseArchiveUrl()}.` : "No immutable archive URL is supplied.";
     return {
-      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, data release ${releaseId}, feed SHA-256 ${checksum}. ${url}`,
-      bibtex: `@misc{fluidsbench_${slug(state.dataset).replaceAll(
+      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, data release ${releaseId} (status: ${status}), verified feed SHA-256 ${checksum}.${resultNote} Licence: ${license.label}; scope: ${license.scope}. ${archiveNote} ${url}`,
+      bibtex: `@misc{fluidsbench_${slug(state.dataset).replaceAll("-", "_")}_${slug(releaseId).replaceAll(
         "-",
         "_"
-      )}_${year},\n  author = {${author}},\n  title = {${title}: ${context}},\n  year = {${year}},\n  publisher = {${publisher}},\n  url = {${url}},\n  note = {Data release ${releaseId}; feed SHA-256 ${checksum}}\n}`,
+      )},\n  author = {${author}},\n  title = {${title}: ${context}},\n  year = {${year}},\n  publisher = {${publisher}},\n  url = {${url}},\n  note = {Data release ${releaseId}; status ${status}; feed SHA-256 ${checksum}; licence ${
+        license.label
+      };${resultNote} ${archiveNote}}\n}`,
     };
   }
 
@@ -585,15 +902,19 @@
       .map((definition) => definition.label)
       .join(", ");
     const definitions = {
-      rank: `Official position for this dataset and split, ordered by ${rankMetric?.label || "the ranking metric"}.`,
-      model: "Free-text model name supplied with the approved submission.",
+      rank: `Position within the loaded release for this dataset and split, ordered by ${
+        rankMetric?.label || "the ranking metric"
+      }. Prototype rows are not official rankings.`,
+      model: "Model name declared by the submitter. Open-code and model-artifact provenance appears in result details when supplied.",
       submitter: "Person, research group, institution, or company submitting the result.",
-      split: `Official ${state.dataset} benchmark split used for training and evaluation.`,
+      split: `Declared ${state.dataset} benchmark split used for training and public-ground-truth evaluation.`,
       modelTypes: `One or more submitted architecture categories. Available here: ${types || "none"}.`,
+      status:
+        "Prototype rows are illustrative only. An official result requires public versioned code and model artifacts plus a successful independent maintainer replay.",
       training: `How the model was initialized and whether target-dataset training data were used. Supported values: ${trainingLabels}.`,
-      parameters: "Submitter-reported trainable parameter count in millions.",
-      date: "Date associated with the approved submission.",
-      details: "Opens submission metadata, links, and the complete metric list.",
+      parameters: "Submitter-reported trainable parameter count in millions; a missing value remains missing rather than being treated as zero.",
+      date: "Date associated with the submitted result.",
+      details: "Opens a deep-linkable result record with submission, open-reproducibility, replay, and metric metadata.",
     };
     return definitions[key] || "";
   }
@@ -629,6 +950,7 @@
       { key: "submitter", label: "Submitted by", sortKey: "submitter" },
       { key: "modelTypes", label: "Model type", sortKey: "modelTypes", group: "model-details" },
       { key: "training", label: "Training", sortKey: "training_regime", group: "model-details" },
+      { key: "status", label: "Result status", sortKey: "approvalStatus", group: "model-details" },
       { key: "split", label: "Split", sortKey: "split" },
     ];
     activeMetricDefinitions().forEach((definition) => {
@@ -761,7 +1083,7 @@
   }
 
   function defaultSortDirection(column) {
-    if (column.key === "rank" || ["model", "submitter", "split", "modelTypes", "training", "date"].includes(column.key)) {
+    if (column.key === "rank" || ["model", "submitter", "split", "modelTypes", "training", "status", "date"].includes(column.key)) {
       return "asc";
     }
     if (column.definition) return column.definition.direction === "lower" ? "asc" : "desc";
@@ -786,7 +1108,7 @@
   function targetDataLabel(value) {
     const labels = {
       none: "None",
-      official_train: "Official training data for this split",
+      official_train: "Declared benchmark training partition",
       other: "Other target-dataset data",
     };
     return labels[value] || value || "Not supplied";
@@ -819,6 +1141,7 @@
       split: row.split,
       modelTypes: row.modelTypes.join(", ") || "Not supplied",
       training: trainingLabel(row),
+      status: humanize(row.approvalStatus),
       parameters: formatNumber(row.parameterCount, 2),
       date: row.date || "Not supplied",
     };
@@ -834,12 +1157,15 @@
 
   function appendCellContent(cell, submission, column) {
     if (column.key === "details") {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "leaderboard-detail-button";
-      button.textContent = "Details";
-      button.addEventListener("click", () => openDetails(submission));
-      cell.appendChild(button);
+      const link = document.createElement("a");
+      link.className = "leaderboard-detail-button";
+      link.href = resultUrl(submission);
+      link.textContent = "Details";
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        openDetails(submission);
+      });
+      cell.appendChild(link);
       return;
     }
     if (column.key === "rank") {
@@ -848,6 +1174,16 @@
     }
     if (column.key === "model") {
       cell.classList.add("leaderboard-model");
+      const link = document.createElement("a");
+      link.className = "leaderboard-result-link";
+      link.href = resultUrl(submission);
+      link.textContent = cellValue(submission, column);
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        openDetails(submission);
+      });
+      cell.appendChild(link);
+      return;
     } else if (column.key === "submitter") {
       cell.classList.add("leaderboard-submitter");
     } else if (column.key === "split") {
@@ -863,6 +1199,9 @@
     } else if (column.key === "training") {
       cell.appendChild(chip("leaderboard-training", trainingLabel(submission)));
       return;
+    } else if (column.key === "status") {
+      cell.appendChild(chip("leaderboard-training", humanize(submission.approvalStatus)));
+      return;
     }
     cell.textContent = cellValue(submission, column);
   }
@@ -877,7 +1216,7 @@
       const cell = document.createElement("td");
       cell.colSpan = Math.max(1, activeColumns().length);
       cell.className = "leaderboard-empty";
-      cell.textContent = "No approved submissions match this dataset, split, and model type.";
+      cell.textContent = "No leaderboard rows match this dataset, split, and model type.";
       row.appendChild(cell);
       body.appendChild(row);
       return;
@@ -886,6 +1225,7 @@
     const columns = activeColumns();
     rows.forEach((submission) => {
       const row = document.createElement("tr");
+      row.dataset.submissionId = submission.id;
       let previousGroup = null;
       columns.forEach((column) => {
         const cell = document.createElement("td");
@@ -910,6 +1250,54 @@
     state.modelType = populateSelect(element("type-filter"), options, state.modelType);
   }
 
+  function setDefaultComparedModels() {
+    state.comparedModelIds = new Set(
+      rowsForCurrentModelType()
+        .slice(0, 5)
+        .map((row) => row.id)
+    );
+    state.staleComparedModelIds = new Set();
+  }
+
+  function renderComparisonModelPicker() {
+    const container = element("comparison-model-options");
+    if (!container) return;
+    container.replaceChildren();
+    const rows = rowsForCurrentModelType();
+    const selectedCount = rows.filter((row) => state.comparedModelIds.has(row.id)).length;
+    rows.forEach((row) => {
+      const label = document.createElement("label");
+      label.className = "leaderboard-model-option";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.value = row.id;
+      input.checked = state.comparedModelIds.has(row.id);
+      input.disabled = !input.checked && selectedCount >= maxFigureModels;
+      input.dataset.comparisonModel = "";
+      const text = document.createElement("span");
+      text.textContent = `${rowLabel(row)} — rank ${row.rank}`;
+      label.append(input, text);
+      container.appendChild(label);
+    });
+    const staleCount = state.staleComparedModelIds.size;
+    const count = element("comparison-model-count");
+    if (count) {
+      count.textContent = `${selectedCount} of ${rows.length} models selected${
+        staleCount
+          ? `; ${staleCount} requested model ID${staleCount === 1 ? " could" : "s could"} not be used (unavailable or above the figure limit)`
+          : ""
+      }. Maximum ${maxFigureModels}.`;
+    }
+  }
+
+  function updateFigureSelection() {
+    renderComparisonModelPicker();
+    renderComparisonChart();
+    renderScatterChart();
+    void refreshProfileContext();
+    updateUrl();
+  }
+
   function comparisonDefinitions() {
     return activeMetricDefinitions().filter((definition) => definition.comparison_group);
   }
@@ -929,8 +1317,6 @@
       };
     });
     state.comparisonMetric = populateSelect(element("comparison-metric"), options, state.comparisonMetric);
-    const rowCountSelect = element("comparison-row-count");
-    if (rowCountSelect) rowCountSelect.value = String(state.comparisonRowCount);
   }
 
   function chartTextColor() {
@@ -950,16 +1336,244 @@
     return formatMetric(value, definition);
   }
 
-  function topRowsForMetric(rows, definition, count) {
+  function rowsForMetric(rows, definition) {
     return rows
       .filter((row) => finiteNumber(row.metricValues[definition.id]) !== null)
-      .sort((a, b) => compareNumbers(a.metricValues[definition.id], b.metricValues[definition.id], definition.direction))
-      .slice(0, count);
+      .sort((a, b) => compareNumbers(a.metricValues[definition.id], b.metricValues[definition.id], definition.direction));
+  }
+
+  function omissionSentence(rows, reason) {
+    if (!rows.length) return "";
+    return ` Omitted selected result${rows.length === 1 ? "" : "s"} ${rows.map((row) => row.id).join(", ")} (${reason}).`;
   }
 
   function setChartSummary(id, text) {
     const summary = element(id);
     if (summary) summary.textContent = text;
+  }
+
+  function setFigureCaption(key, text) {
+    state.figureCaptions.set(key, text);
+    const caption = element(`${key}-figure-caption`);
+    if (caption) caption.textContent = text;
+  }
+
+  function renderNumericTable(containerId, captionText, columns, rows) {
+    const container = element(containerId);
+    if (!container) return;
+    container.replaceChildren();
+    const table = document.createElement("table");
+    table.className = "leaderboard-data-table";
+    const caption = document.createElement("caption");
+    caption.textContent = captionText;
+    const head = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    columns.forEach((column) => {
+      const cell = document.createElement("th");
+      cell.scope = "col";
+      cell.textContent = column.label;
+      headRow.appendChild(cell);
+    });
+    head.appendChild(headRow);
+    const body = document.createElement("tbody");
+    rows.forEach((row) => {
+      const tableRow = document.createElement("tr");
+      columns.forEach((column) => {
+        const cell = document.createElement("td");
+        const value = typeof column.value === "function" ? column.value(row) : row[column.value];
+        cell.textContent = value === null || value === undefined ? "" : String(value);
+        tableRow.appendChild(cell);
+      });
+      body.appendChild(tableRow);
+    });
+    table.append(caption, head, body);
+    container.appendChild(table);
+  }
+
+  function figureFilename(key, extension) {
+    return `fluidsbench-${slug(state.dataset)}-${slug(state.split)}-${slug(key)}-${slug(dataRelease().id || "unversioned")}.${extension}`;
+  }
+
+  function xmlEscape(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&apos;");
+  }
+
+  function decorateSvg(key, svg) {
+    const caption = state.figureCaptions.get(key) || releaseStamp();
+    const metadata = {
+      schema_version: "fluidsbench-svg-metadata-v1",
+      release: dataRelease(),
+      loaded_feed_sha256: state.loadedFeedSha256,
+      feed_verified: state.feedVerified,
+      loaded_profile_ground_truth_manifest: state.groundTruthManifestProvenance,
+      archive_url: releaseArchiveUrl() || null,
+      license: releaseLicenseMetadata(),
+      view_url: currentViewUrl(false, false),
+      selected_submission_ids: Array.from(new Set((state.figureSpecs.get(key)?.data?.values || []).map((row) => row.submission_id).filter(Boolean))),
+      caption,
+      figure_spec: state.figureSpecs.get(key),
+    };
+    const annotation = `<title>${xmlEscape(`${state.dataset}: ${key}`)}</title><desc>${xmlEscape(caption)}</desc><metadata>${xmlEscape(
+      JSON.stringify(metadata)
+    )}</metadata>`;
+    return svg.replace(/<svg([^>]*)>/, `<svg$1>${annotation}`);
+  }
+
+  function figureSpecBase(title, values) {
+    const release = dataRelease();
+    const subtitle = [
+      `Data release ${release.id || "unversioned"} · status ${humanize(release.status || "not supplied")}`,
+      `Verified scalar feed SHA-256: ${state.loadedFeedSha256 || release.feed_sha256 || "not supplied"}`,
+      releaseArchiveUrl() ? `Immutable archive: ${releaseArchiveUrl()}` : "No immutable archive URL supplied",
+    ];
+    if (release.profile_ground_truth?.release_id) {
+      subtitle.push(
+        `Profile ground truth: ${release.profile_ground_truth.release_id} · manifest SHA-256 ${
+          release.profile_ground_truth.manifest_sha256 || "not supplied"
+        }`
+      );
+    }
+    if (release.status !== "official") subtitle.push("PROTOTYPE — NOT FOR CITATION OR PROMOTIONAL CLAIMS");
+    return {
+      $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+      width: 900,
+      height: 480,
+      background: "white",
+      padding: 16,
+      title: {
+        text: title,
+        subtitle,
+        anchor: "start",
+        color: "#111827",
+        fontSize: 18,
+        subtitleColor: "#4b5563",
+        subtitleFontSize: 11,
+        subtitleLineHeight: 15,
+      },
+      data: { values },
+      config: {
+        font: "Arial",
+        axis: {
+          domainColor: "#4b5563",
+          gridColor: "#e5e7eb",
+          labelColor: "#111827",
+          titleColor: "#111827",
+          titleFontWeight: 600,
+        },
+        legend: { labelColor: "#111827", titleColor: "#111827" },
+        view: { stroke: null },
+      },
+      usermeta: {
+        fluidsbench_release: dataRelease(),
+        fluidsbench_archive_url: releaseArchiveUrl() || null,
+        fluidsbench_license: releaseLicenseMetadata(),
+        fluidsbench_view_url: currentViewUrl(false, false),
+      },
+    };
+  }
+
+  async function withVegaView(key, callback) {
+    const spec = state.figureSpecs.get(key);
+    if (!spec) throw new Error("No figure data are available for this selection");
+    if (typeof window.vegaEmbed !== "function") throw new Error("The vector export library is not available");
+    const host = document.createElement("div");
+    host.style.cssText = "left:-10000px;position:fixed;top:0;width:960px;";
+    document.body.appendChild(host);
+    let result;
+    try {
+      result = await window.vegaEmbed(host, spec, { actions: false, renderer: "svg" });
+      await result.view.runAsync();
+      return await callback(result.view);
+    } finally {
+      result?.view?.finalize();
+      host.remove();
+    }
+  }
+
+  function printFigureSvg(svg, caption) {
+    element("leaderboard-print-figure")?.remove();
+    const printArea = document.createElement("section");
+    printArea.id = "leaderboard-print-figure";
+    printArea.setAttribute("aria-label", "FluidsBench figure print view");
+    printArea.innerHTML = svg;
+    const captionElement = document.createElement("p");
+    captionElement.textContent = caption;
+    printArea.appendChild(captionElement);
+    document.body.appendChild(printArea);
+    const cleanup = () => {
+      document.body.classList.remove("leaderboard-printing");
+      printArea.remove();
+    };
+    window.addEventListener("afterprint", cleanup, { once: true });
+    document.body.classList.add("leaderboard-printing");
+    window.print();
+    window.setTimeout(() => {
+      if (document.body.classList.contains("leaderboard-printing")) cleanup();
+    }, 120000);
+  }
+
+  async function exportFigure(key, format) {
+    const status = element("leaderboard-release-action-status");
+    try {
+      if (status) status.textContent = `Preparing ${format === "print" ? "print view" : format.toUpperCase()}...`;
+      if (format === "svg") {
+        const svg = decorateSvg(key, await withVegaView(key, (view) => view.toSVG()));
+        downloadText(figureFilename(key, "svg"), svg, "image/svg+xml;charset=utf-8");
+      } else if (format === "png") {
+        const dataUrl = await withVegaView(key, (view) => view.toImageURL("png", 3));
+        const blob = await fetch(dataUrl).then((response) => response.blob());
+        downloadBlob(figureFilename(key, "png"), blob);
+      } else if (format === "print") {
+        const svg = decorateSvg(key, await withVegaView(key, (view) => view.toSVG()));
+        printFigureSvg(svg, state.figureCaptions.get(key) || releaseStamp());
+        if (status) status.textContent = "Opened the browser print dialog; choose Save as PDF to create a PDF.";
+      }
+    } catch (error) {
+      if (status) status.textContent = `Could not export figure: ${error.message}`;
+      console.error(error);
+    }
+  }
+
+  async function copyText(value) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const input = document.createElement("textarea");
+    input.value = value;
+    input.setAttribute("readonly", "");
+    input.style.cssText = "opacity:0;position:fixed;";
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand("copy");
+    input.remove();
+  }
+
+  async function copyFigureCaption(key) {
+    const caption = state.figureCaptions.get(key);
+    if (!caption) return;
+    const status = element("leaderboard-release-action-status");
+    try {
+      await copyText(caption);
+      if (status) status.textContent = "Figure caption copied.";
+    } catch (error) {
+      if (status) status.textContent = `Could not copy caption: ${error.message}`;
+    }
+  }
+
+  async function copyResultCitation(kind) {
+    const status = element("result-citation-copy-status");
+    try {
+      await copyText(citationValues()[kind]);
+      if (status) status.textContent = `${kind === "bibtex" ? "Result BibTeX" : "Result citation"} copied.`;
+    } catch (error) {
+      if (status) status.textContent = `Could not copy result citation: ${error.message}`;
+    }
   }
 
   const barValueLabels = {
@@ -988,8 +1602,9 @@
     destroyChart("comparison");
     const definition = comparisonDefinitions().find((candidate) => candidate.id === state.comparisonMetric);
     if (!definition) return;
-    const rowCount = state.comparisonRowCount;
-    const rows = topRowsForMetric(rowsForActiveSplit(), definition, rowCount);
+    const selectedRows = figureRows();
+    const rows = rowsForMetric(selectedRows, definition);
+    const omittedRows = selectedRows.filter((row) => finiteNumber(row.metricValues[definition.id]) === null);
     const directionText = `${definition.direction === "lower" ? "Lower" : "Higher"} is better`;
     const unitText = definition.unit ? ` Values are shown in ${definition.unit}.` : "";
     element("comparison-description").textContent = `${plainMetricLabel(definition)}: ${directionText.toLowerCase()}.${unitText}`;
@@ -1003,7 +1618,53 @@
       "comparison-chart-summary",
       `${plainMetricLabel(definition)} bar chart for ${state.dataset}, ${state.split}. ${
         rowsWithValues.length
-      } submissions displayed. ${directionText}.${bestText}`
+      } explicitly selected submissions displayed. ${directionText}.${bestText}${omissionSentence(omittedRows, "metric unavailable")}`
+    );
+    const caption = `${state.dataset}, ${state.split}: ${plainMetricLabel(definition)} for ${rows.length} explicitly selected model${
+      rows.length === 1 ? "" : "s"
+    }; ${directionText.toLowerCase()}.${omissionSentence(
+      omittedRows,
+      "metric unavailable"
+    )} ${releaseStamp()}. Open reproducibility track with public scored ground truth.`;
+    setFigureCaption("comparison", caption);
+    const figureValues = rows.map((row, index) => ({
+      model: rowLabel(row),
+      submission_id: row.id,
+      rank: row.rank,
+      value: row.metricValues[definition.id],
+      order: index,
+    }));
+    state.figureSpecs.set("comparison", {
+      ...figureSpecBase(`${state.dataset}: ${plainMetricLabel(definition)}`, figureValues),
+      mark: { type: "bar", color: palette[0], tooltip: true },
+      encoding: {
+        x: {
+          field: "model",
+          type: "nominal",
+          sort: { field: "order", order: "ascending" },
+          axis: { labelAngle: -25, labelLimit: 180, title: "Model" },
+        },
+        y: { field: "value", type: "quantitative", scale: { zero: true }, title: axisTitle(definition) },
+        tooltip: [
+          { field: "model", type: "nominal", title: "Model" },
+          { field: "submission_id", type: "nominal", title: "Submission ID" },
+          { field: "rank", type: "quantitative", title: "Overall rank" },
+          { field: "value", type: "quantitative", title: plainMetricLabel(definition) },
+        ],
+      },
+    });
+    renderNumericTable(
+      "comparison-data-table",
+      `${plainMetricLabel(definition)} values used in the displayed figure.`,
+      [
+        { label: "Model", value: (row) => rowLabel(row) },
+        { label: "Submission ID", value: "id" },
+        { label: "Rank", value: "rank" },
+        { label: plainMetricLabel(definition), value: (row) => String(row.metricValues[definition.id]) },
+        { label: "Unit", value: () => definition.unit || "dimensionless" },
+        { label: "Direction", value: () => `${definition.direction} is better` },
+      ],
+      rows
     );
     state.charts.comparison = new Chart(canvas, {
       type: "bar",
@@ -1085,7 +1746,7 @@
     const xDefinition = definitions.get(state.scatterX);
     const yDefinition = definitions.get(state.scatterY);
     if (!xDefinition || !yDefinition) return;
-    const rows = rowsForActiveSplit();
+    const rows = figureRows();
     const points = rows
       .map((row, index) => ({
         x: scatterValue(row, state.scatterX),
@@ -1094,6 +1755,8 @@
         backgroundColor: palette[index % palette.length],
       }))
       .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y));
+    const plottedIds = new Set(points.map((point) => point.row.id));
+    const omittedRows = rows.filter((row) => !plottedIds.has(row.id));
     const xValues = points.map((point) => point.x);
     const yValues = points.map((point) => point.y);
     const rangeText = points.length
@@ -1109,7 +1772,63 @@
       "aria-label",
       `${plainMetricLabel(xDefinition)} versus ${plainMetricLabel(yDefinition)} for ${state.dataset}, ${state.split}`
     );
-    setChartSummary("scatter-chart-summary", `Scatter chart for ${state.dataset}, ${state.split}, with ${points.length} submissions.${rangeText}`);
+    setChartSummary(
+      "scatter-chart-summary",
+      `Scatter chart for ${state.dataset}, ${state.split}, with ${points.length} explicitly selected submissions.${rangeText}${omissionSentence(
+        omittedRows,
+        "one or both axis values unavailable"
+      )}`
+    );
+    const caption = `${state.dataset}, ${state.split}: ${plainMetricLabel(xDefinition)} versus ${plainMetricLabel(yDefinition)} for ${
+      points.length
+    } explicitly selected model${points.length === 1 ? "" : "s"}.${omissionSentence(
+      omittedRows,
+      "one or both axis values unavailable"
+    )} ${releaseStamp()}. Open reproducibility track with public scored ground truth.`;
+    setFigureCaption("scatter", caption);
+    const figureValues = points.map((point, index) => ({
+      model: rowLabel(point.row),
+      submission_id: point.row.id,
+      rank: point.row.rank,
+      x: point.x,
+      y: point.y,
+      order: index,
+    }));
+    state.figureSpecs.set("scatter", {
+      ...figureSpecBase(`${state.dataset}: metric scatter`, figureValues),
+      mark: { type: "point", filled: true, size: 120, tooltip: true },
+      encoding: {
+        x: { field: "x", type: "quantitative", title: axisTitle(xDefinition) },
+        y: { field: "y", type: "quantitative", title: axisTitle(yDefinition) },
+        color: {
+          field: "model",
+          type: "nominal",
+          scale: { domain: figureValues.map((point) => point.model), range: palette.slice(0, figureValues.length) },
+          legend: { title: "Model", labelLimit: 260 },
+        },
+        tooltip: [
+          { field: "model", type: "nominal", title: "Model" },
+          { field: "submission_id", type: "nominal", title: "Submission ID" },
+          { field: "rank", type: "quantitative", title: "Overall rank" },
+          { field: "x", type: "quantitative", title: plainMetricLabel(xDefinition) },
+          { field: "y", type: "quantitative", title: plainMetricLabel(yDefinition) },
+        ],
+      },
+    });
+    renderNumericTable(
+      "scatter-data-table",
+      `Values used in the displayed ${plainMetricLabel(xDefinition)} versus ${plainMetricLabel(yDefinition)} figure.`,
+      [
+        { label: "Model", value: (point) => rowLabel(point.row) },
+        { label: "Submission ID", value: (point) => point.row.id },
+        { label: "Rank", value: (point) => point.row.rank },
+        { label: plainMetricLabel(xDefinition), value: (point) => String(point.x) },
+        { label: "X unit", value: () => xDefinition.unit || "dimensionless" },
+        { label: plainMetricLabel(yDefinition), value: (point) => String(point.y) },
+        { label: "Y unit", value: () => yDefinition.unit || "dimensionless" },
+      ],
+      points
+    );
     state.charts.scatter = new Chart(canvas, {
       type: "scatter",
       data: {
@@ -1250,7 +1969,7 @@
             <select id="profile-${index}-split" data-leaderboard-split-select></select>
           </div>
           <div class="chart-control profile-case-control">
-            <label class="chart-control-title" for="profile-${index}-case">Test geometry</label>
+            <label class="chart-control-title" for="profile-${index}-case">Public evaluation geometry</label>
             <select id="profile-${index}-case" data-profile-case-select disabled></select>
           </div>
           <div class="chart-control">
@@ -1263,13 +1982,26 @@
           </div>
         </div>
       </div>
+      <div class="leaderboard-figure-toolbar" role="group" aria-label="${escapeHtml(panel.title)} figure and data actions">
+        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="svg">SVG</button>
+        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="png">High-res PNG</button>
+        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="print">Print / save PDF</button>
+        <button class="leaderboard-action-button" type="button" data-profile-data-index="${index}" data-profile-data-format="csv">Plot data CSV</button>
+        <button class="leaderboard-action-button" type="button" data-profile-data-index="${index}" data-profile-data-format="json">Plot data JSON</button>
+        <button class="leaderboard-action-button" type="button" data-copy-caption="profile-${index}">Copy caption</button>
+      </div>
       <div class="chart-frame">
         <p id="profile-${index}-status" class="profile-chart-status" role="status">Loading profile data...</p>
         <canvas id="profile-${index}-chart" role="img" aria-label="${escapeHtml(
           panel.title
-        )}" aria-describedby="profile-${index}-chart-summary"></canvas>
+        )}" aria-describedby="profile-${index}-chart-summary profile-${index}-figure-caption"></canvas>
         <p id="profile-${index}-chart-summary" class="leaderboard-sr-only"></p>
-      </div>`;
+      </div>
+      <p id="profile-${index}-figure-caption" class="leaderboard-figure-caption"></p>
+      <details class="leaderboard-numeric-data">
+        <summary>View numeric figure data</summary>
+        <div id="profile-${index}-data-table" class="leaderboard-data-table-wrap"></div>
+      </details>`;
     return section;
   }
 
@@ -1305,19 +2037,23 @@
       return candidate.panel_id === panel.id && candidate.station_id === stationId && candidate.quantity_id === quantity.id;
     });
     if (!match) return null;
+    const coordinates = match.coordinate || [];
     const values = match.prediction || match.value || [];
-    const points = (match.coordinate || [])
-      .map((coordinate, index) => ({ x: finiteNumber(coordinate), y: finiteNumber(values[index]) }))
-      .filter((point) => point.x !== null && point.y !== null)
-      .sort((a, b) => a.x - b.x);
-    return points.length ? points : null;
+    const sourcePointCount = Math.max(coordinates.length, values.length);
+    const points = [];
+    for (let index = 0; index < sourcePointCount; index += 1) {
+      const x = finiteNumber(coordinates[index]);
+      const y = finiteNumber(values[index]);
+      if (x !== null && y !== null) points.push({ x, y, sourcePointIndex: index });
+    }
+    return points.length ? { points, sourcePointCount, droppedPointCount: sourcePointCount - points.length } : null;
   }
 
   async function refreshProfileContext() {
     const dataset = activeDataset();
     if (!dataset || !state.split) return;
     const version = ++state.profileLoadVersion;
-    const rows = rowsForActiveSplit().slice(0, 6);
+    const rows = figureRows();
     setProfileStatus("Loading profile data...");
     try {
       let groundTruthContext = null;
@@ -1341,6 +2077,7 @@
       if (!state.profileCase) {
         state.groundTruthCase = null;
         state.profileCases = new Map();
+        state.profileCaseErrors = new Map();
         setProfileStatus("No profile cases are available for this dataset and split.");
         dataset.diagnostic_panels.forEach((_, index) => renderProfileChart(index));
         return;
@@ -1353,16 +2090,17 @@
         try {
           const context = await submissionProfileIndex(row);
           const value = await indexedProfileCase(context, state.profileCase, state.profileChunks, rowLabel(row));
-          return [row.id, value];
+          return { id: row.id, value, error: value ? null : "selected case is absent from the verified profile package" };
         } catch (error) {
           console.error(error);
-          return [row.id, null];
+          return { id: row.id, value: null, error: error.message };
         }
       });
       const [groundTruthCase, rowCases] = await Promise.all([groundTruthRequest, Promise.all(rowRequests)]);
       if (version !== state.profileLoadVersion) return;
       state.groundTruthCase = groundTruthCase;
-      state.profileCases = new Map(rowCases);
+      state.profileCases = new Map(rowCases.map(({ id, value }) => [id, value]));
+      state.profileCaseErrors = new Map(rowCases.filter(({ error }) => error).map(({ id, error }) => [id, error]));
       if (!groundTruthError) element("leaderboard-profile-warning").hidden = true;
       setProfileStatus("");
       dataset.diagnostic_panels.forEach((_, index) => renderProfileChart(index));
@@ -1370,6 +2108,8 @@
       if (version !== state.profileLoadVersion) return;
       state.groundTruthCase = null;
       state.profileCases = new Map();
+      state.profileCaseErrors = new Map();
+      state.profileCaseErrors = new Map();
       setProfileStatus(`Profile data could not be loaded: ${error.message}`);
       showProfileWarning(error);
       console.error(error);
@@ -1387,36 +2127,59 @@
     if (!quantity || !station) return;
 
     const datasets = [];
-    const groundTruthPoints = profileSeries(state.groundTruthCase, panel, station.id, quantity);
-    if (groundTruthPoints) {
+    const omittedProfiles = [];
+    const groundTruthSeries = profileSeries(state.groundTruthCase, panel, station.id, quantity);
+    if (groundTruthSeries) {
       datasets.push({
         label: "Ground truth",
-        data: groundTruthPoints,
+        seriesRole: "public_ground_truth",
+        submissionId: null,
+        sourceProvenance: state.groundTruthCase?._fluidsbenchProvenance || {},
+        lineStyle: "solid",
+        data: groundTruthSeries.points,
+        sourcePointCount: groundTruthSeries.sourcePointCount,
+        droppedPointCount: groundTruthSeries.droppedPointCount,
         borderColor: chartTextColor(),
         backgroundColor: chartTextColor(),
         borderWidth: 3,
         pointRadius: 0,
-        tension: 0.18,
+        tension: 0,
       });
     }
-    rowsForActiveSplit()
-      .slice(0, 6)
-      .forEach((row, rowIndex) => {
-        const points = profileSeries(state.profileCases.get(row.id), panel, station.id, quantity);
-        if (!points) return;
-        datasets.push({
-          label: rowLabel(row),
-          data: points,
-          borderColor: palette[rowIndex % palette.length],
-          backgroundColor: palette[rowIndex % palette.length],
-          borderWidth: 2,
-          borderDash: rowIndex % 2 ? [6, 3] : [],
-          pointRadius: 0,
-          tension: 0.18,
+    figureRows().forEach((row, rowIndex) => {
+      const series = profileSeries(state.profileCases.get(row.id), panel, station.id, quantity);
+      if (!series) {
+        omittedProfiles.push({
+          row,
+          reason: state.profileCaseErrors.get(row.id) || "requested panel, station, or quantity is unavailable",
         });
+        return;
+      }
+      datasets.push({
+        label: rowLabel(row),
+        seriesRole: "submission_prediction",
+        submissionId: row.id,
+        rank: row.rank,
+        sourceProvenance: state.profileCases.get(row.id)?._fluidsbenchProvenance || {},
+        lineStyle: rowIndex % 2 ? "dashed" : "solid",
+        data: series.points,
+        sourcePointCount: series.sourcePointCount,
+        droppedPointCount: series.droppedPointCount,
+        borderColor: palette[rowIndex % palette.length],
+        backgroundColor: palette[rowIndex % palette.length],
+        borderWidth: 2,
+        borderDash: rowIndex % 2 ? [6, 3] : [],
+        pointRadius: 0,
+        tension: 0,
       });
+    });
 
-    const submissionCurveCount = datasets.length - (groundTruthPoints ? 1 : 0);
+    const submissionCurveCount = datasets.length - (groundTruthSeries ? 1 : 0);
+    const profileOmissionText = omittedProfiles.length
+      ? ` Omitted selected result${omittedProfiles.length === 1 ? "" : "s"}: ${omittedProfiles
+          .map(({ row, reason }) => `${row.id} (${reason})`)
+          .join("; ")}.`
+      : "";
     const status = element(`profile-${index}-status`);
     if (status) {
       status.hidden = datasets.length > 0;
@@ -1427,8 +2190,102 @@
     setChartSummary(
       `profile-${index}-chart-summary`,
       `${panel.title} for ${state.dataset}, ${state.split}, geometry ${state.profileCase}. Showing ${quantity.label} at ${station.label}. ${
-        groundTruthPoints ? "Ground truth is included." : "Ground truth is unavailable."
-      } ${submissionCurveCount} submission curves are displayed.`
+        groundTruthSeries ? "Ground truth is included." : "Ground truth is unavailable."
+      } ${submissionCurveCount} submission curves are displayed.${profileOmissionText}`
+    );
+
+    const figureKey = `profile-${index}`;
+    const plottedValues = datasets.flatMap((dataset, seriesIndex) =>
+      dataset.data.map((point, pointIndex) => ({
+        series: dataset.label,
+        series_role: dataset.seriesRole,
+        submission_id: dataset.submissionId,
+        rank: dataset.rank ?? null,
+        series_order: seriesIndex,
+        line_style: dataset.lineStyle,
+        point_index: pointIndex,
+        source_point_index: point.sourcePointIndex,
+        source_point_count: dataset.sourcePointCount,
+        dropped_point_count: dataset.droppedPointCount,
+        x: point.x,
+        y: point.y,
+        source_index_url: dataset.sourceProvenance?.index_url || null,
+        source_index_sha256: dataset.sourceProvenance?.index_sha256 || null,
+        source_chunk_url: dataset.sourceProvenance?.chunk_url || null,
+        source_chunk_declared_sha256: dataset.sourceProvenance?.chunk_declared_sha256 || null,
+        source_chunk_downloaded_sha256: dataset.sourceProvenance?.chunk_downloaded_sha256 || null,
+      }))
+    );
+    const droppedPointCount = datasets.reduce((total, dataset) => total + dataset.droppedPointCount, 0);
+    const caption = `${state.dataset}, ${state.split}, public evaluation geometry ${state.profileCase}: ${quantity.label} at ${
+      station.label
+    }, showing ${groundTruthSeries ? "public ground truth and " : ""}${submissionCurveCount} explicitly selected model curve${
+      submissionCurveCount === 1 ? "" : "s"
+    }. Lines preserve native source order and join finite source coordinate/value pairs without smoothing, interpolation, resampling, or sorting; ${
+      droppedPointCount || "no"
+    } invalid or unpaired source point${droppedPointCount === 1 ? " was" : "s were"} omitted.${profileOmissionText} ${releaseStamp()}.`;
+    setFigureCaption(figureKey, caption);
+    const domain = datasets.map((dataset) => dataset.label);
+    const range = datasets.map((dataset) => dataset.borderColor);
+    state.figureSpecs.set(figureKey, {
+      ...figureSpecBase(`${state.dataset}: ${panel.title}`, plottedValues),
+      mark: { type: "line", interpolate: "linear", point: false, tooltip: true },
+      encoding: {
+        x: { field: "x", type: "quantitative", title: station.x_label },
+        y: {
+          field: "y",
+          type: "quantitative",
+          title: quantity.y_label,
+          scale: { reverse: Boolean(panel.reverse_y), zero: false },
+        },
+        color: {
+          field: "series",
+          type: "nominal",
+          scale: { domain, range },
+          legend: { title: "Series", labelLimit: 260 },
+        },
+        strokeDash: {
+          field: "line_style",
+          type: "nominal",
+          scale: {
+            domain: ["solid", "dashed"],
+            range: [
+              [1, 0],
+              [6, 3],
+            ],
+          },
+          legend: null,
+        },
+        detail: [{ field: "series" }],
+        order: { field: "source_point_index", type: "quantitative" },
+        strokeWidth: {
+          condition: { test: "datum.series_role === 'public_ground_truth'", value: 3 },
+          value: 2,
+        },
+        tooltip: [
+          { field: "series", type: "nominal", title: "Series" },
+          { field: "submission_id", type: "nominal", title: "Submission ID" },
+          { field: "x", type: "quantitative", title: station.x_label },
+          { field: "y", type: "quantitative", title: quantity.y_label },
+        ],
+      },
+    });
+    renderNumericTable(
+      `${figureKey}-data-table`,
+      `Finite source coordinate/value pairs used in the displayed figure, in native source order; omitted-point counts are explicit and no smoothing, interpolation, resampling, or sorting is applied.`,
+      [
+        { label: "Series", value: "series" },
+        { label: "Role", value: "series_role" },
+        { label: "Line style", value: "line_style" },
+        { label: "Submission ID", value: "submission_id" },
+        { label: "Plotted point", value: "point_index" },
+        { label: "Source point", value: "source_point_index" },
+        { label: "Source points", value: "source_point_count" },
+        { label: "Dropped points", value: "dropped_point_count" },
+        { label: station.x_label, value: "x" },
+        { label: quantity.y_label, value: "y" },
+      ],
+      plottedValues
     );
 
     state.charts[`profile-${index}`] = new Chart(canvas, {
@@ -1459,6 +2316,178 @@
         },
       },
     });
+  }
+
+  function profileDataExport(index) {
+    const panel = activeDataset()?.diagnostic_panels?.[index];
+    const selection = panel ? panelSelection(panel) : null;
+    const quantity = (panel?.quantities || []).find((candidate) => candidate.id === selection?.quantity);
+    const station = (panel?.stations || []).find((candidate) => candidate.id === selection?.station);
+    const spec = state.figureSpecs.get(`profile-${index}`);
+    const points = Array.isArray(spec?.data?.values) ? spec.data.values : [];
+    if (!panel || !quantity || !station || !points.length) throw new Error("No plotted profile data are available");
+    const license = releaseLicenseMetadata();
+    return {
+      schema_version: "fluidsbench-profile-plot-export-v1",
+      exported_at: new Date().toISOString(),
+      provenance: {
+        export_scope: "exact_displayed_profile_figure",
+        row_count: points.length,
+        release_id: dataRelease().id || null,
+        release_status: dataRelease().status || null,
+        reproducibility_contract_version: dataRelease().reproducibility_contract_version || null,
+        feed_sha256: dataRelease().feed_sha256 || null,
+        loaded_feed_sha256: state.loadedFeedSha256,
+        feed_verified: state.feedVerified,
+        archive_url: releaseArchiveUrl() || null,
+        profile_ground_truth: {
+          ...dataRelease().profile_ground_truth,
+          loaded_manifest_sha256: state.groundTruthManifestProvenance?.sha256 || null,
+          loaded_release_id: state.groundTruthManifestProvenance?.release_id || null,
+        },
+        view_url: currentViewUrl(false, false),
+        license: {
+          spdx_id: license.spdxId || null,
+          name: license.name || null,
+          url: license.url || null,
+          scope: license.scope,
+          fallback_notice: license.spdxId ? null : license.label,
+        },
+      },
+      figure: {
+        dataset: state.dataset,
+        split: state.split,
+        split_id: activeSplitDefinition()?.id || null,
+        public_evaluation_case_id: state.profileCase,
+        panel_id: panel.id,
+        panel_title: panel.title,
+        station_id: station.id,
+        station_label: station.label,
+        quantity_id: quantity.id,
+        quantity_label: quantity.label,
+        x_label: station.x_label,
+        y_label: quantity.y_label,
+        requested_model_ids: figureRows().map((row) => row.id),
+        plotted_model_ids: Array.from(new Set(points.map((point) => point.submission_id).filter(Boolean))),
+        processing:
+          "Finite submitted/reference coordinate-value pairs in native source order; no smoothing, interpolation, resampling, or sorting; dropped and source point counts are recorded per row",
+        caption: state.figureCaptions.get(`profile-${index}`),
+      },
+      points,
+    };
+  }
+
+  function profileDataFilename(index, extension) {
+    const panel = activeDataset()?.diagnostic_panels?.[index];
+    const selection = panel ? panelSelection(panel) : {};
+    return figureFilename(
+      `profile-data-${panel?.id || index}-${state.profileCase}-${selection.station || "station"}-${selection.quantity || "quantity"}`,
+      extension
+    );
+  }
+
+  function exportProfileData(index, format) {
+    const status = element("leaderboard-release-action-status");
+    try {
+      const payload = profileDataExport(index);
+      if (format === "json") {
+        downloadText(profileDataFilename(index, "json"), `${JSON.stringify(payload, null, 2)}\n`, "application/json;charset=utf-8");
+        return;
+      }
+      const metadata = payload.provenance;
+      const figure = payload.figure;
+      const columns = [
+        "export_scope",
+        "export_row_count",
+        "release_id",
+        "release_status",
+        "release_reproducibility_contract",
+        "feed_sha256",
+        "loaded_feed_sha256",
+        "feed_verified",
+        "archive_url",
+        "profile_ground_truth_json",
+        "view_url",
+        "release_license_spdx",
+        "release_license_name",
+        "release_license_url",
+        "release_license_scope",
+        "dataset",
+        "split",
+        "split_id",
+        "public_evaluation_case_id",
+        "panel_id",
+        "station_id",
+        "quantity_id",
+        "processing",
+        "series",
+        "series_role",
+        "line_style",
+        "submission_id",
+        "rank",
+        "series_order",
+        "point_index",
+        "source_point_index",
+        "source_point_count",
+        "dropped_point_count",
+        "source_index_url",
+        "source_index_sha256",
+        "source_chunk_url",
+        "source_chunk_declared_sha256",
+        "source_chunk_downloaded_sha256",
+        "x",
+        "y",
+      ];
+      const lines = [columns.map(csvCell).join(",")];
+      payload.points.forEach((point) => {
+        const values = [
+          metadata.export_scope,
+          metadata.row_count,
+          metadata.release_id,
+          metadata.release_status,
+          metadata.reproducibility_contract_version,
+          metadata.feed_sha256,
+          metadata.loaded_feed_sha256,
+          metadata.feed_verified,
+          metadata.archive_url,
+          metadata.profile_ground_truth,
+          metadata.view_url,
+          metadata.license.spdx_id,
+          metadata.license.name,
+          metadata.license.url,
+          metadata.license.scope,
+          figure.dataset,
+          figure.split,
+          figure.split_id,
+          figure.public_evaluation_case_id,
+          figure.panel_id,
+          figure.station_id,
+          figure.quantity_id,
+          figure.processing,
+          point.series,
+          point.series_role,
+          point.line_style,
+          point.submission_id,
+          point.rank,
+          point.series_order,
+          point.point_index,
+          point.source_point_index,
+          point.source_point_count,
+          point.dropped_point_count,
+          point.source_index_url,
+          point.source_index_sha256,
+          point.source_chunk_url,
+          point.source_chunk_declared_sha256,
+          point.source_chunk_downloaded_sha256,
+          point.x,
+          point.y,
+        ];
+        lines.push(values.map(csvCell).join(","));
+      });
+      downloadText(profileDataFilename(index, "csv"), `${lines.join("\n")}\n`, "text/csv;charset=utf-8");
+    } catch (error) {
+      if (status) status.textContent = `Could not export plotted data: ${error.message}`;
+    }
   }
 
   function renderMetricDefinitions() {
@@ -1542,7 +2571,7 @@
     const list = element("training-definitions-list");
     list.replaceChildren();
     element("training-definitions-intro").textContent =
-      `Training values accepted by the submission format. Each status is based on the loaded ${state.dataset} data and the selected ${state.split} table.`;
+      `Training values defined by the planned submission format. Each status is based on the loaded ${state.dataset} data and the selected ${state.split} table.`;
     const selectedRegimes = new Set(rowsForActiveSplit().map((row) => row.training_regime));
     const datasetRegimes = new Set((state.rows.get(state.dataset) || []).map((row) => row.training_regime));
     trainingRegimeDefinitions().forEach((definition) => {
@@ -1554,7 +2583,7 @@
         ? "Shown in selected table"
         : datasetRegimes.has(definition.id)
           ? `Used in another ${state.dataset} split`
-          : "Accepted submission value";
+          : "Planned submission value";
       term.appendChild(definitionStatus(status));
       const description = document.createElement("dd");
       description.textContent = definition.description;
@@ -1600,19 +2629,64 @@
     }
   }
 
-  function openDetails(row) {
+  function submissionEvidenceUrl(row, file) {
+    const indexFile = row.profile_data?.index_file;
+    if (!indexFile || !file) return "";
+    try {
+      return safeHttpUrl(new URL(`../${file}`, fileUrl(indexFile)).href);
+    } catch (_error) {
+      return "";
+    }
+  }
+
+  function maintainerReplay(row) {
+    return row.maintainer_replay || row.approval?.replay || {};
+  }
+
+  function openDetails(row, syncUrl = true) {
+    state.resultId = row.id;
+    if (syncUrl) updateUrl();
     const dialog = element("details-dialog");
     element("details-dialog-title").textContent = row.model;
     element("details-dialog-subtitle").textContent = `${row.dataset} / ${row.split}`;
-    const links = [detailsLink("Paper", row.paper_url), detailsLink("Code", row.code_url)].filter(Boolean).join(" &middot; ");
+    const links = [
+      detailsLink("Paper", row.paper_url),
+      detailsLink("Legacy code link", row.code_url),
+      detailsLink("Result permalink", resultUrl(row, Boolean(releaseArchiveUrl()))),
+    ]
+      .filter(Boolean)
+      .join(" &middot; ");
     const evaluationLinks = [detailsLink("Evaluation evidence", evaluationEvidenceUrl(row))].filter(Boolean).join(" &middot; ");
-    const approvalLinks = [detailsLink("Approval pull request", row.approval?.pull_request_url)].filter(Boolean).join(" &middot; ");
+    const reproducibilityLinks = [
+      detailsLink("Pinned public code", row.reproducibility?.code?.repository_url),
+      detailsLink("Public model artifact", row.reproducibility?.model_artifact?.url),
+      detailsLink("Locked environment", row.reproducibility?.environment?.url),
+      detailsLink("Replay instructions", row.reproducibility?.replay_instructions_url),
+    ]
+      .filter(Boolean)
+      .join(" &middot; ");
+    const replay = maintainerReplay(row);
+    const replayEvidenceUrl = submissionEvidenceUrl(row, replay.evidence_file);
+    const approvalLinks = [
+      detailsLink("Approval pull request", row.approval?.pull_request_url),
+      detailsLink("Maintainer replay evidence", replayEvidenceUrl),
+    ]
+      .filter(Boolean)
+      .join(" &middot; ");
     const metricSections = Array.from(detailsMetricGroups(row).entries())
       .map(([group, metrics]) => {
         const values = metrics.map(({ definition, value }) => detailsRow(definition.label, formatMetric(value, definition), true)).join("");
         return `<section><h4>${escapeHtml(group)}</h4><dl>${values}</dl></section>`;
       })
       .join("");
+    const resultCitationActions =
+      dataRelease().status === "official" && state.feedVerified
+        ? `<p class="leaderboard-result-citation-actions">
+            <button class="leaderboard-action-button" type="button" data-copy-result-citation="plain">Copy result citation</button>
+            <button class="leaderboard-action-button" type="button" data-copy-result-citation="bibtex">Copy result BibTeX</button>
+            <span id="result-citation-copy-status" role="status"></span>
+          </p>`
+        : "";
     element("details-dialog-body").innerHTML = `
       <section><h4>Submission</h4><dl>
         ${detailsRow("Submission ID", row.id)}
@@ -1621,7 +2695,7 @@
         ${detailsRow("Submitted by", row.submitter)}
         ${detailsRow("Institution", row.institution)}
         ${detailsRow("Model types", row.modelTypes.join(", "))}
-        ${detailsRow("Parameters", `${formatNumber(row.parameterCount, 2)} M`)}
+        ${detailsRow("Parameters", row.parameterCount === null ? null : `${formatNumber(row.parameterCount, 2)} M`)}
         ${detailsRow("Date", row.date)}
       </dl>${links ? `<p>${links}</p>` : ""}${row.note ? `<p>${escapeHtml(row.note)}</p>` : ""}</section>
       <section><h4>Training</h4><dl>
@@ -1639,13 +2713,52 @@
         ${detailsRow("Evidence SHA-256", row.evaluation?.evidence_sha256)}
         ${detailsRow("Profile case set", row.profile_data?.case_set_id)}
         ${detailsRow("Profile case count", row.profile_data?.case_count)}
+        ${detailsRow("Profile index SHA-256", row.profile_data?.index_sha256)}
       </dl>${evaluationLinks ? `<p>${evaluationLinks}</p>` : ""}</section>
-      <section><h4>Approval</h4><dl>
+      <section><h4>Open reproducibility</h4><dl>
+        ${detailsRow("Contract", row.reproducibility?.contract_version)}
+        ${detailsRow("Artifact access", humanize(row.reproducibility?.access))}
+        ${detailsRow("Public evaluation-data use", humanize(row.reproducibility?.public_test_data_use))}
+        ${detailsRow("Result-data licence", row.reproducibility?.result_data_license_spdx)}
+        ${detailsRow("Code repository", row.reproducibility?.code?.repository_url)}
+        ${detailsRow("Code commit", row.reproducibility?.code?.commit)}
+        ${detailsRow("Code licence", row.reproducibility?.code?.license_spdx)}
+        ${detailsRow("Model artifact", row.reproducibility?.model_artifact?.url)}
+        ${detailsRow("Model SHA-256", row.reproducibility?.model_artifact?.sha256)}
+        ${detailsRow("Model licence", row.reproducibility?.model_artifact?.license_spdx)}
+        ${detailsRow("Environment kind", humanize(row.reproducibility?.environment?.kind))}
+        ${detailsRow("Environment", row.reproducibility?.environment?.url)}
+        ${detailsRow("Environment SHA-256", row.reproducibility?.environment?.sha256)}
+        ${detailsRow("Replay instructions", row.reproducibility?.replay_instructions_url)}
+      </dl>${reproducibilityLinks ? `<p>${reproducibilityLinks}</p>` : ""}</section>
+      <section><h4>Result status and independent replay</h4><dl>
         ${detailsRow("Status", humanize(row.approval?.status))}
-        ${detailsRow("Reviewed by", row.approval?.approved_by)}
+        ${detailsRow(
+          "Citation / promotion eligibility",
+          dataRelease().status === "official" && row.approval?.status === "approved" && replay.status === "reproduced"
+            ? "Eligible as a verified official leaderboard result; preserve the release ID, result permalink, rank context, and replay evidence in any claim"
+            : "Not eligible for scholarly citation or promotional leaderboard claims"
+        )}
+        ${detailsRow("Approved by", row.approval?.approved_by)}
         ${detailsRow("Approval date", row.approval?.approved_at)}
         ${detailsRow("Approval note", row.approval?.note)}
-      </dl>${approvalLinks ? `<p>${approvalLinks}</p>` : ""}</section>
+        ${detailsRow("Replay status", humanize(replay.status))}
+        ${detailsRow("Replay contract", replay.contract_version)}
+        ${detailsRow("Replay reference version", replay.reference_version)}
+        ${detailsRow("Replayed by", replay.replayed_by)}
+        ${detailsRow("Replayed at", replay.replayed_at)}
+        ${detailsRow("Metric absolute tolerance", replay.metric_abs_tolerance)}
+        ${detailsRow("Reviewed submission SHA-256", replay.reviewed_submission_sha256)}
+        ${detailsRow("Submitted profile index SHA-256", replay.submitted_profile_index_sha256)}
+        ${detailsRow("Replayed profile index SHA-256", replay.replayed_profile_index_sha256)}
+        ${detailsRow(
+          "Independent of submitter",
+          replay.independence?.independent_of_submitter === true ? "Yes" : replay.independence?.independent_of_submitter === false ? "No" : null
+        )}
+        ${detailsRow("Conflict-of-interest disclosure", replay.independence?.conflict_of_interest_disclosure)}
+        ${detailsRow("Replay evidence file", replay.evidence_file)}
+        ${detailsRow("Replay evidence SHA-256", replay.evidence_sha256)}
+      </dl>${approvalLinks ? `<p>${approvalLinks}</p>` : ""}${resultCitationActions}</section>
       ${metricSections}`;
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
@@ -1708,12 +2821,28 @@
 
     const metricIds = new Set(activeMetricDefinitions().map((definition) => definition.id));
     if (metricIds.has(restored.comparisonMetric)) state.comparisonMetric = restored.comparisonMetric;
-    if ([3, 5, 10].includes(restored.comparisonRowCount)) state.comparisonRowCount = restored.comparisonRowCount;
+
+    const availableRowIds = new Set(rowsForActiveSplit().map((row) => row.id));
+    if (restored.hasComparedModelIds) {
+      const availableRequestedIds = restored.comparedModelIds.filter((id) => availableRowIds.has(id));
+      state.comparedModelIds = new Set(availableRequestedIds.slice(0, maxFigureModels));
+      state.staleComparedModelIds = new Set([
+        ...restored.comparedModelIds.filter((id) => !availableRowIds.has(id)),
+        ...availableRequestedIds.slice(maxFigureModels),
+      ]);
+    } else {
+      setDefaultComparedModels();
+    }
 
     const scatterIds = new Set(scatterDefinitions().map((definition) => definition.id));
     if (scatterIds.has(restored.scatterX)) state.scatterX = restored.scatterX;
     if (scatterIds.has(restored.scatterY)) state.scatterY = restored.scatterY;
     state.profileCase = restored.profileCase;
+
+    state.requestedResultId = restored.resultId;
+    const resultExists = rowsForActiveSplit().some((row) => row.id === restored.resultId);
+    state.resultUnavailable = Boolean(restored.resultId && !state.releaseMismatch && !resultExists);
+    state.resultId = restored.resultId && !state.releaseMismatch && resultExists ? restored.resultId : "";
 
     (activeDataset()?.diagnostic_panels || []).forEach((panel) => {
       const quantity = restored.params.get(`quantity_${panel.id}`);
@@ -1729,6 +2858,7 @@
     renderColumnToggles();
     renderTable();
     renderTypeFilter();
+    renderComparisonModelPicker();
     renderComparisonControls();
     renderScatterControls();
     renderDiagnosticPanels();
@@ -1765,6 +2895,11 @@
   async function setDataset(datasetName, restored = null, syncUrl = true) {
     const dataset = datasetEntries().find((candidate) => candidate.name === datasetName);
     if (!dataset) return;
+    const detailsDialog = element("details-dialog");
+    if (detailsDialog?.open) {
+      state.resultId = "";
+      detailsDialog.close();
+    }
     const version = ++state.loadVersion;
     const previousDataset = state.dataset;
     syncDatasetSelects();
@@ -1781,19 +2916,33 @@
       state.sortKey = "rank";
       state.sortDirection = "asc";
       state.comparisonMetric = dataset.ranking?.metric_id || "";
-      state.comparisonRowCount = 5;
       state.scatterX = "";
       state.scatterY = dataset.ranking?.metric_id || "";
+      state.comparedModelIds = new Set();
+      state.staleComparedModelIds = new Set();
       state.profileCaseIds = [];
       state.profileCase = "";
       state.groundTruthCase = null;
       state.profileCases = new Map();
+      state.profileCaseErrors = new Map();
+      state.resultId = "";
+      state.resultUnavailable = false;
+      if (!restored) {
+        state.requestedReleaseId = "";
+        state.requestedResultId = "";
+        state.releaseMismatch = false;
+      }
       initializeVisibleGroups();
-      applyRestoredState(restored);
+      if (restored) applyRestoredState(restored);
+      else setDefaultComparedModels();
       syncDatasetSelects();
       syncSplitSelects();
       element("leaderboard-error").hidden = true;
       renderAll();
+      if (state.resultId) {
+        const targetRow = rowsForActiveSplit().find((row) => row.id === state.resultId);
+        if (targetRow) openDetails(targetRow, false);
+      }
       if (syncUrl) updateUrl();
     } catch (error) {
       if (version === state.loadVersion) {
@@ -1810,14 +2959,25 @@
 
   function setSplit(splitName) {
     if (!splitOptions().some((split) => split.name === splitName)) return;
+    const detailsDialog = element("details-dialog");
+    if (detailsDialog?.open) {
+      state.resultId = "";
+      detailsDialog.close();
+    }
     state.split = splitName;
     syncSplitSelects();
     state.sortKey = "rank";
     state.sortDirection = "asc";
+    state.resultId = "";
+    state.requestedResultId = "";
+    state.resultUnavailable = false;
+    state.staleComparedModelIds = new Set();
+    setDefaultComparedModels();
     state.profileCaseIds = [];
     state.profileCase = "";
     state.groundTruthCase = null;
     state.profileCases = new Map();
+    state.profileCaseErrors = new Map();
     renderAll();
     updateUrl();
   }
@@ -1831,20 +2991,25 @@
         syncProfileCaseSelects();
         void refreshProfileContext();
         updateUrl();
+      } else if (event.target.matches("[data-comparison-model]")) {
+        if (event.target.checked && state.comparedModelIds.size >= maxFigureModels) {
+          event.target.checked = false;
+          element("comparison-model-count").textContent = `Choose at most ${maxFigureModels} models for readable, color-consistent figures.`;
+          return;
+        }
+        if (event.target.checked) state.comparedModelIds.add(event.target.value);
+        else state.comparedModelIds.delete(event.target.value);
+        state.staleComparedModelIds.delete(event.target.value);
+        updateFigureSelection();
       }
     });
     element("type-filter")?.addEventListener("change", (event) => {
       state.modelType = event.target.value;
       renderTable();
-      updateUrl();
+      updateFigureSelection();
     });
     element("comparison-metric")?.addEventListener("change", (event) => {
       state.comparisonMetric = event.target.value;
-      renderComparisonChart();
-      updateUrl();
-    });
-    element("comparison-row-count")?.addEventListener("change", (event) => {
-      state.comparisonRowCount = Number(event.target.value);
       renderComparisonChart();
       updateUrl();
     });
@@ -1860,6 +3025,23 @@
     });
     element("export-leaderboard-csv")?.addEventListener("click", exportCsv);
     element("export-leaderboard-json")?.addEventListener("click", exportJson);
+    element("leaderboard-export-scope")?.addEventListener("change", (event) => {
+      state.exportScope = event.target.value === "full" ? "full" : "current";
+    });
+    element("select-all-comparison-models")?.addEventListener("click", () => {
+      state.comparedModelIds = new Set(
+        rowsForCurrentModelType()
+          .slice(0, maxFigureModels)
+          .map((row) => row.id)
+      );
+      state.staleComparedModelIds = new Set();
+      updateFigureSelection();
+    });
+    element("clear-comparison-models")?.addEventListener("click", () => {
+      state.comparedModelIds = new Set();
+      state.staleComparedModelIds = new Set();
+      updateFigureSelection();
+    });
     element("open-citation-dialog")?.addEventListener("click", openCitationDialog);
     element("copy-citation-text")?.addEventListener("click", () => void copyCitation("plain"));
     element("copy-citation-bibtex")?.addEventListener("click", () => void copyCitation("bibtex"));
@@ -1867,9 +3049,35 @@
     element("details-dialog")?.addEventListener("click", (event) => {
       if (event.target === event.currentTarget) event.currentTarget.close();
     });
+    element("details-dialog")?.addEventListener("close", () => {
+      if (!state.resultId) return;
+      state.resultId = "";
+      updateUrl();
+    });
     element("close-citation-dialog")?.addEventListener("click", () => element("citation-dialog").close());
     element("citation-dialog")?.addEventListener("click", (event) => {
       if (event.target === event.currentTarget) event.currentTarget.close();
+    });
+    document.addEventListener("click", (event) => {
+      const resultCitationButton = event.target.closest("[data-copy-result-citation]");
+      if (resultCitationButton) {
+        void copyResultCitation(resultCitationButton.dataset.copyResultCitation);
+        return;
+      }
+      const figureButton = event.target.closest("[data-figure-key][data-figure-format]");
+      if (figureButton) {
+        void exportFigure(figureButton.dataset.figureKey, figureButton.dataset.figureFormat);
+        return;
+      }
+      const captionButton = event.target.closest("[data-copy-caption]");
+      if (captionButton) {
+        void copyFigureCaption(captionButton.dataset.copyCaption);
+        return;
+      }
+      const profileDataButton = event.target.closest("[data-profile-data-index][data-profile-data-format]");
+      if (profileDataButton) {
+        exportProfileData(Number(profileDataButton.dataset.profileDataIndex), profileDataButton.dataset.profileDataFormat);
+      }
     });
     document.addEventListener("mouseover", (event) => {
       const button = event.target.closest(".leaderboard-column-help");
@@ -1893,6 +3101,13 @@
       }
     });
     window.addEventListener("resize", hideHelp);
+    window.addEventListener("popstate", () => {
+      const restored = readUrlState();
+      state.requestedReleaseId = restored.releaseId;
+      state.releaseMismatch = Boolean(restored.releaseId && restored.releaseId !== dataRelease().id);
+      const dataset = datasetEntries().find((candidate) => slug(candidate.name) === restored.dataset) || datasetEntries()[0];
+      if (dataset) void setDataset(dataset.name, restored, false);
+    });
     const helpPopover = element("column-help-popover");
     helpPopover?.addEventListener("mouseenter", () => window.clearTimeout(helpHideTimer));
     helpPopover?.addEventListener("mouseleave", scheduleHelpHide);
@@ -1912,6 +3127,8 @@
       }
       state.metrics = new Map(state.manifest.metric_definitions.map((definition) => [definition.id, definition]));
       const restored = readUrlState();
+      state.requestedReleaseId = restored.releaseId;
+      state.releaseMismatch = Boolean(restored.releaseId && restored.releaseId !== dataRelease().id);
       const initial = datasetEntries().find((dataset) => slug(dataset.name) === restored.dataset) || datasetEntries()[0];
       await setDataset(initial.name, restored, false);
     } catch (error) {

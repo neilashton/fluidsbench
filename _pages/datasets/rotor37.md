@@ -14,8 +14,8 @@ compact_masthead: true
     <h2>Overview</h2>
     <p>
       Rotor37 contains 1,200 three-dimensional CFD simulations derived from NASA Rotor 37 compressor configurations.
-      FluidsBench follows the current PLAID release: 1,000 cases form the training pool and 200 cases form the fixed
-      hidden test set.
+      FluidsBench follows the current PLAID release: 1,000 cases form the training pool and 200 cases form the published
+      evaluation set. Under the FluidsBench open-reproducibility policy, the scored case list and ground truth are public.
     </p>
     <p>
       Inputs are blade geometry, surface normals, rotational speed <code>Omega</code>, and pressure condition
@@ -26,7 +26,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-section">
-    <h2>Official splits</h2>
+    <h2>Planned benchmark splits</h2>
     <p>
       Set the submission <code>split</code> to the exact ID below. The reduced training sets use the official published
       non-contiguous index selections; they must not be replaced by the first <em>N</em> cases. Every split uses the same
