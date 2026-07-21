@@ -1,1 +1,2006 @@
-{"schema_version":"1.0","cases":[{"case_id":"hiliftaeroml_stall_test_0721","series":[{"panel_id":"pressure_profiles","station_id":"pressure_belt_a","quantity_id":"cp","coordinate":[1096.61,1127.81,1174.61,1252.61,1330.61,1408.61,1486.61],"value":[-2.0522575,-2.422646,-1.6117955,-0.921071,-0.580714,-0.280399,-0.040147]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_b","quantity_id":"cp","coordinate":[1167.86,1196.02,1238.26,1308.66,1379.06,1449.46,1519.86],"value":[-2.0818313,-2.4604139,-1.6434725,-0.9361208,-0.5874263,-0.2885453,-0.0394778]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_c","quantity_id":"cp","coordinate":[1232.16,1257.68,1295.96,1359.76,1423.56,1487.36,1551.16],"value":[-2.1396782,-2.5213274,-1.6877252,-0.9646004,-0.603038,-0.2916926,-0.0406076]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_d","quantity_id":"cp","coordinate":[1296.41,1318.89,1352.61,1408.81,1465.01,1521.21,1577.41],"value":[-2.1820976,-2.5624472,-1.7216744,-0.9809936,-0.6106532,-0.300368,-0.0401288]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_e","quantity_id":"cp","coordinate":[1364.17,1382.41,1409.77,1455.37,1500.97,1546.57,1592.17],"value":[-2.2046648,-2.582153,-1.7477054,-0.992729,-0.6152408,-0.3072899,-0.0390746]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_f","quantity_id":"cp","coordinate":[1438.9,1455.3,1479.9,1520.9,1561.9,1602.9,1643.9],"value":[-2.2624634,-2.641255,-1.793958,-1.0164384,-0.6376468,-0.3086962,-0.049523]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_g","quantity_id":"cp","coordinate":[1519.64,1533.72,1554.84,1590.04,1625.24,1660.44,1695.64],"value":[-2.3226043,-2.7045917,-1.8400939,-1.0459622,-0.6539225,-0.3221966,-0.0507845]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_h","quantity_id":"cp","coordinate":[1591.91,1603.91,1621.91,1651.91,1681.91,1711.91,1741.91],"value":[-2.376175,-2.757125,-1.874925,-1.0629,-0.671925,-0.331075,-0.050375]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_i","quantity_id":"cp","coordinate":[1685.11,1695.43,1710.91,1736.71,1762.51,1788.31,1814.11],"value":[-2.4200318,-2.788574,-1.89212,-1.0753508,-0.6769268,-0.3382664,-0.049409]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_j","quantity_id":"cp","coordinate":[1758.87,1767.67,1780.87,1802.87,1824.87,1846.87,1868.87],"value":[-2.486633,-2.856152,-1.937348,-1.09844,-0.688973,-0.349415,-0.049805]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.101286,0.2220576,0.3428292,0.5139223,0.705144,0.8762371,0.9869444,1.0272016,1.0272016]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0798614,0.1897767,0.3096843,0.4795534,0.6793994,0.8492685,0.9691761,1.0091453,1.0191376]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0492155,0.1387448,0.2382218,0.3874373,0.5764436,0.7753976,0.9246131,0.994247,1.0041947]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_4","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.040329,0.1104935,0.200705,0.341034,0.5314805,0.741974,0.9123735,0.9925615,1.0126085]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_5","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0292317,0.0888771,0.1684043,0.2876951,0.4666313,0.6853311,0.8642673,0.9736172,0.993499]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_6","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0494885,0.1192498,0.2189088,0.3683973,0.5677153,0.7769992,0.9264877,0.996249,1.0062149]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0904959,0.200783,0.3210962,0.4915399,0.6820358,0.8524795,0.9727927,1.0128971,1.0229232]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0707514,0.1711934,0.2816796,0.4423868,0.6432708,0.8240664,0.954641,1.004862,1.0149062]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0394526,0.1191398,0.2087879,0.3482405,0.5374976,0.7466765,0.9060509,0.9857381,1.0056599]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_4","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0294137,0.0891431,0.1588274,0.2782862,0.4574744,0.6764822,0.8556704,0.9751292,0.995039]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.078632,0.177872,0.287036,0.44582,0.634376,0.813008,0.94202,0.99164,1.001564]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0507155,0.1310971,0.2315741,0.3722419,0.5631482,0.7641022,0.9248654,0.9951993,1.0152947]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.01952,0.06932,0.13904,0.2486,0.41792,0.62708,0.82628,0.95576,0.9956]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0712631,0.1619318,0.2626748,0.4137893,0.605201,0.7966127,0.9376529,0.9980987,1.0182473]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0397578,0.1096367,0.1894983,0.3192734,0.498962,0.7085987,0.8783046,0.9681489,0.998097]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0207224,0.0710234,0.1313846,0.2319866,0.3929498,0.5941538,0.805418,0.9462608,0.9965618]}]},{"case_id":"hiliftaeroml_stall_test_0722","series":[{"panel_id":"pressure_profiles","station_id":"pressure_belt_a","quantity_id":"cp","coordinate":[1096.61,1127.81,1174.61,1252.61,1330.61,1408.61,1486.61],"value":[-2.0519995,-2.4223436,-1.6115903,-0.9209486,-0.5806324,-0.2803534,-0.0401302]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_b","quantity_id":"cp","coordinate":[1167.86,1196.02,1238.26,1308.66,1379.06,1449.46,1519.86],"value":[-2.1008186,-2.4826958,-1.658645,-0.9451376,-0.5934086,-0.2919266,-0.0406916]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_c","quantity_id":"cp","coordinate":[1232.16,1257.68,1295.96,1359.76,1423.56,1487.36,1551.16],"value":[-2.1387862,-2.5202834,-1.6870132,-0.9641764,-0.602758,-0.2915366,-0.0405516]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_d","quantity_id":"cp","coordinate":[1296.41,1318.89,1352.61,1408.81,1465.01,1521.21,1577.41],"value":[-2.1748016,-2.5539352,-1.7158504,-0.9775376,-0.6083812,-0.299088,-0.0396808]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_e","quantity_id":"cp","coordinate":[1364.17,1382.41,1409.77,1455.37,1500.97,1546.57,1592.17],"value":[-2.2280272,-2.609342,-1.7664356,-1.003806,-0.6224912,-0.3114186,-0.0404844]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_f","quantity_id":"cp","coordinate":[1438.9,1455.3,1479.9,1520.9,1561.9,1602.9,1643.9],"value":[-2.2589558,-2.637185,-1.791146,-1.0147808,-0.6365516,-0.3080894,-0.049301]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_g","quantity_id":"cp","coordinate":[1519.64,1533.72,1554.84,1590.04,1625.24,1660.44,1695.64],"value":[-2.3008902,-2.6794538,-1.8227046,-1.0356908,-0.647165,-0.3184124,-0.049433]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_h","quantity_id":"cp","coordinate":[1591.91,1603.91,1621.91,1651.91,1681.91,1711.91,1741.91],"value":[-2.3634792,-2.742476,-1.8647992,-1.0569376,-0.6679672,-0.3288648,-0.049604]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_i","quantity_id":"cp","coordinate":[1685.11,1695.43,1710.91,1736.71,1762.51,1788.31,1814.11],"value":[-2.4472799,-2.819807,-1.91366,-1.0880594,-0.6853274,-0.3430052,-0.0510245]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_j","quantity_id":"cp","coordinate":[1758.87,1767.67,1780.87,1802.87,1824.87,1846.87,1868.87],"value":[-2.4833696,-2.8524224,-1.9347776,-1.096928,-0.6879776,-0.348848,-0.049616]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.099688,0.2195008,0.3393136,0.5090484,0.698752,0.8684868,0.9783152,1.0182528,1.0182528]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0810656,0.1917168,0.3124272,0.4834336,0.6846176,0.855624,0.9763344,1.0165712,1.0266304]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0498755,0.1398008,0.2397178,0.3895933,0.5794356,0.7792696,0.9291451,0.999087,1.0090787]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_4","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.038908,0.108362,0.19766,0.336568,0.525086,0.733448,0.902122,0.981498,1.001342]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_5","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.030468,0.090684,0.170972,0.291404,0.472052,0.692844,0.873492,0.983888,1.00396]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_6","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.049079,0.1186492,0.2180352,0.3671142,0.5658862,0.7745968,0.9236758,0.993246,1.0031846]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0904579,0.200723,0.3210122,0.4914219,0.6818798,0.8522895,0.9725787,1.0126751,1.0226992]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0694951,0.1691981,0.2788714,0.4383962,0.6378022,0.8172676,0.9468815,0.996733,1.0067033]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0403024,0.1204752,0.2106696,0.350972,0.5413824,0.751836,0.9121816,0.9923544,1.0123976]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_4","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0301729,0.0902527,0.1603458,0.2805054,0.4607448,0.6810374,0.8612768,0.9814364,1.001463]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.080567,0.180882,0.2912285,0.4517325,0.642331,0.822898,0.9533075,1.003465,1.0134965]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.050978,0.1314996,0.2321516,0.3730644,0.5643032,0.7656072,0.9266504,0.9971068,1.0172372]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.019724,0.069609,0.139448,0.249195,0.418804,0.628321,0.827861,0.957562,0.99747]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.069643,0.159454,0.259244,0.408929,0.59853,0.788131,0.927837,0.987711,1.007669]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0402184,0.1103276,0.1904524,0.3206552,0.500936,0.7112636,0.8815288,0.9716692,1.001716]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0196304,0.0694764,0.1292916,0.2289836,0.3884908,0.5878748,0.797228,0.9367968,0.9866428]}]},{"case_id":"hiliftaeroml_stall_test_0723","series":[{"panel_id":"pressure_profiles","station_id":"pressure_belt_a","quantity_id":"cp","coordinate":[1096.61,1127.81,1174.61,1252.61,1330.61,1408.61,1486.61],"value":[-2.043249,-2.4120872,-1.6046306,-0.9167972,-0.5778648,-0.2788068,-0.0395604]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_b","quantity_id":"cp","coordinate":[1167.86,1196.02,1238.26,1308.66,1379.06,1449.46,1519.86],"value":[-2.1022859,-2.4844177,-1.6598175,-0.9458344,-0.5938709,-0.2921879,-0.0407854]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_c","quantity_id":"cp","coordinate":[1232.16,1257.68,1295.96,1359.76,1423.56,1487.36,1551.16],"value":[-2.1211023,-2.4995861,-1.6728978,-0.9557706,-0.597207,-0.2884439,-0.0394414]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_d","quantity_id":"cp","coordinate":[1296.41,1318.89,1352.61,1408.81,1465.01,1521.21,1577.41],"value":[-2.1848108,-2.5656126,-1.7238402,-0.9822788,-0.6114981,-0.300844,-0.0402954]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_e","quantity_id":"cp","coordinate":[1364.17,1382.41,1409.77,1455.37,1500.97,1546.57,1592.17],"value":[-2.234384,-2.61674,-1.771532,-1.00682,-0.624464,-0.312542,-0.040868]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_f","quantity_id":"cp","coordinate":[1438.9,1455.3,1479.9,1520.9,1561.9,1602.9,1643.9],"value":[-2.2670138,-2.646535,-1.797606,-1.0185888,-0.6390676,-0.3094834,-0.049811]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_g","quantity_id":"cp","coordinate":[1519.64,1533.72,1554.84,1590.04,1625.24,1660.44,1695.64],"value":[-2.2978777,-2.6759663,-1.8202921,-1.0342658,-0.6462275,-0.3178874,-0.0492455]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_h","quantity_id":"cp","coordinate":[1591.91,1603.91,1621.91,1651.91,1681.91,1711.91,1741.91],"value":[-2.3838073,-2.7659315,-1.8810123,-1.0664844,-0.6743043,-0.3324037,-0.0508385]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_i","quantity_id":"cp","coordinate":[1685.11,1695.43,1710.91,1736.71,1762.51,1788.31,1814.11],"value":[-2.4495063,-2.822359,-1.91542,-1.0890978,-0.6860138,-0.3433924,-0.0511565]},{"panel_id":"pressure_profiles","station_id":"pressure_belt_j","quantity_id":"cp","coordinate":[1758.87,1767.67,1780.87,1802.87,1824.87,1846.87,1868.87],"value":[-2.4811163,-2.8498472,-1.9330028,-1.095884,-0.6872903,-0.3484565,-0.0494855]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.09921,0.218736,0.338262,0.5075905,0.69684,0.8661685,0.975734,1.015576,1.015576]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0793304,0.1889212,0.3084748,0.4778424,0.6770984,0.846466,0.9660196,1.0058708,1.0158336]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.050654,0.1410464,0.2414824,0.3921364,0.5829648,0.7838368,0.9344908,1.004796,1.0148396]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_4","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0405516,0.1108274,0.201182,0.3417336,0.5324822,0.7433096,0.9139794,0.9942946,1.0143734]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_5","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0292096,0.0888448,0.1683584,0.2876288,0.4665344,0.6851968,0.8641024,0.9734336,0.993312]},{"panel_id":"velocity_profiles","station_id":"hlpw5_a_6","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0490175,0.118559,0.217904,0.3669215,0.5656115,0.774236,0.9232535,0.992795,1.0027295]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0893388,0.198956,0.3185384,0.4879468,0.6772856,0.846694,0.9662764,1.0061372,1.0161024]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.069405,0.169055,0.27867,0.43811,0.63741,0.81678,0.946325,0.99615,1.006115]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0396626,0.1194698,0.2092529,0.3489155,0.5384576,0.7479515,0.9075659,0.9873731,1.0073249]},{"panel_id":"velocity_profiles","station_id":"hlpw5_b_4","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0308684,0.0912692,0.1617368,0.2825384,0.4637408,0.6852104,0.8664128,0.9872144,1.007348]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0813662,0.1821252,0.2929601,0.4541745,0.6456166,0.8269828,0.9579695,1.008349,1.0184249]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0495695,0.1293399,0.2290529,0.3686511,0.5581058,0.7575318,0.9170726,0.9868717,1.0068143]},{"panel_id":"velocity_profiles","station_id":"hlpw5_c_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0202724,0.0703859,0.1405448,0.2507945,0.4211804,0.6316571,0.8321111,0.9624062,1.002497]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_1","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0703281,0.1605018,0.2606948,0.4109843,0.601351,0.7917177,0.9319879,0.9921037,1.0121423]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_2","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0398418,0.1097627,0.1896723,0.3195254,0.499322,0.7090847,0.8788926,0.9687909,0.998757]},{"panel_id":"velocity_profiles","station_id":"hlpw5_d_3","quantity_id":"velocity_ratio","coordinate":[0.0,0.25,0.5,1.0,2.0,4.0,8.0,16.0,24.0],"value":[0.0209468,0.0713413,0.1318147,0.2326037,0.3938661,0.5954441,0.807101,0.9482056,0.9986001]}]}]}
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "hiliftaeroml_stall_test_0721",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_a",
+          "quantity_id": "cp",
+          "coordinate": [
+            1096.61,
+            1127.81,
+            1174.61,
+            1252.61,
+            1330.61,
+            1408.61,
+            1486.61
+          ],
+          "value": [
+            -2.0522575,
+            -2.422646,
+            -1.6117955,
+            -0.921071,
+            -0.580714,
+            -0.280399,
+            -0.040147
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_b",
+          "quantity_id": "cp",
+          "coordinate": [
+            1167.86,
+            1196.02,
+            1238.26,
+            1308.66,
+            1379.06,
+            1449.46,
+            1519.86
+          ],
+          "value": [
+            -2.0818313,
+            -2.4604139,
+            -1.6434725,
+            -0.9361208,
+            -0.5874263,
+            -0.2885453,
+            -0.0394778
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_c",
+          "quantity_id": "cp",
+          "coordinate": [
+            1232.16,
+            1257.68,
+            1295.96,
+            1359.76,
+            1423.56,
+            1487.36,
+            1551.16
+          ],
+          "value": [
+            -2.1396782,
+            -2.5213274,
+            -1.6877252,
+            -0.9646004,
+            -0.603038,
+            -0.2916926,
+            -0.0406076
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_d",
+          "quantity_id": "cp",
+          "coordinate": [
+            1296.41,
+            1318.89,
+            1352.61,
+            1408.81,
+            1465.01,
+            1521.21,
+            1577.41
+          ],
+          "value": [
+            -2.1820976,
+            -2.5624472,
+            -1.7216744,
+            -0.9809936,
+            -0.6106532,
+            -0.300368,
+            -0.0401288
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_e",
+          "quantity_id": "cp",
+          "coordinate": [
+            1364.17,
+            1382.41,
+            1409.77,
+            1455.37,
+            1500.97,
+            1546.57,
+            1592.17
+          ],
+          "value": [
+            -2.2046648,
+            -2.582153,
+            -1.7477054,
+            -0.992729,
+            -0.6152408,
+            -0.3072899,
+            -0.0390746
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_f",
+          "quantity_id": "cp",
+          "coordinate": [
+            1438.9,
+            1455.3,
+            1479.9,
+            1520.9,
+            1561.9,
+            1602.9,
+            1643.9
+          ],
+          "value": [
+            -2.2624634,
+            -2.641255,
+            -1.793958,
+            -1.0164384,
+            -0.6376468,
+            -0.3086962,
+            -0.049523
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_g",
+          "quantity_id": "cp",
+          "coordinate": [
+            1519.64,
+            1533.72,
+            1554.84,
+            1590.04,
+            1625.24,
+            1660.44,
+            1695.64
+          ],
+          "value": [
+            -2.3226043,
+            -2.7045917,
+            -1.8400939,
+            -1.0459622,
+            -0.6539225,
+            -0.3221966,
+            -0.0507845
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_h",
+          "quantity_id": "cp",
+          "coordinate": [
+            1591.91,
+            1603.91,
+            1621.91,
+            1651.91,
+            1681.91,
+            1711.91,
+            1741.91
+          ],
+          "value": [
+            -2.376175,
+            -2.757125,
+            -1.874925,
+            -1.0629,
+            -0.671925,
+            -0.331075,
+            -0.050375
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_i",
+          "quantity_id": "cp",
+          "coordinate": [
+            1685.11,
+            1695.43,
+            1710.91,
+            1736.71,
+            1762.51,
+            1788.31,
+            1814.11
+          ],
+          "value": [
+            -2.4200318,
+            -2.788574,
+            -1.89212,
+            -1.0753508,
+            -0.6769268,
+            -0.3382664,
+            -0.049409
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_j",
+          "quantity_id": "cp",
+          "coordinate": [
+            1758.87,
+            1767.67,
+            1780.87,
+            1802.87,
+            1824.87,
+            1846.87,
+            1868.87
+          ],
+          "value": [
+            -2.486633,
+            -2.856152,
+            -1.937348,
+            -1.09844,
+            -0.688973,
+            -0.349415,
+            -0.049805
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.101286,
+            0.2220576,
+            0.3428292,
+            0.5139223,
+            0.705144,
+            0.8762371,
+            0.9869444,
+            1.0272016,
+            1.0272016
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0798614,
+            0.1897767,
+            0.3096843,
+            0.4795534,
+            0.6793994,
+            0.8492685,
+            0.9691761,
+            1.0091453,
+            1.0191376
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0492155,
+            0.1387448,
+            0.2382218,
+            0.3874373,
+            0.5764436,
+            0.7753976,
+            0.9246131,
+            0.994247,
+            1.0041947
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_4",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.040329,
+            0.1104935,
+            0.200705,
+            0.341034,
+            0.5314805,
+            0.741974,
+            0.9123735,
+            0.9925615,
+            1.0126085
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_5",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0292317,
+            0.0888771,
+            0.1684043,
+            0.2876951,
+            0.4666313,
+            0.6853311,
+            0.8642673,
+            0.9736172,
+            0.993499
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_6",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0494885,
+            0.1192498,
+            0.2189088,
+            0.3683973,
+            0.5677153,
+            0.7769992,
+            0.9264877,
+            0.996249,
+            1.0062149
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0904959,
+            0.200783,
+            0.3210962,
+            0.4915399,
+            0.6820358,
+            0.8524795,
+            0.9727927,
+            1.0128971,
+            1.0229232
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0707514,
+            0.1711934,
+            0.2816796,
+            0.4423868,
+            0.6432708,
+            0.8240664,
+            0.954641,
+            1.004862,
+            1.0149062
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0394526,
+            0.1191398,
+            0.2087879,
+            0.3482405,
+            0.5374976,
+            0.7466765,
+            0.9060509,
+            0.9857381,
+            1.0056599
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_4",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0294137,
+            0.0891431,
+            0.1588274,
+            0.2782862,
+            0.4574744,
+            0.6764822,
+            0.8556704,
+            0.9751292,
+            0.995039
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.078632,
+            0.177872,
+            0.287036,
+            0.44582,
+            0.634376,
+            0.813008,
+            0.94202,
+            0.99164,
+            1.001564
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0507155,
+            0.1310971,
+            0.2315741,
+            0.3722419,
+            0.5631482,
+            0.7641022,
+            0.9248654,
+            0.9951993,
+            1.0152947
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.01952,
+            0.06932,
+            0.13904,
+            0.2486,
+            0.41792,
+            0.62708,
+            0.82628,
+            0.95576,
+            0.9956
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0712631,
+            0.1619318,
+            0.2626748,
+            0.4137893,
+            0.605201,
+            0.7966127,
+            0.9376529,
+            0.9980987,
+            1.0182473
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0397578,
+            0.1096367,
+            0.1894983,
+            0.3192734,
+            0.498962,
+            0.7085987,
+            0.8783046,
+            0.9681489,
+            0.998097
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0207224,
+            0.0710234,
+            0.1313846,
+            0.2319866,
+            0.3929498,
+            0.5941538,
+            0.805418,
+            0.9462608,
+            0.9965618
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "hiliftaeroml_stall_test_0722",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_a",
+          "quantity_id": "cp",
+          "coordinate": [
+            1096.61,
+            1127.81,
+            1174.61,
+            1252.61,
+            1330.61,
+            1408.61,
+            1486.61
+          ],
+          "value": [
+            -2.0519995,
+            -2.4223436,
+            -1.6115903,
+            -0.9209486,
+            -0.5806324,
+            -0.2803534,
+            -0.0401302
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_b",
+          "quantity_id": "cp",
+          "coordinate": [
+            1167.86,
+            1196.02,
+            1238.26,
+            1308.66,
+            1379.06,
+            1449.46,
+            1519.86
+          ],
+          "value": [
+            -2.1008186,
+            -2.4826958,
+            -1.658645,
+            -0.9451376,
+            -0.5934086,
+            -0.2919266,
+            -0.0406916
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_c",
+          "quantity_id": "cp",
+          "coordinate": [
+            1232.16,
+            1257.68,
+            1295.96,
+            1359.76,
+            1423.56,
+            1487.36,
+            1551.16
+          ],
+          "value": [
+            -2.1387862,
+            -2.5202834,
+            -1.6870132,
+            -0.9641764,
+            -0.602758,
+            -0.2915366,
+            -0.0405516
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_d",
+          "quantity_id": "cp",
+          "coordinate": [
+            1296.41,
+            1318.89,
+            1352.61,
+            1408.81,
+            1465.01,
+            1521.21,
+            1577.41
+          ],
+          "value": [
+            -2.1748016,
+            -2.5539352,
+            -1.7158504,
+            -0.9775376,
+            -0.6083812,
+            -0.299088,
+            -0.0396808
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_e",
+          "quantity_id": "cp",
+          "coordinate": [
+            1364.17,
+            1382.41,
+            1409.77,
+            1455.37,
+            1500.97,
+            1546.57,
+            1592.17
+          ],
+          "value": [
+            -2.2280272,
+            -2.609342,
+            -1.7664356,
+            -1.003806,
+            -0.6224912,
+            -0.3114186,
+            -0.0404844
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_f",
+          "quantity_id": "cp",
+          "coordinate": [
+            1438.9,
+            1455.3,
+            1479.9,
+            1520.9,
+            1561.9,
+            1602.9,
+            1643.9
+          ],
+          "value": [
+            -2.2589558,
+            -2.637185,
+            -1.791146,
+            -1.0147808,
+            -0.6365516,
+            -0.3080894,
+            -0.049301
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_g",
+          "quantity_id": "cp",
+          "coordinate": [
+            1519.64,
+            1533.72,
+            1554.84,
+            1590.04,
+            1625.24,
+            1660.44,
+            1695.64
+          ],
+          "value": [
+            -2.3008902,
+            -2.6794538,
+            -1.8227046,
+            -1.0356908,
+            -0.647165,
+            -0.3184124,
+            -0.049433
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_h",
+          "quantity_id": "cp",
+          "coordinate": [
+            1591.91,
+            1603.91,
+            1621.91,
+            1651.91,
+            1681.91,
+            1711.91,
+            1741.91
+          ],
+          "value": [
+            -2.3634792,
+            -2.742476,
+            -1.8647992,
+            -1.0569376,
+            -0.6679672,
+            -0.3288648,
+            -0.049604
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_i",
+          "quantity_id": "cp",
+          "coordinate": [
+            1685.11,
+            1695.43,
+            1710.91,
+            1736.71,
+            1762.51,
+            1788.31,
+            1814.11
+          ],
+          "value": [
+            -2.4472799,
+            -2.819807,
+            -1.91366,
+            -1.0880594,
+            -0.6853274,
+            -0.3430052,
+            -0.0510245
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_j",
+          "quantity_id": "cp",
+          "coordinate": [
+            1758.87,
+            1767.67,
+            1780.87,
+            1802.87,
+            1824.87,
+            1846.87,
+            1868.87
+          ],
+          "value": [
+            -2.4833696,
+            -2.8524224,
+            -1.9347776,
+            -1.096928,
+            -0.6879776,
+            -0.348848,
+            -0.049616
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.099688,
+            0.2195008,
+            0.3393136,
+            0.5090484,
+            0.698752,
+            0.8684868,
+            0.9783152,
+            1.0182528,
+            1.0182528
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0810656,
+            0.1917168,
+            0.3124272,
+            0.4834336,
+            0.6846176,
+            0.855624,
+            0.9763344,
+            1.0165712,
+            1.0266304
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0498755,
+            0.1398008,
+            0.2397178,
+            0.3895933,
+            0.5794356,
+            0.7792696,
+            0.9291451,
+            0.999087,
+            1.0090787
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_4",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.038908,
+            0.108362,
+            0.19766,
+            0.336568,
+            0.525086,
+            0.733448,
+            0.902122,
+            0.981498,
+            1.001342
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_5",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.030468,
+            0.090684,
+            0.170972,
+            0.291404,
+            0.472052,
+            0.692844,
+            0.873492,
+            0.983888,
+            1.00396
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_6",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.049079,
+            0.1186492,
+            0.2180352,
+            0.3671142,
+            0.5658862,
+            0.7745968,
+            0.9236758,
+            0.993246,
+            1.0031846
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0904579,
+            0.200723,
+            0.3210122,
+            0.4914219,
+            0.6818798,
+            0.8522895,
+            0.9725787,
+            1.0126751,
+            1.0226992
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0694951,
+            0.1691981,
+            0.2788714,
+            0.4383962,
+            0.6378022,
+            0.8172676,
+            0.9468815,
+            0.996733,
+            1.0067033
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0403024,
+            0.1204752,
+            0.2106696,
+            0.350972,
+            0.5413824,
+            0.751836,
+            0.9121816,
+            0.9923544,
+            1.0123976
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_4",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0301729,
+            0.0902527,
+            0.1603458,
+            0.2805054,
+            0.4607448,
+            0.6810374,
+            0.8612768,
+            0.9814364,
+            1.001463
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.080567,
+            0.180882,
+            0.2912285,
+            0.4517325,
+            0.642331,
+            0.822898,
+            0.9533075,
+            1.003465,
+            1.0134965
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.050978,
+            0.1314996,
+            0.2321516,
+            0.3730644,
+            0.5643032,
+            0.7656072,
+            0.9266504,
+            0.9971068,
+            1.0172372
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.019724,
+            0.069609,
+            0.139448,
+            0.249195,
+            0.418804,
+            0.628321,
+            0.827861,
+            0.957562,
+            0.99747
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.069643,
+            0.159454,
+            0.259244,
+            0.408929,
+            0.59853,
+            0.788131,
+            0.927837,
+            0.987711,
+            1.007669
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0402184,
+            0.1103276,
+            0.1904524,
+            0.3206552,
+            0.500936,
+            0.7112636,
+            0.8815288,
+            0.9716692,
+            1.001716
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0196304,
+            0.0694764,
+            0.1292916,
+            0.2289836,
+            0.3884908,
+            0.5878748,
+            0.797228,
+            0.9367968,
+            0.9866428
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "hiliftaeroml_stall_test_0723",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_a",
+          "quantity_id": "cp",
+          "coordinate": [
+            1096.61,
+            1127.81,
+            1174.61,
+            1252.61,
+            1330.61,
+            1408.61,
+            1486.61
+          ],
+          "value": [
+            -2.043249,
+            -2.4120872,
+            -1.6046306,
+            -0.9167972,
+            -0.5778648,
+            -0.2788068,
+            -0.0395604
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_b",
+          "quantity_id": "cp",
+          "coordinate": [
+            1167.86,
+            1196.02,
+            1238.26,
+            1308.66,
+            1379.06,
+            1449.46,
+            1519.86
+          ],
+          "value": [
+            -2.1022859,
+            -2.4844177,
+            -1.6598175,
+            -0.9458344,
+            -0.5938709,
+            -0.2921879,
+            -0.0407854
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_c",
+          "quantity_id": "cp",
+          "coordinate": [
+            1232.16,
+            1257.68,
+            1295.96,
+            1359.76,
+            1423.56,
+            1487.36,
+            1551.16
+          ],
+          "value": [
+            -2.1211023,
+            -2.4995861,
+            -1.6728978,
+            -0.9557706,
+            -0.597207,
+            -0.2884439,
+            -0.0394414
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_d",
+          "quantity_id": "cp",
+          "coordinate": [
+            1296.41,
+            1318.89,
+            1352.61,
+            1408.81,
+            1465.01,
+            1521.21,
+            1577.41
+          ],
+          "value": [
+            -2.1848108,
+            -2.5656126,
+            -1.7238402,
+            -0.9822788,
+            -0.6114981,
+            -0.300844,
+            -0.0402954
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_e",
+          "quantity_id": "cp",
+          "coordinate": [
+            1364.17,
+            1382.41,
+            1409.77,
+            1455.37,
+            1500.97,
+            1546.57,
+            1592.17
+          ],
+          "value": [
+            -2.234384,
+            -2.61674,
+            -1.771532,
+            -1.00682,
+            -0.624464,
+            -0.312542,
+            -0.040868
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_f",
+          "quantity_id": "cp",
+          "coordinate": [
+            1438.9,
+            1455.3,
+            1479.9,
+            1520.9,
+            1561.9,
+            1602.9,
+            1643.9
+          ],
+          "value": [
+            -2.2670138,
+            -2.646535,
+            -1.797606,
+            -1.0185888,
+            -0.6390676,
+            -0.3094834,
+            -0.049811
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_g",
+          "quantity_id": "cp",
+          "coordinate": [
+            1519.64,
+            1533.72,
+            1554.84,
+            1590.04,
+            1625.24,
+            1660.44,
+            1695.64
+          ],
+          "value": [
+            -2.2978777,
+            -2.6759663,
+            -1.8202921,
+            -1.0342658,
+            -0.6462275,
+            -0.3178874,
+            -0.0492455
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_h",
+          "quantity_id": "cp",
+          "coordinate": [
+            1591.91,
+            1603.91,
+            1621.91,
+            1651.91,
+            1681.91,
+            1711.91,
+            1741.91
+          ],
+          "value": [
+            -2.3838073,
+            -2.7659315,
+            -1.8810123,
+            -1.0664844,
+            -0.6743043,
+            -0.3324037,
+            -0.0508385
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_i",
+          "quantity_id": "cp",
+          "coordinate": [
+            1685.11,
+            1695.43,
+            1710.91,
+            1736.71,
+            1762.51,
+            1788.31,
+            1814.11
+          ],
+          "value": [
+            -2.4495063,
+            -2.822359,
+            -1.91542,
+            -1.0890978,
+            -0.6860138,
+            -0.3433924,
+            -0.0511565
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "pressure_belt_j",
+          "quantity_id": "cp",
+          "coordinate": [
+            1758.87,
+            1767.67,
+            1780.87,
+            1802.87,
+            1824.87,
+            1846.87,
+            1868.87
+          ],
+          "value": [
+            -2.4811163,
+            -2.8498472,
+            -1.9330028,
+            -1.095884,
+            -0.6872903,
+            -0.3484565,
+            -0.0494855
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.09921,
+            0.218736,
+            0.338262,
+            0.5075905,
+            0.69684,
+            0.8661685,
+            0.975734,
+            1.015576,
+            1.015576
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0793304,
+            0.1889212,
+            0.3084748,
+            0.4778424,
+            0.6770984,
+            0.846466,
+            0.9660196,
+            1.0058708,
+            1.0158336
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.050654,
+            0.1410464,
+            0.2414824,
+            0.3921364,
+            0.5829648,
+            0.7838368,
+            0.9344908,
+            1.004796,
+            1.0148396
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_4",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0405516,
+            0.1108274,
+            0.201182,
+            0.3417336,
+            0.5324822,
+            0.7433096,
+            0.9139794,
+            0.9942946,
+            1.0143734
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_5",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0292096,
+            0.0888448,
+            0.1683584,
+            0.2876288,
+            0.4665344,
+            0.6851968,
+            0.8641024,
+            0.9734336,
+            0.993312
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_a_6",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0490175,
+            0.118559,
+            0.217904,
+            0.3669215,
+            0.5656115,
+            0.774236,
+            0.9232535,
+            0.992795,
+            1.0027295
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0893388,
+            0.198956,
+            0.3185384,
+            0.4879468,
+            0.6772856,
+            0.846694,
+            0.9662764,
+            1.0061372,
+            1.0161024
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.069405,
+            0.169055,
+            0.27867,
+            0.43811,
+            0.63741,
+            0.81678,
+            0.946325,
+            0.99615,
+            1.006115
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0396626,
+            0.1194698,
+            0.2092529,
+            0.3489155,
+            0.5384576,
+            0.7479515,
+            0.9075659,
+            0.9873731,
+            1.0073249
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_b_4",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0308684,
+            0.0912692,
+            0.1617368,
+            0.2825384,
+            0.4637408,
+            0.6852104,
+            0.8664128,
+            0.9872144,
+            1.007348
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0813662,
+            0.1821252,
+            0.2929601,
+            0.4541745,
+            0.6456166,
+            0.8269828,
+            0.9579695,
+            1.008349,
+            1.0184249
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0495695,
+            0.1293399,
+            0.2290529,
+            0.3686511,
+            0.5581058,
+            0.7575318,
+            0.9170726,
+            0.9868717,
+            1.0068143
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_c_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0202724,
+            0.0703859,
+            0.1405448,
+            0.2507945,
+            0.4211804,
+            0.6316571,
+            0.8321111,
+            0.9624062,
+            1.002497
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_1",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0703281,
+            0.1605018,
+            0.2606948,
+            0.4109843,
+            0.601351,
+            0.7917177,
+            0.9319879,
+            0.9921037,
+            1.0121423
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_2",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0398418,
+            0.1097627,
+            0.1896723,
+            0.3195254,
+            0.499322,
+            0.7090847,
+            0.8788926,
+            0.9687909,
+            0.998757
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "hlpw5_d_3",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            4.0,
+            8.0,
+            16.0,
+            24.0
+          ],
+          "value": [
+            0.0209468,
+            0.0713413,
+            0.1318147,
+            0.2326037,
+            0.3938661,
+            0.5954441,
+            0.807101,
+            0.9482056,
+            0.9986001
+          ]
+        }
+      ]
+    }
+  ]
+}

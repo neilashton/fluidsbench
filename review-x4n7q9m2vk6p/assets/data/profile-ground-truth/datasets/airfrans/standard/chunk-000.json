@@ -1,1 +1,148 @@
-{"schema_version":"1.0","cases":[{"case_id":"airfrans_standard_test_0001","series":[{"panel_id":"pressure_profiles","station_id":"upper_surface","quantity_id":"cp","coordinate":[0.0,0.05,0.15,0.3,0.5,0.75,1.0],"value":[-1.327171,-1.6789385,-1.2166155,-0.8145955,-0.462828,-0.201515,-0.000505]},{"panel_id":"pressure_profiles","station_id":"lower_surface","quantity_id":"cp","coordinate":[0.0,0.05,0.15,0.3,0.5,0.75,1.0],"value":[0.4812702,0.401095,0.2808322,0.1605694,0.0703723,0.0202628,0.000219]},{"panel_id":"velocity_profiles","station_id":"prototype_0_25l","quantity_id":"velocity_ratio","coordinate":[0.0,0.002,0.005,0.01,0.02,0.04,0.08],"value":[0.020258,0.140516,0.381032,0.581462,0.7919135,0.942236,1.002365]},{"panel_id":"velocity_profiles","station_id":"prototype_0_50l","quantity_id":"velocity_ratio","coordinate":[0.0,0.002,0.005,0.01,0.02,0.04,0.08],"value":[0.019106,0.1084355,0.3267965,0.5253065,0.7436675,0.912401,0.991805]},{"panel_id":"velocity_profiles","station_id":"prototype_1_00l","quantity_id":"velocity_ratio","coordinate":[0.0,0.002,0.005,0.01,0.02,0.04,0.08],"value":[0.0201188,0.0801782,0.2703663,0.4605544,0.700792,0.8909801,1.001089]},{"panel_id":"velocity_profiles","station_id":"wake_x_1_50c","quantity_id":"velocity_ratio","coordinate":[0.0,0.002,0.005,0.01,0.02,0.04,0.08],"value":[0.0190976,0.1381952,0.3763904,0.5748864,0.7833072,0.9321792,0.991728]}]}]}
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "airfrans_standard_test_0001",
+      "series": [
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "upper_surface",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.05,
+            0.15,
+            0.3,
+            0.5,
+            0.75,
+            1.0
+          ],
+          "value": [
+            -1.327171,
+            -1.6789385,
+            -1.2166155,
+            -0.8145955,
+            -0.462828,
+            -0.201515,
+            -0.000505
+          ]
+        },
+        {
+          "panel_id": "pressure_profiles",
+          "station_id": "lower_surface",
+          "quantity_id": "cp",
+          "coordinate": [
+            0.0,
+            0.05,
+            0.15,
+            0.3,
+            0.5,
+            0.75,
+            1.0
+          ],
+          "value": [
+            0.4812702,
+            0.401095,
+            0.2808322,
+            0.1605694,
+            0.0703723,
+            0.0202628,
+            0.000219
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_25l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.002,
+            0.005,
+            0.01,
+            0.02,
+            0.04,
+            0.08
+          ],
+          "value": [
+            0.020258,
+            0.140516,
+            0.381032,
+            0.581462,
+            0.7919135,
+            0.942236,
+            1.002365
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_0_50l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.002,
+            0.005,
+            0.01,
+            0.02,
+            0.04,
+            0.08
+          ],
+          "value": [
+            0.019106,
+            0.1084355,
+            0.3267965,
+            0.5253065,
+            0.7436675,
+            0.912401,
+            0.991805
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "prototype_1_00l",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.002,
+            0.005,
+            0.01,
+            0.02,
+            0.04,
+            0.08
+          ],
+          "value": [
+            0.0201188,
+            0.0801782,
+            0.2703663,
+            0.4605544,
+            0.700792,
+            0.8909801,
+            1.001089
+          ]
+        },
+        {
+          "panel_id": "velocity_profiles",
+          "station_id": "wake_x_1_50c",
+          "quantity_id": "velocity_ratio",
+          "coordinate": [
+            0.0,
+            0.002,
+            0.005,
+            0.01,
+            0.02,
+            0.04,
+            0.08
+          ],
+          "value": [
+            0.0190976,
+            0.1381952,
+            0.3763904,
+            0.5748864,
+            0.7833072,
+            0.9321792,
+            0.991728
+          ]
+        }
+      ]
+    }
+  ]
+}
