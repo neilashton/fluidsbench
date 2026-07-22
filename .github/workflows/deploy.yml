@@ -95,3 +95,4 @@ jobs:
           folder: _site
           clean-exclude: |
             review-x4n7q9m2vk6p
+            releases

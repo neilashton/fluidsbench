@@ -14,6 +14,7 @@ icon: ⚛️ # the emoji used as the favicon (alternatively, provide image name 
 
 url: https://neilashton.github.io/fluidsbench # the base hostname & protocol for your site
 baseurl: # the subpath of your site, e.g. /blog/. Leave blank for root
+leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/
 last_updated: true # set to true if you want to display last updated in the footer
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR
 
@@ -212,9 +213,12 @@ exclude:
   - package.json
   - package-lock.json
   - _pages/about_einstein.md
+  - _config_release.yml
+  - _submission_release/
   - purgecss.config.js
   - README.md
   - readme_preview/
+  - tests/
   - vendor
 keep_files:
   - CNAME
@@ -253,7 +257,7 @@ sass:
 
 jekyll-minifier:
   # These files are byte-addressed by the leaderboard release contract.
-  exclude: ["robots.txt", "assets/data/profile-ground-truth/*.json", "schemas/v2/*.json"]
+  exclude: ["robots.txt", "assets/data/profile-ground-truth/*.json", "schemas/v2/*.json", "schemas/releases/*.json"]
   uglifier_args:
     harmony: true
 

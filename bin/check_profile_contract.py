@@ -20,6 +20,11 @@ V2_SCHEMA_NAMES = (
     "evaluation-evidence.schema.json",
     "maintainer-validation.schema.json",
 )
+PUBLIC_RELEASE_SCHEMA_ROOT = ROOT / "schemas" / "releases"
+RELEASE_SCHEMA_NAMES = (
+    "claim-index.schema.json",
+    "result-claim.schema.json",
+)
 
 
 def load_json(path: Path) -> Any:
@@ -49,6 +54,16 @@ def check(submission_root: Path) -> list[str]:
             errors.append(f"website is missing public schema schemas/v2/{schema_name}")
         elif public_schema.read_bytes() != source_schema.read_bytes():
             errors.append(f"public schema schemas/v2/{schema_name} differs from the submission contract")
+
+    for schema_name in RELEASE_SCHEMA_NAMES:
+        source_schema = submission_root / "schemas" / "releases" / schema_name
+        public_schema = PUBLIC_RELEASE_SCHEMA_ROOT / schema_name
+        if not source_schema.is_file():
+            errors.append(f"submission repository is missing schemas/releases/{schema_name}")
+        elif not public_schema.is_file():
+            errors.append(f"website is missing public schema schemas/releases/{schema_name}")
+        elif public_schema.read_bytes() != source_schema.read_bytes():
+            errors.append(f"public schema schemas/releases/{schema_name} differs from the submission contract")
 
     submission_manifest = load_json(submission_root / "leaderboard" / "manifest.json")
     ground_truth_manifest_path = GROUND_TRUTH_ROOT / "manifest.json"
@@ -166,7 +181,8 @@ def main() -> int:
     manifest = load_json(GROUND_TRUTH_ROOT / "manifest.json")
     case_set_count = sum(len(dataset.get("case_sets", [])) for dataset in manifest["datasets"])
     print(
-        f"Validated {len(V2_SCHEMA_NAMES)} public v2 schemas and profile ground truth for "
+        f"Validated {len(V2_SCHEMA_NAMES)} public v2 schemas, "
+        f"{len(RELEASE_SCHEMA_NAMES)} public release schemas, and profile ground truth for "
         f"{len(manifest['datasets'])} datasets and {case_set_count} case sets."
     )
     return 0

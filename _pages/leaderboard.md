@@ -29,10 +29,9 @@ chart:
     </div>
   </header>
 
-  <aside class="leaderboard-data-warning" role="note" aria-label="Leaderboard data status">
-    <strong>Prototype only:</strong> all results currently shown are illustrative dummy data. They are not official results and must not be cited or
-    promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, require open versioned code,
-    model, and environment artifacts, and pass FluidsBench package validation and maintainer approval.
+  <aside id="leaderboard-data-warning" class="leaderboard-data-warning" role="note" aria-label="Leaderboard data status">
+    <strong id="leaderboard-data-warning-title">Loading release status:</strong>
+    <span id="leaderboard-data-warning-text">checking the selected leaderboard data release.</span>
   </aside>
 
   <section class="leaderboard-release-bar" aria-label="Leaderboard data release">
@@ -56,10 +55,17 @@ chart:
       <button id="export-leaderboard-json" class="leaderboard-action-button" type="button" disabled>
         <i class="fa-solid fa-file-code" aria-hidden="true"></i><span>Table JSON</span>
       </button>
-      <button id="open-citation-dialog" class="leaderboard-action-button" type="button" disabled>
+      <button
+        id="open-citation-dialog"
+        class="leaderboard-action-button"
+        type="button"
+        aria-describedby="leaderboard-claim-eligibility"
+        disabled
+      >
         <i class="fa-solid fa-quote-left" aria-hidden="true"></i><span>Cite official release</span>
       </button>
     </div>
+    <p id="leaderboard-claim-eligibility" class="leaderboard-claim-eligibility" role="status" hidden></p>
     <p id="leaderboard-release-action-status" class="leaderboard-sr-only" role="status"></p>
   </section>
   <div id="leaderboard-release-warning" class="leaderboard-profile-warning" role="alert" hidden></div>
@@ -109,6 +115,7 @@ chart:
         <tbody id="leaderboard-body"></tbody>
       </table>
     </section>
+    <p id="leaderboard-ranking-policy" class="leaderboard-ranking-policy"></p>
   </div>
 
   <section class="leaderboard-panel leaderboard-comparison-panel">
@@ -265,11 +272,17 @@ chart:
 
 <script>
   const localLeaderboard = ["127.0.0.1", "localhost"].includes(window.location.hostname);
+  const configuredLeaderboardBaseUrl =
+    {{ site.leaderboard_base_url | default: "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/" | jsonify }};
   window.FluidsBenchLeaderboardBaseUrl = localLeaderboard
     ? "http://127.0.0.1:4100/"
-    : "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/";
+    : configuredLeaderboardBaseUrl.endsWith("/")
+      ? configuredLeaderboardBaseUrl
+      : configuredLeaderboardBaseUrl + "/";
   window.FluidsBenchLeaderboardManifestUrl =
     window.FluidsBenchLeaderboardBaseUrl + "leaderboard/manifest.json";
+  window.FluidsBenchLeaderboardManifestSha256 =
+    {{ site.leaderboard_manifest_sha256 | default: "" | jsonify }};
   window.FluidsBenchProfileGroundTruthBaseUrl =
     new URL("{{ '/assets/data/profile-ground-truth/' | relative_url }}", window.location.origin).href;
 </script>

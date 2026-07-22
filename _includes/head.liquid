@@ -7,6 +7,14 @@
   <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
 {% endif %}
 
+{% if site.release_snapshot %}
+  <!-- Machine-readable provenance for this immutable leaderboard release snapshot. -->
+  <meta name="fluidsbench-release-id" content="{{ site.release_snapshot_id | escape }}">
+  <meta name="fluidsbench-submission-commit" content="{{ site.release_snapshot_submission_commit | escape }}">
+  <meta name="fluidsbench-website-commit" content="{{ site.release_snapshot_website_commit | escape }}">
+  <meta name="fluidsbench-manifest-sha256" content="{{ site.leaderboard_manifest_sha256 | escape }}">
+{% endif %}
+
 <!-- Bootstrap & MDB -->
 <link rel="stylesheet" href="{{ '/assets/css/bootstrap.min.css' | relative_url | bust_file_cache }}">
 <!-- <link rel="stylesheet" href="{{ '/assets/css/mdb.min.css' | relative_url | bust_file_cache }}"> -->

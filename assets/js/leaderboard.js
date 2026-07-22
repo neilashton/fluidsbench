@@ -3,6 +3,7 @@
 
   const baseUrl = window.FluidsBenchLeaderboardBaseUrl;
   const manifestUrl = window.FluidsBenchLeaderboardManifestUrl;
+  const expectedManifestSha256 = String(window.FluidsBenchLeaderboardManifestSha256 || "").trim();
   const groundTruthBaseUrl = window.FluidsBenchProfileGroundTruthBaseUrl;
   const palette = [
     "#0072b2",
@@ -32,6 +33,8 @@
     manifest: null,
     metrics: new Map(),
     rows: new Map(),
+    loadedManifestSha256: null,
+    manifestPinVerified: false,
     groundTruthManifest: null,
     groundTruthIndexes: new Map(),
     groundTruthChunks: new Map(),
@@ -45,6 +48,12 @@
     groundTruthComparisonKey: "",
     groundTruthComparisonCaseSetId: "",
     validationEvidenceChecks: new Map(),
+    validationEvidencePromises: new Map(),
+    claimsIndex: null,
+    claimsIndexProvenance: null,
+    claimsIndexPromise: null,
+    claimRecords: new Map(),
+    claimRecordPromises: new Map(),
     dataset: "",
     split: "",
     modelType: "",
@@ -141,6 +150,11 @@
     return safeHttpUrl(dataRelease().asset_base_url) || baseUrl;
   }
 
+  function declaredLeaderboardAssetUrl(file) {
+    const declaredBase = safeHttpUrl(dataRelease().asset_base_url);
+    return declaredBase ? fileUrl(file, declaredBase) : "";
+  }
+
   function fileUrl(file, root = leaderboardAssetBaseUrl()) {
     const normalizedRoot = root.endsWith("/") ? root : `${root}/`;
     return new URL(file, normalizedRoot).href;
@@ -167,6 +181,10 @@
     };
   }
 
+  function releaseViewUrl() {
+    return safeHttpUrl(dataRelease().release_view_url);
+  }
+
   function groundTruthManifestVerified() {
     const expected = dataRelease().profile_ground_truth || {};
     const loaded = state.groundTruthManifestProvenance || {};
@@ -175,68 +193,21 @@
     );
   }
 
-  function currentGroundTruthComparisonKey() {
-    return [dataRelease().id || "unversioned", state.dataset, state.split, state.profileCase].join("|");
+  function releaseGroundTruthManifestUrl() {
+    const declared = safeHttpUrl(dataRelease().profile_ground_truth?.manifest_url);
+    const localOrPrototype = isLocalUrl(groundTruthBaseUrl) || dataRelease().status === "prototype_dummy_data";
+    if (localOrPrototype) return fileUrl("manifest.json", groundTruthBaseUrl);
+    return declared;
   }
 
-  function groundTruthComparisonVerified() {
-    return Boolean(
-      state.groundTruthComparisonHealthy &&
-        state.groundTruthComparisonKey === currentGroundTruthComparisonKey() &&
-        state.groundTruthComparisonCaseSetId
-    );
+  function currentGroundTruthComparisonKey() {
+    return [dataRelease().id || "unversioned", state.dataset, state.split, state.profileCase].join("|");
   }
 
   function setGroundTruthComparisonHealth(healthy, caseSetId = "") {
     state.groundTruthComparisonHealthy = Boolean(healthy);
     state.groundTruthComparisonKey = healthy ? currentGroundTruthComparisonKey() : "";
     state.groundTruthComparisonCaseSetId = healthy ? caseSetId : "";
-    refreshCitationEligibilityUi();
-  }
-
-  function citationEligible(row = null) {
-    const release = dataRelease();
-    const releaseEligible =
-      release.status === "official" &&
-      release.reproducibility_contract_version === reproducibilityContractVersion &&
-      state.feedVerified &&
-      groundTruthManifestVerified() &&
-      groundTruthComparisonVerified();
-    if (!releaseEligible || !row) return releaseEligible;
-    const validation = maintainerValidation(row);
-    const profile = row.profile_data || {};
-    const evaluation = row.evaluation || {};
-    const expectedGroundTruth = release.profile_ground_truth || {};
-    const loadedGroundTruth = state.groundTruthManifestProvenance || {};
-    return Boolean(
-      row.approval?.status === "approved" &&
-        row.schema_version === "2.0" &&
-        row.reproducibility?.contract_version === reproducibilityContractVersion &&
-        validation.schema_version === "2.0" &&
-        validation.contract_version === reproducibilityContractVersion &&
-        validation.status === "validated" &&
-        validation.validation_scope === "submitted_data_only" &&
-        validation.model_execution === "not_performed" &&
-        validation.metric_recomputation === "not_performed" &&
-        validation.profile_ground_truth_release_id &&
-        validation.profile_ground_truth_release_id === expectedGroundTruth.release_id &&
-        validation.profile_ground_truth_release_id === loadedGroundTruth.release_id &&
-        validation.profile_ground_truth_release_id === profile.profile_ground_truth_release_id &&
-        validation.profile_ground_truth_manifest_sha256 &&
-        validation.profile_ground_truth_manifest_sha256 === expectedGroundTruth.manifest_sha256 &&
-        validation.profile_ground_truth_manifest_sha256 === loadedGroundTruth.sha256 &&
-        validation.profile_ground_truth_manifest_sha256 === profile.profile_ground_truth_manifest_sha256 &&
-        validation.case_set_id &&
-        validation.case_set_id === profile.case_set_id &&
-        validation.case_set_id === state.groundTruthComparisonCaseSetId &&
-        validation.profile_index_sha256 &&
-        validation.profile_index_sha256 === profile.index_sha256 &&
-        validation.evaluation_evidence_sha256 &&
-        validation.evaluation_evidence_sha256 === evaluation.evidence_sha256 &&
-        validation.evidence_sha256 &&
-        validation.evidence_sha256 === row.approval?.validation?.evidence_sha256 &&
-        validationEvidenceVerified(row)
-    );
   }
 
   function activeSplitDefinition() {
@@ -317,7 +288,11 @@
   }
 
   function resultUrl(row, canonical = false) {
-    const root = canonical && releaseArchiveUrl() ? releaseArchiveUrl() : window.location.href;
+    const verifiedClaim = verifiedClaimRecord(row);
+    if (canonical && verifiedClaim?.result_permalink) return verifiedClaim.result_permalink;
+    const immutablePermalink = canonicalResultPermalink(row);
+    if (canonical && immutablePermalink) return immutablePermalink;
+    const root = window.location.href;
     const url = new URL(root, window.location.href);
     const params = viewSearchParams(false);
     params.set("result", row.id);
@@ -326,17 +301,28 @@
     return url.href;
   }
 
-  function citedViewUrl() {
-    const url = new URL(releaseArchiveUrl() || window.location.href, window.location.href);
-    url.search = viewSearchParams(true).toString();
+  function canonicalResultPermalink(row) {
+    if (!releaseViewUrl()) return "";
+    const url = new URL(releaseViewUrl(), window.location.href);
+    ["view", "dataset", "split", "result"].forEach((key) => url.searchParams.delete(key));
+    url.searchParams.append("view", "result");
+    url.searchParams.append("dataset", row.dataset_id || slug(row.dataset));
+    url.searchParams.append("split", row.split_id || slug(row.split));
+    url.searchParams.append("result", row.id);
     url.hash = "";
     return url.href;
   }
 
-  async function fetchJson(url, label) {
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
-    return response.json();
+  function citedViewUrl() {
+    const url = new URL(releaseViewUrl() || window.location.href, window.location.href);
+    const params = new URLSearchParams();
+    const dataset = activeDataset();
+    const split = activeSplitDefinition();
+    if (dataset) params.set("dataset", dataset.slug || slug(dataset.name));
+    if (split) params.set("split", split.id || slug(split.name));
+    url.search = params.toString();
+    url.hash = "";
+    return url.href;
   }
 
   async function sha256Hex(value) {
@@ -350,7 +336,335 @@
     if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
     const bytes = await response.arrayBuffer();
     const text = new TextDecoder("utf-8").decode(bytes);
-    return { data: JSON.parse(text), sha256: await sha256Hex(bytes) };
+    return { data: JSON.parse(text), text, sha256: await sha256Hex(bytes) };
+  }
+
+  function verifyManifestSha256(loadedSha256, expectedSha256 = expectedManifestSha256) {
+    const expected = String(expectedSha256 || "").trim();
+    const loaded = String(loadedSha256 || "").trim();
+    if (expected && !/^[a-f0-9]{64}$/.test(expected)) {
+      throw new Error("the release snapshot contains an invalid publication-time leaderboard manifest SHA-256");
+    }
+    if (!expected) return { required: false, expected_sha256: null, loaded_sha256: loaded || null, verified: false };
+    if (!loaded) throw new Error("this browser cannot verify the publication-time leaderboard manifest SHA-256");
+    if (loaded !== expected) {
+      throw new Error("leaderboard manifest bytes do not match the publication-time release snapshot SHA-256");
+    }
+    return { required: true, expected_sha256: expected, loaded_sha256: loaded, verified: true };
+  }
+
+  function leaderboardManifestProvenance() {
+    return {
+      url: manifestUrl,
+      publication_sha256: expectedManifestSha256 || null,
+      loaded_sha256: state.loadedManifestSha256,
+      pin_required: Boolean(expectedManifestSha256),
+      pin_verified: state.manifestPinVerified,
+    };
+  }
+
+  function releaseManifestSha256() {
+    return expectedManifestSha256 || state.loadedManifestSha256 || "";
+  }
+
+  function claimsReleaseMetadata() {
+    const claims = dataRelease().claims;
+    return claims && typeof claims === "object" ? claims : {};
+  }
+
+  function jsonStructuresEqual(left, right) {
+    if (left === right) return true;
+    if (Array.isArray(left) || Array.isArray(right)) {
+      return (
+        Array.isArray(left) &&
+        Array.isArray(right) &&
+        left.length === right.length &&
+        left.every((value, index) => jsonStructuresEqual(value, right[index]))
+      );
+    }
+    if (left && right && typeof left === "object" && typeof right === "object") {
+      const leftKeys = Object.keys(left).sort();
+      const rightKeys = Object.keys(right).sort();
+      return (
+        leftKeys.length === rightKeys.length && leftKeys.every((key, index) => key === rightKeys[index] && jsonStructuresEqual(left[key], right[key]))
+      );
+    }
+    return false;
+  }
+
+  function claimRecordKey(row) {
+    return [row?.id, row?.dataset_id || slug(row?.dataset), row?.split_id || slug(row?.split)].join("|");
+  }
+
+  function claimIndexEntry(row) {
+    if (!Array.isArray(state.claimsIndex?.records)) return null;
+    return (
+      state.claimsIndex.records.find(
+        (entry) =>
+          entry.submission_id === row.id &&
+          entry.dataset_id === (row.dataset_id || slug(row.dataset)) &&
+          entry.split_id === (row.split_id || slug(row.split))
+      ) || null
+    );
+  }
+
+  function claimRecordCheck(row) {
+    return state.claimRecords.get(claimRecordKey(row)) || null;
+  }
+
+  function verifiedClaimRecord(row) {
+    const check = claimRecordCheck(row);
+    return check?.status === "verified" ? check.data : null;
+  }
+
+  async function ensureClaimsIndex() {
+    if (state.claimsIndex) return state.claimsIndex;
+    if (state.claimsIndexPromise) return state.claimsIndexPromise;
+    if (["failed", "not_configured"].includes(state.claimsIndexProvenance?.status)) return null;
+    const declared = claimsReleaseMetadata();
+    if (!declared.index_file || !declared.index_sha256) {
+      state.claimsIndexProvenance = { status: "not_configured", url: null, sha256: null, error: null };
+      return null;
+    }
+    state.claimsIndexProvenance = { status: "loading", url: fileUrl(declared.index_file), sha256: null, error: null };
+    state.claimsIndexPromise = (async () => {
+      try {
+        const loaded = await fetchJsonWithProvenance(state.claimsIndexProvenance.url, "leaderboard claim index");
+        if (!loaded.sha256 || loaded.sha256 !== declared.index_sha256) {
+          throw new Error("claim index checksum does not match the selected data release");
+        }
+        if (loaded.data?.release_id !== dataRelease().id || loaded.data?.release_status !== dataRelease().status) {
+          throw new Error("claim index release binding does not match the selected data release");
+        }
+        if (loaded.data?.feed_sha256 !== dataRelease().feed_sha256) {
+          throw new Error("claim index feed binding does not match the hash-verified leaderboard feed");
+        }
+        if (loaded.data?.feed_file !== state.manifest?.all_file) {
+          throw new Error("claim index feed path does not match the selected leaderboard manifest");
+        }
+        if (!jsonStructuresEqual(loaded.data?.ranking_contract, state.manifest?.ranking_contract)) {
+          throw new Error("claim index ranking contract does not match the selected leaderboard manifest");
+        }
+        if (!Array.isArray(loaded.data?.records) || Number(loaded.data.record_count) !== loaded.data.records.length) {
+          throw new Error("claim index record count is invalid");
+        }
+        if (declared.schema_version && loaded.data.schema_version !== declared.schema_version) {
+          throw new Error("claim index schema version does not match the selected data release");
+        }
+        if (Number(declared.record_count) !== loaded.data.records.length) {
+          throw new Error("claim index record count does not match the selected data release");
+        }
+        const eligibleRecordCount = loaded.data.records.filter((entry) => entry.eligible === true).length;
+        if (Number(loaded.data.eligible_record_count) !== eligibleRecordCount || Number(declared.eligible_record_count) !== eligibleRecordCount) {
+          throw new Error("claim index eligible-record count does not match its entries and release metadata");
+        }
+        loaded.data.records.forEach((entry) => {
+          const expectedClaimId = [loaded.data.release_id, entry.dataset_id, entry.split_id, entry.submission_id].join("/");
+          const expectedFile = `leaderboard/claims/${entry.dataset_id}/${entry.split_id}/${entry.submission_id}.json`;
+          if (typeof entry.eligible !== "boolean") throw new Error("claim index eligibility values must be booleans");
+          if (entry.claim_id !== expectedClaimId || entry.file !== expectedFile || !/^[a-f0-9]{64}$/.test(entry.sha256 || "")) {
+            throw new Error("claim index contains an invalid claim identity, path, or checksum");
+          }
+        });
+        const uniqueKeys = [
+          ["result identity", (entry) => `${entry.submission_id}|${entry.dataset_id}|${entry.split_id}`],
+          ["claim ID", (entry) => entry.claim_id],
+          ["claim file", (entry) => entry.file],
+        ];
+        uniqueKeys.forEach(([label, keyFor]) => {
+          const values = loaded.data.records.map(keyFor);
+          if (new Set(values).size !== values.length) throw new Error(`claim index contains a duplicate ${label}`);
+        });
+        state.claimsIndex = loaded.data;
+        state.claimsIndexProvenance = {
+          status: "verified",
+          url: state.claimsIndexProvenance.url,
+          sha256: loaded.sha256,
+          error: null,
+        };
+        return state.claimsIndex;
+      } catch (error) {
+        state.claimsIndexProvenance = {
+          ...state.claimsIndexProvenance,
+          status: "failed",
+          sha256: null,
+          error: error.message,
+        };
+        console.error(error);
+        return null;
+      } finally {
+        state.claimsIndexPromise = null;
+        refreshCitationEligibilityUi();
+      }
+    })();
+    return state.claimsIndexPromise;
+  }
+
+  function matchingClaimRanking(recordRanking, row) {
+    const expected = rowRanking(row);
+    if (!recordRanking || !expected) return false;
+    const fields = [
+      "metric_id",
+      "value",
+      "ranked_value",
+      "display_value",
+      "unit",
+      "direction",
+      "decimal_places",
+      "rounding",
+      "method",
+      "rank",
+      "ranked_result_count",
+      "tied",
+      "tie_count",
+    ];
+    return fields.every((field) => String(recordRanking[field]) === String(expected[field]));
+  }
+
+  function matchingClaimEligibility(recordEligibility, row) {
+    const expected = row.claim_eligibility;
+    if (!recordEligibility || !expected) return false;
+    return ["academic_citation", "promotion", "reason_code", "reason"].every(
+      (field) => String(recordEligibility[field] ?? "") === String(expected[field] ?? "")
+    );
+  }
+
+  async function verifyClaimBindings(record, row, entry) {
+    const validation = maintainerValidation(row);
+    const result = record.result || {};
+    if (record.claim_id !== entry.claim_id) throw new Error("claim record ID does not match its index entry");
+    if (
+      record.release?.id !== dataRelease().id ||
+      record.release?.status !== dataRelease().status ||
+      record.release?.published_at !== dataRelease().generated_at ||
+      (record.release?.archive_url || null) !== (dataRelease().archive_url || null) ||
+      (record.release?.release_view_url || null) !== (dataRelease().release_view_url || null)
+    ) {
+      throw new Error("claim record release binding does not match the selected data release");
+    }
+    if (
+      result.submission_id !== row.id ||
+      result.dataset_id !== (row.dataset_id || slug(row.dataset)) ||
+      result.split_id !== (row.split_id || slug(row.split)) ||
+      result.model !== row.model ||
+      result.dataset !== row.dataset ||
+      result.split !== row.split
+    ) {
+      throw new Error("claim record result binding does not match the hash-verified feed row");
+    }
+    if (!matchingClaimRanking(record.ranking, row)) throw new Error("claim record ranking does not match the hash-verified feed row");
+    if (!matchingClaimEligibility(record.eligibility, row)) {
+      throw new Error("claim record eligibility does not match the hash-verified feed row");
+    }
+    const declaredEligible = row.claim_eligibility?.academic_citation === true && row.claim_eligibility?.promotion === true;
+    if (entry.eligible !== declaredEligible) {
+      throw new Error("claim index eligibility does not match the hash-verified feed row");
+    }
+    const bindings = record.bindings || {};
+    const resultBinding = bindings.result || {};
+    if (
+      resultBinding.feed_file !== state.manifest?.all_file ||
+      resultBinding.feed_sha256 !== dataRelease().feed_sha256 ||
+      Number(resultBinding.row_index) !== row._feedIndex
+    ) {
+      throw new Error("claim record result binding does not select this exact row in the hash-verified feed");
+    }
+    const sourceBinding = bindings.source_submission || {};
+    const expectedSourcePath = `submissions/${row.dataset_id}/${row.id}/submission.json`;
+    if (sourceBinding.path !== expectedSourcePath || !/^[a-f0-9]{64}$/.test(sourceBinding.sha256 || "")) {
+      throw new Error("claim record source-submission binding does not match the selected feed row");
+    }
+    const loadedSource = await fetchJsonWithProvenance(fileUrl(sourceBinding.path), `${rowLabel(row)} source submission`);
+    if (loadedSource.sha256 !== sourceBinding.sha256) {
+      throw new Error("source-submission bytes do not match the checksum-verified claim record");
+    }
+    const sourceModel = typeof loadedSource.data?.model === "string" ? loadedSource.data.model : loadedSource.data?.model?.name;
+    if (
+      loadedSource.data?.submission_id !== row.id ||
+      loadedSource.data?.dataset_id !== row.dataset_id ||
+      loadedSource.data?.split_id !== row.split_id ||
+      sourceModel !== row.model
+    ) {
+      throw new Error("source-submission identity does not match the hash-verified leaderboard feed row");
+    }
+    const evaluationBinding = bindings.evaluation_evidence || {};
+    const expectedEvaluationPath = `submissions/${row.dataset_id}/${row.id}/${row.evaluation?.evidence_file}`;
+    if (
+      evaluationBinding.path !== expectedEvaluationPath ||
+      !row.evaluation?.evidence_sha256 ||
+      evaluationBinding.sha256 !== row.evaluation.evidence_sha256
+    ) {
+      throw new Error("claim record evaluation-evidence binding does not match the hash-verified feed row");
+    }
+    const profileBinding = bindings.profile_index || {};
+    if (
+      profileBinding.path !== row.profile_data?.index_file ||
+      !row.profile_data?.index_sha256 ||
+      profileBinding.sha256 !== row.profile_data.index_sha256
+    ) {
+      throw new Error("claim record profile-index binding does not match the hash-verified feed row");
+    }
+    const validationBinding = bindings.maintainer_validation;
+    if (validation && Object.keys(validation).length) {
+      if (
+        !validationBinding ||
+        validationBinding.path !== validation.evidence_path ||
+        validationBinding.sha256 !== validation.evidence_sha256 ||
+        validationBinding.status !== validation.status ||
+        validationBinding.validation_scope !== validation.validation_scope ||
+        validationBinding.model_execution !== validation.model_execution ||
+        validationBinding.metric_recomputation !== validation.metric_recomputation
+      ) {
+        throw new Error("claim record maintainer-validation binding does not match the hash-verified feed row");
+      }
+    } else if (validationBinding) {
+      throw new Error("claim record supplies maintainer validation that is absent from the hash-verified feed row");
+    }
+    const expectedPermalink = canonicalResultPermalink(row) || null;
+    if ((record.result_permalink || null) !== expectedPermalink) {
+      throw new Error("claim record result permalink does not match the immutable release view");
+    }
+    const expectedClaimRecordUrl = dataRelease().status === "official" ? declaredLeaderboardAssetUrl(entry.file) || null : null;
+    if ((record.claim_record_url || null) !== expectedClaimRecordUrl) {
+      throw new Error("claim record URL does not match the immutable release view");
+    }
+  }
+
+  async function ensureClaimRecord(row) {
+    await ensureClaimsIndex();
+    const key = claimRecordKey(row);
+    const existing = claimRecordCheck(row);
+    if (existing?.status === "verified") return verifiedClaimRecord(row);
+    if (["failed", "not_listed"].includes(existing?.status)) return null;
+    if (state.claimRecordPromises.has(key)) return state.claimRecordPromises.get(key);
+    const entry = claimIndexEntry(row);
+    if (!entry?.file || !entry.sha256) {
+      state.claimRecords.set(key, { status: "not_listed", data: null, sha256: null, url: null, error: null });
+      refreshCitationEligibilityUi();
+      return null;
+    }
+    const recordUrl = fileUrl(entry.file);
+    state.claimRecords.set(key, { status: "loading", data: null, sha256: null, url: recordUrl, error: null });
+    const promise = (async () => {
+      try {
+        const loaded = await fetchJsonWithProvenance(recordUrl, `${rowLabel(row)} claim record`);
+        if (!loaded.sha256 || loaded.sha256 !== entry.sha256) {
+          throw new Error("claim record checksum does not match its verified index entry");
+        }
+        await verifyClaimBindings(loaded.data, row, entry);
+        state.claimRecords.set(key, { status: "verified", data: loaded.data, sha256: loaded.sha256, url: recordUrl, error: null });
+        return loaded.data;
+      } catch (error) {
+        state.claimRecords.set(key, { status: "failed", data: null, sha256: null, url: recordUrl, error: error.message });
+        console.error(error);
+        return null;
+      } finally {
+        state.claimRecordPromises.delete(key);
+        refreshCitationEligibilityUi();
+      }
+    })();
+    state.claimRecordPromises.set(key, promise);
+    return promise;
   }
 
   function datasetEntries() {
@@ -415,7 +729,7 @@
     splitSelects().forEach((select) => populateSelect(select, options, state.split));
   }
 
-  function normalizeRow(entry) {
+  function normalizeRow(entry, feedIndex) {
     const metricValues = {};
     Object.entries(entry.metric_values || {}).forEach(([metricId, value]) => {
       const number = finiteNumber(value);
@@ -424,6 +738,7 @@
     const modelTypes = Array.isArray(entry.model_types) ? entry.model_types.filter(Boolean) : [entry.model_type].filter(Boolean);
     return {
       ...entry,
+      _feedIndex: feedIndex,
       id: entry.submission_id || `${entry.dataset}-${entry.split}-${entry.model}`,
       model: entry.model || "Unnamed model",
       modelTypes,
@@ -447,20 +762,25 @@
         throw new Error("complete leaderboard feed checksum does not match the selected data release");
       }
       datasetEntries().forEach((entry) => state.rows.set(entry.name, []));
-      loaded.data.map(normalizeRow).forEach((row) => {
-        if (state.rows.has(row.dataset)) state.rows.get(row.dataset).push(row);
-      });
+      loaded.data
+        .map((entry, index) => normalizeRow(entry, index))
+        .forEach((row) => {
+          if (state.rows.has(row.dataset)) state.rows.get(row.dataset).push(row);
+        });
       state.loadedFeedSha256 = loaded.sha256;
       state.feedVerified = true;
       state.feedRowsLoaded = true;
+      await ensureClaimsIndex();
     }
     return state.rows.get(dataset.name) || [];
   }
 
   async function ensureGroundTruthManifest() {
     if (state.groundTruthManifest) return state.groundTruthManifest;
-    const loaded = await fetchJsonWithProvenance(fileUrl("manifest.json", groundTruthBaseUrl), "profile ground-truth manifest");
     const expected = dataRelease().profile_ground_truth;
+    const selectedManifestUrl = releaseGroundTruthManifestUrl();
+    if (!selectedManifestUrl) throw new Error("the selected release does not declare a profile ground-truth manifest URL");
+    const loaded = await fetchJsonWithProvenance(selectedManifestUrl, "profile ground-truth manifest");
     if (!loaded.sha256) throw new Error("this browser cannot verify the profile ground-truth manifest SHA-256 digest");
     if (!expected?.manifest_sha256 || loaded.sha256 !== expected.manifest_sha256) {
       throw new Error("profile ground-truth manifest checksum does not match the selected data release");
@@ -475,7 +795,8 @@
       }
     }
     state.groundTruthManifestProvenance = {
-      url: fileUrl("manifest.json", groundTruthBaseUrl),
+      url: selectedManifestUrl,
+      base_url: new URL(".", selectedManifestUrl).href,
       sha256: loaded.sha256,
       release_id: loaded.data?.data_release?.id || null,
     };
@@ -490,7 +811,7 @@
     const split = (dataset?.splits || []).find((candidate) => candidate.label === splitName);
     const caseSet = (dataset?.case_sets || []).find((candidate) => candidate.id === split?.case_set_id);
     if (!caseSet?.index_file) throw new Error(`${datasetName} / ${splitName} has no profile ground-truth index`);
-    const indexUrl = fileUrl(caseSet.index_file, groundTruthBaseUrl);
+    const indexUrl = fileUrl(caseSet.index_file, state.groundTruthManifestProvenance?.base_url || groundTruthBaseUrl);
     if (!state.groundTruthIndexes.has(indexUrl)) {
       state.groundTruthIndexes.set(indexUrl, await fetchJsonWithProvenance(indexUrl, `${datasetName} profile ground-truth index`));
     }
@@ -546,6 +867,166 @@
     return activeDataset()?.ranking || { metric_id: activeMetricDefinitions()[0]?.id, direction: "higher" };
   }
 
+  function rankingDecimalPlaces() {
+    const selectedRanking = ranking();
+    const definition = metricDefinition(selectedRanking.metric_id);
+    const configured =
+      selectedRanking.decimal_places ?? selectedRanking.precision?.decimal_places ?? selectedRanking.precision_digits ?? definition?.digits ?? 2;
+    const digits = finiteNumber(configured);
+    return digits === null ? 2 : Math.max(0, Math.min(12, Math.trunc(digits)));
+  }
+
+  function rankingPolicy() {
+    const selectedRanking = ranking();
+    const contract = state.manifest?.ranking_contract || {};
+    return {
+      metric_id: selectedRanking.metric_id,
+      direction: selectedRanking.direction === "lower" ? "lower" : "higher",
+      decimal_places: rankingDecimalPlaces(),
+      rounding: selectedRanking.precision?.rounding || selectedRanking.rounding || contract.rounding || "decimal_half_up",
+      method: selectedRanking.method || contract.method || "competition",
+      scope: "exact_data_release_dataset_split",
+    };
+  }
+
+  function decimalHalfUp(value, decimalPlaces) {
+    const number = finiteNumber(value);
+    if (number === null) return null;
+    const [coefficient, exponentText = "0"] = Math.abs(number).toString().toLowerCase().split("e");
+    const [whole, fraction = ""] = coefficient.split(".");
+    let digits = `${whole}${fraction}`;
+    let decimalPosition = whole.length + Number(exponentText);
+    if (decimalPosition < 0) {
+      digits = `${"0".repeat(-decimalPosition)}${digits}`;
+      decimalPosition = 0;
+    }
+    const cut = decimalPosition + decimalPlaces;
+    if (digits.length <= cut) digits = digits.padEnd(cut + 1, "0");
+    const retained = digits.slice(0, cut) || "0";
+    const nextDigit = Number(digits[cut] || "0");
+    const roundedInteger = BigInt(retained) + (nextDigit >= 5 ? 1n : 0n);
+    const rounded = (number < 0 ? -1 : 1) * (Number(roundedInteger) / 10 ** decimalPlaces);
+    return Object.is(rounded, -0) ? 0 : rounded;
+  }
+
+  function rankedDisplayValue(value, policy = rankingPolicy()) {
+    const rounded = decimalHalfUp(value, policy.decimal_places);
+    return rounded === null ? "N/A" : rounded.toFixed(policy.decimal_places);
+  }
+
+  function generatedRanking(row, policy) {
+    const generated = row.ranking;
+    if (!state.feedVerified || !generated || typeof generated !== "object") return null;
+    const requiredNumberFields = ["value", "ranked_value", "rank", "ranked_result_count", "tie_count"];
+    if (requiredNumberFields.some((field) => finiteNumber(generated[field]) === null)) return null;
+    if (
+      generated.metric_id !== policy.metric_id ||
+      generated.direction !== policy.direction ||
+      Number(generated.decimal_places) !== policy.decimal_places ||
+      generated.rounding !== policy.rounding ||
+      generated.method !== policy.method
+    ) {
+      return null;
+    }
+    return {
+      metric_id: generated.metric_id,
+      value: Number(generated.value),
+      ranked_value: Number(generated.ranked_value),
+      display_value: String(generated.display_value ?? rankedDisplayValue(generated.ranked_value, policy)),
+      unit: String(generated.unit || ""),
+      direction: generated.direction,
+      decimal_places: policy.decimal_places,
+      rounding: generated.rounding,
+      method: generated.method,
+      rank: Number(generated.rank),
+      ranked_result_count: Number(generated.ranked_result_count),
+      tied: Boolean(generated.tied),
+      tie_count: Number(generated.tie_count),
+      source: "hash_verified_feed",
+    };
+  }
+
+  function fallbackRankings(rows, policy) {
+    const ranked = rows
+      .map((row) => ({
+        row,
+        value: finiteNumber(row.metricValues[policy.metric_id]),
+        rankedValue: decimalHalfUp(row.metricValues[policy.metric_id], policy.decimal_places),
+      }))
+      .sort((a, b) => {
+        const compared = compareNumbers(a.rankedValue, b.rankedValue, policy.direction);
+        return compared || String(a.row.id).localeCompare(String(b.row.id));
+      });
+    const rankedResultCount = ranked.filter(({ rankedValue }) => rankedValue !== null).length;
+    const tieCounts = new Map();
+    ranked.forEach(({ rankedValue }) => {
+      if (rankedValue === null) return;
+      const key = String(rankedValue);
+      tieCounts.set(key, (tieCounts.get(key) || 0) + 1);
+    });
+    let previousRankedValue = null;
+    let competitionRank = null;
+    let rankedPosition = 0;
+    return ranked.map(({ row, value, rankedValue }) => {
+      if (rankedValue === null) {
+        return {
+          row,
+          ranking: {
+            ...policy,
+            value: null,
+            ranked_value: null,
+            display_value: "N/A",
+            unit: metricDefinition(policy.metric_id)?.unit || "",
+            rank: null,
+            ranked_result_count: rankedResultCount,
+            tied: false,
+            tie_count: 0,
+            source: "computed_fallback",
+          },
+        };
+      }
+      rankedPosition += 1;
+      if (previousRankedValue === null || rankedValue !== previousRankedValue) competitionRank = rankedPosition;
+      previousRankedValue = rankedValue;
+      const tieCount = tieCounts.get(String(rankedValue)) || 1;
+      return {
+        row,
+        ranking: {
+          ...policy,
+          value,
+          ranked_value: rankedValue,
+          display_value: rankedDisplayValue(rankedValue, policy),
+          unit: metricDefinition(policy.metric_id)?.unit || "",
+          rank: competitionRank,
+          ranked_result_count: rankedResultCount,
+          tied: tieCount > 1,
+          tie_count: tieCount,
+          source: "computed_fallback",
+        },
+      };
+    });
+  }
+
+  function generatedRankingMatches(generated, fallback) {
+    if (!generated || !fallback) return false;
+    const fields = [
+      "metric_id",
+      "value",
+      "ranked_value",
+      "display_value",
+      "unit",
+      "direction",
+      "decimal_places",
+      "rounding",
+      "method",
+      "rank",
+      "ranked_result_count",
+      "tied",
+      "tie_count",
+    ];
+    return fields.every((field) => String(generated[field]) === String(fallback[field]));
+  }
+
   function compareNumbers(a, b, direction) {
     const aValue = finiteNumber(a);
     const bValue = finiteNumber(b);
@@ -557,11 +1038,31 @@
 
   function rowsForActiveSplit() {
     const allRows = (state.rows.get(state.dataset) || []).filter((row) => row.split === state.split);
-    const rank = ranking();
-    return allRows
-      .slice()
-      .sort((a, b) => compareNumbers(a.metricValues[rank.metric_id], b.metricValues[rank.metric_id], rank.direction))
-      .map((row, index) => ({ ...row, rank: index + 1 }));
+    const policy = rankingPolicy();
+    const fallback = fallbackRankings(allRows, policy);
+    const fallbackById = new Map(fallback.map((item) => [item.row.id, item.ranking]));
+    const generated = allRows.map((row) => generatedRanking(row, policy));
+    const generatedIsConsistent =
+      generated.length && generated.every((item, index) => generatedRankingMatches(item, fallbackById.get(allRows[index].id)));
+    if (generatedIsConsistent) {
+      const generatedById = new Map(allRows.map((row, index) => [row.id, generated[index]]));
+      return fallback.map(({ row }) => {
+        const verifiedRanking = { ...generatedById.get(row.id), source: "verified_generated_release" };
+        return { ...row, rank: verifiedRanking.rank, _ranking: verifiedRanking };
+      });
+    }
+    const generatedWasPresent = allRows.some((row) => row.ranking && typeof row.ranking === "object");
+    return fallback.map(({ row, ranking: rowRanking }) => {
+      const verifiedFallback = {
+        ...rowRanking,
+        source: generatedWasPresent ? "computed_fallback_generated_release_mismatch" : "computed_fallback_legacy_release",
+      };
+      return { ...row, rank: verifiedFallback.rank, _ranking: verifiedFallback };
+    });
+  }
+
+  function rowRanking(row) {
+    return row?._ranking || generatedRanking(row, rankingPolicy()) || fallbackRankings([row], rankingPolicy())[0]?.ranking || null;
   }
 
   function rowsForCurrentModelType() {
@@ -575,7 +1076,8 @@
   function filteredRows() {
     const ranked = rowsForCurrentModelType();
     if (state.sortKey === "rank") {
-      return ranked.slice().sort((a, b) => (state.sortDirection === "asc" ? a.rank - b.rank : b.rank - a.rank));
+      const direction = state.sortDirection === "asc" ? "lower" : "higher";
+      return ranked.slice().sort((a, b) => compareNumbers(a.rank, b.rank, direction) || String(a.id).localeCompare(String(b.id)));
     }
     const direction = state.sortDirection === "asc" ? "lower" : "higher";
     return ranked.slice().sort((a, b) => {
@@ -607,7 +1109,10 @@
   }
 
   function formatMetric(value, definition) {
-    const formatted = formatNumber(value, definition?.digits ?? 2);
+    const isRankingMetric = definition?.id && definition.id === ranking().metric_id;
+    const digits = isRankingMetric ? rankingDecimalPlaces() : definition?.digits ?? 2;
+    const displayValue = isRankingMetric ? decimalHalfUp(value, digits) : value;
+    const formatted = formatNumber(displayValue, digits);
     if (formatted === "N/A" || !definition?.unit) return formatted;
     return `${formatted}${definition.unit === "%" ? "" : " "}${definition.unit}`;
   }
@@ -660,9 +1165,11 @@
       ? `verified feed SHA-256 ${state.feedVerified ? state.loadedFeedSha256 : release.feed_sha256}`
       : "feed checksum not supplied";
     const archive = releaseArchiveUrl() ? `archive ${releaseArchiveUrl()}` : "no immutable archive URL supplied";
+    const manifestDigest = releaseManifestSha256();
+    const manifest = manifestDigest ? `; release manifest SHA-256 ${manifestDigest}` : "";
     return `FluidsBench data release ${release.id || "unversioned"} (status: ${humanize(
       release.status || "not supplied"
-    )}; ${checksum}; ${archive}; result-data origin: ${humanize(scope.result_data_origin)})`;
+    )}; ${checksum}${manifest}; ${archive}; result-data origin: ${humanize(scope.result_data_origin)})`;
   }
 
   function humanize(value) {
@@ -689,16 +1196,30 @@
 
   function renderReleaseMetadata() {
     const release = dataRelease();
+    const dataWarning = element("leaderboard-data-warning");
+    const dataWarningTitle = element("leaderboard-data-warning-title");
+    const dataWarningText = element("leaderboard-data-warning-text");
+    const officialRelease = release.status === "official";
+    if (dataWarning) dataWarning.className = `leaderboard-data-warning${officialRelease ? " is-official" : ""}`;
+    if (dataWarningTitle) dataWarningTitle.textContent = officialRelease ? "Official submitted-data release:" : "Prototype only:";
+    if (dataWarningText) {
+      dataWarningText.textContent = officialRelease
+        ? " results use submitter-provided metrics and profile predictions from open, versioned submission packages. FluidsBench validated and approved the submitted package, but did not run the model or recompute base metrics."
+        : " all results currently shown are illustrative dummy data. They are not official results and must not be cited or promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, require open versioned code, model, and environment artifacts, and pass FluidsBench package validation and maintainer approval.";
+    }
     element("leaderboard-release-id").textContent = release.id || "Unversioned";
     const details = [];
     if (release.status) details.push(humanize(release.status));
     if (release.generated_at) details.push(`generated ${formatReleaseDate(release.generated_at)}`);
     if (release.feed_sha256) details.push(`SHA-256 ${release.feed_sha256.slice(0, 12)}...`);
     if (state.feedVerified) details.push("feed bytes verified");
+    if (releaseManifestSha256()) details.push(`manifest SHA-256 ${releaseManifestSha256().slice(0, 12)}...`);
+    if (state.manifestPinVerified) details.push("manifest bytes match snapshot pin");
     if (release.reproducibility_contract_version) details.push(release.reproducibility_contract_version);
     const license = releaseLicenseMetadata();
     details.push(`licence ${license.label}`);
     if (!releaseArchiveUrl()) details.push("no immutable archive");
+    if (!releaseViewUrl()) details.push("no immutable release view");
     const meta = element("leaderboard-release-meta");
     meta.textContent = details.join(" | ");
     if (release.feed_sha256) meta.title = `Feed SHA-256: ${release.feed_sha256}`;
@@ -718,13 +1239,23 @@
     const citationButton = element("open-citation-dialog");
     if (citationButton) {
       const citedRow = state.resultId ? rowsForActiveSplit().find((row) => row.id === state.resultId) : null;
-      const eligible = citationEligible(citedRow);
+      const eligibility = claimEligibility(citedRow);
+      const eligible = eligibility.academic_citation;
       citationButton.disabled = !state.dataset || !eligible;
       citationButton.title = eligible
         ? citedRow
           ? "Cite this approved result from a hash-verified official release"
           : "Cite this hash-verified official release"
-        : "Citations require an official release with verified feed and ground-truth hashes; result citations also require approval and a validated submission package";
+        : eligibility.reason;
+      const status = element("leaderboard-claim-eligibility");
+      if (status) {
+        status.hidden = !state.dataset || eligible;
+        status.textContent = eligible
+          ? ""
+          : eligibility.declared.academic_citation
+            ? `Citation copying is temporarily unavailable because browser verification has not passed: ${eligibility.reason}`
+            : `This release is not declared eligible for citation: ${eligibility.declared.reason}`;
+      }
     }
     const warning = element("leaderboard-release-warning");
     if (warning) {
@@ -765,7 +1296,9 @@
       loaded_feed_sha256: state.loadedFeedSha256,
       feed_verified: state.feedVerified,
       archive_url: releaseArchiveUrl() || null,
+      release_view_url: releaseViewUrl() || null,
       asset_base_url: leaderboardAssetBaseUrl(),
+      leaderboard_manifest: leaderboardManifestProvenance(),
       profile_ground_truth: {
         ...dataRelease().profile_ground_truth,
         loaded_manifest_sha256: state.groundTruthManifestProvenance?.sha256 || null,
@@ -775,6 +1308,13 @@
       source_ref: dataRelease().source_ref || null,
       source_commit: dataRelease().source_commit || null,
       reproducibility_contract_version: dataRelease().reproducibility_contract_version || null,
+      ranking_contract: state.manifest?.ranking_contract || rankingPolicy(),
+      claims_index: {
+        ...claimsReleaseMetadata(),
+        verification_status: state.claimsIndexProvenance?.status || "not_checked",
+        loaded_sha256: state.claimsIndexProvenance?.sha256 || null,
+        url: state.claimsIndexProvenance?.url || null,
+      },
       publication_scope: publicationScope(),
       license: {
         spdx_id: license.spdxId || null,
@@ -808,8 +1348,16 @@
       ["release_reproducibility_contract", () => provenance.reproducibility_contract_version],
       ["publication_scope_json", () => provenance.publication_scope],
       ["archive_url", () => provenance.archive_url],
+      ["release_view_url", () => provenance.release_view_url],
       ["asset_base_url", () => provenance.asset_base_url],
+      ["leaderboard_manifest_url", () => provenance.leaderboard_manifest.url],
+      ["leaderboard_manifest_sha256", () => provenance.leaderboard_manifest.publication_sha256 || provenance.leaderboard_manifest.loaded_sha256],
+      ["loaded_leaderboard_manifest_sha256", () => provenance.leaderboard_manifest.loaded_sha256],
+      ["leaderboard_manifest_pin_required", () => provenance.leaderboard_manifest.pin_required],
+      ["leaderboard_manifest_pin_verified", () => provenance.leaderboard_manifest.pin_verified],
       ["profile_ground_truth_json", () => provenance.profile_ground_truth],
+      ["ranking_contract_json", () => provenance.ranking_contract],
+      ["claims_index_json", () => provenance.claims_index],
       ["view_url", () => provenance.view_url],
       ["release_license_spdx", () => provenance.license.spdx_id],
       ["release_license_name", () => provenance.license.name],
@@ -817,6 +1365,39 @@
       ["release_license_scope", () => provenance.license.scope],
       ["filters_json", () => provenance.filters],
       ["rank", (row) => row.rank],
+      ["ranked_result_count", (row) => rowRanking(row)?.ranked_result_count],
+      ["rank_tied", (row) => rowRanking(row)?.tied],
+      ["rank_tie_count", (row) => rowRanking(row)?.tie_count],
+      ["ranking_metric_id", (row) => rowRanking(row)?.metric_id],
+      ["ranking_metric_label", (row) => plainMetricLabel(metricDefinition(rowRanking(row)?.metric_id))],
+      ["ranking_metric_value", (row) => rowRanking(row)?.ranked_value],
+      ["ranking_metric_display_value", (row) => rowRanking(row)?.display_value],
+      ["ranking_metric_raw_value", (row) => rowRanking(row)?.value],
+      ["ranking_metric_unit", (row) => rowRanking(row)?.unit],
+      ["ranking_direction", (row) => rowRanking(row)?.direction],
+      ["ranking_decimal_places", (row) => rowRanking(row)?.decimal_places],
+      ["ranking_rounding", (row) => rowRanking(row)?.rounding],
+      ["ranking_method", (row) => rowRanking(row)?.method],
+      ["ranking_scope_release_id", () => provenance.release_id],
+      ["ranking_scope_dataset", (row) => row.dataset],
+      ["ranking_scope_dataset_id", (row) => row.dataset_id],
+      ["ranking_scope_split", (row) => row.split],
+      ["ranking_scope_split_id", (row) => row.split_id],
+      ["declared_academic_citation_eligible", (row) => declaredClaimEligibility(row).academic_citation],
+      ["declared_promotion_eligible", (row) => declaredClaimEligibility(row).promotion],
+      ["declared_eligibility_reason_code", (row) => declaredClaimEligibility(row).reason_code],
+      ["declared_eligibility_reason", (row) => declaredClaimEligibility(row).reason],
+      ["browser_verification_passed", (row) => claimEligibility(row).browser_verification.passed],
+      ["browser_verification_status", (row) => claimEligibility(row).browser_verification.status],
+      ["browser_verification_reason_codes", (row) => claimEligibility(row).browser_verification.reason_codes],
+      ["browser_verification_reasons", (row) => claimEligibility(row).browser_verification.reasons],
+      ["academic_citation_copy_enabled", (row) => claimEligibility(row).academic_citation],
+      ["promotion_copy_enabled", (row) => claimEligibility(row).promotion],
+      ["claim_record_url", (row) => resultClaimRecordUrl(row)],
+      ["claim_record_attempted_url", (row) => claimRecordCheck(row)?.url],
+      ["claim_record_sha256", (row) => claimRecordCheck(row)?.sha256],
+      ["claim_record_verification_status", (row) => claimRecordCheck(row)?.status || "not_checked"],
+      ["claim_record_verification_error", (row) => claimRecordCheck(row)?.error],
       ["submission_id", (row) => row.id],
       ["dataset", (row) => row.dataset],
       ["dataset_version", (row) => row.dataset_version],
@@ -879,7 +1460,7 @@
       ["profile_index_sha256", (row) => row.profile_data?.index_sha256],
       ["profile_ground_truth_release_id", (row) => row.profile_data?.profile_ground_truth_release_id],
       ["profile_ground_truth_manifest_sha256", (row) => row.profile_data?.profile_ground_truth_manifest_sha256],
-      ["result_permalink", (row) => resultUrl(row, Boolean(releaseArchiveUrl()))],
+      ["result_permalink", (row) => resultUrl(row, Boolean(releaseViewUrl()))],
       ["note", (row) => row.note],
     ];
   }
@@ -905,42 +1486,140 @@
     downloadBlob(filename, new Blob([content], { type }));
   }
 
-  function exportCsv() {
+  async function verifiedTableExportRows() {
     const rows = tableExportRows();
-    const provenance = exportProvenance(rows.length);
-    const metadata = exportMetadataColumns(provenance);
-    const metrics = activeMetricDefinitions();
-    const header = [...metadata.map(([label]) => label), ...metrics.map((definition) => definition.id)];
-    const lines = [header.map(csvCell).join(",")];
-    rows.forEach((row) => {
-      const values = [...metadata.map(([, value]) => value(row)), ...metrics.map((definition) => row.metricValues[definition.id])];
-      lines.push(values.map(csvCell).join(","));
-    });
-    downloadText(exportFilename("csv"), `${lines.join("\n")}\n`, "text/csv;charset=utf-8");
+    const snapshot = {
+      dataset: state.dataset,
+      split: state.split,
+      exportScope: state.exportScope,
+      modelType: state.modelType,
+      sortKey: state.sortKey,
+      sortDirection: state.sortDirection,
+      loadVersion: state.loadVersion,
+      viewQuery: viewSearchParams(false).toString(),
+      rowIds: rows.map((row) => row.id),
+    };
+    const status = element("leaderboard-release-action-status");
+    if (status) status.textContent = "Verifying claim and validation records for the table export...";
+    await ensureClaimsIndex();
+    await Promise.all(rows.flatMap((row) => [ensureClaimRecord(row), ensureValidationEvidence(row)]));
+    const currentRowIds = tableExportRows().map((row) => row.id);
+    if (
+      state.dataset !== snapshot.dataset ||
+      state.split !== snapshot.split ||
+      state.exportScope !== snapshot.exportScope ||
+      state.modelType !== snapshot.modelType ||
+      state.sortKey !== snapshot.sortKey ||
+      state.sortDirection !== snapshot.sortDirection ||
+      state.loadVersion !== snapshot.loadVersion ||
+      viewSearchParams(false).toString() !== snapshot.viewQuery ||
+      currentRowIds.join("\u0000") !== snapshot.rowIds.join("\u0000")
+    ) {
+      throw new Error("The leaderboard selection changed while export records were being verified; export the current view again.");
+    }
+    return rows;
+  }
+
+  async function exportCsv() {
+    try {
+      const rows = await verifiedTableExportRows();
+      const provenance = exportProvenance(rows.length);
+      const metadata = exportMetadataColumns(provenance);
+      const metrics = activeMetricDefinitions();
+      const header = [...metadata.map(([label]) => label), ...metrics.map((definition) => definition.id)];
+      const lines = [header.map(csvCell).join(",")];
+      rows.forEach((row) => {
+        const values = [...metadata.map(([, value]) => value(row)), ...metrics.map((definition) => row.metricValues[definition.id])];
+        lines.push(values.map(csvCell).join(","));
+      });
+      downloadText(exportFilename("csv"), `${lines.join("\n")}\n`, "text/csv;charset=utf-8");
+    } catch (error) {
+      const status = element("leaderboard-release-action-status");
+      if (status) status.textContent = `Could not export table CSV: ${error.message}`;
+      console.error(error);
+    }
   }
 
   function sourceSubmission(row) {
-    const { id, rank, metricValues, modelTypes, parameterCount, submitter, date, ...source } = row;
+    const { id, rank, metricValues, modelTypes, parameterCount, submitter, date, _ranking, _feedIndex, ranking, claim_eligibility, ...source } = row;
+    const eligibility = claimEligibility(row);
+    const claimCheck = claimRecordCheck(row);
     return {
       rank,
+      ranked_result_count: rowRanking(row)?.ranked_result_count ?? null,
+      rank_tied: rowRanking(row)?.tied ?? false,
+      rank_tie_count: rowRanking(row)?.tie_count ?? 0,
+      ranking: rowRanking(row),
+      claim_eligibility: claim_eligibility || declaredClaimEligibility(row),
+      browser_verification: eligibility.browser_verification,
+      copy_readiness: {
+        academic_citation: eligibility.academic_citation,
+        promotion: eligibility.promotion,
+      },
       ...source,
-      result_permalink: resultUrl(row, Boolean(releaseArchiveUrl())),
+      result_permalink: resultUrl(row, Boolean(releaseViewUrl())),
+      claim_record: {
+        url: resultClaimRecordUrl(row) || null,
+        attempted_url: claimCheck?.url || null,
+        sha256: claimCheck?.sha256 || null,
+        verification_status: claimCheck?.status || "not_checked",
+        verification_error: claimCheck?.error || null,
+      },
     };
   }
 
-  function exportJson() {
-    const rows = tableExportRows();
-    const provenance = exportProvenance(rows.length);
-    const payload = {
-      schema_version: "fluidsbench-leaderboard-export-v2",
-      exported_at: new Date().toISOString(),
-      data_release: dataRelease(),
-      provenance,
-      ranking: ranking(),
-      metric_definitions: activeMetricDefinitions(),
-      submissions: rows.map(sourceSubmission),
+  async function exportJson() {
+    try {
+      const rows = await verifiedTableExportRows();
+      const provenance = exportProvenance(rows.length);
+      const payload = {
+        schema_version: "fluidsbench-leaderboard-export-v3",
+        exported_at: new Date().toISOString(),
+        data_release: dataRelease(),
+        provenance,
+        ranking: rankingPolicy(),
+        metric_definitions: activeMetricDefinitions(),
+        submissions: rows.map(sourceSubmission),
+      };
+      downloadText(exportFilename("json"), `${JSON.stringify(payload, null, 2)}\n`, "application/json;charset=utf-8");
+    } catch (error) {
+      const status = element("leaderboard-release-action-status");
+      if (status) status.textContent = `Could not export table JSON: ${error.message}`;
+      console.error(error);
+    }
+  }
+
+  function rankingValueText(context) {
+    if (!context || context.ranked_value === null || context.ranked_value === undefined) return "not supplied";
+    return `${context.display_value}${context.unit ? ` ${context.unit}` : ""}`;
+  }
+
+  function resultRankText(context) {
+    if (!context || context.rank === null || context.rank === undefined) return "unranked";
+    return `${context.tied ? "joint " : ""}rank ${context.rank} of ${context.ranked_result_count}`;
+  }
+
+  function resultClaimRecordUrl(row) {
+    const check = claimRecordCheck(row);
+    if (check?.status !== "verified") return "";
+    const record = verifiedClaimRecord(row);
+    return safeHttpUrl(record?.claim_record_url);
+  }
+
+  function bibtexEscape(value) {
+    const escaped = {
+      "\\": "\\textbackslash{}",
+      "{": "\\{",
+      "}": "\\}",
+      "&": "\\&",
+      "%": "\\%",
+      _: "\\_",
+      "#": "\\#",
+      $: "\\$",
+      "^": "\\textasciicircum{}",
+      "~": "\\textasciitilde{}",
     };
-    downloadText(exportFilename("json"), `${JSON.stringify(payload, null, 2)}\n`, "application/json;charset=utf-8");
+    return Array.from(String(value ?? ""), (character) => escaped[character] || (/\s/.test(character) ? " " : character)).join("");
   }
 
   function citationValues() {
@@ -952,13 +1631,21 @@
     const year = citation.year || new Date(release.generated_at || Date.now()).getUTCFullYear();
     const releaseId = release.id || "unversioned";
     const checksum = release.feed_sha256 || "not supplied";
-    const url = citedViewUrl();
+    const manifestChecksum = releaseManifestSha256() || "not supplied";
     const citedResult = state.resultId ? rowsForActiveSplit().find((row) => row.id === state.resultId) : null;
+    const url = citedResult ? resultUrl(citedResult, true) : citedViewUrl();
     const validation = citedResult ? maintainerValidation(citedResult) : {};
+    const resultRanking = citedResult ? rowRanking(citedResult) : null;
     const context = citedResult ? `${state.dataset}, ${state.split}, ${citedResult.model} (${citedResult.id})` : `${state.dataset}, ${state.split}`;
     const status = humanize(release.status || "not supplied");
     const resultNote = citedResult
-      ? ` Result status: ${humanize(citedResult.approvalStatus)}; submission package validation ${validation.status || "not supplied"} (scope: ${
+      ? ` ${resultRankText(resultRanking)} by ${
+          plainMetricLabel(metricDefinition(resultRanking?.metric_id)) || resultRanking?.metric_id || "the ranking metric"
+        } (${rankingValueText(resultRanking)}; ${
+          resultRanking?.direction || "direction not supplied"
+        } is better), scoped to this exact dataset, split, and release. Result status: ${humanize(
+          citedResult.approvalStatus
+        )}; submission package validation ${validation.status || "not supplied"} (scope: ${
           validation.validation_scope || "not supplied"
         }; model execution: ${validation.model_execution || "not supplied"}; metric recomputation: ${
           validation.metric_recomputation || "not supplied"
@@ -967,17 +1654,40 @@
         }), validation record SHA-256 ${validation.evidence_sha256 || "not supplied"}.`
       : "";
     const license = releaseLicenseMetadata();
-    const archiveNote = releaseArchiveUrl() ? `Archived release: ${releaseArchiveUrl()}.` : "No immutable archive URL is supplied.";
+    const archiveNote = releaseArchiveUrl() ? `Release data archive: ${releaseArchiveUrl()}.` : "No separate release data archive is supplied.";
+    const releaseViewNote = releaseViewUrl() ? `Immutable release view: ${releaseViewUrl()}.` : "No immutable release view is supplied.";
+    const bibtexKeyParts = ["fluidsbench", slug(state.dataset), slug(state.split)];
+    if (citedResult) bibtexKeyParts.push(slug(citedResult.id));
+    bibtexKeyParts.push(slug(releaseId));
+    const bibtexKey = bibtexKeyParts.filter(Boolean).join("_").replaceAll("-", "_");
+    const claimRecord = citedResult ? resultClaimRecordUrl(citedResult) : "";
+    const promotion = citedResult
+      ? `In FluidsBench data release ${releaseId}, ${citedResult.model} is recorded at ${resultRankText(resultRanking)} on ${state.dataset} / ${
+          state.split
+        }, ordered by ${
+          plainMetricLabel(metricDefinition(resultRanking?.metric_id)) || resultRanking?.metric_id || "the ranking metric"
+        } (${rankingValueText(resultRanking)}; ${
+          resultRanking?.direction || "direction not supplied"
+        } is better). This rank applies only to that exact dataset, split, and release—not the changing current leaderboard. The result uses submitter-provided metrics and profile predictions; FluidsBench validated the submitted package but did not run the model or recompute base metrics. Release manifest SHA-256: ${manifestChecksum}. ${url}${
+          claimRecord ? ` Claim record: ${claimRecord}` : ""
+        }`
+      : "";
+    const bibtexTitle = citedResult ? `FluidsBench result: ${citedResult.model} on ${state.dataset} / ${state.split}` : `${title}: ${context}`;
+    const bibtexNote = `Exact data release ${releaseId}; status ${status}; release manifest SHA-256 ${manifestChecksum}; feed SHA-256 ${checksum}; licence ${
+      license.label
+    };${resultNote} model-result data are ${resultDataOriginLabel()}; FluidsBench model execution and base-metric recomputation were not performed; ${releaseViewNote} ${archiveNote}${
+      claimRecord ? ` Claim record: ${claimRecord}.` : ""
+    }`;
     return {
-      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, data release ${releaseId} (status: ${status}), verified feed SHA-256 ${checksum}.${resultNote} Model-result data are ${resultDataOriginLabel()}; FluidsBench model execution and base-metric recomputation were not performed. Licence: ${
+      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, exact data release ${releaseId} (status: ${status}), release manifest SHA-256 ${manifestChecksum}, verified feed SHA-256 ${checksum}.${resultNote} Model-result data are ${resultDataOriginLabel()}; FluidsBench model execution and base-metric recomputation were not performed. Licence: ${
         license.label
-      }; scope: ${license.scope}. ${archiveNote} ${url}`,
-      bibtex: `@misc{fluidsbench_${slug(state.dataset).replaceAll("-", "_")}_${slug(releaseId).replaceAll(
-        "-",
-        "_"
-      )},\n  author = {${author}},\n  title = {${title}: ${context}},\n  year = {${year}},\n  publisher = {${publisher}},\n  url = {${url}},\n  note = {Data release ${releaseId}; status ${status}; feed SHA-256 ${checksum}; licence ${
-        license.label
-      };${resultNote} model-result data are ${resultDataOriginLabel()}; FluidsBench model execution and base-metric recomputation were not performed; ${archiveNote}}\n}`,
+      }; scope: ${license.scope}. ${releaseViewNote} ${archiveNote} ${claimRecord ? `Claim record: ${claimRecord}. ` : ""}${url}`,
+      bibtex: `@misc{${bibtexKey},\n  author = {{${bibtexEscape(author)}}},\n  title = {${bibtexEscape(bibtexTitle)}},\n  year = {${bibtexEscape(
+        year
+      )}},\n  publisher = {${bibtexEscape(publisher)}},\n  version = {${bibtexEscape(releaseId)}},\n  url = {${bibtexEscape(
+        url
+      )}},\n  note = {${bibtexEscape(bibtexNote)}}\n}`,
+      promotion,
     };
   }
 
@@ -1014,14 +1724,17 @@
 
   function staticHelp(key) {
     const types = Array.from(new Set((state.rows.get(state.dataset) || []).flatMap((row) => row.modelTypes))).join(", ");
-    const rankMetric = metricDefinition(ranking().metric_id);
+    const policy = rankingPolicy();
+    const rankMetric = metricDefinition(policy.metric_id);
     const trainingLabels = trainingRegimeDefinitions()
       .map((definition) => definition.label)
       .join(", ");
     const definitions = {
-      rank: `Position within the loaded release for this dataset and split, ordered by ${
-        rankMetric?.label || "the ranking metric"
-      }. Prototype rows are not official rankings.`,
+      rank: `Competition rank within this exact loaded release, dataset, and split, ordered by ${rankMetric?.label || "the ranking metric"} at ${
+        policy.decimal_places
+      } decimal place${
+        policy.decimal_places === 1 ? "" : "s"
+      }. Ties share a position (1, 2, 2, 4). Filters and table sorting do not change rank. Prototype rows are not official rankings.`,
       model: "Model name declared by the submitter. Open-code and model-artifact provenance appears in result details when supplied.",
       submitter: "Person, research group, institution, or company submitting the result.",
       split: `Declared ${state.dataset} benchmark split used for training and public-ground-truth evaluation.`,
@@ -1286,7 +1999,13 @@
       return;
     }
     if (column.key === "rank") {
-      cell.appendChild(chip("leaderboard-rank", submission.rank));
+      const context = rowRanking(submission);
+      const rankChip = chip("leaderboard-rank", submission.rank ?? "—");
+      if (context?.tied) {
+        rankChip.title = `Joint rank ${context.rank}; ${context.tie_count} results share this published value.`;
+        rankChip.setAttribute("aria-label", `Joint rank ${context.rank} of ${context.ranked_result_count}, shared by ${context.tie_count} results`);
+      }
+      cell.appendChild(rankChip);
       return;
     }
     if (column.key === "model") {
@@ -1392,7 +2111,8 @@
       input.disabled = !input.checked && selectedCount >= maxFigureModels;
       input.dataset.comparisonModel = "";
       const text = document.createElement("span");
-      text.textContent = `${rowLabel(row)} — rank ${row.rank}`;
+      const context = rowRanking(row);
+      text.textContent = `${rowLabel(row)} — ${context?.tied ? "joint " : ""}rank ${row.rank ?? "unranked"}`;
       label.append(input, text);
       container.appendChild(label);
     });
@@ -1581,6 +2301,7 @@
     const metadata = {
       schema_version: "fluidsbench-svg-metadata-v2",
       release: dataRelease(),
+      leaderboard_manifest: leaderboardManifestProvenance(),
       loaded_feed_sha256: state.loadedFeedSha256,
       feed_verified: state.feedVerified,
       loaded_profile_ground_truth_manifest: state.groundTruthManifestProvenance ? { ...state.groundTruthManifestProvenance } : null,
@@ -1622,9 +2343,11 @@
     const release = dataRelease();
     const subtitle = [
       `Data release ${release.id || "unversioned"} · status ${humanize(release.status || "not supplied")}`,
+      `Release manifest SHA-256: ${releaseManifestSha256() || "not supplied"}`,
       `Verified scalar feed SHA-256: ${state.loadedFeedSha256 || release.feed_sha256 || "not supplied"}`,
       `Result data: ${humanize(publicationScope().result_data_origin)} · FluidsBench model execution and base-metric recomputation: not performed`,
-      releaseArchiveUrl() ? `Immutable archive: ${releaseArchiveUrl()}` : "No immutable archive URL supplied",
+      releaseArchiveUrl() ? `Release data archive: ${releaseArchiveUrl()}` : "No separate release data archive supplied",
+      releaseViewUrl() ? `Immutable release view: ${releaseViewUrl()}` : "No immutable release view supplied",
     ];
     if (release.profile_ground_truth?.release_id) {
       subtitle.push(
@@ -1770,9 +2493,23 @@
 
   async function copyResultCitation(kind) {
     const status = element("result-citation-copy-status");
+    const row = state.resultId ? rowsForActiveSplit().find((candidate) => candidate.id === state.resultId) : null;
+    const eligibility = claimEligibility(row);
+    const allowed = kind === "promotion" ? eligibility.promotion : eligibility.academic_citation;
+    if (!row || !allowed) {
+      const declaredAllowed = kind === "promotion" ? eligibility.declared.promotion : eligibility.declared.academic_citation;
+      if (status) {
+        status.textContent = declaredAllowed
+          ? `Copying is temporarily unavailable because browser verification has not passed: ${eligibility.reason}`
+          : `Copy unavailable under the release declaration: ${eligibility.declared.reason}`;
+      }
+      return;
+    }
     try {
       await copyText(citationValues()[kind]);
-      if (status) status.textContent = `${kind === "bibtex" ? "Result BibTeX" : "Result citation"} copied.`;
+      if (status) {
+        status.textContent = `${kind === "bibtex" ? "Result BibTeX" : kind === "promotion" ? "Leaderboard claim" : "Result citation"} copied.`;
+      }
     } catch (error) {
       if (status) status.textContent = `Could not copy result citation: ${error.message}`;
     }
@@ -2569,6 +3306,7 @@
         release_status: dataRelease().status || null,
         reproducibility_contract_version: dataRelease().reproducibility_contract_version || null,
         publication_scope: publicationScope(),
+        leaderboard_manifest: leaderboardManifestProvenance(),
         feed_sha256: dataRelease().feed_sha256 || null,
         loaded_feed_sha256: state.loadedFeedSha256,
         feed_verified: state.feedVerified,
@@ -2749,8 +3487,13 @@
     const list = element("metric-definitions-list");
     if (window.MathJax?.typesetClear) window.MathJax.typesetClear([list]);
     list.replaceChildren();
-    element("metric-definitions-intro").textContent =
-      `Metrics shown for ${state.dataset}. The selected dataset controls the table columns and all chart choices.`;
+    const policy = rankingPolicy();
+    const rankMetric = metricDefinition(policy.metric_id);
+    element("metric-definitions-intro").textContent = `Metrics shown for ${
+      state.dataset
+    }. The selected dataset controls the table columns and all chart choices. ${
+      plainMetricLabel(rankMetric) || policy.metric_id
+    } is displayed and ranked at ${policy.decimal_places} decimal place${policy.decimal_places === 1 ? "" : "s"}.`;
     activeMetricDefinitions().forEach((definition) => {
       const wrapper = document.createElement("div");
       wrapper.className = groupClass(metricColumnGroup(definition));
@@ -2853,6 +3596,22 @@
     renderTrainingDefinitions();
   }
 
+  function renderRankingPolicy() {
+    const target = element("leaderboard-ranking-policy");
+    if (!target) return;
+    const policy = rankingPolicy();
+    const definition = metricDefinition(policy.metric_id);
+    const rows = rowsForActiveSplit();
+    const rankedCount = rows[0] ? rowRanking(rows[0])?.ranked_result_count : 0;
+    target.textContent = `Ranking policy for data release ${dataRelease().id || "unversioned"}, ${state.dataset} / ${state.split}: ${
+      plainMetricLabel(definition) || policy.metric_id
+    }, ${policy.direction} is better, compared at ${policy.decimal_places} decimal place${
+      policy.decimal_places === 1 ? "" : "s"
+    } using decimal-half-up rounding. Competition ranking gives tied values the same position (1, 2, 2, 4). The rank covers ${
+      rankedCount || "all"
+    } ranked result${rankedCount === 1 ? "" : "s"} in this exact dataset, split, and release; model-type filters and table sorting do not change it.`;
+  }
+
   function detailsMetricGroups(row) {
     const groups = new Map();
     activeMetricDefinitions().forEach((definition) => {
@@ -2927,47 +3686,235 @@
     return Boolean(check?.status === "verified" && check.sha256 === validation.evidence_sha256);
   }
 
+  function declaredClaimEligibility(row = null) {
+    if (!row) {
+      const eligible = dataRelease().status === "official";
+      return {
+        academic_citation: eligible,
+        promotion: eligible,
+        reason_code: eligible ? "eligible" : "release_not_official",
+        reason: eligible
+          ? "This release is declared eligible for citation."
+          : "This data release is not declared eligible for academic citation or promotion.",
+        source: "data_release",
+      };
+    }
+    const declared = row.claim_eligibility;
+    if (!state.feedVerified || !declared || typeof declared !== "object") {
+      return {
+        academic_citation: false,
+        promotion: false,
+        reason_code: "claim_eligibility_missing",
+        reason: "The hash-verified feed does not contain generated claim eligibility for this result.",
+        source: "unavailable",
+      };
+    }
+    return {
+      academic_citation: declared.academic_citation === true,
+      promotion: declared.promotion === true,
+      reason_code: declared.reason_code || (declared.academic_citation && declared.promotion ? "eligible" : "not_eligible"),
+      reason: declared.reason || "No declared eligibility reason was supplied.",
+      source: verifiedClaimRecord(row) ? "verified_claim_record" : "hash_verified_feed",
+    };
+  }
+
+  function claimEligibility(row = null) {
+    const release = dataRelease();
+    const blockers = [];
+    const addBlocker = (code, reason, targets = ["academic_citation", "promotion"]) => {
+      blockers.push({ code, reason, targets });
+    };
+    if (release.status !== "official") addBlocker("release_not_official", "This data release is not official.");
+    if (release.status === "official" && !expectedManifestSha256) {
+      addBlocker(
+        "manifest_pin_not_configured",
+        "This page does not publish a SHA-256 pin for the leaderboard manifest; use the immutable release snapshot."
+      );
+    } else if (expectedManifestSha256 && !state.manifestPinVerified) {
+      addBlocker("manifest_pin_not_verified", "The loaded leaderboard manifest bytes have not matched the publication-time SHA-256 pin.");
+    }
+    if (release.reproducibility_contract_version !== reproducibilityContractVersion) {
+      addBlocker("release_contract_mismatch", `The release does not use ${reproducibilityContractVersion}.`);
+    }
+    if (!state.feedVerified) addBlocker("feed_not_verified", "The leaderboard feed bytes have not been SHA-256 verified.");
+    if (!groundTruthManifestVerified()) {
+      addBlocker("ground_truth_manifest_not_verified", "The release's public ground-truth manifest has not been SHA-256 verified.");
+    }
+    if (!releaseViewUrl()) {
+      addBlocker("release_view_unavailable", "This release has no immutable release-view URL for later verification.");
+    }
+    if (state.releaseMismatch) {
+      addBlocker("requested_release_not_loaded", "The release requested by this URL is not the release currently loaded.");
+    }
+
+    if (row && !blockers.length) {
+      const validation = maintainerValidation(row);
+      const profile = row.profile_data || {};
+      const evaluation = row.evaluation || {};
+      const expectedGroundTruth = release.profile_ground_truth || {};
+      const loadedGroundTruth = state.groundTruthManifestProvenance || {};
+      if (rowRanking(row)?.source === "computed_fallback_generated_release_mismatch") {
+        addBlocker(
+          "generated_ranking_mismatch",
+          "The generated release ranking does not match an independent full-split competition-ranking calculation."
+        );
+      }
+      if (!row.claim_eligibility || typeof row.claim_eligibility !== "object") {
+        addBlocker("claim_eligibility_missing", "The hash-verified feed row does not contain generated claim eligibility metadata.");
+      }
+      if (
+        row.approval?.status !== "approved" ||
+        row.schema_version !== "2.0" ||
+        row.reproducibility?.contract_version !== reproducibilityContractVersion
+      ) {
+        addBlocker("result_not_approved", "The result is not an approved schema-v2 open-contract submission.");
+      }
+      if (
+        validation.schema_version !== "2.0" ||
+        validation.contract_version !== reproducibilityContractVersion ||
+        validation.status !== "validated" ||
+        validation.validation_scope !== "submitted_data_only" ||
+        validation.model_execution !== "not_performed" ||
+        validation.metric_recomputation !== "not_performed"
+      ) {
+        addBlocker("validation_contract_mismatch", "The maintainer validation metadata does not match the submitted-data-only contract.");
+      }
+      if (
+        !validation.profile_ground_truth_release_id ||
+        validation.profile_ground_truth_release_id !== expectedGroundTruth.release_id ||
+        validation.profile_ground_truth_release_id !== loadedGroundTruth.release_id ||
+        validation.profile_ground_truth_release_id !== profile.profile_ground_truth_release_id ||
+        !validation.profile_ground_truth_manifest_sha256 ||
+        validation.profile_ground_truth_manifest_sha256 !== expectedGroundTruth.manifest_sha256 ||
+        validation.profile_ground_truth_manifest_sha256 !== loadedGroundTruth.sha256 ||
+        validation.profile_ground_truth_manifest_sha256 !== profile.profile_ground_truth_manifest_sha256 ||
+        !validation.case_set_id ||
+        validation.case_set_id !== profile.case_set_id
+      ) {
+        addBlocker(
+          "ground_truth_binding_mismatch",
+          "The result and validation record do not bind to this release's public ground truth and case set."
+        );
+      }
+      if (
+        !validation.profile_index_sha256 ||
+        validation.profile_index_sha256 !== profile.index_sha256 ||
+        !validation.evaluation_evidence_sha256 ||
+        validation.evaluation_evidence_sha256 !== evaluation.evidence_sha256 ||
+        !validation.evidence_sha256 ||
+        validation.evidence_sha256 !== row.approval?.validation?.evidence_sha256
+      ) {
+        addBlocker("submitted_data_binding_mismatch", "The submitted profile, evaluation, approval, and validation hashes do not agree.");
+      }
+      if (state.claimsIndexProvenance?.status !== "verified") {
+        const reason =
+          state.claimsIndexProvenance?.status === "failed"
+            ? `The release claim index failed verification: ${state.claimsIndexProvenance.error}`
+            : state.claimsIndexProvenance?.status === "loading"
+              ? "The release claim index is still being verified."
+              : "The release does not provide a checksum-verified claim index.";
+        addBlocker("claim_index_not_verified", reason);
+      }
+      const recordCheck = claimRecordCheck(row);
+      if (recordCheck?.status !== "verified") {
+        const reason =
+          recordCheck?.status === "failed"
+            ? `The result claim record failed verification: ${recordCheck.error}`
+            : recordCheck?.status === "loading"
+              ? "The result claim record is still being verified."
+              : recordCheck?.status === "not_listed"
+                ? "This result is not listed in the release claim index."
+                : "The result claim record has not yet been verified.";
+        addBlocker("claim_record_not_verified", reason);
+      }
+      const validationCheck = validationEvidenceCheck(row);
+      if (!validationEvidenceVerified(row)) {
+        const reason =
+          validationCheck?.status === "failed"
+            ? `The maintainer validation record failed verification: ${validationCheck.error}`
+            : validationCheck?.status === "loading"
+              ? "The maintainer validation record is still being verified."
+              : "The maintainer validation record has not yet been checksum-verified.";
+        addBlocker("validation_record_not_verified", reason);
+      }
+    }
+
+    const reasonsFor = (target) => blockers.filter((blocker) => blocker.targets.includes(target));
+    const academicBlockers = reasonsFor("academic_citation");
+    const promotionBlockers = reasonsFor("promotion");
+    const declared = declaredClaimEligibility(row);
+    const uniqueBlockers = blockers.filter(
+      (blocker, index) => blockers.findIndex((candidate) => candidate.code === blocker.code && candidate.reason === blocker.reason) === index
+    );
+    return {
+      academic_citation: declared.academic_citation && academicBlockers.length === 0,
+      promotion: declared.promotion && promotionBlockers.length === 0,
+      declared,
+      browser_verification: {
+        passed: uniqueBlockers.length === 0,
+        status: uniqueBlockers.length === 0 ? "verified" : "not_verified",
+        reason_codes: uniqueBlockers.map((blocker) => blocker.code),
+        reasons: uniqueBlockers.map((blocker) => blocker.reason),
+      },
+      reason_code: !declared.academic_citation || !declared.promotion ? declared.reason_code : uniqueBlockers[0]?.code || "eligible",
+      reason:
+        !declared.academic_citation || !declared.promotion
+          ? declared.reason
+          : uniqueBlockers.map((blocker) => blocker.reason).join(" ") || "Eligible for this exact release, dataset, and split.",
+      reasons: uniqueBlockers,
+      academic_reasons: academicBlockers,
+      promotion_reasons: promotionBlockers,
+    };
+  }
+
   async function ensureValidationEvidence(row) {
     const url = validationEvidenceUrl(row);
     const validation = maintainerValidation(row);
     const approvalSha256 = row.approval?.validation?.evidence_sha256;
     if (!url || !validation.evidence_sha256 || !approvalSha256) return;
     const existing = state.validationEvidenceChecks.get(url);
-    if (existing) return;
+    if (existing && existing.status !== "loading") return;
+    if (state.validationEvidencePromises.has(url)) return state.validationEvidencePromises.get(url);
     state.validationEvidenceChecks.set(url, { status: "loading", sha256: null, error: null });
-    try {
-      const loaded = await fetchJsonWithProvenance(url, `${rowLabel(row)} validation record`);
-      if (!loaded.sha256 || loaded.sha256 !== validation.evidence_sha256 || loaded.sha256 !== approvalSha256) {
-        throw new Error("validation record checksum does not match the hash-verified leaderboard feed");
+    const promise = (async () => {
+      try {
+        const loaded = await fetchJsonWithProvenance(url, `${rowLabel(row)} validation record`);
+        if (!loaded.sha256 || loaded.sha256 !== validation.evidence_sha256 || loaded.sha256 !== approvalSha256) {
+          throw new Error("validation record checksum does not match the hash-verified leaderboard feed");
+        }
+        const bindings = [
+          ["schema_version", validation.schema_version],
+          ["submission_id", row.id],
+          ["dataset_id", row.dataset_id],
+          ["split_id", row.split_id],
+          ["status", validation.status],
+          ["contract_version", validation.contract_version],
+          ["reference_version", validation.reference_version],
+          ["case_set_id", validation.case_set_id],
+          ["profile_ground_truth_release_id", validation.profile_ground_truth_release_id],
+          ["profile_ground_truth_manifest_sha256", validation.profile_ground_truth_manifest_sha256],
+          ["validated_by", validation.validated_by],
+          ["validated_at", validation.validated_at],
+          ["validation_scope", validation.validation_scope],
+          ["model_execution", validation.model_execution],
+          ["metric_recomputation", validation.metric_recomputation],
+          ["reviewed_submission_sha256", validation.reviewed_submission_sha256],
+          ["evaluation_evidence_sha256", validation.evaluation_evidence_sha256],
+          ["profile_index_sha256", validation.profile_index_sha256],
+        ];
+        const mismatch = bindings.find(([key, expected]) => !expected || loaded.data?.[key] !== expected);
+        if (mismatch) throw new Error(`validation record ${mismatch[0]} does not match the hash-verified leaderboard feed`);
+        state.validationEvidenceChecks.set(url, { status: "verified", sha256: loaded.sha256, error: null });
+      } catch (error) {
+        state.validationEvidenceChecks.set(url, { status: "failed", sha256: null, error: error.message });
+        console.error(error);
+      } finally {
+        state.validationEvidencePromises.delete(url);
+        refreshCitationEligibilityUi();
       }
-      const bindings = [
-        ["schema_version", validation.schema_version],
-        ["submission_id", row.id],
-        ["dataset_id", row.dataset_id],
-        ["split_id", row.split_id],
-        ["status", validation.status],
-        ["contract_version", validation.contract_version],
-        ["reference_version", validation.reference_version],
-        ["case_set_id", validation.case_set_id],
-        ["profile_ground_truth_release_id", validation.profile_ground_truth_release_id],
-        ["profile_ground_truth_manifest_sha256", validation.profile_ground_truth_manifest_sha256],
-        ["validated_by", validation.validated_by],
-        ["validated_at", validation.validated_at],
-        ["validation_scope", validation.validation_scope],
-        ["model_execution", validation.model_execution],
-        ["metric_recomputation", validation.metric_recomputation],
-        ["reviewed_submission_sha256", validation.reviewed_submission_sha256],
-        ["evaluation_evidence_sha256", validation.evaluation_evidence_sha256],
-        ["profile_index_sha256", validation.profile_index_sha256],
-      ];
-      const mismatch = bindings.find(([key, expected]) => !expected || loaded.data?.[key] !== expected);
-      if (mismatch) throw new Error(`validation record ${mismatch[0]} does not match the hash-verified leaderboard feed`);
-      state.validationEvidenceChecks.set(url, { status: "verified", sha256: loaded.sha256, error: null });
-    } catch (error) {
-      state.validationEvidenceChecks.set(url, { status: "failed", sha256: null, error: error.message });
-      console.error(error);
-    }
-    refreshCitationEligibilityUi();
+    })();
+    state.validationEvidencePromises.set(url, promise);
+    return promise;
   }
 
   function refreshCitationEligibilityUi() {
@@ -2975,8 +3922,20 @@
     renderReleaseMetadata();
     const dialog = element("details-dialog");
     if (!dialog?.open || !state.resultId) return;
+    const focused = document.activeElement;
+    const focusWasInside = Boolean(focused && dialog.contains?.(focused));
+    const focusedHref = focusWasInside && focused.tagName === "A" ? focused.href : "";
+    const focusedCopyAction = focusWasInside ? focused.dataset?.copyResultCitation || "" : "";
     const row = rowsForActiveSplit().find((candidate) => candidate.id === state.resultId);
-    if (row) openDetails(row, false);
+    if (!row) return;
+    openDetails(row, false);
+    const body = element("details-dialog-body");
+    const replacement = focusedCopyAction
+      ? body?.querySelector?.(`[data-copy-result-citation="${focusedCopyAction}"]`)
+      : focusedHref
+        ? Array.from(body?.querySelectorAll?.("a") || []).find((link) => link.href === focusedHref)
+        : null;
+    replacement?.focus();
   }
 
   function openDetails(row, syncUrl = true) {
@@ -2989,7 +3948,7 @@
     const links = [
       detailsLink("Paper", row.paper_url),
       detailsLink("Legacy code link", row.code_url),
-      detailsLink("Result permalink", resultUrl(row, Boolean(releaseArchiveUrl()))),
+      detailsLink("Result permalink", resultUrl(row, Boolean(releaseViewUrl()))),
     ]
       .filter(Boolean)
       .join(" &middot; ");
@@ -3004,10 +3963,15 @@
       .join(" &middot; ");
     const validation = maintainerValidation(row);
     void ensureValidationEvidence(row);
+    void ensureClaimRecord(row);
     const validationCheck = validationEvidenceCheck(row);
+    const claimCheck = claimRecordCheck(row);
+    const eligibility = claimEligibility(row);
+    const rankContext = rowRanking(row);
     const approvalLinks = [
       detailsLink("Approval pull request", row.approval?.pull_request_url),
       detailsLink("Validation record", validationEvidenceUrl(row)),
+      detailsLink("Claim record", resultClaimRecordUrl(row)),
     ]
       .filter(Boolean)
       .join(" &middot; ");
@@ -3017,14 +3981,45 @@
         return `<section><h4>${escapeHtml(group)}</h4><dl>${values}</dl></section>`;
       })
       .join("");
-    const resultCitationActions = citationEligible(row)
-      ? `<p class="leaderboard-result-citation-actions">
-            <button class="leaderboard-action-button" type="button" data-copy-result-citation="plain">Copy result citation</button>
-            <button class="leaderboard-action-button" type="button" data-copy-result-citation="bibtex">Copy result BibTeX</button>
-            <span id="result-citation-copy-status" role="status"></span>
-          </p>`
-      : "";
+    const resultCitationActions = `<div class="leaderboard-result-citation-actions">
+          <button class="leaderboard-action-button" type="button" data-copy-result-citation="plain" aria-describedby="result-citation-eligibility" ${
+            eligibility.academic_citation ? "" : "disabled"
+          }>Copy result citation</button>
+          <button class="leaderboard-action-button" type="button" data-copy-result-citation="bibtex" aria-describedby="result-citation-eligibility" ${
+            eligibility.academic_citation ? "" : "disabled"
+          }>Copy result BibTeX</button>
+          <button class="leaderboard-action-button" type="button" data-copy-result-citation="promotion" aria-describedby="result-citation-eligibility" ${
+            eligibility.promotion ? "" : "disabled"
+          }>Copy leaderboard claim</button>
+          <p id="result-citation-eligibility" class="leaderboard-claim-eligibility" role="status">${escapeHtml(
+            eligibility.academic_citation && eligibility.promotion
+              ? "Copying is enabled for this exact release, dataset, and split."
+              : eligibility.declared.academic_citation && eligibility.declared.promotion
+                ? `Copying is temporarily unavailable because browser verification has not passed: ${eligibility.reason}`
+                : `Declared claim eligibility: ${eligibility.declared.reason}`
+          )}</p>
+          <p id="result-citation-copy-status" class="leaderboard-copy-status" role="status"></p>
+        </div>`;
     element("details-dialog-body").innerHTML = `
+      <section><h4>Rank and claim context</h4><dl>
+        ${detailsRow("Rank in this release", resultRankText(rankContext))}
+        ${detailsRow("Ranked result count", rankContext?.ranked_result_count)}
+        ${detailsRow("Tied", rankContext?.tied ? `Yes — ${rankContext.tie_count} results share this rank` : "No")}
+        ${detailsRow("Ranking metric", plainMetricLabel(metricDefinition(rankContext?.metric_id)) || rankContext?.metric_id)}
+        ${detailsRow("Published ranking value", rankingValueText(rankContext))}
+        ${detailsRow("Submitter-provided ranking value", rankContext?.value)}
+        ${detailsRow("Ranking direction", `${humanize(rankContext?.direction)} is better`)}
+        ${detailsRow(
+          "Published ranking precision",
+          `${rankContext?.decimal_places} decimal place${rankContext?.decimal_places === 1 ? "" : "s"}; decimal-half-up rounding`
+        )}
+        ${detailsRow("Tie method", "Competition ranking (1, 2, 2, 4)")}
+        ${detailsRow("Exact rank scope", `${state.dataset} / ${state.split} / ${dataRelease().id || "unversioned"}`)}
+        ${detailsRow("Claim record SHA-256", claimCheck?.sha256)}
+        ${detailsRow("Claim record bytes", humanize(claimCheck?.status || "not_checked"))}
+        ${detailsRow("Claim record attempted URL", claimCheck?.url)}
+        ${detailsRow("Claim record verification error", claimCheck?.error)}
+      </dl><p class="details-note">This rank is fixed to the exact dataset, split, and data release shown above. It is not a claim about the changing current leaderboard.</p></section>
       <section><h4>Submission</h4><dl>
         ${detailsRow("Submission ID", row.id)}
         ${detailsRow("Dataset version", row.dataset_version)}
@@ -3073,10 +4068,22 @@
       <section><h4>Result status and submitted-data validation</h4><dl>
         ${detailsRow("Status", humanize(row.approval?.status))}
         ${detailsRow(
-          "Citation / promotion eligibility",
-          citationEligible(row)
-            ? "Eligible as an approved official leaderboard result; preserve the release ID, result permalink, rank context, and validation record in any claim"
-            : "Not eligible for scholarly citation or promotional leaderboard claims"
+          "Academic citation eligibility",
+          eligibility.declared.academic_citation
+            ? "Declared eligible for this exact release context"
+            : `Declared not eligible — ${eligibility.declared.reason}`
+        )}
+        ${detailsRow(
+          "Promotion eligibility",
+          eligibility.declared.promotion
+            ? "Declared eligible for this exact release context"
+            : `Declared not eligible — ${eligibility.declared.reason}`
+        )}
+        ${detailsRow(
+          "Browser verification",
+          eligibility.browser_verification.passed
+            ? "Passed"
+            : `Not passed — ${eligibility.browser_verification.reasons.join(" ") || "verification has not completed"}`
         )}
         ${detailsRow("Approved by", row.approval?.approved_by)}
         ${detailsRow("Approval date", row.approval?.approved_at)}
@@ -3191,6 +4198,7 @@
     renderReleaseMetadata();
     renderColumnToggles();
     renderTable();
+    renderRankingPolicy();
     renderTypeFilter();
     renderComparisonModelPicker();
     renderComparisonControls();
@@ -3455,7 +4463,11 @@
   async function initialize() {
     configureEvents();
     try {
-      state.manifest = await fetchJson(manifestUrl, "leaderboard manifest");
+      const loadedManifest = await fetchJsonWithProvenance(manifestUrl, "leaderboard manifest");
+      const manifestCheck = verifyManifestSha256(loadedManifest.sha256);
+      state.loadedManifestSha256 = loadedManifest.sha256;
+      state.manifestPinVerified = manifestCheck.verified;
+      state.manifest = loadedManifest.data;
       if (!Array.isArray(state.manifest.metric_definitions) || !Array.isArray(state.manifest.training_regimes) || !datasetEntries().length) {
         throw new Error("manifest is missing dataset-driven leaderboard definitions");
       }
