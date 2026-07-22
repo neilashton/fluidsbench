@@ -61,7 +61,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    {% include dataset_submission_v1.html slug="windsorml" dataset="WindsorML" %}
+    {% include dataset_submission.html slug="windsorml" dataset="WindsorML" %}
 
   </section>
 

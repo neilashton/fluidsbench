@@ -50,7 +50,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-section">
-    {% include dataset_submission_v1.html heading=2 slug="blendednet" dataset="BlendedNet" %}
+    {% include dataset_submission.html heading=2 slug="blendednet" dataset="BlendedNet" %}
   </section>
 
   <section class="dataset-section">

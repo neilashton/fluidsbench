@@ -59,7 +59,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    {% include dataset_submission_v1.html slug="drivaernetplusplus" dataset="DrivAerNet++" %}
+    {% include dataset_submission.html slug="drivaernetplusplus" dataset="DrivAerNet++" %}
 
   </section>
 

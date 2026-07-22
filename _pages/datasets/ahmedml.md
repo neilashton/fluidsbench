@@ -138,7 +138,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    {% include dataset_submission_v1.html slug="ahmedml" dataset="AhmedML" %}
+    {% include dataset_submission.html slug="ahmedml" dataset="AhmedML" %}
 
   </section>
 

@@ -10,7 +10,9 @@
 </p>
 <ul>
   <li><code>submission.json</code> for model metadata and the required scalar metrics;</li>
-  <li><code>evaluation-evidence.json</code> linking those metrics to the recorded evaluation revision and profile-index checksum;</li>
+  <li>
+    <code>evaluation-evidence.json</code> linking those submitter-provided metrics to the declared evaluation revision and profile-index checksum;
+  </li>
   <li><code>profiles/index.json</code> listing the lightweight profile chunks; and</li>
   <li><code>profiles/chunk-*.json</code> containing profile coordinates and predictions for the declared test cases.</li>
 </ul>
@@ -28,17 +30,17 @@
 </p>
 <p>
   Before opening a pull request, run
-  <code>python scripts/validate_submission.py submissions/{{ include.slug }}/&lt;submission-id&gt;</code>. The validator checks the schema, split
-  identity, derived-score arithmetic, profile coverage, array lengths, ordering, finite values, and chunk hashes. It checks the submitted package's
-  internal consistency; it does not run the contributor's model or independently recalculate base metrics from full fields.
+  <code>python scripts/validate_submission.py --contributor-stage submissions/{{ include.slug }}/&lt;submission-id&gt;</code>. The validator checks
+  the schema, split identity, derived-score arithmetic, profile coverage, array lengths, ordering, finite values, and chunk hashes. It checks the
+  submitted package's internal consistency; it does not run the contributor's model or recalculate base metrics from full fields.
 </p>
 <p>
   A passing validator or pull request will not make a result official. Official results will require openly accessible evaluation code pinned to an
-  immutable revision, an openly accessible versioned model artifact with a cryptographic digest and licence, a locked environment and replay
-  instructions, and an independent maintainer replay that reproduces the submitted metrics within published tolerances. FluidsBench will publish the
-  replay evidence with the result.
+  immutable revision, an openly accessible versioned model artifact with a cryptographic digest and licence, a locked environment, artifact
+  documentation, and maintainer approval of the validated submission package. The public validation record states that its scope is submitted data
+  only: FluidsBench does not execute the contributor's code or model or recompute base metrics.
 </p>
 <p>
   <strong>Prototype notice:</strong> current case IDs, ground truth, profile values, and leaderboard rows are illustrative dummy data. Dataset owners
-  must replace and approve these materials before submissions open; none of the current rows is an official or replay-verified result.
+  must replace and approve these materials before submissions open; none of the current rows is an official or approved result.
 </p>

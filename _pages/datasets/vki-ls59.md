@@ -52,7 +52,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-section">
-    {% include dataset_submission_v1.html heading=2 slug="vki-ls59" dataset="VKI-LS59" %}
+    {% include dataset_submission.html heading=2 slug="vki-ls59" dataset="VKI-LS59" %}
   </section>
 
   <section class="dataset-section">
@@ -76,7 +76,7 @@ compact_masthead: true
 
   <section class="dataset-section">
     <h2>Profile comparisons</h2>
-    <p>The planned replay-verified result format provides the following station IDs and quantities:</p>
+    <p>The planned submitter-provided profile format uses the following station IDs and quantities:</p>
     <ul>
       <li><code>pressure_side</code> and <code>suction_side</code>: <code>M_iso</code> against normalized chord.</li>
       <li><code>outlet_plane_2</code>: normalized downstream velocity against pitch fraction.</li>

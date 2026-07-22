@@ -17,7 +17,7 @@ chart:
     <h1>FluidsBench Leaderboard</h1>
     <div class="leaderboard-source-row">
       <span id="submission-status" class="leaderboard-submit-status"
-        >Submissions remain closed while the open-reproducibility workflow is finalized.</span
+        >Submissions remain closed while the open-submission validation workflow is finalized.</span
       >
       <button
         id="open-submission-repo"
@@ -30,9 +30,9 @@ chart:
   </header>
 
   <aside class="leaderboard-data-warning" role="note" aria-label="Leaderboard data status">
-    <strong>Prototype only:</strong> all results currently shown are illustrative dummy data. They are not official, independently replayed results and
-    must not be cited or promoted as leaderboard claims. FluidsBench's open reproducibility track will publish all scored ground truth and require open,
-    versioned code and model artifacts plus independent maintainer replay before a result becomes official.
+    <strong>Prototype only:</strong> all results currently shown are illustrative dummy data. They are not official results and must not be cited or
+    promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, require open versioned code,
+    model, and environment artifacts, and pass FluidsBench package validation and maintainer approval.
   </aside>
 
   <section class="leaderboard-release-bar" aria-label="Leaderboard data release">
@@ -83,8 +83,8 @@ chart:
     <legend>Models shown in figures</legend>
     <p id="comparison-model-description">
       Request the same models for the comparison, scatter, and profile figures. The first five ranked rows are selected initially; each caption lists
-      any requested model that cannot be plotted because the required metric or profile is unavailable. This choice is independent of table-export
-      scope. Up to twelve models may be shown at once so colors remain consistent across screen and exported figures.
+      any requested model that cannot be plotted because the required metric or profile is unavailable. Table-export scope does not affect this choice.
+      Up to twelve models may be shown at once so colors remain consistent across screen and exported figures.
     </p>
     <div class="leaderboard-model-picker-actions">
       <button id="select-all-comparison-models" class="leaderboard-action-button" type="button">Select up to 12</button>

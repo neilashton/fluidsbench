@@ -57,7 +57,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    {% include dataset_submission_v1.html slug="airfrans" dataset="AirfRANS" %}
+    {% include dataset_submission.html slug="airfrans" dataset="AirfRANS" %}
 
   </section>
 

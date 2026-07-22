@@ -19,6 +19,7 @@
     "#17becf",
   ];
   const maxFigureModels = palette.length;
+  const reproducibilityContractVersion = "open-reproducibility-2.0";
   const columnGroups = [
     { id: "absolute", label: "Absolute", className: "metric-group-absolute" },
     { id: "relative", label: "Relative", className: "metric-group-relative" },
@@ -40,6 +41,10 @@
     loadedFeedSha256: null,
     feedVerified: false,
     groundTruthManifestProvenance: null,
+    groundTruthComparisonHealthy: false,
+    groundTruthComparisonKey: "",
+    groundTruthComparisonCaseSetId: "",
+    validationEvidenceChecks: new Map(),
     dataset: "",
     split: "",
     modelType: "",
@@ -68,6 +73,7 @@
     resultUnavailable: false,
     loadVersion: 0,
     profileLoadVersion: 0,
+    profileReadyVersion: -1,
   };
   let helpHideTimer = null;
   let activeHelpButton = null;
@@ -142,6 +148,95 @@
 
   function dataRelease() {
     return state.manifest?.data_release || {};
+  }
+
+  function resultDataOriginLabel() {
+    const origin = publicationScope().result_data_origin;
+    if (origin === "submitter_provided") return "submitter-provided";
+    if (origin === "illustrative_dummy_data") return "illustrative prototype";
+    return humanize(origin || "not supplied").toLowerCase();
+  }
+
+  function publicationScope() {
+    const prototype = dataRelease().status === "prototype_dummy_data";
+    return {
+      result_data_origin: prototype ? "illustrative_dummy_data" : "submitter_provided",
+      validation_scope: prototype ? "not_applicable" : "submitted_data_only",
+      model_execution: "not_performed",
+      metric_recomputation: "not_performed",
+    };
+  }
+
+  function groundTruthManifestVerified() {
+    const expected = dataRelease().profile_ground_truth || {};
+    const loaded = state.groundTruthManifestProvenance || {};
+    return Boolean(
+      expected.release_id && expected.manifest_sha256 && loaded.release_id === expected.release_id && loaded.sha256 === expected.manifest_sha256
+    );
+  }
+
+  function currentGroundTruthComparisonKey() {
+    return [dataRelease().id || "unversioned", state.dataset, state.split, state.profileCase].join("|");
+  }
+
+  function groundTruthComparisonVerified() {
+    return Boolean(
+      state.groundTruthComparisonHealthy &&
+        state.groundTruthComparisonKey === currentGroundTruthComparisonKey() &&
+        state.groundTruthComparisonCaseSetId
+    );
+  }
+
+  function setGroundTruthComparisonHealth(healthy, caseSetId = "") {
+    state.groundTruthComparisonHealthy = Boolean(healthy);
+    state.groundTruthComparisonKey = healthy ? currentGroundTruthComparisonKey() : "";
+    state.groundTruthComparisonCaseSetId = healthy ? caseSetId : "";
+    refreshCitationEligibilityUi();
+  }
+
+  function citationEligible(row = null) {
+    const release = dataRelease();
+    const releaseEligible =
+      release.status === "official" &&
+      release.reproducibility_contract_version === reproducibilityContractVersion &&
+      state.feedVerified &&
+      groundTruthManifestVerified() &&
+      groundTruthComparisonVerified();
+    if (!releaseEligible || !row) return releaseEligible;
+    const validation = maintainerValidation(row);
+    const profile = row.profile_data || {};
+    const evaluation = row.evaluation || {};
+    const expectedGroundTruth = release.profile_ground_truth || {};
+    const loadedGroundTruth = state.groundTruthManifestProvenance || {};
+    return Boolean(
+      row.approval?.status === "approved" &&
+        row.schema_version === "2.0" &&
+        row.reproducibility?.contract_version === reproducibilityContractVersion &&
+        validation.schema_version === "2.0" &&
+        validation.contract_version === reproducibilityContractVersion &&
+        validation.status === "validated" &&
+        validation.validation_scope === "submitted_data_only" &&
+        validation.model_execution === "not_performed" &&
+        validation.metric_recomputation === "not_performed" &&
+        validation.profile_ground_truth_release_id &&
+        validation.profile_ground_truth_release_id === expectedGroundTruth.release_id &&
+        validation.profile_ground_truth_release_id === loadedGroundTruth.release_id &&
+        validation.profile_ground_truth_release_id === profile.profile_ground_truth_release_id &&
+        validation.profile_ground_truth_manifest_sha256 &&
+        validation.profile_ground_truth_manifest_sha256 === expectedGroundTruth.manifest_sha256 &&
+        validation.profile_ground_truth_manifest_sha256 === loadedGroundTruth.sha256 &&
+        validation.profile_ground_truth_manifest_sha256 === profile.profile_ground_truth_manifest_sha256 &&
+        validation.case_set_id &&
+        validation.case_set_id === profile.case_set_id &&
+        validation.case_set_id === state.groundTruthComparisonCaseSetId &&
+        validation.profile_index_sha256 &&
+        validation.profile_index_sha256 === profile.index_sha256 &&
+        validation.evaluation_evidence_sha256 &&
+        validation.evaluation_evidence_sha256 === evaluation.evidence_sha256 &&
+        validation.evidence_sha256 &&
+        validation.evidence_sha256 === row.approval?.validation?.evidence_sha256 &&
+        validationEvidenceVerified(row)
+    );
   }
 
   function activeSplitDefinition() {
@@ -385,6 +480,7 @@
       release_id: loaded.data?.data_release?.id || null,
     };
     state.groundTruthManifest = loaded.data;
+    refreshCitationEligibilityUi();
     return state.groundTruthManifest;
   }
 
@@ -402,7 +498,7 @@
     if (!caseSet.index_sha256 || !cached.sha256 || cached.sha256 !== caseSet.index_sha256) {
       throw new Error(`${datasetName} profile ground-truth index checksum does not match its release manifest`);
     }
-    return { index: cached.data, indexUrl, indexSha256: cached.sha256 };
+    return { index: cached.data, indexUrl, indexSha256: cached.sha256, caseSetId: caseSet.id };
   }
 
   async function submissionProfileIndex(row) {
@@ -559,11 +655,14 @@
 
   function releaseStamp() {
     const release = dataRelease();
+    const scope = publicationScope();
     const checksum = release.feed_sha256
       ? `verified feed SHA-256 ${state.feedVerified ? state.loadedFeedSha256 : release.feed_sha256}`
       : "feed checksum not supplied";
     const archive = releaseArchiveUrl() ? `archive ${releaseArchiveUrl()}` : "no immutable archive URL supplied";
-    return `FluidsBench data release ${release.id || "unversioned"} (status: ${humanize(release.status || "not supplied")}; ${checksum}; ${archive})`;
+    return `FluidsBench data release ${release.id || "unversioned"} (status: ${humanize(
+      release.status || "not supplied"
+    )}; ${checksum}; ${archive}; result-data origin: ${humanize(scope.result_data_origin)})`;
   }
 
   function humanize(value) {
@@ -618,11 +717,14 @@
     });
     const citationButton = element("open-citation-dialog");
     if (citationButton) {
-      const official = release.status === "official" && state.feedVerified;
-      citationButton.disabled = !state.dataset || !official;
-      citationButton.title = official
-        ? "Cite this verified official release or open result"
-        : "Citations are enabled only for verified official releases";
+      const citedRow = state.resultId ? rowsForActiveSplit().find((row) => row.id === state.resultId) : null;
+      const eligible = citationEligible(citedRow);
+      citationButton.disabled = !state.dataset || !eligible;
+      citationButton.title = eligible
+        ? citedRow
+          ? "Cite this approved result from a hash-verified official release"
+          : "Cite this hash-verified official release"
+        : "Citations require an official release with verified feed and ground-truth hashes; result citations also require approval and a validated submission package";
     }
     const warning = element("leaderboard-release-warning");
     if (warning) {
@@ -673,6 +775,7 @@
       source_ref: dataRelease().source_ref || null,
       source_commit: dataRelease().source_commit || null,
       reproducibility_contract_version: dataRelease().reproducibility_contract_version || null,
+      publication_scope: publicationScope(),
       license: {
         spdx_id: license.spdxId || null,
         name: license.name || null,
@@ -703,6 +806,7 @@
       ["loaded_feed_sha256", () => provenance.loaded_feed_sha256],
       ["feed_verified", () => provenance.feed_verified],
       ["release_reproducibility_contract", () => provenance.reproducibility_contract_version],
+      ["publication_scope_json", () => provenance.publication_scope],
       ["archive_url", () => provenance.archive_url],
       ["asset_base_url", () => provenance.asset_base_url],
       ["profile_ground_truth_json", () => provenance.profile_ground_truth],
@@ -747,27 +851,34 @@
       ["environment_kind", (row) => row.reproducibility?.environment?.kind],
       ["environment_url", (row) => row.reproducibility?.environment?.url],
       ["environment_sha256", (row) => row.reproducibility?.environment?.sha256],
-      ["replay_instructions_url", (row) => row.reproducibility?.replay_instructions_url],
+      ["artifact_documentation_url", (row) => row.reproducibility?.artifact_documentation_url],
       ["approval_status", (row) => row.approval?.status],
       ["approved_by", (row) => row.approval?.approved_by],
       ["approved_at", (row) => row.approval?.approved_at],
       ["pull_request_url", (row) => row.approval?.pull_request_url],
-      ["maintainer_replay_status", (row) => maintainerReplay(row).status],
-      ["maintainer_replay_contract", (row) => maintainerReplay(row).contract_version],
-      ["maintainer_replay_reference", (row) => maintainerReplay(row).reference_version],
-      ["maintainer_replayed_by", (row) => maintainerReplay(row).replayed_by],
-      ["maintainer_replayed_at", (row) => maintainerReplay(row).replayed_at],
-      ["maintainer_replay_tolerance", (row) => maintainerReplay(row).metric_abs_tolerance],
-      ["reviewed_submission_sha256", (row) => maintainerReplay(row).reviewed_submission_sha256],
-      ["submitted_profile_index_sha256", (row) => maintainerReplay(row).submitted_profile_index_sha256],
-      ["replayed_profile_index_sha256", (row) => maintainerReplay(row).replayed_profile_index_sha256],
-      ["replay_independence_json", (row) => maintainerReplay(row).independence],
-      ["maintainer_replay_file", (row) => maintainerReplay(row).evidence_file],
-      ["maintainer_replay_sha256", (row) => maintainerReplay(row).evidence_sha256],
+      ["maintainer_validation_status", (row) => maintainerValidation(row).status],
+      ["maintainer_validation_schema_version", (row) => maintainerValidation(row).schema_version],
+      ["maintainer_validation_contract", (row) => maintainerValidation(row).contract_version],
+      ["maintainer_validation_reference", (row) => maintainerValidation(row).reference_version],
+      ["maintainer_validated_by", (row) => maintainerValidation(row).validated_by],
+      ["maintainer_validated_at", (row) => maintainerValidation(row).validated_at],
+      ["validation_scope", (row) => maintainerValidation(row).validation_scope],
+      ["model_execution", (row) => maintainerValidation(row).model_execution],
+      ["metric_recomputation", (row) => maintainerValidation(row).metric_recomputation],
+      ["reviewed_submission_sha256", (row) => maintainerValidation(row).reviewed_submission_sha256],
+      ["validated_evaluation_evidence_sha256", (row) => maintainerValidation(row).evaluation_evidence_sha256],
+      ["validated_profile_index_sha256", (row) => maintainerValidation(row).profile_index_sha256],
+      ["validated_case_set_id", (row) => maintainerValidation(row).case_set_id],
+      ["validated_profile_ground_truth_release_id", (row) => maintainerValidation(row).profile_ground_truth_release_id],
+      ["validated_profile_ground_truth_manifest_sha256", (row) => maintainerValidation(row).profile_ground_truth_manifest_sha256],
+      ["maintainer_validation_evidence_path", (row) => maintainerValidation(row).evidence_path],
+      ["maintainer_validation_evidence_sha256", (row) => maintainerValidation(row).evidence_sha256],
       ["paper_url", (row) => row.paper_url],
       ["code_url", (row) => row.code_url],
       ["profile_index_file", (row) => row.profile_data?.index_file],
       ["profile_index_sha256", (row) => row.profile_data?.index_sha256],
+      ["profile_ground_truth_release_id", (row) => row.profile_data?.profile_ground_truth_release_id],
+      ["profile_ground_truth_manifest_sha256", (row) => row.profile_data?.profile_ground_truth_manifest_sha256],
       ["result_permalink", (row) => resultUrl(row, Boolean(releaseArchiveUrl()))],
       ["note", (row) => row.note],
     ];
@@ -843,24 +954,30 @@
     const checksum = release.feed_sha256 || "not supplied";
     const url = citedViewUrl();
     const citedResult = state.resultId ? rowsForActiveSplit().find((row) => row.id === state.resultId) : null;
-    const replay = citedResult ? maintainerReplay(citedResult) : {};
+    const validation = citedResult ? maintainerValidation(citedResult) : {};
     const context = citedResult ? `${state.dataset}, ${state.split}, ${citedResult.model} (${citedResult.id})` : `${state.dataset}, ${state.split}`;
     const status = humanize(release.status || "not supplied");
     const resultNote = citedResult
-      ? ` Result status: ${humanize(citedResult.approvalStatus)}; maintainer replay ${replay.status || "not supplied"}, evidence SHA-256 ${
-          replay.evidence_sha256 || "not supplied"
-        }.`
+      ? ` Result status: ${humanize(citedResult.approvalStatus)}; submission package validation ${validation.status || "not supplied"} (scope: ${
+          validation.validation_scope || "not supplied"
+        }; model execution: ${validation.model_execution || "not supplied"}; metric recomputation: ${
+          validation.metric_recomputation || "not supplied"
+        }; profile ground-truth release: ${validation.profile_ground_truth_release_id || "not supplied"}; profile ground-truth manifest SHA-256: ${
+          validation.profile_ground_truth_manifest_sha256 || "not supplied"
+        }), validation record SHA-256 ${validation.evidence_sha256 || "not supplied"}.`
       : "";
     const license = releaseLicenseMetadata();
     const archiveNote = releaseArchiveUrl() ? `Archived release: ${releaseArchiveUrl()}.` : "No immutable archive URL is supplied.";
     return {
-      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, data release ${releaseId} (status: ${status}), verified feed SHA-256 ${checksum}.${resultNote} Licence: ${license.label}; scope: ${license.scope}. ${archiveNote} ${url}`,
+      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, data release ${releaseId} (status: ${status}), verified feed SHA-256 ${checksum}.${resultNote} Model-result data are ${resultDataOriginLabel()}; FluidsBench model execution and base-metric recomputation were not performed. Licence: ${
+        license.label
+      }; scope: ${license.scope}. ${archiveNote} ${url}`,
       bibtex: `@misc{fluidsbench_${slug(state.dataset).replaceAll("-", "_")}_${slug(releaseId).replaceAll(
         "-",
         "_"
       )},\n  author = {${author}},\n  title = {${title}: ${context}},\n  year = {${year}},\n  publisher = {${publisher}},\n  url = {${url}},\n  note = {Data release ${releaseId}; status ${status}; feed SHA-256 ${checksum}; licence ${
         license.label
-      };${resultNote} ${archiveNote}}\n}`,
+      };${resultNote} model-result data are ${resultDataOriginLabel()}; FluidsBench model execution and base-metric recomputation were not performed; ${archiveNote}}\n}`,
     };
   }
 
@@ -910,11 +1027,11 @@
       split: `Declared ${state.dataset} benchmark split used for training and public-ground-truth evaluation.`,
       modelTypes: `One or more submitted architecture categories. Available here: ${types || "none"}.`,
       status:
-        "Prototype rows are illustrative only. An official result requires public versioned code and model artifacts plus a successful independent maintainer replay.",
+        "Prototype rows are illustrative only. An official result requires public versioned code, model, and environment artifacts, a validated submission package, and maintainer approval.",
       training: `How the model was initialized and whether target-dataset training data were used. Supported values: ${trainingLabels}.`,
       parameters: "Submitter-reported trainable parameter count in millions; a missing value remains missing rather than being treated as zero.",
       date: "Date associated with the submitted result.",
-      details: "Opens a deep-linkable result record with submission, open-reproducibility, replay, and metric metadata.",
+      details: "Opens a deep-linkable result record with submission, open-artifact, validation, approval, and metric metadata.",
     };
     return definitions[key] || "";
   }
@@ -1332,6 +1449,59 @@
     state.charts[key] = null;
   }
 
+  function profileFigureReady(key) {
+    const values = state.figureSpecs.get(key)?.data?.values;
+    return Boolean(
+      key.startsWith("profile-") &&
+        state.profileReadyVersion === state.profileLoadVersion &&
+        Array.isArray(values) &&
+        values.length &&
+        state.figureCaptions.get(key)
+    );
+  }
+
+  function assertProfileFigureCurrent(key, version) {
+    if (!key.startsWith("profile-")) return;
+    if (version !== state.profileLoadVersion || version !== state.profileReadyVersion || !profileFigureReady(key)) {
+      throw new Error("The profile selection changed while this export was being prepared; try again after loading finishes");
+    }
+  }
+
+  function syncProfileActionAvailability() {
+    document.querySelectorAll('[data-figure-key^="profile-"], [data-copy-caption^="profile-"], [data-profile-data-index]').forEach((button) => {
+      const key = button.dataset.figureKey || button.dataset.copyCaption || `profile-${button.dataset.profileDataIndex}`;
+      button.disabled = !profileFigureReady(key);
+    });
+  }
+
+  function invalidateProfileFigure(key, clearSummary = true) {
+    state.figureSpecs.delete(key);
+    state.figureCaptions.delete(key);
+    destroyChart(key);
+    const index = key.slice("profile-".length);
+    const canvas = element(`${key}-chart`);
+    if (canvas) canvas.hidden = true;
+    const caption = element(`${key}-figure-caption`);
+    if (caption) caption.textContent = "";
+    const table = element(`${key}-data-table`);
+    if (table) table.replaceChildren();
+    if (clearSummary) setChartSummary(`${key}-chart-summary`, "");
+    document.querySelectorAll(`[data-figure-key="${key}"], [data-copy-caption="${key}"], [data-profile-data-index="${index}"]`).forEach((button) => {
+      button.disabled = true;
+    });
+  }
+
+  function invalidateProfileFigures() {
+    state.profileReadyVersion = -1;
+    const keys = new Set(
+      [...state.figureSpecs.keys(), ...state.figureCaptions.keys()]
+        .filter((key) => key.startsWith("profile-"))
+        .concat(Array.from(document.querySelectorAll("[data-profile-panel]"), (section) => `profile-${section.dataset.profilePanel}`))
+    );
+    keys.forEach((key) => invalidateProfileFigure(key));
+    syncProfileActionAvailability();
+  }
+
   function comparisonLabel(value, definition) {
     return formatMetric(value, definition);
   }
@@ -1403,23 +1573,47 @@
       .replaceAll("'", "&apos;");
   }
 
-  function decorateSvg(key, svg) {
-    const caption = state.figureCaptions.get(key) || releaseStamp();
+  function figureExportSnapshot(key, format) {
+    const spec = state.figureSpecs.get(key);
+    if (!spec) throw new Error("No figure data are available for this selection");
+    const captionEntry = state.figureCaptions.get(key);
+    const caption = captionEntry || releaseStamp();
     const metadata = {
-      schema_version: "fluidsbench-svg-metadata-v1",
+      schema_version: "fluidsbench-svg-metadata-v2",
       release: dataRelease(),
       loaded_feed_sha256: state.loadedFeedSha256,
       feed_verified: state.feedVerified,
-      loaded_profile_ground_truth_manifest: state.groundTruthManifestProvenance,
+      loaded_profile_ground_truth_manifest: state.groundTruthManifestProvenance ? { ...state.groundTruthManifestProvenance } : null,
       archive_url: releaseArchiveUrl() || null,
       license: releaseLicenseMetadata(),
+      publication_scope: publicationScope(),
       view_url: currentViewUrl(false, false),
-      selected_submission_ids: Array.from(new Set((state.figureSpecs.get(key)?.data?.values || []).map((row) => row.submission_id).filter(Boolean))),
+      selected_submission_ids: Array.from(new Set((spec.data?.values || []).map((row) => row.submission_id).filter(Boolean))),
       caption,
-      figure_spec: state.figureSpecs.get(key),
+      figure_spec: spec,
     };
-    const annotation = `<title>${xmlEscape(`${state.dataset}: ${key}`)}</title><desc>${xmlEscape(caption)}</desc><metadata>${xmlEscape(
-      JSON.stringify(metadata)
+    return {
+      key,
+      spec,
+      captionEntry,
+      caption,
+      metadata,
+      svgTitle: `${state.dataset}: ${key}`,
+      filename: format === "print" ? "" : figureFilename(key, format),
+      profileVersion: key.startsWith("profile-") ? state.profileLoadVersion : null,
+    };
+  }
+
+  function assertFigureExportCurrent(snapshot) {
+    if (state.figureSpecs.get(snapshot.key) !== snapshot.spec || state.figureCaptions.get(snapshot.key) !== snapshot.captionEntry) {
+      throw new Error("Figure selection changed while the export was being prepared; export again for the current view");
+    }
+    if (snapshot.profileVersion !== null) assertProfileFigureCurrent(snapshot.key, snapshot.profileVersion);
+  }
+
+  function decorateSvg(svg, snapshot) {
+    const annotation = `<title>${xmlEscape(snapshot.svgTitle)}</title><desc>${xmlEscape(snapshot.caption)}</desc><metadata>${xmlEscape(
+      JSON.stringify(snapshot.metadata)
     )}</metadata>`;
     return svg.replace(/<svg([^>]*)>/, `<svg$1>${annotation}`);
   }
@@ -1429,6 +1623,7 @@
     const subtitle = [
       `Data release ${release.id || "unversioned"} · status ${humanize(release.status || "not supplied")}`,
       `Verified scalar feed SHA-256: ${state.loadedFeedSha256 || release.feed_sha256 || "not supplied"}`,
+      `Result data: ${humanize(publicationScope().result_data_origin)} · FluidsBench model execution and base-metric recomputation: not performed`,
       releaseArchiveUrl() ? `Immutable archive: ${releaseArchiveUrl()}` : "No immutable archive URL supplied",
     ];
     if (release.profile_ground_truth?.release_id) {
@@ -1472,14 +1667,13 @@
         fluidsbench_release: dataRelease(),
         fluidsbench_archive_url: releaseArchiveUrl() || null,
         fluidsbench_license: releaseLicenseMetadata(),
+        fluidsbench_publication_scope: publicationScope(),
         fluidsbench_view_url: currentViewUrl(false, false),
       },
     };
   }
 
-  async function withVegaView(key, callback) {
-    const spec = state.figureSpecs.get(key);
-    if (!spec) throw new Error("No figure data are available for this selection");
+  async function withVegaView(spec, callback) {
     if (typeof window.vegaEmbed !== "function") throw new Error("The vector export library is not available");
     const host = document.createElement("div");
     host.style.cssText = "left:-10000px;position:fixed;top:0;width:960px;";
@@ -1520,17 +1714,25 @@
   async function exportFigure(key, format) {
     const status = element("leaderboard-release-action-status");
     try {
+      const snapshot = figureExportSnapshot(key, format);
+      assertFigureExportCurrent(snapshot);
       if (status) status.textContent = `Preparing ${format === "print" ? "print view" : format.toUpperCase()}...`;
       if (format === "svg") {
-        const svg = decorateSvg(key, await withVegaView(key, (view) => view.toSVG()));
-        downloadText(figureFilename(key, "svg"), svg, "image/svg+xml;charset=utf-8");
+        const renderedSvg = await withVegaView(snapshot.spec, (view) => view.toSVG());
+        assertFigureExportCurrent(snapshot);
+        const svg = decorateSvg(renderedSvg, snapshot);
+        downloadText(snapshot.filename, svg, "image/svg+xml;charset=utf-8");
       } else if (format === "png") {
-        const dataUrl = await withVegaView(key, (view) => view.toImageURL("png", 3));
+        const dataUrl = await withVegaView(snapshot.spec, (view) => view.toImageURL("png", 3));
+        assertFigureExportCurrent(snapshot);
         const blob = await fetch(dataUrl).then((response) => response.blob());
-        downloadBlob(figureFilename(key, "png"), blob);
+        assertFigureExportCurrent(snapshot);
+        downloadBlob(snapshot.filename, blob);
       } else if (format === "print") {
-        const svg = decorateSvg(key, await withVegaView(key, (view) => view.toSVG()));
-        printFigureSvg(svg, state.figureCaptions.get(key) || releaseStamp());
+        const renderedSvg = await withVegaView(snapshot.spec, (view) => view.toSVG());
+        assertFigureExportCurrent(snapshot);
+        const svg = decorateSvg(renderedSvg, snapshot);
+        printFigureSvg(svg, snapshot.caption);
         if (status) status.textContent = "Opened the browser print dialog; choose Save as PDF to create a PDF.";
       }
     } catch (error) {
@@ -1633,6 +1835,7 @@
       rank: row.rank,
       value: row.metricValues[definition.id],
       order: index,
+      ...validationMetadata(row),
     }));
     state.figureSpecs.set("comparison", {
       ...figureSpecBase(`${state.dataset}: ${plainMetricLabel(definition)}`, figureValues),
@@ -1793,6 +1996,7 @@
       x: point.x,
       y: point.y,
       order: index,
+      ...validationMetadata(point.row),
     }));
     state.figureSpecs.set("scatter", {
       ...figureSpecBase(`${state.dataset}: metric scatter`, figureValues),
@@ -1983,12 +2187,12 @@
         </div>
       </div>
       <div class="leaderboard-figure-toolbar" role="group" aria-label="${escapeHtml(panel.title)} figure and data actions">
-        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="svg">SVG</button>
-        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="png">High-res PNG</button>
-        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="print">Print / save PDF</button>
-        <button class="leaderboard-action-button" type="button" data-profile-data-index="${index}" data-profile-data-format="csv">Plot data CSV</button>
-        <button class="leaderboard-action-button" type="button" data-profile-data-index="${index}" data-profile-data-format="json">Plot data JSON</button>
-        <button class="leaderboard-action-button" type="button" data-copy-caption="profile-${index}">Copy caption</button>
+        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="svg" disabled>SVG</button>
+        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="png" disabled>High-res PNG</button>
+        <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="print" disabled>Print / save PDF</button>
+        <button class="leaderboard-action-button" type="button" data-profile-data-index="${index}" data-profile-data-format="csv" disabled>Plot data CSV</button>
+        <button class="leaderboard-action-button" type="button" data-profile-data-index="${index}" data-profile-data-format="json" disabled>Plot data JSON</button>
+        <button class="leaderboard-action-button" type="button" data-copy-caption="profile-${index}" disabled>Copy caption</button>
       </div>
       <div class="chart-frame">
         <p id="profile-${index}-status" class="profile-chart-status" role="status">Loading profile data...</p>
@@ -2030,6 +2234,7 @@
     syncDatasetSelects();
     syncSplitSelects();
     syncProfileCaseSelects();
+    syncProfileActionAvailability();
   }
 
   function profileSeries(source, panel, stationId, quantity) {
@@ -2050,10 +2255,15 @@
   }
 
   async function refreshProfileContext() {
-    const dataset = activeDataset();
-    if (!dataset || !state.split) return;
     const version = ++state.profileLoadVersion;
+    invalidateProfileFigures();
+    const dataset = activeDataset();
+    if (!dataset || !state.split) {
+      setProfileStatus("No profile data are available for this selection.");
+      return;
+    }
     const rows = figureRows();
+    setGroundTruthComparisonHealth(false);
     setProfileStatus("Loading profile data...");
     try {
       let groundTruthContext = null;
@@ -2079,7 +2289,7 @@
         state.profileCases = new Map();
         state.profileCaseErrors = new Map();
         setProfileStatus("No profile cases are available for this dataset and split.");
-        dataset.diagnostic_panels.forEach((_, index) => renderProfileChart(index));
+        syncProfileActionAvailability();
         return;
       }
 
@@ -2090,7 +2300,7 @@
         try {
           const context = await submissionProfileIndex(row);
           const value = await indexedProfileCase(context, state.profileCase, state.profileChunks, rowLabel(row));
-          return { id: row.id, value, error: value ? null : "selected case is absent from the verified profile package" };
+          return { id: row.id, value, error: value ? null : "selected case is absent from the checksum-verified submitted profile package" };
         } catch (error) {
           console.error(error);
           return { id: row.id, value: null, error: error.message };
@@ -2101,26 +2311,38 @@
       state.groundTruthCase = groundTruthCase;
       state.profileCases = new Map(rowCases.map(({ id, value }) => [id, value]));
       state.profileCaseErrors = new Map(rowCases.filter(({ error }) => error).map(({ id, error }) => [id, error]));
-      if (!groundTruthError) element("leaderboard-profile-warning").hidden = true;
+      if (groundTruthError || !groundTruthCase) {
+        if (!groundTruthError) showProfileWarning(new Error("the selected case is absent from the checksum-verified ground-truth package"));
+        setGroundTruthComparisonHealth(false);
+        setProfileStatus("Profile comparison is unavailable because the selected ground-truth case could not be verified.");
+        syncProfileActionAvailability();
+        return;
+      }
+      element("leaderboard-profile-warning").hidden = true;
+      setGroundTruthComparisonHealth(true, groundTruthContext.caseSetId);
+      state.profileReadyVersion = version;
       setProfileStatus("");
       dataset.diagnostic_panels.forEach((_, index) => renderProfileChart(index));
+      syncProfileActionAvailability();
     } catch (error) {
       if (version !== state.profileLoadVersion) return;
       state.groundTruthCase = null;
       state.profileCases = new Map();
       state.profileCaseErrors = new Map();
-      state.profileCaseErrors = new Map();
+      invalidateProfileFigures();
       setProfileStatus(`Profile data could not be loaded: ${error.message}`);
       showProfileWarning(error);
+      setGroundTruthComparisonHealth(false);
       console.error(error);
     }
   }
 
   function renderProfileChart(index) {
+    const figureKey = `profile-${index}`;
+    invalidateProfileFigure(figureKey);
     const panel = activeDataset()?.diagnostic_panels?.[index];
     const canvas = element(`profile-${index}-chart`);
-    if (!panel || !canvas || typeof Chart === "undefined") return;
-    destroyChart(`profile-${index}`);
+    if (state.profileReadyVersion !== state.profileLoadVersion || !panel || !canvas || typeof Chart === "undefined") return;
     const selection = panelSelection(panel);
     const quantity = (panel.quantities || []).find((candidate) => candidate.id === selection.quantity);
     const station = (panel.stations || []).find((candidate) => candidate.id === selection.station);
@@ -2160,6 +2382,7 @@
         seriesRole: "submission_prediction",
         submissionId: row.id,
         rank: row.rank,
+        validationMetadata: validationMetadata(row),
         sourceProvenance: state.profileCases.get(row.id)?._fluidsbenchProvenance || {},
         lineStyle: rowIndex % 2 ? "dashed" : "solid",
         data: series.points,
@@ -2194,7 +2417,10 @@
       } ${submissionCurveCount} submission curves are displayed.${profileOmissionText}`
     );
 
-    const figureKey = `profile-${index}`;
+    if (!datasets.length) {
+      syncProfileActionAvailability();
+      return;
+    }
     const plottedValues = datasets.flatMap((dataset, seriesIndex) =>
       dataset.data.map((point, pointIndex) => ({
         series: dataset.label,
@@ -2214,12 +2440,15 @@
         source_chunk_url: dataset.sourceProvenance?.chunk_url || null,
         source_chunk_declared_sha256: dataset.sourceProvenance?.chunk_declared_sha256 || null,
         source_chunk_downloaded_sha256: dataset.sourceProvenance?.chunk_downloaded_sha256 || null,
+        ...(dataset.validationMetadata || validationMetadata(null)),
       }))
     );
     const droppedPointCount = datasets.reduce((total, dataset) => total + dataset.droppedPointCount, 0);
     const caption = `${state.dataset}, ${state.split}, public evaluation geometry ${state.profileCase}: ${quantity.label} at ${
       station.label
-    }, showing ${groundTruthSeries ? "public ground truth and " : ""}${submissionCurveCount} explicitly selected model curve${
+    }, showing ${
+      groundTruthSeries ? "public ground truth and " : ""
+    }${submissionCurveCount} explicitly selected ${resultDataOriginLabel()} model curve${
       submissionCurveCount === 1 ? "" : "s"
     }. Lines preserve native source order and join finite source coordinate/value pairs without smoothing, interpolation, resampling, or sorting; ${
       droppedPointCount || "no"
@@ -2316,19 +2545,22 @@
         },
       },
     });
+    syncProfileActionAvailability();
   }
 
   function profileDataExport(index) {
+    const figureKey = `profile-${index}`;
+    if (!profileFigureReady(figureKey)) throw new Error("No current plotted profile data are available");
     const panel = activeDataset()?.diagnostic_panels?.[index];
     const selection = panel ? panelSelection(panel) : null;
     const quantity = (panel?.quantities || []).find((candidate) => candidate.id === selection?.quantity);
     const station = (panel?.stations || []).find((candidate) => candidate.id === selection?.station);
-    const spec = state.figureSpecs.get(`profile-${index}`);
+    const spec = state.figureSpecs.get(figureKey);
     const points = Array.isArray(spec?.data?.values) ? spec.data.values : [];
     if (!panel || !quantity || !station || !points.length) throw new Error("No plotted profile data are available");
     const license = releaseLicenseMetadata();
     return {
-      schema_version: "fluidsbench-profile-plot-export-v1",
+      schema_version: "fluidsbench-profile-plot-export-v2",
       exported_at: new Date().toISOString(),
       provenance: {
         export_scope: "exact_displayed_profile_figure",
@@ -2336,6 +2568,7 @@
         release_id: dataRelease().id || null,
         release_status: dataRelease().status || null,
         reproducibility_contract_version: dataRelease().reproducibility_contract_version || null,
+        publication_scope: publicationScope(),
         feed_sha256: dataRelease().feed_sha256 || null,
         loaded_feed_sha256: state.loadedFeedSha256,
         feed_verified: state.feedVerified,
@@ -2402,6 +2635,7 @@
         "release_id",
         "release_status",
         "release_reproducibility_contract",
+        "publication_scope_json",
         "feed_sha256",
         "loaded_feed_sha256",
         "feed_verified",
@@ -2435,6 +2669,16 @@
         "source_chunk_url",
         "source_chunk_declared_sha256",
         "source_chunk_downloaded_sha256",
+        "maintainer_validation_status",
+        "validation_scope",
+        "model_execution",
+        "metric_recomputation",
+        "validated_case_set_id",
+        "submitted_profile_ground_truth_release_id",
+        "submitted_profile_ground_truth_manifest_sha256",
+        "validated_profile_ground_truth_release_id",
+        "validated_profile_ground_truth_manifest_sha256",
+        "maintainer_validation_evidence_sha256",
         "x",
         "y",
       ];
@@ -2446,6 +2690,7 @@
           metadata.release_id,
           metadata.release_status,
           metadata.reproducibility_contract_version,
+          metadata.publication_scope,
           metadata.feed_sha256,
           metadata.loaded_feed_sha256,
           metadata.feed_verified,
@@ -2479,6 +2724,16 @@
           point.source_chunk_url,
           point.source_chunk_declared_sha256,
           point.source_chunk_downloaded_sha256,
+          point.maintainer_validation_status,
+          point.validation_scope,
+          point.model_execution,
+          point.metric_recomputation,
+          point.validated_case_set_id,
+          point.submitted_profile_ground_truth_release_id,
+          point.submitted_profile_ground_truth_manifest_sha256,
+          point.validated_profile_ground_truth_release_id,
+          point.validated_profile_ground_truth_manifest_sha256,
+          point.maintainer_validation_evidence_sha256,
           point.x,
           point.y,
         ];
@@ -2629,23 +2884,105 @@
     }
   }
 
-  function submissionEvidenceUrl(row, file) {
-    const indexFile = row.profile_data?.index_file;
-    if (!indexFile || !file) return "";
+  function maintainerValidation(row) {
+    const validation = row?.maintainer_validation || row?.approval?.validation;
+    return validation && typeof validation === "object" ? validation : {};
+  }
+
+  function validationMetadata(row) {
+    const validation = maintainerValidation(row);
+    return {
+      maintainer_validation_status: validation.status || null,
+      maintainer_validation_schema_version: validation.schema_version || null,
+      validation_scope: validation.validation_scope || null,
+      model_execution: validation.model_execution || null,
+      metric_recomputation: validation.metric_recomputation || null,
+      validated_case_set_id: validation.case_set_id || null,
+      submitted_profile_ground_truth_release_id: row?.profile_data?.profile_ground_truth_release_id || null,
+      submitted_profile_ground_truth_manifest_sha256: row?.profile_data?.profile_ground_truth_manifest_sha256 || null,
+      validated_profile_ground_truth_release_id: validation.profile_ground_truth_release_id || null,
+      validated_profile_ground_truth_manifest_sha256: validation.profile_ground_truth_manifest_sha256 || null,
+      maintainer_validation_evidence_sha256: validation.evidence_sha256 || null,
+    };
+  }
+
+  function validationEvidenceUrl(row) {
+    const evidencePath = maintainerValidation(row).evidence_path;
+    if (!evidencePath) return "";
     try {
-      return safeHttpUrl(new URL(`../${file}`, fileUrl(indexFile)).href);
+      return safeHttpUrl(fileUrl(evidencePath));
     } catch (_error) {
       return "";
     }
   }
 
-  function maintainerReplay(row) {
-    return row.maintainer_replay || row.approval?.replay || {};
+  function validationEvidenceCheck(row) {
+    const url = validationEvidenceUrl(row);
+    return url ? state.validationEvidenceChecks.get(url) : null;
+  }
+
+  function validationEvidenceVerified(row) {
+    const validation = maintainerValidation(row);
+    const check = validationEvidenceCheck(row);
+    return Boolean(check?.status === "verified" && check.sha256 === validation.evidence_sha256);
+  }
+
+  async function ensureValidationEvidence(row) {
+    const url = validationEvidenceUrl(row);
+    const validation = maintainerValidation(row);
+    const approvalSha256 = row.approval?.validation?.evidence_sha256;
+    if (!url || !validation.evidence_sha256 || !approvalSha256) return;
+    const existing = state.validationEvidenceChecks.get(url);
+    if (existing) return;
+    state.validationEvidenceChecks.set(url, { status: "loading", sha256: null, error: null });
+    try {
+      const loaded = await fetchJsonWithProvenance(url, `${rowLabel(row)} validation record`);
+      if (!loaded.sha256 || loaded.sha256 !== validation.evidence_sha256 || loaded.sha256 !== approvalSha256) {
+        throw new Error("validation record checksum does not match the hash-verified leaderboard feed");
+      }
+      const bindings = [
+        ["schema_version", validation.schema_version],
+        ["submission_id", row.id],
+        ["dataset_id", row.dataset_id],
+        ["split_id", row.split_id],
+        ["status", validation.status],
+        ["contract_version", validation.contract_version],
+        ["reference_version", validation.reference_version],
+        ["case_set_id", validation.case_set_id],
+        ["profile_ground_truth_release_id", validation.profile_ground_truth_release_id],
+        ["profile_ground_truth_manifest_sha256", validation.profile_ground_truth_manifest_sha256],
+        ["validated_by", validation.validated_by],
+        ["validated_at", validation.validated_at],
+        ["validation_scope", validation.validation_scope],
+        ["model_execution", validation.model_execution],
+        ["metric_recomputation", validation.metric_recomputation],
+        ["reviewed_submission_sha256", validation.reviewed_submission_sha256],
+        ["evaluation_evidence_sha256", validation.evaluation_evidence_sha256],
+        ["profile_index_sha256", validation.profile_index_sha256],
+      ];
+      const mismatch = bindings.find(([key, expected]) => !expected || loaded.data?.[key] !== expected);
+      if (mismatch) throw new Error(`validation record ${mismatch[0]} does not match the hash-verified leaderboard feed`);
+      state.validationEvidenceChecks.set(url, { status: "verified", sha256: loaded.sha256, error: null });
+    } catch (error) {
+      state.validationEvidenceChecks.set(url, { status: "failed", sha256: null, error: error.message });
+      console.error(error);
+    }
+    refreshCitationEligibilityUi();
+  }
+
+  function refreshCitationEligibilityUi() {
+    if (!state.manifest) return;
+    renderReleaseMetadata();
+    const dialog = element("details-dialog");
+    if (!dialog?.open || !state.resultId) return;
+    const row = rowsForActiveSplit().find((candidate) => candidate.id === state.resultId);
+    if (row) openDetails(row, false);
   }
 
   function openDetails(row, syncUrl = true) {
     state.resultId = row.id;
     if (syncUrl) updateUrl();
+    renderReleaseMetadata();
     const dialog = element("details-dialog");
     element("details-dialog-title").textContent = row.model;
     element("details-dialog-subtitle").textContent = `${row.dataset} / ${row.split}`;
@@ -2656,20 +2993,21 @@
     ]
       .filter(Boolean)
       .join(" &middot; ");
-    const evaluationLinks = [detailsLink("Evaluation evidence", evaluationEvidenceUrl(row))].filter(Boolean).join(" &middot; ");
+    const evaluationLinks = [detailsLink("Submitter evaluation record", evaluationEvidenceUrl(row))].filter(Boolean).join(" &middot; ");
     const reproducibilityLinks = [
       detailsLink("Pinned public code", row.reproducibility?.code?.repository_url),
       detailsLink("Public model artifact", row.reproducibility?.model_artifact?.url),
       detailsLink("Locked environment", row.reproducibility?.environment?.url),
-      detailsLink("Replay instructions", row.reproducibility?.replay_instructions_url),
+      detailsLink("Artifact documentation", row.reproducibility?.artifact_documentation_url),
     ]
       .filter(Boolean)
       .join(" &middot; ");
-    const replay = maintainerReplay(row);
-    const replayEvidenceUrl = submissionEvidenceUrl(row, replay.evidence_file);
+    const validation = maintainerValidation(row);
+    void ensureValidationEvidence(row);
+    const validationCheck = validationEvidenceCheck(row);
     const approvalLinks = [
       detailsLink("Approval pull request", row.approval?.pull_request_url),
-      detailsLink("Maintainer replay evidence", replayEvidenceUrl),
+      detailsLink("Validation record", validationEvidenceUrl(row)),
     ]
       .filter(Boolean)
       .join(" &middot; ");
@@ -2679,14 +3017,13 @@
         return `<section><h4>${escapeHtml(group)}</h4><dl>${values}</dl></section>`;
       })
       .join("");
-    const resultCitationActions =
-      dataRelease().status === "official" && state.feedVerified
-        ? `<p class="leaderboard-result-citation-actions">
+    const resultCitationActions = citationEligible(row)
+      ? `<p class="leaderboard-result-citation-actions">
             <button class="leaderboard-action-button" type="button" data-copy-result-citation="plain">Copy result citation</button>
             <button class="leaderboard-action-button" type="button" data-copy-result-citation="bibtex">Copy result BibTeX</button>
             <span id="result-citation-copy-status" role="status"></span>
           </p>`
-        : "";
+      : "";
     element("details-dialog-body").innerHTML = `
       <section><h4>Submission</h4><dl>
         ${detailsRow("Submission ID", row.id)}
@@ -2705,17 +3042,19 @@
         ${detailsRow("Pretraining data", pretrainingDataLabel(row.pretraining_data))}
         ${detailsRow("Protocol explanation", row.training_regime_explanation)}
       </dl></section>
-      <section><h4>Evaluation provenance</h4><dl>
-        ${detailsRow("Reference version", row.evaluation?.reference_version)}
-        ${detailsRow("Code revision", row.evaluation?.code_revision)}
-        ${detailsRow("Evaluation command", row.evaluation?.command)}
-        ${detailsRow("Evidence file", row.evaluation?.evidence_file)}
-        ${detailsRow("Evidence SHA-256", row.evaluation?.evidence_sha256)}
+      <section><h4>Submitter-reported evaluation provenance</h4><dl>
+        ${detailsRow("Declared reference version", row.evaluation?.reference_version)}
+        ${detailsRow("Declared code revision", row.evaluation?.code_revision)}
+        ${detailsRow("Declared evaluation command", row.evaluation?.command)}
+        ${detailsRow("Evaluation record file", row.evaluation?.evidence_file)}
+        ${detailsRow("Evaluation record SHA-256", row.evaluation?.evidence_sha256)}
         ${detailsRow("Profile case set", row.profile_data?.case_set_id)}
         ${detailsRow("Profile case count", row.profile_data?.case_count)}
         ${detailsRow("Profile index SHA-256", row.profile_data?.index_sha256)}
+        ${detailsRow("Profile ground-truth release", row.profile_data?.profile_ground_truth_release_id)}
+        ${detailsRow("Profile ground-truth manifest SHA-256", row.profile_data?.profile_ground_truth_manifest_sha256)}
       </dl>${evaluationLinks ? `<p>${evaluationLinks}</p>` : ""}</section>
-      <section><h4>Open reproducibility</h4><dl>
+      <section><h4>Open reproducibility materials</h4><dl>
         ${detailsRow("Contract", row.reproducibility?.contract_version)}
         ${detailsRow("Artifact access", humanize(row.reproducibility?.access))}
         ${detailsRow("Public evaluation-data use", humanize(row.reproducibility?.public_test_data_use))}
@@ -2729,37 +3068,32 @@
         ${detailsRow("Environment kind", humanize(row.reproducibility?.environment?.kind))}
         ${detailsRow("Environment", row.reproducibility?.environment?.url)}
         ${detailsRow("Environment SHA-256", row.reproducibility?.environment?.sha256)}
-        ${detailsRow("Replay instructions", row.reproducibility?.replay_instructions_url)}
+        ${detailsRow("Artifact documentation", row.reproducibility?.artifact_documentation_url)}
       </dl>${reproducibilityLinks ? `<p>${reproducibilityLinks}</p>` : ""}</section>
-      <section><h4>Result status and independent replay</h4><dl>
+      <section><h4>Result status and submitted-data validation</h4><dl>
         ${detailsRow("Status", humanize(row.approval?.status))}
         ${detailsRow(
           "Citation / promotion eligibility",
-          dataRelease().status === "official" && row.approval?.status === "approved" && replay.status === "reproduced"
-            ? "Eligible as a verified official leaderboard result; preserve the release ID, result permalink, rank context, and replay evidence in any claim"
+          citationEligible(row)
+            ? "Eligible as an approved official leaderboard result; preserve the release ID, result permalink, rank context, and validation record in any claim"
             : "Not eligible for scholarly citation or promotional leaderboard claims"
         )}
         ${detailsRow("Approved by", row.approval?.approved_by)}
         ${detailsRow("Approval date", row.approval?.approved_at)}
         ${detailsRow("Approval note", row.approval?.note)}
-        ${detailsRow("Replay status", humanize(replay.status))}
-        ${detailsRow("Replay contract", replay.contract_version)}
-        ${detailsRow("Replay reference version", replay.reference_version)}
-        ${detailsRow("Replayed by", replay.replayed_by)}
-        ${detailsRow("Replayed at", replay.replayed_at)}
-        ${detailsRow("Metric absolute tolerance", replay.metric_abs_tolerance)}
-        ${detailsRow("Reviewed submission SHA-256", replay.reviewed_submission_sha256)}
-        ${detailsRow("Submitted profile index SHA-256", replay.submitted_profile_index_sha256)}
-        ${detailsRow("Replayed profile index SHA-256", replay.replayed_profile_index_sha256)}
-        ${detailsRow(
-          "Independent of submitter",
-          replay.independence?.independent_of_submitter === true ? "Yes" : replay.independence?.independent_of_submitter === false ? "No" : null
-        )}
-        ${detailsRow("Conflict-of-interest disclosure", replay.independence?.conflict_of_interest_disclosure)}
-        ${detailsRow("Replay evidence file", replay.evidence_file)}
-        ${detailsRow("Replay evidence SHA-256", replay.evidence_sha256)}
+        ${detailsRow("Package validation", humanize(validation.status))}
+        ${detailsRow("Validation schema version", validation.schema_version)}
+        ${detailsRow("Validation scope", humanize(validation.validation_scope))}
+        ${detailsRow("Model execution by FluidsBench", humanize(validation.model_execution))}
+        ${detailsRow("Base-metric recomputation by FluidsBench", humanize(validation.metric_recomputation))}
+        ${detailsRow("Validated profile case set", validation.case_set_id)}
+        ${detailsRow("Validated profile ground-truth release", validation.profile_ground_truth_release_id)}
+        ${detailsRow("Validated profile ground-truth manifest SHA-256", validation.profile_ground_truth_manifest_sha256)}
+        ${detailsRow("Validation record SHA-256", validation.evidence_sha256)}
+        ${detailsRow("Validation record bytes", humanize(validationCheck?.status || "not_checked"))}
       </dl>${approvalLinks ? `<p>${approvalLinks}</p>` : ""}${resultCitationActions}</section>
       ${metricSections}`;
+    if (dialog.open) return;
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
   }
@@ -2865,7 +3199,6 @@
     renderDefinitions();
     renderComparisonChart();
     renderScatterChart();
-    (activeDataset()?.diagnostic_panels || []).forEach((_, index) => renderProfileChart(index));
     void refreshProfileContext();
   }
 
@@ -3053,6 +3386,7 @@
       if (!state.resultId) return;
       state.resultId = "";
       updateUrl();
+      renderReleaseMetadata();
     });
     element("close-citation-dialog")?.addEventListener("click", () => element("citation-dialog").close());
     element("citation-dialog")?.addEventListener("click", (event) => {
