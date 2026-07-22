@@ -6,8 +6,10 @@ submissions. Evaluation cases remain a declared test partition and must not be u
 preprocessing statistics.
 
 The current files are explicitly marked `prototype_dummy_data` and must be replaced with dataset-owner-approved values before
-submissions open. An official result will additionally require public versioned code and model artifacts plus an independent
-maintainer replay; none of the current rows is official or replay-verified.
+submissions open. An official result will additionally require public versioned code, model, and environment artifacts, artifact
+documentation, a validated submission package, and maintainer approval; none of the current rows is official or approved. Submitted
+metrics and profile predictions are provided by the submitter. FluidsBench does not execute submitted code or models or recompute base
+metrics.
 
 `manifest.json` maps leaderboard splits to shared test case sets. Each case set has an index and JSON chunks containing compact
 `case_id`, `panel_id`, `station_id`, `quantity_id`, `coordinate`, and `value` arrays. The frontend fetches only the chunk needed for
