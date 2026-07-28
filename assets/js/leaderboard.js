@@ -1701,19 +1701,9 @@
     const status = element("submission-status");
     const button = element("open-submission-repo");
     if (status) {
-      const closedReason = String(support.closed_reason || "")
-        .trim()
-        .replace(/[.!?]+$/, "");
       status.textContent = open
         ? `${dataset.name} submissions are open. Final scores use ${support.release_id || "the official scoring-support release"}.`
-        : supportStatus !== "official"
-          ? `${dataset?.name || "This dataset"} submissions are closed: ${
-              closedReason ||
-              `the scoring support is ${humanize(
-                supportStatus
-              ).toLowerCase()}, so dataset-owner approval and an official scoring-support manifest are still required`
-            }.`
-          : `${dataset.name} has official scoring support, but submissions remain closed until the contribution workflow is opened.`;
+        : "Submissions are currently closed.";
     }
     if (button) {
       button.disabled = !open;

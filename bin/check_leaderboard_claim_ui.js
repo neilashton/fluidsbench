@@ -718,7 +718,7 @@ function verifyDatasetSubmissionAvailability() {
   api.state.dataset = "Pending";
   api.renderSubmissionAvailability();
   assert.equal(elements.get("open-submission-repo").disabled, true);
-  assert.match(elements.get("submission-status").textContent, /Dataset-owner scoring-support approval is pending/);
+  assert.equal(elements.get("submission-status").textContent, "Submissions are currently closed.");
 
   api.state.manifest.datasets[0].scoring_support = {
     status: "official",

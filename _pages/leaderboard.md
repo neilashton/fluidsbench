@@ -16,9 +16,7 @@ chart:
   <header class="leaderboard-masthead">
     <h1>FluidsBench Leaderboard</h1>
     <div class="leaderboard-source-row">
-      <span id="submission-status" class="leaderboard-submit-status"
-        >Submissions remain closed while the open-submission validation workflow is finalized.</span
-      >
+      <span id="submission-status" class="leaderboard-submit-status">Submissions are currently closed.</span>
       <button
         id="open-submission-repo"
         class="leaderboard-submit-button"
