@@ -836,6 +836,22 @@
     return null;
   }
 
+  function reproducibilityArtifactAvailability(row) {
+    const reproducibility = record(row?.reproducibility);
+    const objectAvailability = (value) => (Object.keys(record(value)).length ? "provided" : "not_supplied");
+    const valueAvailability = (value) => (typeof value === "string" && value.trim() ? "provided" : "not_supplied");
+    return {
+      code: objectAvailability(reproducibility.code),
+      model: objectAvailability(reproducibility.model_artifact),
+      environment: objectAvailability(reproducibility.environment),
+      documentation: valueAvailability(reproducibility.artifact_documentation_url),
+    };
+  }
+
+  function optionalArtifactAvailabilityLabel(value) {
+    return value === "provided" ? "Provided" : "Not supplied (optional)";
+  }
+
   function scoringSupportBinding(row) {
     return record(
       firstValue(
@@ -1723,7 +1739,7 @@
     if (dataWarningText) {
       dataWarningText.textContent = officialRelease
         ? " results use submitter-provided metrics, spatial declarations, and profile predictions from open, versioned submission packages. FluidsBench validates and approves each submitted package but does not run the model. Any prediction-artifact checks and metric recomputation are reported separately for each result."
-        : " all results currently shown are illustrative dummy data. They are not official results and must not be cited or promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, require open versioned code, model, and environment artifacts, and pass FluidsBench package validation and maintainer approval.";
+        : " all results currently shown are illustrative dummy data. They are not official results and must not be cited or promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, pass FluidsBench package validation, and receive maintainer approval. Public code, model, and environment artifacts are optional.";
     }
     element("leaderboard-release-id").textContent = release.id || "Unversioned";
     const details = [];
@@ -2029,15 +2045,19 @@
       ["reproducibility_access", (row) => row.reproducibility?.access],
       ["public_test_data_use", (row) => row.reproducibility?.public_test_data_use],
       ["result_data_license", (row) => row.reproducibility?.result_data_license_spdx],
+      ["reproducibility_code_artifact_availability", (row) => reproducibilityArtifactAvailability(row).code],
       ["reproducibility_code_repository", (row) => row.reproducibility?.code?.repository_url],
       ["reproducibility_code_commit", (row) => row.reproducibility?.code?.commit],
       ["reproducibility_code_license", (row) => row.reproducibility?.code?.license_spdx],
+      ["reproducibility_model_artifact_availability", (row) => reproducibilityArtifactAvailability(row).model],
       ["model_artifact_url", (row) => row.reproducibility?.model_artifact?.url],
       ["model_artifact_sha256", (row) => row.reproducibility?.model_artifact?.sha256],
       ["model_artifact_license", (row) => row.reproducibility?.model_artifact?.license_spdx],
+      ["reproducibility_environment_artifact_availability", (row) => reproducibilityArtifactAvailability(row).environment],
       ["environment_kind", (row) => row.reproducibility?.environment?.kind],
       ["environment_url", (row) => row.reproducibility?.environment?.url],
       ["environment_sha256", (row) => row.reproducibility?.environment?.sha256],
+      ["reproducibility_artifact_documentation_availability", (row) => reproducibilityArtifactAvailability(row).documentation],
       ["artifact_documentation_url", (row) => row.reproducibility?.artifact_documentation_url],
       ["approval_status", (row) => row.approval?.status],
       ["approved_by", (row) => row.approval?.approved_by],
@@ -2202,6 +2222,7 @@
         },
         metric_recomputation: predictionMetricRecomputation(row),
       },
+      reproducibility_artifact_availability: reproducibilityArtifactAvailability(row),
       result_permalink: resultUrl(row, Boolean(releaseViewUrl())),
       claim_record: {
         url: resultClaimRecordUrl(row) || null,
@@ -2400,13 +2421,13 @@
       split: `Declared ${state.dataset} benchmark split used for training and public-ground-truth evaluation.`,
       modelTypes: `One or more submitted architecture categories. Available here: ${types || "none"}.`,
       status:
-        "Prototype rows are illustrative only. An official result requires public versioned code, model, and environment artifacts, a validated submission package, and maintainer approval.",
+        "Prototype rows are illustrative only. An official result requires a validated submission package and maintainer approval. Public code, model, and environment artifacts are optional and are reported when supplied; their absence does not affect rank, citation eligibility, or promotion eligibility.",
       predictionData:
         "Optional public scored predictions or direct model outputs. Complete means every case in the selected split is declared; Examples means only some cases are declared. Sharing does not affect accuracy rank, citation eligibility, or promotion eligibility. Open Details for the separate artifact-check and metric-recomputation statuses.",
       training: `How the model was initialized and whether target-dataset training data were used. Supported values: ${trainingLabels}.`,
       parameters: "Submitter-reported trainable parameter count in millions; a missing value remains missing rather than being treated as zero.",
       date: "Date associated with the submitted result.",
-      details: "Opens a deep-linkable result record with submission, open-artifact, validation, approval, and metric metadata.",
+      details: "Opens a deep-linkable result record with submission, optional-artifact, validation, approval, and metric metadata.",
     };
     return definitions[key] || "";
   }
@@ -4430,6 +4451,8 @@
       const loadedGroundTruth = state.groundTruthManifestProvenance || {};
       const schemaMajor = submissionSchemaMajor(row);
       const expectedContract = expectedReproducibilityContract(row);
+      // Code, model, environment, and artifact-documentation fields are optional evidence.
+      // Claim eligibility is bound to the contract and validated submitted data, not artifact presence.
       if (rowRanking(row)?.source === "computed_fallback_generated_release_mismatch") {
         addBlocker(
           "generated_ranking_mismatch",
@@ -4669,13 +4692,14 @@
       .join(" &middot; ");
     const evaluationLinks = [detailsLink("Submitter evaluation record", evaluationEvidenceUrl(row))].filter(Boolean).join(" &middot; ");
     const reproducibilityLinks = [
-      detailsLink("Pinned public code", row.reproducibility?.code?.repository_url),
-      detailsLink("Public model artifact", row.reproducibility?.model_artifact?.url),
-      detailsLink("Locked environment", row.reproducibility?.environment?.url),
-      detailsLink("Artifact documentation", row.reproducibility?.artifact_documentation_url),
+      detailsLink("Code repository (optional)", row.reproducibility?.code?.repository_url),
+      detailsLink("Model artifact (optional)", row.reproducibility?.model_artifact?.url),
+      detailsLink("Environment artifact (optional)", row.reproducibility?.environment?.url),
+      detailsLink("Artifact documentation (optional)", row.reproducibility?.artifact_documentation_url),
     ]
       .filter(Boolean)
       .join(" &middot; ");
+    const reproducibilityArtifacts = reproducibilityArtifactAvailability(row);
     const support = scoringSupportSummary(row);
     const datasetSupport = record(activeDataset()?.scoring_support);
     const supportOwnerApproval = support.release_id && datasetSupport.release_id === support.release_id ? record(datasetSupport.owner_approval) : {};
@@ -4884,22 +4908,27 @@
         ${detailsRow("Profile ground-truth release", row.profile_data?.profile_ground_truth_release_id)}
         ${detailsRow("Profile ground-truth manifest SHA-256", row.profile_data?.profile_ground_truth_manifest_sha256)}
       </dl>${evaluationLinks ? `<p>${evaluationLinks}</p>` : ""}</section>
-      <section><h4>Open reproducibility materials</h4><dl>
+      <section><h4>Reproducibility record</h4><dl>
         ${detailsRow("Contract", row.reproducibility?.contract_version)}
-        ${detailsRow("Artifact access", humanize(row.reproducibility?.access))}
+        ${detailsRow("Submission-package access", humanize(row.reproducibility?.access))}
         ${detailsRow("Public evaluation-data use", humanize(row.reproducibility?.public_test_data_use))}
         ${detailsRow("Result-data licence", row.reproducibility?.result_data_license_spdx)}
+        ${detailsRow("Code artifact availability", optionalArtifactAvailabilityLabel(reproducibilityArtifacts.code))}
         ${detailsRow("Code repository", row.reproducibility?.code?.repository_url)}
         ${detailsRow("Code commit", row.reproducibility?.code?.commit)}
         ${detailsRow("Code licence", row.reproducibility?.code?.license_spdx)}
+        ${detailsRow("Model artifact availability", optionalArtifactAvailabilityLabel(reproducibilityArtifacts.model))}
         ${detailsRow("Model artifact", row.reproducibility?.model_artifact?.url)}
         ${detailsRow("Model SHA-256", row.reproducibility?.model_artifact?.sha256)}
         ${detailsRow("Model licence", row.reproducibility?.model_artifact?.license_spdx)}
+        ${detailsRow("Environment artifact availability", optionalArtifactAvailabilityLabel(reproducibilityArtifacts.environment))}
         ${detailsRow("Environment kind", humanize(row.reproducibility?.environment?.kind))}
         ${detailsRow("Environment", row.reproducibility?.environment?.url)}
         ${detailsRow("Environment SHA-256", row.reproducibility?.environment?.sha256)}
+        ${detailsRow("Artifact documentation availability", optionalArtifactAvailabilityLabel(reproducibilityArtifacts.documentation))}
         ${detailsRow("Artifact documentation", row.reproducibility?.artifact_documentation_url)}
-      </dl>${reproducibilityLinks ? `<p>${reproducibilityLinks}</p>` : ""}</section>
+      </dl>${reproducibilityLinks ? `<p>${reproducibilityLinks}</p>` : ""}
+      <p class="details-note">Code, model, environment, and artifact-documentation links are optional. When supplied, this record reports their submitter-provided identifiers and metadata. Their absence does not affect accuracy rank, academic-citation eligibility, or promotion eligibility.</p></section>
       <section><h4>Result status and submitted-data validation</h4><dl>
         ${detailsRow("Status", humanize(row.approval?.status))}
         ${detailsRow(

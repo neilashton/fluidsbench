@@ -31,10 +31,12 @@ window.__FluidsBenchClaimTest = {
   leaderboardManifestProvenance,
   claimRecordCheck,
   normalizeRow,
+  openDetails,
   predictionArtifactStatus,
   predictionAvailability,
   predictionMetricRecomputation,
   representationSummary,
+  reproducibilityArtifactAvailability,
   mappingSummary,
   renderReleaseMetadata,
   renderSubmissionAvailability,
@@ -61,7 +63,17 @@ const context = {
     readyState: "loading",
     addEventListener() {},
     getElementById(id) {
-      if (!elements.has(id)) elements.set(id, { hidden: false, open: false, textContent: "" });
+      if (!elements.has(id)) {
+        elements.set(id, {
+          hidden: false,
+          open: false,
+          textContent: "",
+          setAttribute(name, value) {
+            this[name] = value;
+            if (name === "open") this.open = true;
+          },
+        });
+      }
       return elements.get(id);
     },
   },
@@ -506,6 +518,23 @@ function verifyOfficialAcademicHappyPath() {
   assert.equal(eligibility.academic_citation, true);
   assert.equal(eligibility.promotion, true);
   assert.equal(eligibility.browser_verification.passed, true);
+  const missingArtifactAvailability = api.reproducibilityArtifactAvailability(rankedRow);
+  assert.equal(missingArtifactAvailability.code, "not_supplied");
+  assert.equal(missingArtifactAvailability.model, "not_supplied");
+  assert.equal(missingArtifactAvailability.environment, "not_supplied");
+  assert.equal(missingArtifactAvailability.documentation, "not_supplied");
+  assert.equal(
+    api.claimEligibility(rankedRow).academic_citation,
+    true,
+    "missing optional code, model, and environment artifacts must not gate citation"
+  );
+  assert.equal(api.claimEligibility(rankedRow).promotion, true, "missing optional code, model, and environment artifacts must not gate promotion");
+  api.openDetails(rankedRow, false);
+  const missingArtifactDetails = elements.get("details-dialog-body").innerHTML;
+  assert.match(missingArtifactDetails, /Code artifact availability<\/dt><dd>Not supplied \(optional\)/);
+  assert.match(missingArtifactDetails, /Model artifact availability<\/dt><dd>Not supplied \(optional\)/);
+  assert.match(missingArtifactDetails, /Environment artifact availability<\/dt><dd>Not supplied \(optional\)/);
+  assert.match(missingArtifactDetails, /Their absence does not affect accuracy rank, academic-citation eligibility, or promotion eligibility/);
 
   const citation = api.citationValues();
   assert.match(citation.plain, /exact data release release-2026-07/);
@@ -539,10 +568,21 @@ function verifyOfficialAcademicHappyPath() {
     "prediction_data_status",
     "prediction_artifact_check_status",
     "prediction_metric_recomputation",
+    "reproducibility_code_artifact_availability",
+    "reproducibility_model_artifact_availability",
+    "reproducibility_environment_artifact_availability",
+    "reproducibility_artifact_documentation_availability",
   ].forEach((name) => assert.equal(columnNames.has(name), true, `${name} must be present in CSV exports`));
   const exportValues = new Map(exportColumns.map(([name, value]) => [name, value(rankedRow)]));
   assert.equal(exportValues.get("prediction_artifact_check_record_file"), `submissions/example/${submissionId}/prediction-artifact-checks.json`);
   assert.equal(exportValues.get("prediction_artifact_check_record_sha256"), "0".repeat(64));
+  assert.equal(exportValues.get("reproducibility_code_artifact_availability"), "not_supplied");
+  assert.equal(exportValues.get("reproducibility_model_artifact_availability"), "not_supplied");
+  assert.equal(exportValues.get("reproducibility_environment_artifact_availability"), "not_supplied");
+  assert.equal(exportValues.get("reproducibility_artifact_documentation_availability"), "not_supplied");
+  assert.equal(exportValues.get("reproducibility_code_repository"), undefined);
+  assert.equal(exportValues.get("model_artifact_url"), undefined);
+  assert.equal(exportValues.get("environment_url"), undefined);
   const exportedRow = api.sourceSubmission(rankedRow);
   assert.equal(exportedRow.ranking.rank, 1);
   assert.equal(exportedRow.claim_eligibility.academic_citation, true);
@@ -558,8 +598,63 @@ function verifyOfficialAcademicHappyPath() {
   assert.equal(exportedRow.prediction_evidence.metric_recomputation.label, "Not performed");
   assert.equal(exportedRow.prediction_evidence.maintainer_checks.file, `submissions/example/${submissionId}/prediction-artifact-checks.json`);
   assert.equal(exportedRow.prediction_evidence.maintainer_checks.sha256, "0".repeat(64));
+  assert.equal(exportedRow.reproducibility_artifact_availability.code, "not_supplied");
+  assert.equal(exportedRow.reproducibility_artifact_availability.model, "not_supplied");
+  assert.equal(exportedRow.reproducibility_artifact_availability.environment, "not_supplied");
+  assert.equal(exportedRow.reproducibility_artifact_availability.documentation, "not_supplied");
   assert.equal(api.claimEligibility(rankedRow).academic_citation, true, "optional prediction metadata must not gate citation");
   assert.equal(api.claimEligibility(rankedRow).promotion, true, "optional prediction metadata must not gate promotion");
+
+  row.reproducibility.code = {
+    repository_url: "https://github.com/example/model",
+    commit: "a".repeat(40),
+    license_spdx: "Apache-2.0",
+  };
+  row.reproducibility.model_artifact = {
+    url: "https://huggingface.co/example/model",
+    sha256: "a".repeat(64),
+    license_spdx: "Apache-2.0",
+  };
+  row.reproducibility.environment = {
+    kind: "lockfile",
+    url: "https://github.com/example/model/blob/main/conda-lock.yml",
+    sha256: "b".repeat(64),
+  };
+  row.reproducibility.artifact_documentation_url = "https://github.com/example/model/blob/main/README.md";
+  const rowWithArtifacts = api.rowsForActiveSplit()[0];
+  const providedArtifactAvailability = api.reproducibilityArtifactAvailability(rowWithArtifacts);
+  assert.equal(providedArtifactAvailability.code, "provided");
+  assert.equal(providedArtifactAvailability.model, "provided");
+  assert.equal(providedArtifactAvailability.environment, "provided");
+  assert.equal(providedArtifactAvailability.documentation, "provided");
+  assert.equal(api.claimEligibility(rowWithArtifacts).academic_citation, true, "provided optional artifacts must not change citation eligibility");
+  assert.equal(api.claimEligibility(rowWithArtifacts).promotion, true, "provided optional artifacts must not change promotion eligibility");
+  const providedExportValues = new Map(exportColumns.map(([name, value]) => [name, value(rowWithArtifacts)]));
+  assert.equal(providedExportValues.get("reproducibility_code_artifact_availability"), "provided");
+  assert.equal(providedExportValues.get("reproducibility_code_repository"), "https://github.com/example/model");
+  assert.equal(providedExportValues.get("reproducibility_model_artifact_availability"), "provided");
+  assert.equal(providedExportValues.get("model_artifact_url"), "https://huggingface.co/example/model");
+  assert.equal(providedExportValues.get("reproducibility_environment_artifact_availability"), "provided");
+  assert.equal(providedExportValues.get("environment_url"), "https://github.com/example/model/blob/main/conda-lock.yml");
+  assert.equal(providedExportValues.get("reproducibility_artifact_documentation_availability"), "provided");
+  assert.equal(providedExportValues.get("artifact_documentation_url"), "https://github.com/example/model/blob/main/README.md");
+  const providedExportedRow = api.sourceSubmission(rowWithArtifacts);
+  assert.equal(providedExportedRow.reproducibility_artifact_availability.code, "provided");
+  assert.equal(providedExportedRow.reproducibility.code.repository_url, "https://github.com/example/model");
+  assert.equal(providedExportedRow.reproducibility.model_artifact.url, "https://huggingface.co/example/model");
+  assert.equal(providedExportedRow.reproducibility.environment.url, "https://github.com/example/model/blob/main/conda-lock.yml");
+  api.openDetails(rowWithArtifacts, false);
+  const providedArtifactDetails = elements.get("details-dialog-body").innerHTML;
+  assert.match(providedArtifactDetails, /Code artifact availability<\/dt><dd>Provided/);
+  assert.match(providedArtifactDetails, /Model artifact availability<\/dt><dd>Provided/);
+  assert.match(providedArtifactDetails, /Environment artifact availability<\/dt><dd>Provided/);
+  assert.match(providedArtifactDetails, /Code repository \(optional\)/);
+  assert.match(providedArtifactDetails, /Model artifact \(optional\)/);
+  assert.match(providedArtifactDetails, /Environment artifact \(optional\)/);
+  delete row.reproducibility.code;
+  delete row.reproducibility.model_artifact;
+  delete row.reproducibility.environment;
+  delete row.reproducibility.artifact_documentation_url;
 
   row.prediction_artifact_status.checks[0].status = "metrics_recomputed";
   row.prediction_artifact_status.checks[0].metric_recomputation = "performed";
@@ -594,6 +689,17 @@ function verifyOfficialAcademicHappyPath() {
   const v3RankedRow = api.rowsForActiveSplit()[0];
   assert.equal(api.claimEligibility(v3RankedRow).academic_citation, true, "approved schema-v3 results remain citable after submissions close");
   assert.equal(api.claimEligibility(v3RankedRow).promotion, true, "optional prediction-check failure must not gate promotion");
+  assert.equal(api.reproducibilityArtifactAvailability(v3RankedRow).code, "not_supplied");
+  assert.equal(
+    api.claimEligibility(v3RankedRow).academic_citation,
+    true,
+    "schema-v3 citations must not require optional code, model, or environment artifacts"
+  );
+  assert.equal(
+    api.claimEligibility(v3RankedRow).promotion,
+    true,
+    "schema-v3 promotions must not require optional code, model, or environment artifacts"
+  );
   const ownerApproval = api.state.manifest.datasets[0].scoring_support.owner_approval;
   delete api.state.manifest.datasets[0].scoring_support.owner_approval;
   assert.equal(api.claimEligibility(v3RankedRow).academic_citation, false, "schema-v3 claims require the frozen dataset-owner approval");
