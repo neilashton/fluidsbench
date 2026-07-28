@@ -20,6 +20,23 @@ V2_SCHEMA_NAMES = (
     "evaluation-evidence.schema.json",
     "maintainer-validation.schema.json",
 )
+PUBLIC_V3_SCHEMA_ROOT = ROOT / "schemas" / "v3"
+V3_SCHEMA_NAMES = (
+    "submission.schema.json",
+    "evaluation-evidence.schema.json",
+    "discretization.schema.json",
+    "discretization-case.schema.json",
+    "case-metrics.schema.json",
+    "maintainer-validation.schema.json",
+    "prediction-artifact.schema.json",
+    "prediction-artifact-checks.schema.json",
+)
+PUBLIC_SCORING_SUPPORT_SCHEMA_ROOT = ROOT / "schemas" / "scoring-support" / "v1"
+SCORING_SUPPORT_SCHEMA_NAMES = (
+    "manifest.schema.json",
+    "case-index.schema.json",
+    "case-chunk.schema.json",
+)
 PUBLIC_RELEASE_SCHEMA_ROOT = ROOT / "schemas" / "releases"
 RELEASE_SCHEMA_NAMES = (
     "claim-index.schema.json",
@@ -54,6 +71,28 @@ def check(submission_root: Path) -> list[str]:
             errors.append(f"website is missing public schema schemas/v2/{schema_name}")
         elif public_schema.read_bytes() != source_schema.read_bytes():
             errors.append(f"public schema schemas/v2/{schema_name} differs from the submission contract")
+
+    for schema_name in V3_SCHEMA_NAMES:
+        source_schema = submission_root / "schemas" / "v3" / schema_name
+        public_schema = PUBLIC_V3_SCHEMA_ROOT / schema_name
+        if not source_schema.is_file():
+            errors.append(f"submission repository is missing schemas/v3/{schema_name}")
+        elif not public_schema.is_file():
+            errors.append(f"website is missing public schema schemas/v3/{schema_name}")
+        elif public_schema.read_bytes() != source_schema.read_bytes():
+            errors.append(f"public schema schemas/v3/{schema_name} differs from the submission contract")
+
+    for schema_name in SCORING_SUPPORT_SCHEMA_NAMES:
+        source_schema = submission_root / "schemas" / "scoring-support" / "v1" / schema_name
+        public_schema = PUBLIC_SCORING_SUPPORT_SCHEMA_ROOT / schema_name
+        if not source_schema.is_file():
+            errors.append(f"submission repository is missing schemas/scoring-support/v1/{schema_name}")
+        elif not public_schema.is_file():
+            errors.append(f"website is missing public schema schemas/scoring-support/v1/{schema_name}")
+        elif public_schema.read_bytes() != source_schema.read_bytes():
+            errors.append(
+                f"public schema schemas/scoring-support/v1/{schema_name} differs from the submission contract"
+            )
 
     for schema_name in RELEASE_SCHEMA_NAMES:
         source_schema = submission_root / "schemas" / "releases" / schema_name
@@ -181,7 +220,8 @@ def main() -> int:
     manifest = load_json(GROUND_TRUTH_ROOT / "manifest.json")
     case_set_count = sum(len(dataset.get("case_sets", [])) for dataset in manifest["datasets"])
     print(
-        f"Validated {len(V2_SCHEMA_NAMES)} public v2 schemas, "
+        f"Validated {len(V2_SCHEMA_NAMES)} public v2 schemas, {len(V3_SCHEMA_NAMES)} public v3 schemas, "
+        f"{len(SCORING_SUPPORT_SCHEMA_NAMES)} public scoring-support schemas, "
         f"{len(RELEASE_SCHEMA_NAMES)} public release schemas, and profile ground truth for "
         f"{len(manifest['datasets'])} datasets and {case_set_count} case sets."
     )

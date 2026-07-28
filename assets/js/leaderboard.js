@@ -20,7 +20,10 @@
     "#17becf",
   ];
   const maxFigureModels = palette.length;
-  const reproducibilityContractVersion = "open-reproducibility-2.0";
+  const reproducibilityContractVersions = {
+    2: "open-reproducibility-2.0",
+    3: "open-reproducibility-3.0",
+  };
   const columnGroups = [
     { id: "absolute", label: "Absolute", className: "metric-group-absolute" },
     { id: "relative", label: "Relative", className: "metric-group-relative" },
@@ -177,8 +180,21 @@
       result_data_origin: prototype ? "illustrative_dummy_data" : "submitter_provided",
       validation_scope: prototype ? "not_applicable" : "submitted_data_only",
       model_execution: "not_performed",
-      metric_recomputation: "not_performed",
+      metric_recomputation: prototype ? "not_applicable" : "result_specific",
     };
+  }
+
+  function submissionSchemaMajor(row) {
+    const major = Number(String(row?.schema_version || "1").split(".")[0]);
+    return Number.isInteger(major) ? major : 1;
+  }
+
+  function expectedReproducibilityContract(row) {
+    return reproducibilityContractVersions[submissionSchemaMajor(row)] || null;
+  }
+
+  function supportedReproducibilityContract(value) {
+    return Object.values(reproducibilityContractVersions).includes(value);
   }
 
   function releaseViewUrl() {
@@ -604,6 +620,57 @@
     ) {
       throw new Error("claim record profile-index binding does not match the hash-verified feed row");
     }
+    const schemaMajor = submissionSchemaMajor(row);
+    const support = scoringSupportSummary(row);
+    const supportBinding = bindings.scoring_support;
+    if (schemaMajor >= 3 || supportBinding) {
+      if (
+        !support.release_id ||
+        !support.manifest_url ||
+        !support.manifest_sha256 ||
+        supportBinding?.release_id !== support.release_id ||
+        supportBinding?.manifest_url !== support.manifest_url ||
+        supportBinding?.manifest_sha256 !== support.manifest_sha256
+      ) {
+        throw new Error("claim record scoring-support binding does not match the hash-verified feed row");
+      }
+    }
+    const discretization = discretizationBinding(row);
+    const discretizationClaimBinding = bindings.spatial_discretization;
+    if (schemaMajor >= 3 || discretizationClaimBinding) {
+      if (
+        !bindingFile(discretization) ||
+        !bindingSha256(discretization) ||
+        discretizationClaimBinding?.path !== submissionAssetPath(row, bindingFile(discretization)) ||
+        discretizationClaimBinding?.sha256 !== bindingSha256(discretization)
+      ) {
+        throw new Error("claim record spatial-discretization binding does not match the hash-verified feed row");
+      }
+    }
+    const discretizationCases = discretizationCaseBinding(row);
+    const discretizationCasesClaimBinding = bindings.discretization_cases;
+    if (schemaMajor >= 3 || discretizationCasesClaimBinding) {
+      if (
+        !bindingFile(discretizationCases) ||
+        !bindingSha256(discretizationCases) ||
+        discretizationCasesClaimBinding?.path !== submissionAssetPath(row, bindingFile(discretizationCases)) ||
+        discretizationCasesClaimBinding?.sha256 !== bindingSha256(discretizationCases)
+      ) {
+        throw new Error("claim record per-case discretization binding does not match the hash-verified feed row");
+      }
+    }
+    const caseMetrics = caseMetricsBinding(row);
+    const caseMetricsClaimBinding = bindings.case_metrics;
+    if (schemaMajor >= 3 || caseMetricsClaimBinding) {
+      if (
+        !bindingFile(caseMetrics) ||
+        !bindingSha256(caseMetrics) ||
+        caseMetricsClaimBinding?.path !== submissionAssetPath(row, bindingFile(caseMetrics)) ||
+        caseMetricsClaimBinding?.sha256 !== bindingSha256(caseMetrics)
+      ) {
+        throw new Error("claim record case-metrics binding does not match the hash-verified feed row");
+      }
+    }
     const validationBinding = bindings.maintainer_validation;
     if (validation && Object.keys(validation).length) {
       if (
@@ -736,7 +803,7 @@
       if (number !== null) metricValues[metricId] = number;
     });
     const modelTypes = Array.isArray(entry.model_types) ? entry.model_types.filter(Boolean) : [entry.model_type].filter(Boolean);
-    return {
+    const normalized = {
       ...entry,
       _feedIndex: feedIndex,
       id: entry.submission_id || `${entry.dataset}-${entry.split}-${entry.model}`,
@@ -748,6 +815,434 @@
       date: entry.submitted_at || "",
       approvalStatus: entry.approval?.status || "not_supplied",
     };
+    normalized.predictionDataRank = predictionAvailability(normalized).rank;
+    return normalized;
+  }
+
+  function record(value) {
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  }
+
+  function firstValue(...values) {
+    return values.find((value) => value !== null && value !== undefined && value !== "");
+  }
+
+  function nestedValue(value, ...paths) {
+    for (const path of paths) {
+      let candidate = value;
+      for (const key of path) candidate = record(candidate)[key];
+      if (candidate !== null && candidate !== undefined && candidate !== "") return candidate;
+    }
+    return null;
+  }
+
+  function scoringSupportBinding(row) {
+    return record(
+      firstValue(
+        row?.scoring_support,
+        row?.scoring_support_binding,
+        row?.spatial_discretization?.scoring_support,
+        row?.discretization?.scoring_support
+      )
+    );
+  }
+
+  function scoringSupportSummary(row) {
+    const support = scoringSupportBinding(row);
+    const supports = Array.isArray(support.supports) ? support.supports : [];
+    const supportFor = (domain) => supports.find((candidate) => candidate?.domain === domain) || {};
+    return {
+      release_id: firstValue(support.release_id, support.id, support.scoring_support_release_id),
+      status: support.status,
+      manifest_url: firstValue(support.manifest_url, support.url),
+      manifest_sha256: firstValue(support.manifest_sha256, support.sha256),
+      surface_support_id: firstValue(support.surface_support_id, support.surface?.support_id, supportFor("surface").id),
+      volume_support_id: firstValue(support.volume_support_id, support.volume?.support_id, supportFor("volume").id),
+    };
+  }
+
+  function discretizationBinding(row) {
+    return record(firstValue(row?.discretization, row?.spatial_discretization));
+  }
+
+  function discretizationSummary(row) {
+    const binding = discretizationBinding(row);
+    return record(firstValue(row?.discretization_summary, row?.spatial_discretization_summary, binding.summary, binding));
+  }
+
+  function discretizationCaseBinding(row) {
+    const binding = discretizationBinding(row);
+    const summary = discretizationSummary(row);
+    return record(
+      firstValue(
+        row?.discretization_cases,
+        row?.spatial_discretization_cases,
+        binding.case_manifest,
+        binding.cases,
+        summary.case_manifest,
+        summary.per_case_manifest
+      )
+    );
+  }
+
+  function caseMetricsBinding(row) {
+    return record(firstValue(row?.case_metrics, row?.evaluation?.case_metrics, row?.evaluation?.per_case_metrics));
+  }
+
+  function bindingFile(value) {
+    const binding = record(value);
+    return firstValue(binding.file, binding.path, binding.report_file, binding.manifest_file);
+  }
+
+  function bindingSha256(value) {
+    const binding = record(value);
+    return firstValue(binding.sha256, binding.report_sha256, binding.manifest_sha256);
+  }
+
+  function submissionAssetPath(row, file) {
+    if (!file) return "";
+    return String(file).startsWith("submissions/") ? String(file) : `submissions/${row.dataset_id}/${row.id}/${file}`;
+  }
+
+  function predictionArtifacts(row) {
+    const candidates = firstValue(
+      row?.prediction_artifacts,
+      row?.prediction_artifact ? [row.prediction_artifact] : null,
+      row?.reproducibility?.prediction_artifacts
+    );
+    return Array.isArray(candidates) ? candidates.filter((value) => value && typeof value === "object") : [];
+  }
+
+  function primaryPredictionArtifact(row) {
+    const artifacts = predictionArtifacts(row);
+    const preferred = artifacts.filter((artifact) => ["scored_predictions", "both"].includes(artifact.kind));
+    const candidates = preferred.length
+      ? preferred
+      : artifacts.filter((artifact) => artifact.kind === "direct_model_outputs").length
+        ? artifacts.filter((artifact) => artifact.kind === "direct_model_outputs")
+        : artifacts;
+    return (
+      [...candidates].sort((left, right) => {
+        const leftCoverage = record(left.coverage);
+        const rightCoverage = record(right.coverage);
+        const leftComplete = leftCoverage.kind === "complete_split" ? 1 : 0;
+        const rightComplete = rightCoverage.kind === "complete_split" ? 1 : 0;
+        return rightComplete - leftComplete || (finiteNumber(rightCoverage.case_count) ?? 0) - (finiteNumber(leftCoverage.case_count) ?? 0);
+      })[0] || {}
+    );
+  }
+
+  function predictionArtifactProvider(artifact) {
+    if (artifact?.provider) return humanize(artifact.provider);
+    const url = safeHttpUrl(firstValue(artifact?.repository_url, artifact?.url));
+    if (!url) return null;
+    const host = new URL(url).hostname.toLowerCase();
+    if (host === "huggingface.co" || host.endsWith(".huggingface.co")) return "Hugging Face";
+    if (host === "github.com" || host.endsWith(".github.com")) return "GitHub";
+    if (host === "zenodo.org" || host.endsWith(".zenodo.org")) return "Zenodo";
+    return host;
+  }
+
+  function predictionArtifactCheck(row) {
+    const checks = firstValue(row?.prediction_artifact_checks, row?.prediction_artifact_status?.checks);
+    if (Array.isArray(checks)) {
+      const artifactId = primaryPredictionArtifact(row).artifact_id;
+      return record(checks.find((check) => check?.artifact_id === artifactId));
+    }
+    return record(
+      firstValue(
+        row?.prediction_artifact_check,
+        checks,
+        row?.prediction_artifact_validation,
+        row?.approval?.prediction_artifact_check,
+        row?.maintainer_validation?.prediction_artifact_check
+      )
+    );
+  }
+
+  function predictionArtifactChecks(row) {
+    const checks = firstValue(row?.prediction_artifact_checks, row?.prediction_artifact_status?.checks);
+    if (Array.isArray(checks)) {
+      return checks.filter((check) => check && typeof check === "object");
+    }
+    const check = predictionArtifactCheck(row);
+    return Object.keys(check).length ? [check] : [];
+  }
+
+  function predictionArtifactChecksBinding(row) {
+    const status = record(row?.prediction_artifact_status);
+    return record(
+      firstValue(
+        row?.prediction_artifact_checks_binding,
+        status.check_file || status.check_sha256 ? { file: status.check_file, sha256: status.check_sha256 } : null
+      )
+    );
+  }
+
+  function splitTestCount(row) {
+    const dataset = datasetEntries().find((candidate) => candidate.name === row?.dataset || candidate.slug === row?.dataset_id);
+    const split = (dataset?.splits || []).find((candidate) => candidate.id === row?.split_id || candidate.name === row?.split);
+    return finiteNumber(split?.test_count);
+  }
+
+  function predictionCoverage(row) {
+    const artifact = primaryPredictionArtifact(row);
+    const coverage = record(artifact.coverage);
+    const caseIds = Array.isArray(coverage.case_ids) ? coverage.case_ids : [];
+    const count = finiteNumber(firstValue(coverage.case_count, artifact.case_count, caseIds.length || null));
+    const expected = finiteNumber(firstValue(coverage.expected_case_count, artifact.expected_case_count, splitTestCount(row)));
+    const kind = firstValue(coverage.kind, artifact.coverage_kind);
+    const complete = kind === "complete_split" || (count !== null && expected !== null && count === expected);
+    return { kind: complete ? "complete_split" : "example_cases", count, expected };
+  }
+
+  function predictionAvailability(row) {
+    if (!predictionArtifacts(row).length) {
+      return { code: "not_shared", label: "Not shared", rank: 0, count: 0, expected: splitTestCount(row) };
+    }
+    const coverage = predictionCoverage(row);
+    const count = coverage.count ?? "?";
+    const expected = coverage.expected ?? "?";
+    return {
+      code: coverage.kind,
+      label: coverage.kind === "complete_split" ? `Complete · ${count}/${expected}` : `Examples · ${count}/${expected}`,
+      rank: coverage.kind === "complete_split" ? 2 : 1,
+      count: coverage.count,
+      expected: coverage.expected,
+    };
+  }
+
+  function predictionArtifactStatus(row) {
+    const artifact = primaryPredictionArtifact(row);
+    if (!Object.keys(artifact).length) return { code: "not_applicable", label: "Not applicable" };
+    const check = predictionArtifactCheck(row);
+    const raw = String(firstValue(check.status, artifact.check_status, "not_checked")).toLowerCase();
+    const codes = {
+      not_applicable: ["not_applicable", "Not applicable"],
+      not_checked: ["not_checked", "Not checked"],
+      accessible: ["accessible", "Accessible"],
+      format_checked: ["format_checked", "Format checked"],
+      metrics_recomputed: ["format_checked", "Format checked"],
+      metrics_reproduced: ["format_checked", "Format checked"],
+      failed: ["failed", "Check failed"],
+      check_failed: ["failed", "Check failed"],
+    };
+    const [code, label] = codes[raw] || codes.not_checked;
+    return { code, label };
+  }
+
+  function predictionMetricRecomputation(row) {
+    const check = predictionArtifactCheck(row);
+    const declared = firstValue(check.metric_recomputation, row?.prediction_metric_recomputation);
+    const recomputation = typeof declared === "string" ? { status: declared } : record(declared);
+    const raw = String(
+      firstValue(recomputation.status, ["metrics_recomputed", "metrics_reproduced"].includes(check.status) ? "complete_split" : "not_performed")
+    ).toLowerCase();
+    const count = finiteNumber(firstValue(recomputation.case_count, check.recomputed_case_count));
+    const expected = finiteNumber(firstValue(recomputation.expected_case_count, check.expected_case_count, predictionCoverage(row).expected));
+    if (["complete_split", "performed", "metrics_recomputed", "metrics_reproduced"].includes(raw)) {
+      return {
+        code: "complete_split",
+        label: "Complete split recomputed by FluidsBench",
+        count: count ?? expected,
+        expected,
+      };
+    }
+    if (["example_cases", "partial", "partial_cases"].includes(raw)) {
+      return {
+        code: "example_cases",
+        label: `Example cases recomputed · ${count ?? "?"}/${expected ?? "?"}`,
+        count,
+        expected,
+      };
+    }
+    return { code: "not_performed", label: "Not performed", count: 0, expected };
+  }
+
+  function compactJson(value) {
+    if (value === null || value === undefined || value === "") return null;
+    if (typeof value !== "object") return String(value);
+    try {
+      return JSON.stringify(value);
+    } catch (_error) {
+      return String(value);
+    }
+  }
+
+  function countSummary(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const direct = finiteNumber(value);
+    if (direct !== null) return direct.toLocaleString();
+    const count = record(value);
+    if (count.kind === "fixed" && finiteNumber(count.value) !== null) {
+      return Number(count.value).toLocaleString();
+    }
+    if (count.kind === "per_case") {
+      const minimum = finiteNumber(count.minimum);
+      const median = finiteNumber(count.median);
+      const maximum = finiteNumber(count.maximum);
+      return `min/median/max ${minimum?.toLocaleString() ?? "?"}/${median?.toLocaleString() ?? "?"}/${maximum?.toLocaleString() ?? "?"}`;
+    }
+    return compactJson(value);
+  }
+
+  function fractionSummary(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const fraction = record(value);
+    if (fraction.kind === "fixed" && finiteNumber(fraction.value) !== null) {
+      return `${(Number(fraction.value) * 100).toLocaleString()}%`;
+    }
+    if (fraction.kind === "per_case") {
+      const values = [fraction.minimum, fraction.median, fraction.maximum].map(finiteNumber);
+      return `min/median/max ${values.map((item) => (item === null ? "?" : `${(item * 100).toLocaleString()}%`)).join("/")}`;
+    }
+    const direct = finiteNumber(value);
+    return direct === null ? compactJson(value) : `${(direct * 100).toLocaleString()}%`;
+  }
+
+  function representationSummary(value) {
+    if (value === null || value === undefined || value === "") return null;
+    if (typeof value !== "object") return humanize(value);
+    const item = record(value);
+    if (item.used === false) return "Not used";
+    const parts = [];
+    if (item.id) parts.push(String(item.id));
+    if (item.domain && typeof item.domain === "string") parts.push(humanize(item.domain));
+    const representation = firstValue(typeof item.representation === "string" ? item.representation : null, item.kind, item.type);
+    if (representation) parts.push(humanize(representation));
+    if (item.representation && typeof item.representation === "object") {
+      parts.push(representationSummary(item.representation));
+    }
+    if (item.entity) parts.push(humanize(item.entity));
+    const count = countSummary(firstValue(item.count, item.count_per_case, item.median_count, item.count_median));
+    if (count) parts.push(`${count} per case`);
+    if (Array.isArray(item.entity_counts)) {
+      item.entity_counts.forEach((entry) => {
+        const entityCount = countSummary(entry?.count);
+        if (entityCount) parts.push(`${humanize(entry.entity) || "entities"}: ${entityCount} per case`);
+      });
+    }
+    const nativeFraction = fractionSummary(item.fraction_of_native);
+    if (nativeFraction) parts.push(`${nativeFraction} of native support`);
+    const nativeComparison = record(item.native_comparison);
+    if (nativeComparison.status === "reported") {
+      (nativeComparison.native_entity_counts || []).forEach((entry) => {
+        const nativeCount = countSummary(entry?.count);
+        if (nativeCount) parts.push(`native ${humanize(entry.entity) || "entities"}: ${nativeCount} per case`);
+      });
+      (nativeComparison.fractions || []).forEach((entry) => {
+        const fraction = fractionSummary(entry?.fraction);
+        if (fraction) parts.push(`${humanize(entry.entity) || "entities"}: ${fraction} of native`);
+      });
+    } else if (nativeComparison.status === "not_applicable") {
+      parts.push("native comparison: not applicable");
+    } else if (nativeComparison.status === "unknown_with_explanation") {
+      parts.push(`native comparison unknown: ${nativeComparison.explanation}`);
+    }
+    if (Array.isArray(item.dimensions)) parts.push(item.dimensions.join(" × "));
+    const minimum = finiteNumber(firstValue(item.minimum_count, item.count_min));
+    const maximum = finiteNumber(firstValue(item.maximum_count, item.count_max));
+    if (minimum !== null || maximum !== null) {
+      parts.push(`range ${minimum === null ? "?" : minimum.toLocaleString()}–${maximum === null ? "?" : maximum.toLocaleString()}`);
+    }
+    if (item.sampling) {
+      const sampling = record(item.sampling);
+      const samplingKind = String(sampling.kind || "");
+      const samplingLabel = samplingKind === "none" ? "none" : sampling.method || humanize(samplingKind) || compactJson(item.sampling);
+      const resampled = samplingKind === "resampled_each_epoch" || sampling.resampled_each_epoch === true;
+      parts.push(`sampling: ${samplingLabel}${resampled ? " (resampled each epoch)" : ""}`);
+    }
+    if (item.connectivity) parts.push(`connectivity: ${humanize(item.connectivity)}`);
+    const domain = firstValue(item.domain && typeof item.domain === "object" ? item.domain : null, item.bounding_box, item.bbox);
+    if (domain) {
+      const domainRecord = record(domain);
+      if (domainRecord.kind === "axis_aligned_box") {
+        parts.push(
+          `domain: [${(domainRecord.minimum || []).join(", ")}] to [${(domainRecord.maximum || []).join(", ")}] ${
+            domainRecord.length_unit || ""
+          } in ${domainRecord.coordinate_frame || "unspecified frame"}`
+        );
+      } else {
+        parts.push(`domain: ${humanize(domainRecord.kind) || compactJson(domain)}`);
+      }
+    }
+    const queries = countSummary(item.queries_per_forward_pass);
+    if (queries) parts.push(`${queries} queries per forward pass`);
+    return parts.length ? parts.join("; ") : compactJson(value);
+  }
+
+  function mappingMethodSummary(value) {
+    if (!value) return null;
+    if (typeof value === "string") return humanize(value);
+    const method = record(value);
+    if (method.kind === "reference_rule") {
+      return `reference rule ${method.rule_id || "unspecified"}${method.rule_version ? ` (${method.rule_version})` : ""}`;
+    }
+    return humanize(method.kind) || compactJson(value);
+  }
+
+  function spatialComponent(row, ...paths) {
+    return nestedValue(discretizationSummary(row), ...paths);
+  }
+
+  function inferenceDirectOutputs(row, domain = null) {
+    const outputs = spatialComponent(row, ["inference", "direct_outputs"]);
+    if (!Array.isArray(outputs)) return [];
+    return domain ? outputs.filter((output) => output?.domain === domain) : outputs;
+  }
+
+  function directOutputSummary(row, domain) {
+    const outputs = inferenceDirectOutputs(row, domain);
+    return outputs.length ? outputs.map(representationSummary).join(" | ") : null;
+  }
+
+  function inferenceMappings(row) {
+    const mappings = spatialComponent(
+      row,
+      ["inference", "mappings"],
+      ["inference", "mapping_to_scoring_support"],
+      ["mapping_to_scoring_support"],
+      ["scoring_mapping"]
+    );
+    return Array.isArray(mappings) ? mappings : mappings ? [mappings] : [];
+  }
+
+  function mappingSummary(row) {
+    const mappings = inferenceMappings(row);
+    if (!mappings.length) return null;
+    return mappings
+      .map((mapping) => {
+        const item = record(mapping);
+        const coverage = finiteNumber(item.final_coverage_fraction);
+        const unmapped = finiteNumber(item.unmapped_fraction);
+        const extrapolated = finiteNumber(item.extrapolated_fraction);
+        return [
+          item.support_id ? `${item.support_id} from ${item.source_output_id || "declared output"}` : null,
+          item.method ? `method: ${mappingMethodSummary(item.method)}` : null,
+          coverage === null ? null : `coverage: ${(coverage * 100).toLocaleString()}%`,
+          unmapped === null ? null : `unmapped: ${(unmapped * 100).toLocaleString()}%`,
+          extrapolated === null ? null : `extrapolated: ${(extrapolated * 100).toLocaleString()}%`,
+        ]
+          .filter(Boolean)
+          .join("; ");
+      })
+      .join(" | ");
+  }
+
+  function scoringCoverageSummary(row) {
+    const mappings = inferenceMappings(row);
+    if (!mappings.length) return null;
+    return mappings
+      .map((mapping) => {
+        const item = record(mapping);
+        const coverage = finiteNumber(item.final_coverage_fraction);
+        const unmapped = finiteNumber(item.unmapped_fraction);
+        const extrapolated = finiteNumber(item.extrapolated_fraction);
+        return `${item.support_id || "support"}: ${coverage === null ? "coverage not supplied" : `${coverage * 100}% coverage`}, ${
+          unmapped === null ? "unmapped fraction not supplied" : `${unmapped * 100}% unmapped`
+        }, ${extrapolated === null ? "extrapolated fraction not supplied" : `${extrapolated * 100}% extrapolated`}`;
+      })
+      .join(" | ");
   }
 
   async function ensureRows(dataset) {
@@ -1088,6 +1583,9 @@
       if (state.sortKey === "parameters") {
         return compareNumbers(a.parameterCount, b.parameterCount, direction);
       }
+      if (state.sortKey === "predictionData") {
+        return compareNumbers(a.predictionDataRank, b.predictionDataRank, direction);
+      }
       const aValue = String(a[state.sortKey] || "");
       const bValue = String(b[state.sortKey] || "");
       return aValue.localeCompare(bValue) * (state.sortDirection === "asc" ? 1 : -1);
@@ -1194,8 +1692,38 @@
     return safeHttpUrl(repository);
   }
 
+  function renderSubmissionAvailability() {
+    const dataset = activeDataset();
+    const support = record(dataset?.scoring_support);
+    const supportStatus = String(firstValue(support.status, dataset?.scoring_support_status, "not_published"));
+    const workflowOpen = support.submissions_open === true;
+    const open = supportStatus === "official" && workflowOpen;
+    const status = element("submission-status");
+    const button = element("open-submission-repo");
+    if (status) {
+      const closedReason = String(support.closed_reason || "")
+        .trim()
+        .replace(/[.!?]+$/, "");
+      status.textContent = open
+        ? `${dataset.name} submissions are open. Final scores use ${support.release_id || "the official scoring-support release"}.`
+        : supportStatus !== "official"
+          ? `${dataset?.name || "This dataset"} submissions are closed: ${
+              closedReason ||
+              `the scoring support is ${humanize(
+                supportStatus
+              ).toLowerCase()}, so dataset-owner approval and an official scoring-support manifest are still required`
+            }.`
+          : `${dataset.name} has official scoring support, but submissions remain closed until the contribution workflow is opened.`;
+    }
+    if (button) {
+      button.disabled = !open;
+      button.textContent = open ? "Submit a result" : "Submit a result — closed";
+    }
+  }
+
   function renderReleaseMetadata() {
     const release = dataRelease();
+    renderSubmissionAvailability();
     const dataWarning = element("leaderboard-data-warning");
     const dataWarningTitle = element("leaderboard-data-warning-title");
     const dataWarningText = element("leaderboard-data-warning-text");
@@ -1204,7 +1732,7 @@
     if (dataWarningTitle) dataWarningTitle.textContent = officialRelease ? "Official submitted-data release:" : "Prototype only:";
     if (dataWarningText) {
       dataWarningText.textContent = officialRelease
-        ? " results use submitter-provided metrics and profile predictions from open, versioned submission packages. FluidsBench validated and approved the submitted package, but did not run the model or recompute base metrics."
+        ? " results use submitter-provided metrics, spatial declarations, and profile predictions from open, versioned submission packages. FluidsBench validates and approves each submitted package but does not run the model. Any prediction-artifact checks and metric recomputation are reported separately for each result."
         : " all results currently shown are illustrative dummy data. They are not official results and must not be cited or promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, require open versioned code, model, and environment artifacts, and pass FluidsBench package validation and maintainer approval.";
     }
     element("leaderboard-release-id").textContent = release.id || "Unversioned";
@@ -1419,6 +1947,94 @@
       ["evaluation_command", (row) => row.evaluation?.command],
       ["evaluation_evidence_file", (row) => row.evaluation?.evidence_file],
       ["evaluation_evidence_sha256", (row) => row.evaluation?.evidence_sha256],
+      ["scoring_support_release_id", (row) => scoringSupportSummary(row).release_id],
+      ["scoring_support_status", (row) => scoringSupportSummary(row).status],
+      ["scoring_support_manifest_url", (row) => scoringSupportSummary(row).manifest_url],
+      ["scoring_support_manifest_sha256", (row) => scoringSupportSummary(row).manifest_sha256],
+      ["surface_scoring_support_id", (row) => scoringSupportSummary(row).surface_support_id],
+      ["volume_scoring_support_id", (row) => scoringSupportSummary(row).volume_support_id],
+      ["discretization_file", (row) => bindingFile(discretizationBinding(row))],
+      ["discretization_sha256", (row) => bindingSha256(discretizationBinding(row))],
+      ["discretization_cases_file", (row) => bindingFile(discretizationCaseBinding(row))],
+      ["discretization_cases_sha256", (row) => bindingSha256(discretizationCaseBinding(row))],
+      ["case_metrics_file", (row) => bindingFile(caseMetricsBinding(row))],
+      ["case_metrics_sha256", (row) => bindingSha256(caseMetricsBinding(row))],
+      ["case_metrics_case_count", (row) => caseMetricsBinding(row).case_count],
+      [
+        "training_surface_input_json",
+        (row) => spatialComponent(row, ["training", "surface", "input"], ["training", "surface_input"], ["training_surface_input"]),
+      ],
+      [
+        "training_surface_supervision_json",
+        (row) => spatialComponent(row, ["training", "surface", "supervision"], ["training", "surface_supervision"], ["training_surface_supervision"]),
+      ],
+      [
+        "training_volume_input_json",
+        (row) => spatialComponent(row, ["training", "volume", "input"], ["training", "volume_input"], ["training_volume_input"]),
+      ],
+      [
+        "training_volume_supervision_json",
+        (row) => spatialComponent(row, ["training", "volume", "supervision"], ["training", "volume_supervision"], ["training_volume_supervision"]),
+      ],
+      [
+        "inference_surface_input_json",
+        (row) => spatialComponent(row, ["inference", "surface_input"], ["inference", "geometry_input", "surface"], ["inference_surface_input"]),
+      ],
+      [
+        "inference_volume_input_json",
+        (row) => spatialComponent(row, ["inference", "volume_input"], ["inference", "geometry_input", "volume"], ["inference_volume_input"]),
+      ],
+      [
+        "inference_mesh_dependency",
+        (row) =>
+          spatialComponent(
+            row,
+            ["inference", "geometry_dependency"],
+            ["inference", "mesh_dependency"],
+            ["inference", "native_mesh_dependency"],
+            ["inference_mesh_dependency"]
+          ),
+      ],
+      [
+        "direct_surface_output_json",
+        (row) =>
+          inferenceDirectOutputs(row, "surface").length
+            ? inferenceDirectOutputs(row, "surface")
+            : spatialComponent(row, ["inference", "surface_direct_output"], ["surface_direct_output"]),
+      ],
+      [
+        "direct_volume_output_json",
+        (row) =>
+          inferenceDirectOutputs(row, "volume").length
+            ? inferenceDirectOutputs(row, "volume")
+            : spatialComponent(row, ["inference", "volume_direct_output"], ["volume_direct_output"]),
+      ],
+      ["scoring_mapping_json", (row) => inferenceMappings(row)],
+      ["declared_scoring_coverage_json", (row) => scoringCoverageSummary(row)],
+      ["prediction_data_status", (row) => predictionAvailability(row).label],
+      ["prediction_artifacts_json", (row) => predictionArtifacts(row)],
+      ["prediction_artifact_checks_json", (row) => predictionArtifactChecks(row)],
+      ["prediction_coverage_kind", (row) => predictionAvailability(row).code],
+      ["prediction_case_count", (row) => predictionAvailability(row).count],
+      ["prediction_expected_case_count", (row) => predictionAvailability(row).expected],
+      ["prediction_artifact_kind", (row) => primaryPredictionArtifact(row).kind],
+      ["prediction_artifact_provider", (row) => predictionArtifactProvider(primaryPredictionArtifact(row))],
+      ["prediction_artifact_repository_url", (row) => firstValue(primaryPredictionArtifact(row).repository_url, primaryPredictionArtifact(row).url)],
+      ["prediction_artifact_revision", (row) => primaryPredictionArtifact(row).revision],
+      ["prediction_artifact_manifest_file", (row) => primaryPredictionArtifact(row).manifest_file],
+      ["prediction_artifact_manifest_sha256", (row) => primaryPredictionArtifact(row).manifest_sha256],
+      ["prediction_artifact_format", (row) => primaryPredictionArtifact(row).format],
+      ["prediction_artifact_license_spdx", (row) => primaryPredictionArtifact(row).license_spdx],
+      ["prediction_artifact_check_status", (row) => predictionArtifactStatus(row).label],
+      ["prediction_artifact_check_code", (row) => predictionArtifactStatus(row).code],
+      ["prediction_artifact_checked_by", (row) => predictionArtifactCheck(row).checked_by],
+      ["prediction_artifact_checked_at", (row) => predictionArtifactCheck(row).checked_at],
+      ["prediction_artifact_check_record_file", (row) => bindingFile(predictionArtifactChecksBinding(row))],
+      ["prediction_artifact_check_record_sha256", (row) => bindingSha256(predictionArtifactChecksBinding(row))],
+      ["prediction_metric_recomputation", (row) => predictionMetricRecomputation(row).label],
+      ["prediction_metric_recomputation_code", (row) => predictionMetricRecomputation(row).code],
+      ["prediction_metric_recomputed_case_count", (row) => predictionMetricRecomputation(row).count],
+      ["prediction_metric_recomputed_expected_case_count", (row) => predictionMetricRecomputation(row).expected],
       ["reproducibility_contract", (row) => row.reproducibility?.contract_version],
       ["reproducibility_access", (row) => row.reproducibility?.access],
       ["public_test_data_use", (row) => row.reproducibility?.public_test_data_use],
@@ -1452,6 +2068,10 @@
       ["validated_case_set_id", (row) => maintainerValidation(row).case_set_id],
       ["validated_profile_ground_truth_release_id", (row) => maintainerValidation(row).profile_ground_truth_release_id],
       ["validated_profile_ground_truth_manifest_sha256", (row) => maintainerValidation(row).profile_ground_truth_manifest_sha256],
+      ["validated_scoring_support_release_id", (row) => maintainerValidation(row).scoring_support_release_id],
+      ["validated_scoring_support_manifest_sha256", (row) => maintainerValidation(row).scoring_support_manifest_sha256],
+      ["validated_discretization_sha256", (row) => maintainerValidation(row).discretization_sha256],
+      ["validated_case_metrics_sha256", (row) => maintainerValidation(row).case_metrics_sha256],
       ["maintainer_validation_evidence_path", (row) => maintainerValidation(row).evidence_path],
       ["maintainer_validation_evidence_sha256", (row) => maintainerValidation(row).evidence_sha256],
       ["paper_url", (row) => row.paper_url],
@@ -1557,6 +2177,41 @@
         promotion: eligibility.promotion,
       },
       ...source,
+      spatial_provenance: {
+        scoring_support: scoringSupportSummary(row),
+        discretization: {
+          file: bindingFile(discretizationBinding(row)) || null,
+          sha256: bindingSha256(discretizationBinding(row)) || null,
+          cases_file: bindingFile(discretizationCaseBinding(row)) || null,
+          cases_sha256: bindingSha256(discretizationCaseBinding(row)) || null,
+          summary: discretizationSummary(row),
+        },
+        case_metrics: {
+          file: bindingFile(caseMetricsBinding(row)) || null,
+          sha256: bindingSha256(caseMetricsBinding(row)) || null,
+          case_count: finiteNumber(caseMetricsBinding(row).case_count),
+        },
+      },
+      prediction_evidence: {
+        availability: predictionAvailability(row),
+        artifacts: predictionArtifacts(row),
+        artifact: primaryPredictionArtifact(row),
+        maintainer_checks: {
+          file: bindingFile(predictionArtifactChecksBinding(row)) || null,
+          sha256: bindingSha256(predictionArtifactChecksBinding(row)) || null,
+          checks: predictionArtifactChecks(row),
+        },
+        primary_artifact: primaryPredictionArtifact(row),
+        primary_artifact_check: {
+          ...predictionArtifactCheck(row),
+          display_status: predictionArtifactStatus(row),
+        },
+        artifact_check: {
+          ...predictionArtifactCheck(row),
+          display_status: predictionArtifactStatus(row),
+        },
+        metric_recomputation: predictionMetricRecomputation(row),
+      },
       result_permalink: resultUrl(row, Boolean(releaseViewUrl())),
       claim_record: {
         url: resultClaimRecordUrl(row) || null,
@@ -1573,7 +2228,7 @@
       const rows = await verifiedTableExportRows();
       const provenance = exportProvenance(rows.length);
       const payload = {
-        schema_version: "fluidsbench-leaderboard-export-v3",
+        schema_version: "fluidsbench-leaderboard-export-v4",
         exported_at: new Date().toISOString(),
         data_release: dataRelease(),
         provenance,
@@ -1622,6 +2277,20 @@
     return Array.from(String(value ?? ""), (character) => escaped[character] || (/\s/.test(character) ? " " : character)).join("");
   }
 
+  function metricRecomputationStatement(row) {
+    if (!row) return "Metric recomputation is result-specific; consult each result record.";
+    const recomputation = predictionMetricRecomputation(row);
+    if (recomputation.code === "complete_split") {
+      return "FluidsBench recomputed the complete evaluation/test split metrics from the shared scored predictions.";
+    }
+    if (recomputation.code === "example_cases") {
+      return `FluidsBench recomputed ${recomputation.count ?? "some"}/${
+        recomputation.expected ?? "?"
+      } example evaluation/test cases; complete-split metric recomputation was not performed.`;
+    }
+    return "FluidsBench did not recompute base metrics from scored predictions.";
+  }
+
   function citationValues() {
     const release = dataRelease();
     const citation = release.citation || {};
@@ -1661,6 +2330,7 @@
     bibtexKeyParts.push(slug(releaseId));
     const bibtexKey = bibtexKeyParts.filter(Boolean).join("_").replaceAll("-", "_");
     const claimRecord = citedResult ? resultClaimRecordUrl(citedResult) : "";
+    const recomputationNote = metricRecomputationStatement(citedResult);
     const promotion = citedResult
       ? `In FluidsBench data release ${releaseId}, ${citedResult.model} is recorded at ${resultRankText(resultRanking)} on ${state.dataset} / ${
           state.split
@@ -1668,18 +2338,18 @@
           plainMetricLabel(metricDefinition(resultRanking?.metric_id)) || resultRanking?.metric_id || "the ranking metric"
         } (${rankingValueText(resultRanking)}; ${
           resultRanking?.direction || "direction not supplied"
-        } is better). This rank applies only to that exact dataset, split, and release—not the changing current leaderboard. The result uses submitter-provided metrics and profile predictions; FluidsBench validated the submitted package but did not run the model or recompute base metrics. Release manifest SHA-256: ${manifestChecksum}. ${url}${
+        } is better). The score is calculated on the declared evaluation/test split, not the training split. This rank applies only to that exact dataset, split, and release—not the changing current leaderboard. The result uses submitter-provided metrics and profile predictions; FluidsBench validated the submitted package and did not run the model. ${recomputationNote} Release manifest SHA-256: ${manifestChecksum}. ${url}${
           claimRecord ? ` Claim record: ${claimRecord}` : ""
         }`
       : "";
     const bibtexTitle = citedResult ? `FluidsBench result: ${citedResult.model} on ${state.dataset} / ${state.split}` : `${title}: ${context}`;
     const bibtexNote = `Exact data release ${releaseId}; status ${status}; release manifest SHA-256 ${manifestChecksum}; feed SHA-256 ${checksum}; licence ${
       license.label
-    };${resultNote} model-result data are ${resultDataOriginLabel()}; FluidsBench model execution and base-metric recomputation were not performed; ${releaseViewNote} ${archiveNote}${
+    };${resultNote} model-result data are ${resultDataOriginLabel()}; FluidsBench model execution was not performed; ${recomputationNote} ${releaseViewNote} ${archiveNote}${
       claimRecord ? ` Claim record: ${claimRecord}.` : ""
     }`;
     return {
-      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, exact data release ${releaseId} (status: ${status}), release manifest SHA-256 ${manifestChecksum}, verified feed SHA-256 ${checksum}.${resultNote} Model-result data are ${resultDataOriginLabel()}; FluidsBench model execution and base-metric recomputation were not performed. Licence: ${
+      plain: `${author} (${year}). ${title}: ${context}. ${publisher}, exact data release ${releaseId} (status: ${status}), release manifest SHA-256 ${manifestChecksum}, verified feed SHA-256 ${checksum}.${resultNote} Model-result data are ${resultDataOriginLabel()}; FluidsBench model execution was not performed. ${recomputationNote} Scores refer to the declared evaluation/test split, not the training split. Licence: ${
         license.label
       }; scope: ${license.scope}. ${releaseViewNote} ${archiveNote} ${claimRecord ? `Claim record: ${claimRecord}. ` : ""}${url}`,
       bibtex: `@misc{${bibtexKey},\n  author = {{${bibtexEscape(author)}}},\n  title = {${bibtexEscape(bibtexTitle)}},\n  year = {${bibtexEscape(
@@ -1741,6 +2411,8 @@
       modelTypes: `One or more submitted architecture categories. Available here: ${types || "none"}.`,
       status:
         "Prototype rows are illustrative only. An official result requires public versioned code, model, and environment artifacts, a validated submission package, and maintainer approval.",
+      predictionData:
+        "Optional public scored predictions or direct model outputs. Complete means every case in the selected split is declared; Examples means only some cases are declared. Sharing does not affect accuracy rank, citation eligibility, or promotion eligibility. Open Details for the separate artifact-check and metric-recomputation statuses.",
       training: `How the model was initialized and whether target-dataset training data were used. Supported values: ${trainingLabels}.`,
       parameters: "Submitter-reported trainable parameter count in millions; a missing value remains missing rather than being treated as zero.",
       date: "Date associated with the submitted result.",
@@ -1780,6 +2452,7 @@
       { key: "submitter", label: "Submitted by", sortKey: "submitter" },
       { key: "modelTypes", label: "Model type", sortKey: "modelTypes", group: "model-details" },
       { key: "training", label: "Training", sortKey: "training_regime", group: "model-details" },
+      { key: "predictionData", label: "Prediction data", sortKey: "predictionData", group: "model-details" },
       { key: "status", label: "Result status", sortKey: "approvalStatus", group: "model-details" },
       { key: "split", label: "Split", sortKey: "split" },
     ];
@@ -1913,6 +2586,7 @@
   }
 
   function defaultSortDirection(column) {
+    if (column.key === "predictionData") return "desc";
     if (column.key === "rank" || ["model", "submitter", "split", "modelTypes", "training", "status", "date"].includes(column.key)) {
       return "asc";
     }
@@ -1971,6 +2645,7 @@
       split: row.split,
       modelTypes: row.modelTypes.join(", ") || "Not supplied",
       training: trainingLabel(row),
+      predictionData: predictionAvailability(row).label,
       status: humanize(row.approvalStatus),
       parameters: formatNumber(row.parameterCount, 2),
       date: row.date || "Not supplied",
@@ -2034,6 +2709,9 @@
       return;
     } else if (column.key === "training") {
       cell.appendChild(chip("leaderboard-training", trainingLabel(submission)));
+      return;
+    } else if (column.key === "predictionData") {
+      cell.appendChild(chip("leaderboard-training", predictionAvailability(submission).label));
       return;
     } else if (column.key === "status") {
       cell.appendChild(chip("leaderboard-training", humanize(submission.approvalStatus)));
@@ -3661,6 +4339,10 @@
       submitted_profile_ground_truth_manifest_sha256: row?.profile_data?.profile_ground_truth_manifest_sha256 || null,
       validated_profile_ground_truth_release_id: validation.profile_ground_truth_release_id || null,
       validated_profile_ground_truth_manifest_sha256: validation.profile_ground_truth_manifest_sha256 || null,
+      validated_scoring_support_release_id: validation.scoring_support_release_id || null,
+      validated_scoring_support_manifest_sha256: validation.scoring_support_manifest_sha256 || null,
+      validated_discretization_sha256: validation.discretization_sha256 || null,
+      validated_case_metrics_sha256: validation.case_metrics_sha256 || null,
       maintainer_validation_evidence_sha256: validation.evidence_sha256 || null,
     };
   }
@@ -3733,8 +4415,11 @@
     } else if (expectedManifestSha256 && !state.manifestPinVerified) {
       addBlocker("manifest_pin_not_verified", "The loaded leaderboard manifest bytes have not matched the publication-time SHA-256 pin.");
     }
-    if (release.reproducibility_contract_version !== reproducibilityContractVersion) {
-      addBlocker("release_contract_mismatch", `The release does not use ${reproducibilityContractVersion}.`);
+    if (!supportedReproducibilityContract(release.reproducibility_contract_version)) {
+      addBlocker(
+        "release_contract_mismatch",
+        `The release does not use a supported open-reproducibility contract (${Object.values(reproducibilityContractVersions).join(" or ")}).`
+      );
     }
     if (!state.feedVerified) addBlocker("feed_not_verified", "The leaderboard feed bytes have not been SHA-256 verified.");
     if (!groundTruthManifestVerified()) {
@@ -3753,6 +4438,8 @@
       const evaluation = row.evaluation || {};
       const expectedGroundTruth = release.profile_ground_truth || {};
       const loadedGroundTruth = state.groundTruthManifestProvenance || {};
+      const schemaMajor = submissionSchemaMajor(row);
+      const expectedContract = expectedReproducibilityContract(row);
       if (rowRanking(row)?.source === "computed_fallback_generated_release_mismatch") {
         addBlocker(
           "generated_ranking_mismatch",
@@ -3764,20 +4451,50 @@
       }
       if (
         row.approval?.status !== "approved" ||
-        row.schema_version !== "2.0" ||
-        row.reproducibility?.contract_version !== reproducibilityContractVersion
+        ![2, 3].includes(schemaMajor) ||
+        row.schema_version !== `${schemaMajor}.0` ||
+        row.reproducibility?.contract_version !== expectedContract ||
+        release.reproducibility_contract_version !== expectedContract
       ) {
-        addBlocker("result_not_approved", "The result is not an approved schema-v2 open-contract submission.");
+        addBlocker("result_not_approved", "The result is not an approved schema-v2 or schema-v3 open-contract submission.");
       }
       if (
-        validation.schema_version !== "2.0" ||
-        validation.contract_version !== reproducibilityContractVersion ||
+        validation.schema_version !== `${schemaMajor}.0` ||
+        validation.contract_version !== expectedContract ||
         validation.status !== "validated" ||
         validation.validation_scope !== "submitted_data_only" ||
         validation.model_execution !== "not_performed" ||
         validation.metric_recomputation !== "not_performed"
       ) {
         addBlocker("validation_contract_mismatch", "The maintainer validation metadata does not match the submitted-data-only contract.");
+      }
+      if (schemaMajor >= 3) {
+        const support = scoringSupportSummary(row);
+        const datasetSupport = record(activeDataset()?.scoring_support);
+        const ownerApproval = record(datasetSupport.owner_approval);
+        const ownerApprovalComplete = ["approved_by", "approved_at", "pull_request_url"].every(
+          (field) => typeof ownerApproval[field] === "string" && ownerApproval[field].trim()
+        );
+        if (
+          support.status !== "official" ||
+          datasetSupport.status !== "official" ||
+          !ownerApprovalComplete ||
+          !support.release_id ||
+          support.release_id !== datasetSupport.release_id ||
+          !support.manifest_url ||
+          support.manifest_url !== datasetSupport.manifest_url ||
+          validation.scoring_support_release_id !== support.release_id ||
+          !support.manifest_sha256 ||
+          support.manifest_sha256 !== datasetSupport.manifest_sha256 ||
+          validation.scoring_support_manifest_sha256 !== support.manifest_sha256 ||
+          validation.discretization_sha256 !== bindingSha256(discretizationBinding(row)) ||
+          validation.case_metrics_sha256 !== bindingSha256(caseMetricsBinding(row))
+        ) {
+          addBlocker(
+            "spatial_evidence_binding_mismatch",
+            "The schema-v3 result is not bound to owner-approved official scoring support, discretization, case metrics, and matching validation hashes."
+          );
+        }
       }
       if (
         !validation.profile_ground_truth_release_id ||
@@ -3902,6 +4619,14 @@
           ["evaluation_evidence_sha256", validation.evaluation_evidence_sha256],
           ["profile_index_sha256", validation.profile_index_sha256],
         ];
+        if (submissionSchemaMajor(row) >= 3) {
+          bindings.push(
+            ["scoring_support_release_id", validation.scoring_support_release_id],
+            ["scoring_support_manifest_sha256", validation.scoring_support_manifest_sha256],
+            ["discretization_sha256", validation.discretization_sha256],
+            ["case_metrics_sha256", validation.case_metrics_sha256]
+          );
+        }
         const mismatch = bindings.find(([key, expected]) => !expected || loaded.data?.[key] !== expected);
         if (mismatch) throw new Error(`validation record ${mismatch[0]} does not match the hash-verified leaderboard feed`);
         state.validationEvidenceChecks.set(url, { status: "verified", sha256: loaded.sha256, error: null });
@@ -3961,6 +4686,67 @@
     ]
       .filter(Boolean)
       .join(" &middot; ");
+    const support = scoringSupportSummary(row);
+    const datasetSupport = record(activeDataset()?.scoring_support);
+    const supportOwnerApproval = support.release_id && datasetSupport.release_id === support.release_id ? record(datasetSupport.owner_approval) : {};
+    const supportLinks = [
+      detailsLink("Official scoring-support manifest", support.manifest_url),
+      detailsLink("Dataset-owner approval", supportOwnerApproval.pull_request_url),
+    ]
+      .filter(Boolean)
+      .join(" &middot; ");
+    const predictionArtifact = primaryPredictionArtifact(row);
+    const predictionCheck = predictionArtifactCheck(row);
+    const predictionLinks = predictionArtifacts(row)
+      .map((artifact, index) =>
+        detailsLink(
+          predictionArtifacts(row).length === 1 ? "Public prediction repository" : `Public prediction repository ${index + 1}`,
+          firstValue(artifact.repository_url, artifact.url)
+        )
+      )
+      .filter(Boolean)
+      .join(" &middot; ");
+    const trainingSurfaceInput = spatialComponent(row, ["training", "surface", "input"], ["training", "surface_input"], ["training_surface_input"]);
+    const trainingSurfaceSupervision = spatialComponent(
+      row,
+      ["training", "surface", "supervision"],
+      ["training", "surface_supervision"],
+      ["training_surface_supervision"]
+    );
+    const trainingVolumeInput = spatialComponent(row, ["training", "volume", "input"], ["training", "volume_input"], ["training_volume_input"]);
+    const trainingVolumeSupervision = spatialComponent(
+      row,
+      ["training", "volume", "supervision"],
+      ["training", "volume_supervision"],
+      ["training_volume_supervision"]
+    );
+    const inferenceSurfaceInput = spatialComponent(
+      row,
+      ["inference", "surface_input"],
+      ["inference", "geometry_input", "surface"],
+      ["inference_surface_input"]
+    );
+    const inferenceVolumeInput = spatialComponent(
+      row,
+      ["inference", "volume_input"],
+      ["inference", "geometry_input", "volume"],
+      ["inference_volume_input"]
+    );
+    const inferenceMeshDependency = spatialComponent(
+      row,
+      ["inference", "geometry_dependency"],
+      ["inference", "mesh_dependency"],
+      ["inference", "native_mesh_dependency"],
+      ["inference_mesh_dependency"]
+    );
+    const directSurfaceOutput =
+      directOutputSummary(row, "surface") ||
+      representationSummary(spatialComponent(row, ["inference", "surface_direct_output"], ["surface_direct_output"]));
+    const directVolumeOutput =
+      directOutputSummary(row, "volume") ||
+      representationSummary(spatialComponent(row, ["inference", "volume_direct_output"], ["volume_direct_output"]));
+    const scoringMapping = mappingSummary(row);
+    const scoringCoverage = scoringCoverageSummary(row);
     const validation = maintainerValidation(row);
     void ensureValidationEvidence(row);
     void ensureClaimRecord(row);
@@ -4037,6 +4823,65 @@
         ${detailsRow("Pretraining data", pretrainingDataLabel(row.pretraining_data))}
         ${detailsRow("Protocol explanation", row.training_regime_explanation)}
       </dl></section>
+      <section><h4>Result scoring support</h4><dl>
+        ${detailsRow("Scoring-support release", support.release_id)}
+        ${detailsRow("Scoring-support status", humanize(support.status))}
+        ${detailsRow("Manifest SHA-256", support.manifest_sha256)}
+        ${detailsRow("Surface support ID", support.surface_support_id)}
+        ${detailsRow("Volume support ID", support.volume_support_id)}
+        ${detailsRow("Dataset-owner approved by", supportOwnerApproval.approved_by)}
+        ${detailsRow("Dataset-owner approval date", supportOwnerApproval.approved_at)}
+      </dl>${supportLinks ? `<p>${supportLinks}</p>` : ""}
+      <p class="details-note">${
+        support.release_id
+          ? "These benchmark-owned locations, IDs, targets, and weights define where final errors are calculated on the declared evaluation/test split. They do not require the model to train or infer at those same locations."
+          : "This historical result has no result-specific scoring-support binding. Do not infer that it used the active dataset's current support release."
+      }</p></section>
+      <section><h4>Submitter-reported spatial setup</h4><dl>
+        ${detailsRow("Training surface input", representationSummary(trainingSurfaceInput))}
+        ${detailsRow("Training surface supervision", representationSummary(trainingSurfaceSupervision))}
+        ${detailsRow("Training volume input", representationSummary(trainingVolumeInput))}
+        ${detailsRow("Training volume supervision", representationSummary(trainingVolumeSupervision))}
+        ${detailsRow("Inference surface input", representationSummary(inferenceSurfaceInput))}
+        ${detailsRow("Inference volume input", representationSummary(inferenceVolumeInput))}
+        ${detailsRow("Inference mesh dependency", representationSummary(inferenceMeshDependency))}
+        ${detailsRow("Direct surface output/query support", directSurfaceOutput)}
+        ${detailsRow("Direct volume output/query support", directVolumeOutput)}
+        ${detailsRow("Discretization report file", bindingFile(discretizationBinding(row)))}
+        ${detailsRow("Discretization report SHA-256", bindingSha256(discretizationBinding(row)))}
+        ${detailsRow("Per-case discretization file", bindingFile(discretizationCaseBinding(row)))}
+        ${detailsRow("Per-case discretization SHA-256", bindingSha256(discretizationCaseBinding(row)))}
+      </dl><p class="details-note">The model's direct inference locations are reported by the submitter; package validation does not observe the model's internal queries.</p></section>
+      <section><h4>Scoring alignment</h4><dl>
+        ${detailsRow("Declared mapping to official support", scoringMapping)}
+        ${detailsRow("Declared final coverage (package-checked)", scoringCoverage)}
+        ${detailsRow("Per-case metric file", bindingFile(caseMetricsBinding(row)))}
+        ${detailsRow("Per-case metric SHA-256", bindingSha256(caseMetricsBinding(row)))}
+      </dl><p class="details-note">Only predictions are mapped. The reference evaluator loads the fixed ground truth and weights at the official support before calculating errors.</p></section>
+      <section><h4>Optional public predictions</h4><dl>
+        ${detailsRow("Prediction data", predictionAvailability(row).label)}
+        ${detailsRow("Declared artifact count", predictionArtifacts(row).length)}
+        ${detailsRow(
+          "Declared artifact kinds",
+          predictionArtifacts(row)
+            .map((artifact) => humanize(artifact.kind))
+            .join(", ")
+        )}
+        ${detailsRow("Primary artifact kind (used for status)", humanize(predictionArtifact.kind))}
+        ${detailsRow("Provider", predictionArtifactProvider(predictionArtifact))}
+        ${detailsRow("Pinned revision", predictionArtifact.revision)}
+        ${detailsRow("Prediction manifest file", predictionArtifact.manifest_file)}
+        ${detailsRow("Prediction manifest SHA-256", predictionArtifact.manifest_sha256)}
+        ${detailsRow("Format", predictionArtifact.format)}
+        ${detailsRow("Licence", predictionArtifact.license_spdx)}
+        ${detailsRow("Artifact check", predictionArtifactStatus(row).label)}
+        ${detailsRow("Checked by", predictionCheck.checked_by)}
+        ${detailsRow("Checked at", predictionCheck.checked_at)}
+        ${detailsRow("Maintainer check record", bindingFile(predictionArtifactChecksBinding(row)))}
+        ${detailsRow("Maintainer check record SHA-256", bindingSha256(predictionArtifactChecksBinding(row)))}
+        ${detailsRow("Metric recomputation", predictionMetricRecomputation(row).label)}
+      </dl>${predictionLinks ? `<p>${predictionLinks}</p>` : ""}
+      <p class="details-note">Prediction sharing and these checks are informational. They do not change accuracy rank, academic-citation eligibility, or promotion eligibility.</p></section>
       <section><h4>Submitter-reported evaluation provenance</h4><dl>
         ${detailsRow("Declared reference version", row.evaluation?.reference_version)}
         ${detailsRow("Declared code revision", row.evaluation?.code_revision)}
@@ -4096,6 +4941,10 @@
         ${detailsRow("Validated profile case set", validation.case_set_id)}
         ${detailsRow("Validated profile ground-truth release", validation.profile_ground_truth_release_id)}
         ${detailsRow("Validated profile ground-truth manifest SHA-256", validation.profile_ground_truth_manifest_sha256)}
+        ${detailsRow("Validated scoring-support release", validation.scoring_support_release_id)}
+        ${detailsRow("Validated scoring-support manifest SHA-256", validation.scoring_support_manifest_sha256)}
+        ${detailsRow("Validated discretization SHA-256", validation.discretization_sha256)}
+        ${detailsRow("Validated case-metrics SHA-256", validation.case_metrics_sha256)}
         ${detailsRow("Validation record SHA-256", validation.evidence_sha256)}
         ${detailsRow("Validation record bytes", humanize(validationCheck?.status || "not_checked"))}
       </dl>${approvalLinks ? `<p>${approvalLinks}</p>` : ""}${resultCitationActions}</section>
@@ -4324,6 +5173,15 @@
   }
 
   function configureEvents() {
+    element("open-submission-repo")?.addEventListener("click", (event) => {
+      if (event.currentTarget.disabled || !activeDataset()) return;
+      const sourceRef = String(window.FluidsBenchSubmissionSourceRef || "main");
+      window.open(
+        `https://github.com/neilashton/fluidsbench-submission/tree/${encodeURIComponent(sourceRef)}/submissions/${activeDataset().slug}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    });
     document.addEventListener("change", (event) => {
       if (event.target.matches("[data-leaderboard-dataset-select]")) setDataset(event.target.value);
       else if (event.target.matches("[data-leaderboard-split-select]")) setSplit(event.target.value);

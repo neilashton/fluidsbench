@@ -52,6 +52,78 @@ class ReleaseSnapshotTests(unittest.TestCase):
         self.assertTrue(any("release_view_url" in error for error in errors))
         self.assertTrue(any("asset_base_url" in error for error in errors))
 
+    def test_manifest_accepts_and_validates_dataset_scoring_support(self) -> None:
+        manifest = official_manifest()
+        manifest["datasets"] = [  # type: ignore[index]
+            {
+                "name": "Example",
+                "slug": "example",
+                "scoring_support": {
+                    "status": "official",
+                    "release_id": "example-scoring-v1",
+                    "manifest_url": "https://example.test/scoring-support/example/manifest.json",
+                    "manifest_sha256": "1" * 64,
+                    "submissions_open": True,
+                    "owner_approval": {
+                        "approved_by": "Dataset owner",
+                        "approved_at": "2026-07-20T00:00:00Z",
+                        "pull_request_url": "https://github.com/example/repository/pull/1",
+                    },
+                },
+            }
+        ]
+        self.assertEqual(check_release_snapshot.validate_manifest(manifest, RELEASE_ID, ARTIFACT_COMMIT), [])
+
+        manifest["datasets"][0]["scoring_support"]["manifest_url"] = "http://example.test/manifest.json"  # type: ignore[index]
+        manifest["datasets"][0]["scoring_support"]["manifest_sha256"] = "invalid"  # type: ignore[index]
+        errors = check_release_snapshot.validate_manifest(manifest, RELEASE_ID, ARTIFACT_COMMIT)
+        self.assertTrue(any("scoring-support manifest_url" in error for error in errors))
+        self.assertTrue(any("scoring-support manifest_sha256" in error for error in errors))
+
+        manifest["datasets"][0]["scoring_support"]["manifest_url"] = (  # type: ignore[index]
+            "https://example.test/scoring-support/example/manifest.json"
+        )
+        manifest["datasets"][0]["scoring_support"]["manifest_sha256"] = "1" * 64  # type: ignore[index]
+        del manifest["datasets"][0]["scoring_support"]["owner_approval"]  # type: ignore[index]
+        errors = check_release_snapshot.validate_manifest(manifest, RELEASE_ID, ARTIFACT_COMMIT)
+        self.assertTrue(any("dataset-owner approval" in error for error in errors))
+
+    def test_partial_scoring_support_coverage_is_rejected_when_configured(self) -> None:
+        manifest = official_manifest()
+        manifest["datasets"] = [  # type: ignore[index]
+            {
+                "name": "First",
+                "slug": "first",
+                "scoring_support": {
+                    "status": "owner_review_required",
+                    "release_id": "first-scoring-v1",
+                    "manifest_url": "https://example.test/first/manifest.json",
+                    "manifest_sha256": "1" * 64,
+                    "submissions_open": False,
+                    "closed_reason": "Owner approval pending.",
+                },
+            },
+            {"name": "Second", "slug": "second"},
+        ]
+        errors = check_release_snapshot.validate_manifest(manifest, RELEASE_ID, ARTIFACT_COMMIT)
+        self.assertTrue(any("cover every dataset" in error for error in errors))
+
+    def test_owner_review_gate_does_not_claim_a_nonexistent_support_release(self) -> None:
+        manifest = official_manifest()
+        manifest["datasets"] = [  # type: ignore[index]
+            {
+                "name": "Pending",
+                "slug": "pending",
+                "scoring_support": {
+                    "status": "owner_review_required",
+                    "submissions_open": False,
+                    "closed_reason": "Dataset-owner decisions remain outstanding.",
+                    "owner_decisions_required": ["approve_support_locations"],
+                },
+            }
+        ]
+        self.assertEqual(check_release_snapshot.validate_manifest(manifest, RELEASE_ID, ARTIFACT_COMMIT), [])
+
     def test_release_id_cannot_escape_target_folder(self) -> None:
         self.assertTrue(check_release_snapshot.validate_release_id("../current"))
         self.assertTrue(check_release_snapshot.validate_release_id("Release_1"))
@@ -145,6 +217,49 @@ const configuredManifestSha256 = {json.dumps(MANIFEST_SHA256)};</script></body><
                 output.read_text(encoding="utf-8"),
                 f"leaderboard/claims/dataset/split/model.json\t{record_sha256}\n",
             )
+
+    def test_scoring_support_manifest_list_preserves_dataset_and_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manifest = {
+                "datasets": [
+                    {
+                        "slug": "example",
+                        "scoring_support": {
+                            "status": "official",
+                            "release_id": "example-scoring-v1",
+                            "manifest_url": "https://example.test/scoring-support/manifest.json",
+                            "manifest_sha256": "2" * 64,
+                            "submissions_open": True,
+                        },
+                    }
+                ]
+            }
+            manifest_path = root / "manifest.json"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            output = root / "scoring-support.tsv"
+            result = check_release_snapshot.scoring_support_manifests(
+                argparse.Namespace(manifest=manifest_path, output=output)
+            )
+            self.assertEqual(result, 0)
+            self.assertEqual(
+                output.read_text(encoding="utf-8"),
+                f"example\thttps://example.test/scoring-support/manifest.json\t{'2' * 64}\n",
+            )
+
+            manifest["datasets"][0]["scoring_support"] = {  # type: ignore[index]
+                "status": "owner_review_required",
+                "submissions_open": False,
+                "closed_reason": "Owner approval pending.",
+            }
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            self.assertEqual(
+                check_release_snapshot.scoring_support_manifests(
+                    argparse.Namespace(manifest=manifest_path, output=output)
+                ),
+                0,
+            )
+            self.assertEqual(output.read_text(encoding="utf-8"), "")
 
 
 if __name__ == "__main__":

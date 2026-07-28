@@ -18,6 +18,7 @@ SUBMISSION_REPOSITORY = "https://github.com/neilashton/fluidsbench-submission"
 SAFE_RELEASE_ID = re.compile(r"^[a-z0-9](?:[a-z0-9.-]{0,158}[a-z0-9])?$")
 FULL_GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+DATASET_ID = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 SAFE_ASSET_PATH = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 URL_ATTRIBUTES = {"action", "href", "poster", "src"}
 UNSCOPED_STATIC_PATHS = (
@@ -123,6 +124,17 @@ def safe_asset_path(value: object) -> bool:
     return all(segment not in {"", ".", ".."} for segment in value.split("/"))
 
 
+def scoring_support_bindings(manifest: object) -> list[dict[str, object]]:
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("datasets"), list):
+        return []
+    bindings: list[dict[str, object]] = []
+    for dataset in manifest["datasets"]:
+        if not isinstance(dataset, dict) or not isinstance(dataset.get("scoring_support"), dict):
+            continue
+        bindings.append({"dataset_id": dataset.get("slug"), **dataset["scoring_support"]})
+    return bindings
+
+
 def validate_manifest(manifest: object, release_id: str, artifact_commit: str) -> list[str]:
     errors = validate_release_id(release_id)
     if not FULL_GIT_SHA.fullmatch(artifact_commit):
@@ -178,6 +190,48 @@ def validate_manifest(manifest: object, release_id: str, artifact_commit: str) -
             errors.append("manifest data_release.profile_ground_truth.manifest_url must be a clean HTTPS URL")
         if not isinstance(ground_truth.get("manifest_sha256"), str) or not SHA256.fullmatch(ground_truth["manifest_sha256"]):
             errors.append("manifest data_release.profile_ground_truth.manifest_sha256 must be a lowercase SHA-256 digest")
+
+    support_bindings = scoring_support_bindings(manifest)
+    if support_bindings:
+        dataset_ids = {
+            dataset.get("slug")
+            for dataset in manifest.get("datasets", [])
+            if isinstance(dataset, dict) and isinstance(dataset.get("slug"), str)
+        }
+        support_dataset_ids = {binding.get("dataset_id") for binding in support_bindings}
+        if support_dataset_ids != dataset_ids:
+            errors.append("manifest scoring-support bindings must cover every dataset exactly once")
+        for binding in support_bindings:
+            dataset_id = binding.get("dataset_id")
+            if not isinstance(dataset_id, str) or not DATASET_ID.fullmatch(dataset_id):
+                errors.append("manifest scoring-support binding has an invalid dataset ID")
+            status = binding.get("status")
+            if status not in {"owner_review_required", "official", "retired"}:
+                errors.append(f"manifest {dataset_id} scoring-support status is invalid")
+            has_release_binding = any(binding.get(key) is not None for key in ("release_id", "manifest_url", "manifest_sha256"))
+            if status in {"official", "retired"} or has_release_binding:
+                if not isinstance(binding.get("release_id"), str) or not binding["release_id"].strip():
+                    errors.append(f"manifest {dataset_id} scoring-support release_id must be a non-empty string")
+                if not clean_https_url(binding.get("manifest_url")):
+                    errors.append(f"manifest {dataset_id} scoring-support manifest_url must be a clean HTTPS URL")
+                if not isinstance(binding.get("manifest_sha256"), str) or not SHA256.fullmatch(binding["manifest_sha256"]):
+                    errors.append(f"manifest {dataset_id} scoring-support manifest_sha256 must be a lowercase SHA-256 digest")
+            submissions_open = binding.get("submissions_open")
+            if not isinstance(submissions_open, bool):
+                errors.append(f"manifest {dataset_id} scoring-support submissions_open must be boolean")
+            elif submissions_open and status != "official":
+                errors.append(f"manifest {dataset_id} cannot open submissions without official scoring support")
+            if submissions_open is False and not isinstance(binding.get("closed_reason"), str):
+                errors.append(f"manifest {dataset_id} closed scoring support must give a closed_reason")
+            owner_approval = binding.get("owner_approval")
+            if status == "official" and (
+                not isinstance(owner_approval, dict)
+                or any(
+                    not isinstance(owner_approval.get(key), str) or not owner_approval[key].strip()
+                    for key in ("approved_by", "approved_at", "pull_request_url")
+                )
+            ):
+                errors.append(f"manifest {dataset_id} official scoring support must record complete dataset-owner approval")
     return errors
 
 
@@ -389,6 +443,39 @@ def claim_assets(args: argparse.Namespace) -> int:
     return 0
 
 
+def scoring_support_manifests(args: argparse.Namespace) -> int:
+    manifest = load_json(args.manifest.resolve())
+    bindings = scoring_support_bindings(manifest)
+    errors: list[str] = []
+    seen: set[str] = set()
+    rows: list[tuple[str, str, str]] = []
+    for binding in bindings:
+        dataset_id = binding.get("dataset_id")
+        url = binding.get("manifest_url")
+        digest = binding.get("manifest_sha256")
+        if not isinstance(dataset_id, str) or not DATASET_ID.fullmatch(dataset_id):
+            errors.append("scoring-support binding has an invalid dataset ID")
+            continue
+        if dataset_id in seen:
+            errors.append(f"duplicate scoring-support binding for {dataset_id}")
+            continue
+        seen.add(dataset_id)
+        if binding.get("status") == "owner_review_required" and url is None and digest is None:
+            continue
+        if not clean_https_url(url):
+            errors.append(f"{dataset_id}: scoring-support manifest URL is invalid")
+            continue
+        if not isinstance(digest, str) or not SHA256.fullmatch(digest):
+            errors.append(f"{dataset_id}: scoring-support manifest SHA-256 is invalid")
+            continue
+        rows.append((dataset_id, url, digest))
+    if errors:
+        return print_errors(errors)
+    args.output.write_text("".join(f"{dataset_id}\t{url}\t{digest}\n" for dataset_id, url, digest in rows), encoding="utf-8")
+    print(f"Validated and listed {len(rows)} scoring-support manifests.")
+    return 0
+
+
 def prepare(args: argparse.Namespace) -> int:
     manifest_path = args.manifest.resolve()
     manifest = load_json(manifest_path)
@@ -489,6 +576,13 @@ def build_parser() -> argparse.ArgumentParser:
     claims_parser.add_argument("--repository-root", type=Path, required=True)
     claims_parser.add_argument("--output", type=Path, required=True)
     claims_parser.set_defaults(func=claim_assets)
+    supports_parser = subparsers.add_parser(
+        "list-scoring-support-manifests",
+        help="write the dataset scoring-support manifest URLs and SHA-256 pins for publication checks",
+    )
+    supports_parser.add_argument("--manifest", type=Path, required=True)
+    supports_parser.add_argument("--output", type=Path, required=True)
+    supports_parser.set_defaults(func=scoring_support_manifests)
     return parser
 
 

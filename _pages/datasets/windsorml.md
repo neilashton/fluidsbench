@@ -88,17 +88,17 @@ compact_masthead: true
       <div>
         <dt>Relative L2 error</dt>
         <dd>
-          For a target field \(q\), first map predictions and targets back to dimensional physical space:
-          \(q^\ast = T_q^{-1}(q)\). The score is \(E_q = ||\hat{q}^\ast - q^\ast||_2 / ||q^\ast||_2\), reported as
-          \(100 E_q\). Vector fields are flattened across cases, points, and components before the norm is taken.
+          For each evaluation/test geometry, first map predictions back to the fixed scoring support and return predictions and targets to dimensional
+          physical space, \(q^\ast = T_q^{-1}(q)\). Apply the official surface-area or volume weights over locations and vector components when
+          calculating the relative L2 norm. Report \(100 E_q\) for each geometry, then take the arithmetic mean of those geometry-level errors.
         </dd>
       </div>
       <div>
         <dt>Relative L1 error</dt>
         <dd>
-          For a target field \(q\), after mapping predictions and targets back to dimensional physical space, the
-          relative L1 error is \(A_q = ||\hat{q}^\ast - q^\ast||_1 / ||q^\ast||_1\), reported as \(100 A_q\). Vector
-          fields are flattened across cases, points, and components before the norm is taken.
+          For each evaluation/test geometry, calculate the weighted relative L1 norm on the same dimensional fixed scoring support and report it as a
+          percentage. The leaderboard value is the arithmetic mean of the geometry-level percentages; field values are not flattened across
+          geometries before taking the norm.
         </dd>
       </div>
       <div>

@@ -31,7 +31,14 @@ window.__FluidsBenchClaimTest = {
   leaderboardManifestProvenance,
   claimRecordCheck,
   normalizeRow,
+  predictionArtifactStatus,
+  predictionAvailability,
+  predictionMetricRecomputation,
+  representationSummary,
+  mappingSummary,
   renderReleaseMetadata,
+  renderSubmissionAvailability,
+  scoringSupportSummary,
   rowsForActiveSplit,
   sourceSubmission,
   state,
@@ -137,7 +144,7 @@ api.state.manifest = {
 };
 api.renderReleaseMetadata();
 assert.equal(elements.get("leaderboard-data-warning-title").textContent, "Official submitted-data release:");
-assert.match(elements.get("leaderboard-data-warning-text").textContent, /submitter-provided metrics and profile predictions/);
+assert.match(elements.get("leaderboard-data-warning-text").textContent, /submitter-provided metrics, spatial declarations, and profile predictions/);
 assert.match(elements.get("leaderboard-data-warning").className, /is-official/);
 
 const manifest = JSON.parse(fs.readFileSync(path.join(submissionRoot, "leaderboard/manifest.json"), "utf8"));
@@ -258,6 +265,144 @@ function verifyOfficialAcademicHappyPath() {
       profile_ground_truth_release_id: "ground-truth-2026-07",
       profile_ground_truth_manifest_sha256: groundTruthSha256,
     },
+    scoring_support: {
+      status: "official",
+      release_id: "example-scoring-v1",
+      manifest_url: "https://example.test/scoring-support/manifest.json",
+      manifest_sha256: "6".repeat(64),
+    },
+    spatial_discretization: {
+      format: "fluidsbench-discretization-v1",
+      file: "discretization.json",
+      sha256: "7".repeat(64),
+      summary: {
+        training: {
+          surface_input: {
+            used: true,
+            representation: "point_cloud",
+            entity_counts: [{ entity: "vertex", count: { kind: "fixed", value: 1024 } }],
+            native_comparison: {
+              status: "reported",
+              native_entity_counts: [{ entity: "vertex", count: { kind: "fixed", value: 8192 } }],
+              fractions: [{ entity: "vertex", fraction: { kind: "fixed", value: 0.125 } }],
+            },
+            sampling: { kind: "fixed", method: "farthest point", seed: 7 },
+            domain: {
+              kind: "axis_aligned_box",
+              coordinate_frame: "vehicle",
+              length_unit: "m",
+              minimum: [-1, -2, -3],
+              maximum: [4, 5, 6],
+              boundary_inclusion: "closed",
+            },
+            connectivity: "none",
+          },
+          surface_supervision: {
+            used: true,
+            representation: "point_cloud",
+            entity_counts: [{ entity: "vertex", count: { kind: "fixed", value: 2048 } }],
+            native_comparison: { status: "not_applicable" },
+            sampling: { kind: "none" },
+            domain: { kind: "full_dataset_domain" },
+            connectivity: "none",
+          },
+          volume_input: { used: false },
+          volume_supervision: { used: false },
+        },
+        inference: {
+          geometry_dependency: "surface_geometry",
+          surface_input: {
+            used: true,
+            representation: "point_cloud",
+            entity_counts: [{ entity: "vertex", count: { kind: "fixed", value: 1024 } }],
+            native_comparison: { status: "not_applicable" },
+            sampling: { kind: "none" },
+            domain: { kind: "full_dataset_domain" },
+            connectivity: "none",
+          },
+          volume_input: { used: false },
+          direct_outputs: [
+            {
+              id: "surface-output",
+              domain: "surface",
+              representation: {
+                used: true,
+                representation: "query_points",
+                entity_counts: [{ entity: "point", count: { kind: "fixed", value: 4096 } }],
+                native_comparison: { status: "not_applicable" },
+                sampling: { kind: "none" },
+                domain: { kind: "full_dataset_domain" },
+                connectivity: "none",
+              },
+              queries_per_forward_pass: { kind: "fixed", value: 1024 },
+            },
+          ],
+          mappings: [
+            {
+              support_id: "surface-support",
+              source_output_id: "surface-output",
+              method: { kind: "nearest" },
+              implementation: "evaluation/map.py",
+              extrapolation_policy: "forbidden",
+              unmapped_fraction: 0,
+              extrapolated_fraction: 0,
+              final_coverage_fraction: 1,
+            },
+          ],
+        },
+        case_manifest: {
+          format: "jsonl",
+          file: "discretization/cases.jsonl",
+          sha256: "3".repeat(64),
+          case_count: 1,
+        },
+      },
+    },
+    case_metrics: {
+      format: "fluidsbench-case-metrics-v1",
+      file: "metrics/cases.json",
+      sha256: "8".repeat(64),
+      case_count: 1,
+    },
+    prediction_artifacts: [
+      {
+        artifact_id: "scored",
+        kind: "scored_predictions",
+        provider: "huggingface",
+        repository_url: "https://huggingface.co/datasets/example/predictions",
+        revision: "4".repeat(40),
+        manifest_file: "fluidsbench-predictions.json",
+        manifest_sha256: "5".repeat(64),
+        format: "fluidsbench-prediction-artifact-v1",
+        support_release_id: "example-scoring-v1",
+        support_manifest_sha256: "6".repeat(64),
+        split_id: "full",
+        coverage: { kind: "complete_split", case_count: 1, expected_case_count: 1 },
+        license_spdx: "CC-BY-4.0",
+      },
+    ],
+    prediction_artifact_status: {
+      sharing: "declared",
+      declared_artifact_count: 1,
+      maintainer_check_status: "recorded",
+      checked_artifact_count: 1,
+      check_file: `submissions/example/${submissionId}/prediction-artifact-checks.json`,
+      check_sha256: "0".repeat(64),
+      checks: [
+        {
+          artifact_id: "scored",
+          status: "format_checked",
+          checked_at: "2026-07-22T00:00:00Z",
+          checked_by: "FluidsBench",
+          repository_revision: "4".repeat(40),
+          manifest_sha256: "5".repeat(64),
+          checked_case_count: 1,
+          recomputed_case_count: 0,
+          expected_case_count: 1,
+          metric_recomputation: "not_performed",
+        },
+      ],
+    },
     maintainer_validation: validation,
     ranking,
     claim_eligibility: {
@@ -267,6 +412,22 @@ function verifyOfficialAcademicHappyPath() {
       reason: "Approved submitted-data result in this immutable release.",
     },
   };
+  const trainingSurfaceSummary = api.representationSummary(row.spatial_discretization.summary.training.surface_input);
+  assert.match(trainingSurfaceSummary, /vertex: 1,024 per case/i);
+  assert.match(trainingSurfaceSummary, /native vertex: 8,192 per case/i);
+  assert.match(trainingSurfaceSummary, /vertex: 12\.5% of native/i);
+  assert.match(trainingSurfaceSummary, /sampling: farthest point/);
+  assert.match(trainingSurfaceSummary, /domain: \[-1, -2, -3\] to \[4, 5, 6\] m in vehicle/);
+  assert.doesNotMatch(trainingSurfaceSummary, /\[object Object\]/);
+  const directOutputSummary = api.representationSummary(row.spatial_discretization.summary.inference.direct_outputs[0]);
+  assert.match(directOutputSummary, /point: 4,096 per case/i);
+  assert.match(directOutputSummary, /1,024 queries per forward pass/);
+  assert.doesNotMatch(directOutputSummary, /\[object Object\]/);
+  const declaredMappingSummary = api.mappingSummary(row);
+  assert.match(declaredMappingSummary, /method: Nearest/);
+  assert.match(declaredMappingSummary, /coverage: 100%/);
+  assert.doesNotMatch(declaredMappingSummary, /\[object Object\]/);
+
   api.state.manifest = {
     all_file: "leaderboard/all.json",
     ranking_contract: {
@@ -352,10 +513,12 @@ function verifyOfficialAcademicHappyPath() {
   assert.match(citation.bibtex, /author = \{\{FluidsBench contributors\}\}/);
   assert.match(citation.bibtex, /R\\&D\\_v2/);
   assert.match(citation.promotion, /rank 1 of 1/);
-  assert.match(citation.promotion, /not run the model or recompute base metrics/);
+  assert.match(citation.promotion, /did not run the model/);
+  assert.match(citation.promotion, /did not recompute base metrics/);
 
   const provenance = api.exportProvenance(1);
-  const columnNames = new Set(api.exportMetadataColumns(provenance).map(([name]) => name));
+  const exportColumns = api.exportMetadataColumns(provenance);
+  const columnNames = new Set(exportColumns.map(([name]) => name));
   [
     "release_id",
     "leaderboard_manifest_sha256",
@@ -369,13 +532,75 @@ function verifyOfficialAcademicHappyPath() {
     "declared_promotion_eligible",
     "browser_verification_status",
     "claim_record_url",
+    "scoring_support_release_id",
+    "scoring_support_manifest_sha256",
+    "discretization_sha256",
+    "case_metrics_sha256",
+    "prediction_data_status",
+    "prediction_artifact_check_status",
+    "prediction_metric_recomputation",
   ].forEach((name) => assert.equal(columnNames.has(name), true, `${name} must be present in CSV exports`));
+  const exportValues = new Map(exportColumns.map(([name, value]) => [name, value(rankedRow)]));
+  assert.equal(exportValues.get("prediction_artifact_check_record_file"), `submissions/example/${submissionId}/prediction-artifact-checks.json`);
+  assert.equal(exportValues.get("prediction_artifact_check_record_sha256"), "0".repeat(64));
   const exportedRow = api.sourceSubmission(rankedRow);
   assert.equal(exportedRow.ranking.rank, 1);
   assert.equal(exportedRow.claim_eligibility.academic_citation, true);
   assert.equal(exportedRow.browser_verification.passed, true);
   assert.equal(exportedRow.copy_readiness.promotion, true);
   assert.equal(exportedRow.claim_record.url, claimRecordUrl);
+  assert.equal(exportedRow.spatial_provenance.scoring_support.release_id, "example-scoring-v1");
+  assert.equal(exportedRow.spatial_provenance.discretization.sha256, "7".repeat(64));
+  assert.equal(exportedRow.spatial_provenance.discretization.cases_file, "discretization/cases.jsonl");
+  assert.equal(exportedRow.spatial_provenance.discretization.cases_sha256, "3".repeat(64));
+  assert.equal(exportedRow.prediction_evidence.availability.label, "Complete · 1/1");
+  assert.equal(exportedRow.prediction_evidence.artifact_check.display_status.label, "Format checked");
+  assert.equal(exportedRow.prediction_evidence.metric_recomputation.label, "Not performed");
+  assert.equal(exportedRow.prediction_evidence.maintainer_checks.file, `submissions/example/${submissionId}/prediction-artifact-checks.json`);
+  assert.equal(exportedRow.prediction_evidence.maintainer_checks.sha256, "0".repeat(64));
+  assert.equal(api.claimEligibility(rankedRow).academic_citation, true, "optional prediction metadata must not gate citation");
+  assert.equal(api.claimEligibility(rankedRow).promotion, true, "optional prediction metadata must not gate promotion");
+
+  row.prediction_artifact_status.checks[0].status = "metrics_recomputed";
+  row.prediction_artifact_status.checks[0].metric_recomputation = "performed";
+  row.prediction_artifact_status.checks[0].recomputed_case_count = 1;
+  const recomputedCitation = api.citationValues();
+  assert.match(recomputedCitation.promotion, /recomputed the complete evaluation\/test split metrics/);
+  assert.doesNotMatch(recomputedCitation.promotion, /did not recompute base metrics/);
+
+  row.schema_version = "3.0";
+  row.reproducibility.contract_version = "open-reproducibility-3.0";
+  validation.schema_version = "3.0";
+  validation.contract_version = "open-reproducibility-3.0";
+  validation.scoring_support_release_id = "example-scoring-v1";
+  validation.scoring_support_manifest_sha256 = "6".repeat(64);
+  validation.discretization_sha256 = "7".repeat(64);
+  validation.case_metrics_sha256 = "8".repeat(64);
+  api.state.manifest.data_release.reproducibility_contract_version = "open-reproducibility-3.0";
+  api.state.manifest.datasets[0].scoring_support = {
+    status: "official",
+    submissions_open: false,
+    closed_reason: "This immutable release is no longer accepting submissions.",
+    owner_approval: {
+      approved_by: "Dataset owner",
+      approved_at: "2026-07-20T00:00:00Z",
+      pull_request_url: "https://github.com/example/repository/pull/1",
+    },
+    ...row.scoring_support,
+  };
+  row.prediction_artifact_status.checks[0].status = "failed";
+  row.prediction_artifact_status.checks[0].metric_recomputation = "not_performed";
+  row.prediction_artifact_status.checks[0].recomputed_case_count = 0;
+  const v3RankedRow = api.rowsForActiveSplit()[0];
+  assert.equal(api.claimEligibility(v3RankedRow).academic_citation, true, "approved schema-v3 results remain citable after submissions close");
+  assert.equal(api.claimEligibility(v3RankedRow).promotion, true, "optional prediction-check failure must not gate promotion");
+  const ownerApproval = api.state.manifest.datasets[0].scoring_support.owner_approval;
+  delete api.state.manifest.datasets[0].scoring_support.owner_approval;
+  assert.equal(api.claimEligibility(v3RankedRow).academic_citation, false, "schema-v3 claims require the frozen dataset-owner approval");
+  api.state.manifest.datasets[0].scoring_support.owner_approval = ownerApproval;
+  api.state.manifest.datasets[0].scoring_support.status = "owner_review_required";
+  assert.equal(api.claimEligibility(v3RankedRow).academic_citation, false, "schema-v3 claims require official scoring support in the frozen release");
+  api.state.manifest.datasets[0].scoring_support.status = "official";
 
   api.renderReleaseMetadata();
   assert.equal(elements.get("open-citation-dialog").disabled, false);
@@ -388,8 +613,132 @@ function verifyOfficialAcademicHappyPath() {
   assert.match(elements.get("leaderboard-claim-eligibility").textContent, /submitted-data-only contract/);
 }
 
+function verifyPredictionEvidenceLabels() {
+  const empty = { prediction_artifacts: [] };
+  assert.equal(api.predictionAvailability(empty).label, "Not shared");
+  assert.equal(api.predictionArtifactStatus(empty).label, "Not applicable");
+  assert.equal(api.predictionMetricRecomputation(empty).label, "Not performed");
+
+  const examples = {
+    prediction_artifacts: [
+      {
+        artifact_id: "examples",
+        kind: "scored_predictions",
+        coverage: { kind: "example_cases", case_count: 3, expected_case_count: 50 },
+      },
+    ],
+    prediction_artifact_status: {
+      sharing: "declared",
+      declared_artifact_count: 1,
+      maintainer_check_status: "recorded",
+      checked_artifact_count: 1,
+      checks: [
+        {
+          artifact_id: "examples",
+          status: "accessible",
+          checked_case_count: 3,
+          recomputed_case_count: 3,
+          expected_case_count: 50,
+          metric_recomputation: "partial",
+        },
+      ],
+    },
+  };
+  assert.equal(api.predictionAvailability(examples).label, "Examples · 3/50");
+  assert.equal(api.predictionArtifactStatus(examples).label, "Accessible");
+  assert.equal(api.predictionMetricRecomputation(examples).label, "Example cases recomputed · 3/50");
+
+  examples.prediction_artifact_status.checks[0].status = "failed";
+  examples.prediction_artifact_status.checks[0].metric_recomputation = "not_performed";
+  examples.prediction_artifact_status.checks[0].recomputed_case_count = 0;
+  assert.equal(api.predictionArtifactStatus(examples).label, "Check failed");
+  assert.equal(api.predictionMetricRecomputation(examples).label, "Not performed");
+
+  const legacy = {
+    ...examples,
+    prediction_artifact_status: undefined,
+    prediction_artifact_checks: [
+      {
+        artifact_id: "examples",
+        status: "format_checked",
+        checked_case_count: 3,
+        recomputed_case_count: 0,
+        expected_case_count: 50,
+        metric_recomputation: "not_performed",
+      },
+    ],
+  };
+  assert.equal(api.predictionArtifactStatus(legacy).label, "Format checked");
+
+  const multiple = {
+    prediction_artifacts: [
+      {
+        artifact_id: "primary-complete",
+        kind: "scored_predictions",
+        coverage: { kind: "complete_split", case_count: 50, expected_case_count: 50 },
+      },
+      {
+        artifact_id: "secondary-examples",
+        kind: "direct_model_outputs",
+        coverage: { kind: "example_cases", case_count: 3, expected_case_count: 50 },
+      },
+    ],
+    prediction_artifact_status: {
+      checks: [
+        {
+          artifact_id: "secondary-examples",
+          status: "metrics_recomputed",
+          checked_case_count: 3,
+          recomputed_case_count: 3,
+          expected_case_count: 50,
+          metric_recomputation: "partial",
+        },
+      ],
+    },
+  };
+  assert.equal(api.predictionAvailability(multiple).label, "Complete · 50/50");
+  assert.equal(api.predictionArtifactStatus(multiple).label, "Not checked");
+  assert.equal(api.predictionMetricRecomputation(multiple).label, "Not performed");
+}
+
+function verifyDatasetSubmissionAvailability() {
+  api.state.manifest = {
+    datasets: [
+      {
+        name: "Pending",
+        slug: "pending",
+        scoring_support: {
+          status: "owner_review_required",
+          submissions_open: false,
+          closed_reason: "Dataset-owner scoring-support approval is pending",
+        },
+      },
+    ],
+  };
+  api.state.dataset = "Pending";
+  api.renderSubmissionAvailability();
+  assert.equal(elements.get("open-submission-repo").disabled, true);
+  assert.match(elements.get("submission-status").textContent, /Dataset-owner scoring-support approval is pending/);
+
+  api.state.manifest.datasets[0].scoring_support = {
+    status: "official",
+    release_id: "pending-scoring-v1",
+    submissions_open: true,
+  };
+  api.renderSubmissionAvailability();
+  assert.equal(elements.get("open-submission-repo").disabled, false);
+  assert.match(elements.get("submission-status").textContent, /submissions are open/);
+  assert.equal(
+    api.scoringSupportSummary({ schema_version: "2.0" }).release_id,
+    undefined,
+    "historical rows must not inherit the active dataset scoring support"
+  );
+}
+
 verifyGeneratedClaimRecords()
   .then(() => {
+    verifyPredictionEvidenceLabels();
+    verifyDatasetSubmissionAvailability();
     verifyOfficialAcademicHappyPath();
     console.log("leaderboard claim UI checks passed");
   })

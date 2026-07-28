@@ -273,7 +273,7 @@ chart:
 <script>
   const localLeaderboard = ["127.0.0.1", "localhost"].includes(window.location.hostname);
   const configuredLeaderboardBaseUrl =
-    {{ site.leaderboard_base_url | default: "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/" | jsonify }};
+    {{ site.leaderboard_base_url | default: "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/main/" | jsonify }};
   window.FluidsBenchLeaderboardBaseUrl = localLeaderboard
     ? "http://127.0.0.1:4100/"
     : configuredLeaderboardBaseUrl.endsWith("/")
@@ -283,6 +283,8 @@ chart:
     window.FluidsBenchLeaderboardBaseUrl + "leaderboard/manifest.json";
   window.FluidsBenchLeaderboardManifestSha256 =
     {{ site.leaderboard_manifest_sha256 | default: "" | jsonify }};
+  window.FluidsBenchSubmissionSourceRef =
+    {{ site.submission_source_ref | default: "main" | jsonify }};
   window.FluidsBenchProfileGroundTruthBaseUrl =
     new URL("{{ '/assets/data/profile-ground-truth/' | relative_url }}", window.location.origin).href;
 </script>

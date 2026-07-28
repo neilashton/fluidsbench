@@ -162,22 +162,39 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
+    <h3>Proposed spatial scoring support</h3>
+    <p>
+      <strong>Pending dataset-owner approval; not an official AhmedML scoring definition.</strong> The current proposal is to publish a fixed,
+      versioned support of 500,000 surface locations and 500,000 volume locations per evaluation case. The eventual owner-approved manifest must
+      define the exact source entities, coordinate frame, physical units, domain and masks, deterministic selection procedure, stable support IDs,
+      quadrature weights, dimensional ground-truth arrays, case ordering, files, and cryptographic hashes. The counts alone are not a scientific
+      specification.
+    </p>
+    <p>
+      FluidsBench will fix where final scoring occurs, not where a model must perform inference. A contributor may query fewer or different points,
+      use a grid, or use a native or participant-generated mesh, provided that the declared mapping produces a prediction for every official support
+      ID before the reference evaluator calculates the errors. Until the AhmedML dataset owner approves and publishes that manifest and evaluator,
+      these proposed counts must not be interpreted as official leaderboard locations.
+    </p>
+  </section>
+
+  <section class="dataset-panel">
     <h3>Metric definitions</h3>
     <dl class="metric-definition-list">
       <div>
         <dt>Relative L2 error</dt>
         <dd>
-          For a target field \(q\), first map predictions and targets back to dimensional physical space:
-          \(q^\ast = T_q^{-1}(q)\). The score is \(E_q = ||\hat{q}^\ast - q^\ast||_2 / ||q^\ast||_2\), reported as
-          \(100 E_q\). Vector fields are flattened across cases, points, and components before the norm is taken.
+          For each evaluation/test geometry, first map predictions back to the fixed scoring support and return predictions and targets to dimensional
+          physical space, \(q^\ast = T_q^{-1}(q)\). Apply the official surface-area or volume weights over locations and vector components when
+          calculating the relative L2 norm. Report \(100 E_q\) for each geometry, then take the arithmetic mean of those geometry-level errors.
         </dd>
       </div>
       <div>
         <dt>Relative L1 error</dt>
         <dd>
-          For a target field \(q\), after mapping predictions and targets back to dimensional physical space, the
-          relative L1 error is \(A_q = ||\hat{q}^\ast - q^\ast||_1 / ||q^\ast||_1\), reported as \(100 A_q\). Vector
-          fields are flattened across cases, points, and components before the norm is taken.
+          For each evaluation/test geometry, calculate the weighted relative L1 norm on the same dimensional fixed scoring support and report it as a
+          percentage. The leaderboard value is the arithmetic mean of the geometry-level percentages; field values are not flattened across
+          geometries before taking the norm.
         </dd>
       </div>
       <div>
