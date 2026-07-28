@@ -1,26 +1,65 @@
-# Contributing to al-folio
+# Contributing to FluidsBench
 
-Thank you for considering contributing to al-folio!
+Thank you for contributing to FluidsBench.
 
-## Pull Requests
+This repository contains the public website and leaderboard interface. Dataset contracts, scoring-support releases, submission schemas, validators, and result packages belong in [fluidsbench-submission](https://github.com/neilashton/fluidsbench-submission). A change that crosses that boundary should use two linked pull requests.
 
-We welcome your pull requests (PRs).
-For minor fixes (e.g., documentation improvements), feel free to submit a PR directly.
-If you would like to implement a new feature or a bug, please make sure you (or someone else) has opened an appropriate issue first; in your PR, please mention the issue it addresses.
+## Workflow
 
-## Issues
+The `dev` and `master` branches are protected. Do not push directly to either branch or edit the generated `gh-pages` branch.
 
-We use GitHub issues to track bugs and feature requests.
-Before submitting an issue, please make sure:
+1. Update your local `dev` branch.
+2. Create a focused feature branch.
+3. Make the change and run the relevant checks.
+4. Open a pull request targeting `dev`.
+5. Resolve automated checks and CODEOWNER review.
+6. Inspect the merged change on the [development review site](https://fluidsbench.org/review-x4n7q9m2vk6p/).
+7. Promote reviewed changes to `master` through a separate pull request.
 
-1. You have read [the FAQ section](FAQ.md) of the README and your question is NOT addressed there.
-2. You have done your best to ensure that your issue is NOT a duplicate of one of [the previous issues](https://github.com/alshedivat/al-folio/issues).
-3. Your issue is either a bug (unexpected/undesirable behavior) or a feature request.
-   If it is just a question, please ask it in the [Discussions](https://github.com/alshedivat/al-folio/discussions) forum.
+For dataset-scientific changes, the dataset owner's recorded approval is distinct from the repository CODEOWNER approval and protected-branch merge.
 
-When submitting an issue, please make sure to use the appropriate template.
+## Local checks
 
-## License
+Install the pinned Node dependencies and confirm the Ruby bundle:
 
-By contributing to al-folio, you agree that your contributions will be licensed
-under the LICENSE file in the root directory of the source tree.
+```bash
+npm ci
+bundle check
+```
+
+Run the website and leaderboard checks:
+
+```bash
+npx prettier . --check
+node bin/check_leaderboard_claim_ui.js
+python3 -m unittest discover -s tests -p "test_release_snapshot.py"
+python3 bin/check_profile_contract.py \
+  --submission-root ../fluidsbench-submission
+JEKYLL_ENV=production bundle exec jekyll build --lsi
+```
+
+To reproduce the review deployment:
+
+```bash
+JEKYLL_ENV=production bundle exec jekyll build --lsi \
+  --config _config.yml,_config_preview.yml
+rm -f _site/CNAME _site/feed.xml _site/robots.txt _site/sitemap.xml
+rm -rf _site/assets/html _site/assets/jupyter _site/assets/plotly _site/leaderboards
+python3 bin/check_preview_build.py _site /review-x4n7q9m2vk6p
+```
+
+## Pull-request scope
+
+A pull request should explain:
+
+- what changed and why;
+- the user or developer impact;
+- any paired pull request in `fluidsbench-submission`;
+- which checks were run;
+- any scientific decision, unresolved assumption, or prototype data affected.
+
+Keep unrelated changes in separate pull requests.
+
+## Licence
+
+By contributing, you agree that your contribution is distributed under the [repository licence](LICENSE).
