@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: ❓ Ask a Question
-    url: https://github.com/alshedivat/al-folio/discussions/categories/q-a
-    about: Ask and answer al-folio related questions.
-  - name: 📖 Read the documentation
-    url: https://github.com/alshedivat/al-folio/blob/master/README.md
-    about: Please consult the documentation before opening any issues!
+  - name: 📖 FluidsBench website
+    url: https://fluidsbench.org/
+    about: Read the public benchmark, dataset, and leaderboard information.
+  - name: 📦 Submission contracts and results
+    url: https://github.com/neilashton/fluidsbench-submission/issues
+    about: Report problems with dataset contracts, scoring support, validators, or result packages in the submission repository.
