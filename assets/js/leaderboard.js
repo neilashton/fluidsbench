@@ -1656,7 +1656,7 @@
       const url = safeHttpUrl(license.url);
       const scope = String(license.scope || "Not supplied").trim();
       return {
-        label: [spdxId, name].filter(Boolean).join(" — ") || "Not supplied",
+        label: name || spdxId || "Not supplied",
         spdxId,
         name,
         url,
@@ -1739,21 +1739,18 @@
     if (dataWarningText) {
       dataWarningText.textContent = officialRelease
         ? " results use submitter-provided metrics, spatial declarations, and profile predictions from open, versioned submission packages. FluidsBench validates and approves each submitted package but does not run the model. Any prediction-artifact checks and metric recomputation are reported separately for each result."
-        : " all results currently shown are illustrative dummy data. They are not official results and must not be cited or promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, pass FluidsBench package validation, and receive maintainer approval. Public code, model, and environment artifacts are optional.";
+        : " all results currently shown are illustrative dummy data. They are not official results and must not be cited or promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, pass FluidsBench package validation, and receive maintainer approval.";
     }
     element("leaderboard-release-id").textContent = release.id || "Unversioned";
     const details = [];
     if (release.status) details.push(humanize(release.status));
     if (release.generated_at) details.push(`generated ${formatReleaseDate(release.generated_at)}`);
     if (release.feed_sha256) details.push(`SHA-256 ${release.feed_sha256.slice(0, 12)}...`);
-    if (state.feedVerified) details.push("feed bytes verified");
     if (releaseManifestSha256()) details.push(`manifest SHA-256 ${releaseManifestSha256().slice(0, 12)}...`);
     if (state.manifestPinVerified) details.push("manifest bytes match snapshot pin");
     if (release.reproducibility_contract_version) details.push(release.reproducibility_contract_version);
     const license = releaseLicenseMetadata();
     details.push(`licence ${license.label}`);
-    if (!releaseArchiveUrl()) details.push("no immutable archive");
-    if (!releaseViewUrl()) details.push("no immutable release view");
     const meta = element("leaderboard-release-meta");
     meta.textContent = details.join(" | ");
     if (release.feed_sha256) meta.title = `Feed SHA-256: ${release.feed_sha256}`;
@@ -1788,7 +1785,7 @@
           ? ""
           : eligibility.declared.academic_citation
             ? `Citation copying is temporarily unavailable because browser verification has not passed: ${eligibility.reason}`
-            : `This release is not declared eligible for citation: ${eligibility.declared.reason}`;
+            : eligibility.declared.reason;
       }
     }
     const warning = element("leaderboard-release-warning");
