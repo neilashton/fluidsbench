@@ -159,6 +159,34 @@ assert.equal(elements.get("leaderboard-data-warning-title").textContent, "Offici
 assert.match(elements.get("leaderboard-data-warning-text").textContent, /submitter-provided metrics, spatial declarations, and profile predictions/);
 assert.match(elements.get("leaderboard-data-warning").className, /is-official/);
 
+api.state.manifest = {
+  data_release: {
+    id: "prototype-copy-test",
+    status: "prototype",
+    feed_sha256: "a".repeat(64),
+    license: {
+      spdx_id: "Apache-2.0",
+      name: "Apache License 2.0",
+      url: "https://www.apache.org/licenses/LICENSE-2.0",
+      scope: "Test",
+    },
+  },
+};
+api.state.feedVerified = true;
+api.state.loadedFeedSha256 = "a".repeat(64);
+api.state.dataset = "";
+api.renderReleaseMetadata();
+assert.doesNotMatch(elements.get("leaderboard-data-warning-text").textContent, /Public code, model, and environment artifacts are optional/);
+assert.match(elements.get("leaderboard-release-meta").textContent, /licence Apache License 2\.0/);
+assert.doesNotMatch(elements.get("leaderboard-release-meta").textContent, /Apache-2\.0 — Apache License 2\.0/);
+assert.doesNotMatch(elements.get("leaderboard-release-meta").textContent, /feed bytes verified/);
+assert.doesNotMatch(elements.get("leaderboard-release-meta").textContent, /no immutable archive/);
+assert.doesNotMatch(elements.get("leaderboard-release-meta").textContent, /no immutable release view/);
+assert.equal(
+  elements.get("leaderboard-claim-eligibility").textContent,
+  "This data release is not declared eligible for academic citation or promotion."
+);
+
 const manifest = JSON.parse(fs.readFileSync(path.join(submissionRoot, "leaderboard/manifest.json"), "utf8"));
 const feed = JSON.parse(fs.readFileSync(path.join(submissionRoot, manifest.all_file), "utf8"));
 api.state.manifest = manifest;
