@@ -303,7 +303,7 @@ compact_masthead: true
         <dd>
           For each evaluation/test geometry, map predictions to every entity in the release-bound public field support and return predictions and
           targets to dimensional physical space, \(q^\ast = T_q^{-1}(q)\). Calculate both paired relative-L2 values from the accumulated
-          sufficient statistics: physical-area weighting is primary on the boundary, while equal-entity weighting is primary in the flow volume.
+          sufficient statistics: area-weighted L2 is primary on the boundary, while unweighted point L2 (each point counts equally) is primary in the flow volume.
           Report the complete-case percentages first, then take the arithmetic mean of the geometry-level values.
         </dd>
       </div>
@@ -417,22 +417,22 @@ S_overall  = sum(weight_q * S_q)</code></pre>
         </thead>
         <tbody>
           <tr>
-            <td>Dimensional surface pressure, physical-area-weighted relative L2</td>
+            <td>Dimensional surface pressure, area-weighted relative L2</td>
             <td>15%</td>
             <td>15% cap</td>
           </tr>
           <tr>
-            <td>Dimensional surface wall shear, physical-area-weighted relative L2</td>
+            <td>Dimensional surface wall shear, area-weighted relative L2</td>
             <td>10%</td>
             <td>20% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume velocity, equal-entity relative L2</td>
+            <td>Dimensional volume velocity, unweighted point relative L2</td>
             <td>15%</td>
             <td>12% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume pressure, equal-entity relative L2</td>
+            <td>Dimensional volume pressure, unweighted point relative L2</td>
             <td>10%</td>
             <td>15% cap</td>
           </tr>

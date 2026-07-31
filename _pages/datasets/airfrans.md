@@ -89,10 +89,10 @@ compact_masthead: true
         <dt>Relative L2 error</dt>
         <dd>
           For each case and target field <code>q</code>, map predictions to every required node and return predictions and
-          targets to dimensional physical space: <code>q* = inverse_transform(q)</code>. Report both the equal-node and
-          physical-weight variants from the complete-case numerators and denominators, then macro-average the case
+          targets to dimensional physical space: <code>q* = inverse_transform(q)</code>. Report both the unweighted node and
+          area- or length-weighted variants from the complete-case numerators and denominators, then macro-average the case
           percentages. The airfoil curve uses length weighting as primary; the two-dimensional flow domain uses
-          equal-node weighting as primary.
+          unweighted node L2 (each node counts equally) as primary.
         </dd>
       </div>
       <div>
@@ -113,7 +113,7 @@ compact_masthead: true
         <dt>Airfoil-curve pressure relative L1/L2</dt>
         <dd>
           Relative L1 and L2 error for dimensional pressure at every ordered node of the one-dimensional airfoil curve.
-          The primary relative L2 uses deterministic dual-length weights; equal-node relative L2 is secondary.
+          Length-weighted relative L2 is primary; unweighted node relative L2 (each node counts equally) is secondary.
         </dd>
       </div>
       <div>
@@ -127,7 +127,7 @@ compact_masthead: true
         <dt>Two-dimensional flow velocity and pressure relative L1/L2</dt>
         <dd>
           Each case uses <code>u_x</code>, <code>u_y</code>, and pressure at every node in the released internal VTU.
-          Equal-node relative L2 is primary and deterministic dual-cell-area weighting is secondary; cases are not
+          Unweighted node relative L2 (each node counts equally) is primary and area-weighted relative L2 is secondary; cases are not
           flattened together before taking the norm.
         </dd>
       </div>

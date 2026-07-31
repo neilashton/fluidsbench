@@ -67,8 +67,8 @@ compact_masthead: true
       The current prototype retains <code>total_error</code>, the arithmetic mean of the PLAID RRMSE values for
       <code>mach</code>, <code>nut</code>, and the six scalar outputs, as a source-compatible display. On the future
       public-ground-truth FluidsBench split, the scored <code>mach</code> and <code>nut</code> domain fields will also have paired complete-domain
-      relative-L2 values: equal-vertex is primary and deterministic dual-cell-area weighting is secondary. The
-      one-dimensional <code>M_iso</code> curve reverses the order: dual-length weighting is primary and equal-vertex is
+      relative-L2 values: unweighted vertex L2 (each vertex counts equally) is primary and area-weighted L2 is secondary. The
+      one-dimensional <code>M_iso</code> curve reverses the order: length-weighted L2 is primary and unweighted vertex L2 is
       secondary. Calculate each case over every required vertex, then macro-average the cases. Lower
       <code>total_error</code> is better.
     </p>

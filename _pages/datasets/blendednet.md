@@ -62,7 +62,7 @@ compact_masthead: true
     <p>
       The primary field error is the mean area-weighted relative L2 across <code>Cp</code>, <code>Cfx</code>,
       <code>Cfy</code>, and <code>Cfz</code>. Every field is evaluated at every vertex in the released VTK
-      <code>POLYDATA</code> surface. An equal-vertex relative L2 is reported alongside each primary value for source-paper
+      <code>POLYDATA</code> surface. An unweighted vertex relative L2 (each vertex counts equally) is reported alongside each primary value for source-paper
       and point-model comparison. Lower field error is better. The four-field aggregate is a FluidsBench display rule;
       the paper reports component metrics separately.
     </p>
@@ -72,7 +72,7 @@ compact_masthead: true
     <p><code>L2_rel(w, %) = 100 sqrt(sum_i w_i (yhat_i-y_i)^2) / sqrt(sum_i w_i y_i^2)</code></p>
     <p>
       Use deterministic mass-lumped dual surface areas for the primary value and <code>w_i = 1</code> for the secondary
-      equal-vertex value. Compute each complete case before macro-averaging cases.
+      unweighted vertex value. Compute each complete case before macro-averaging cases.
     </p>
     <p><code>R2 = 1 - sum_i (y_i-yhat_i)^2 / sum_i (y_i-mean(y))^2</code></p>
     <p><code>surface_mean_L2 = (area_L2_Cp + area_L2_Cfx + area_L2_Cfy + area_L2_Cfz) / 4</code></p>

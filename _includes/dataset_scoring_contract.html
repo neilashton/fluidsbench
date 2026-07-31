@@ -33,7 +33,7 @@
             <code>CellData</code> (<code>static(p)_coeffMean</code> is also available for coefficient diagnostics)
           </td>
           <td>Every polygon carrying the scored pressure and wall-shear fields</td>
-          <td>Polygon-area weighted primary; equal-polygon secondary</td>
+          <td>Area-weighted primary; unweighted polygon (each polygon counts equally) secondary</td>
         </tr>
         <tr>
           <td>Three-dimensional flow volume</td>
@@ -42,7 +42,7 @@
             <code>CellData</code>
           </td>
           <td>Every cell carrying <code>UMean</code> and <code>pMean</code></td>
-          <td>Equal-cell primary; cell-volume weighted secondary</td>
+          <td>Unweighted cell (each cell counts equally) primary; volume-weighted secondary</td>
         </tr>
         {% when "drivaerml" %}
         <tr>
@@ -52,7 +52,7 @@
             <code>CellData</code> (<code>CpMeanTrim</code> is also available for coefficient diagnostics)
           </td>
           <td>Every polygon carrying the scored pressure and wall-shear fields</td>
-          <td>Polygon-area weighted primary; equal-polygon secondary</td>
+          <td>Area-weighted primary; unweighted polygon (each polygon counts equally) secondary</td>
         </tr>
         <tr>
           <td>Three-dimensional flow volume</td>
@@ -61,7 +61,7 @@
             <code>.01.part</code> files; <code>UMeanTrim</code> and <code>pMeanTrim</code> in VTK <code>CellData</code>
           </td>
           <td>Every cell carrying <code>UMeanTrim</code> and <code>pMeanTrim</code></td>
-          <td>Equal-cell primary; cell-volume weighted secondary</td>
+          <td>Unweighted cell (each cell counts equally) primary; volume-weighted secondary</td>
         </tr>
         {% when "windsorml" %}
         <tr>
@@ -73,7 +73,7 @@
             in VTK <code>PointData</code>
           </td>
           <td>Every point carrying the scored pressure and skin-friction coefficients</td>
-          <td>Dual-area weighted primary; equal-point secondary</td>
+          <td>Area-weighted primary; unweighted point (each point counts equally) secondary</td>
         </tr>
         <tr>
           <td>Three-dimensional flow volume</td>
@@ -82,7 +82,7 @@
             <code>velocityzavg</code>, and <code>pressureavg</code> in VTK <code>CellData</code>
           </td>
           <td>Every cell carrying those velocity components and pressure</td>
-          <td>Equal-cell primary; cell-volume weighted secondary</td>
+          <td>Unweighted cell (each cell counts equally) primary; volume-weighted secondary</td>
         </tr>
         {% when "hiliftaeroml" %}
         <tr>
@@ -92,7 +92,7 @@
             owner-approved scoring release will pin the exact scored array names
           </td>
           <td>Every point carrying each scored boundary field</td>
-          <td>Dual-area weighted primary; equal-point secondary</td>
+          <td>Area-weighted primary; unweighted point (each point counts equally) secondary</td>
         </tr>
         <tr>
           <td>Three-dimensional flow volume</td>
@@ -101,7 +101,7 @@
             owner-approved scoring release will pin the exact scored array names
           </td>
           <td>Every point carrying each scored volume field</td>
-          <td>Equal-point primary; dual-volume weighted secondary</td>
+          <td>Unweighted point (each point counts equally) primary; volume-weighted secondary</td>
         </tr>
         {% when "drivaernetplusplus" %}
         <tr>
@@ -111,7 +111,7 @@
             <code>PointData</code>
           </td>
           <td>Every surface point carrying <code>p</code></td>
-          <td>Dual-area weighted primary; equal-point secondary</td>
+          <td>Area-weighted primary; unweighted point (each point counts equally) secondary</td>
         </tr>
         <tr>
           <td colspan="4">
@@ -127,7 +127,7 @@
             <code>PointData</code>
           </td>
           <td>Every mesh node carrying each scored interior field</td>
-          <td>Equal-node primary; dual-cell-area weighted secondary</td>
+          <td>Unweighted node (each node counts equally) primary; area-weighted secondary</td>
         </tr>
         <tr>
           <td>One-dimensional airfoil boundary curve</td>
@@ -136,7 +136,7 @@
             wall shear is derived by the fixed AirfRANS procedure
           </td>
           <td>Every ordered boundary node carrying or defining each scored quantity</td>
-          <td>Dual-length weighted primary; equal-node secondary</td>
+          <td>Length-weighted primary; unweighted node (each node counts equally) secondary</td>
         </tr>
         {% when "blendednet" %}
         <tr>
@@ -146,7 +146,7 @@
             <code>PointData</code>
           </td>
           <td>Every surface vertex carrying each scored coefficient</td>
-          <td>Dual-area weighted primary; equal-vertex secondary</td>
+          <td>Area-weighted primary; unweighted vertex (each vertex counts equally) secondary</td>
         </tr>
         <tr>
           <td colspan="4">The current public FluidsBench field task is surface-only; it does not invent a volume target.</td>
@@ -159,7 +159,7 @@
             <code>Vertex</code> locations
           </td>
           <td>Every vertex in the release-bound zone</td>
-          <td>Dual-surface-area weighted primary; equal-vertex secondary</td>
+          <td>Area-weighted primary; unweighted vertex (each vertex counts equally) secondary</td>
         </tr>
         <tr>
           <td colspan="4">
@@ -172,13 +172,13 @@
           <td>Two-dimensional quadrilateral flow domain</td>
           <td>PLAID CGNS <code>/Base_2_2/Zone</code>; <code>mach</code> and <code>nut</code> at CGNS <code>Vertex</code> locations</td>
           <td>Every vertex carrying the scored <code>mach</code> and <code>nut</code> fields</td>
-          <td>Equal-vertex primary; dual-cell-area weighted secondary</td>
+          <td>Unweighted vertex (each vertex counts equally) primary; area-weighted secondary</td>
         </tr>
         <tr>
           <td>One-dimensional blade curve</td>
           <td>PLAID CGNS <code>/Base_1_2/Zone</code>; <code>M_iso</code> at CGNS <code>Vertex</code> locations</td>
           <td>Every ordered curve vertex carrying <code>M_iso</code></td>
-          <td>Dual-length weighted primary; equal-vertex secondary</td>
+          <td>Length-weighted primary; unweighted vertex (each vertex counts equally) secondary</td>
         </tr>
         <tr>
           <td colspan="4">
@@ -194,19 +194,19 @@
   <h4>How to calculate large cases</h4>
   <ul>
     <li>
-      Surface and one-dimensional curve fields use the physical measure (area or length) as the primary relative L2 and an equal-entity relative L2 as
-      the secondary value. Two- and three-dimensional flow domains reverse that order: equal-entity is primary and physical cell-area or cell-volume
-      weighting is secondary.
+      Surface and one-dimensional curve fields use area- or length-weighted relative L2 as the primary value and unweighted relative L2 as the
+      secondary value. Two- and three-dimensional flow domains reverse that order: unweighted relative L2 is primary and area- or volume-weighted
+      relative L2 is secondary. “Unweighted” means that every scored point, node, face, polygon, or cell counts equally.
     </li>
     <li>
       Face- or cell-associated fields use the face area, cell area, or cell volume directly. For
-      <code>PointData</code> or CGNS <code>Vertex</code> fields, the physical weight is a deterministic mass-lumped dual area, dual volume, or dual
-      length derived from the same reference mesh connectivity.
+      <code>PointData</code> or CGNS <code>Vertex</code> fields, FluidsBench supplies the area, volume, or curve length represented by each point or
+      vertex, derived from the same reference mesh connectivity.
     </li>
     <li>
-      In one pass over each case, accumulate the squared-error numerator and ground-truth denominator for both the equal-entity and physical-weight
-      variants, together with entity count and total physical weight. Chunks may be any convenient size, but their numerators and denominators must be
-      summed before taking the square root; never average chunk-level L2 values.
+      In one pass over each case, accumulate the squared-error numerator and ground-truth denominator for both the unweighted and area-, length-, or
+      volume-weighted variants, together with entity count and total area, length, or volume. Chunks may be any convenient size, but their numerators
+      and denominators must be summed before taking the square root; never average chunk-level L2 values.
     </li>
     <li>Calculate each complete-case percentage first, then macro-average the case percentages so every case counts equally.</li>
   </ul>

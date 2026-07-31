@@ -67,7 +67,7 @@ compact_masthead: true
       The current prototype retains <code>total_error</code>, the arithmetic mean of the six PLAID RRMSE values, as a
       source-compatible display. Lower <code>total_error</code> is better. On the future public-ground-truth FluidsBench
       split, every field will also have paired complete-surface relative-L2 values: deterministic dual-surface-area
-      weighting is primary and equal-vertex is secondary. Both are calculated per case over every vertex in
+      weighting is primary and unweighted vertex L2 (each vertex counts equally) is secondary. Both are calculated per case over every vertex in
       <code>/Base_2_3/Zone</code>, then macro-averaged. Dimensional MAE and RMSE remain available in <code>kg/m^3</code>,
       <code>Pa</code>, <code>K</code>, and <code>kg/s</code> where applicable; compression ratio and efficiency are
       dimensionless.

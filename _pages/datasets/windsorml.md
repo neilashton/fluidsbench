@@ -94,7 +94,7 @@ compact_masthead: true
         <dd>
           For each evaluation/test geometry, map predictions to every entity in the release-bound public field support and undo any training
           normalization. Calculate both paired relative-L2 values from the accumulated
-          sufficient statistics: physical-area weighting is primary on the boundary, while equal-entity weighting is primary in the flow volume.
+          sufficient statistics: area-weighted L2 is primary on the boundary, while unweighted cell L2 (each cell counts equally) is primary in the flow volume.
           Report the complete-case percentages first, then take the arithmetic mean of the geometry-level values.
         </dd>
       </div>
@@ -140,9 +140,9 @@ compact_masthead: true
       <div>
         <dt>AB-UPT convention</dt>
         <dd>
-          The equal-entity secondary follows the AB-UPT-compatible convention used for AhmedML and DrivAerML: targets
+          The secondary unweighted point relative L2 (each point counts equally) follows the AB-UPT-compatible convention used for AhmedML and DrivAerML: targets
           may be normalized for training, but evaluation uses unnormalized predictions and targets. FluidsBench uses the
-          dual-area-weighted boundary value as its primary surface metric. AB-UPT v2 does not report WindsorML numbers.
+          area-weighted boundary value as its primary surface metric. AB-UPT v2 does not report WindsorML numbers.
         </dd>
       </div>
       <div>
@@ -213,22 +213,22 @@ S_overall  = sum(weight_q * S_q)</code></pre>
         </thead>
         <tbody>
           <tr>
-            <td>Surface pressure coefficient, physical-area-weighted relative L2</td>
+            <td>Surface pressure coefficient, area-weighted relative L2</td>
             <td>15%</td>
             <td>15% cap</td>
           </tr>
           <tr>
-            <td>Surface skin-friction coefficient vector, physical-area-weighted relative L2</td>
+            <td>Surface skin-friction coefficient vector, area-weighted relative L2</td>
             <td>10%</td>
             <td>20% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume velocity, equal-entity relative L2</td>
+            <td>Dimensional volume velocity, unweighted cell relative L2</td>
             <td>15%</td>
             <td>12% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume pressure, equal-entity relative L2</td>
+            <td>Dimensional volume pressure, unweighted cell relative L2</td>
             <td>10%</td>
             <td>15% cap</td>
           </tr>

@@ -97,8 +97,8 @@ compact_masthead: true
         <dt>Relative L2 error</dt>
         <dd>
           For each case, map dataset-native kinematic-pressure predictions to every point carrying <code>p</code> in the release-bound
-          VTK surface. FluidsBench reports a deterministic dual-area-weighted relative L2 as primary and equal-point
-          relative L2 as secondary. Calculate each complete-case percentage first, then macro-average the cases.
+          VTK surface. FluidsBench reports an area-weighted relative L2 as primary and unweighted point
+          relative L2 (each point counts equally) as secondary. Calculate each complete-case percentage first, then macro-average the cases.
         </dd>
       </div>
       <div>
@@ -111,9 +111,9 @@ compact_masthead: true
       <div>
         <dt>Surface pressure relative L2</dt>
         <dd>
-          CarBench reports an equal-point relative L2 on the DrivAerNet++ geometry-disjoint evaluation set. FluidsBench
-          displays that source-paper value only as a prototype for the equal-point secondary metric; the primary
-          dual-area-weighted value requires a complete evaluator rerun.
+          CarBench reports an unweighted point relative L2 (each point counts equally) on the DrivAerNet++ geometry-disjoint evaluation set. FluidsBench
+          displays that source-paper value only as a prototype for the unweighted point secondary metric; the primary
+          area-weighted value requires a complete evaluator rerun.
         </dd>
       </div>
       <div>
@@ -128,7 +128,7 @@ compact_masthead: true
       For the current prototype release, leaderboard rank uses the higher-is-better composite score
       <code>overall_score = clip(100 - surface_pressure_rel_l2, 0, 100)</code>, where
       <code>surface_pressure_rel_l2</code> is the primary
-      dual-area-weighted percentage error. This provisional transformation preserves the ordering of the underlying
+      area-weighted percentage error. This provisional transformation preserves the ordering of the underlying
       pressure error while giving every FluidsBench dataset the same ranking-column ID. The original pressure metrics
       remain visible alongside it.
     </p>
@@ -141,7 +141,7 @@ compact_masthead: true
       R<sup>2</sup>, and parameter count. The paper states that its first release focuses on surface pressure and does
       not evaluate drag/lift coefficients or volumetric fields, so those unsupported fields have been removed from the
       active prototype metric contract. Absolute pressure MAE/RMSE are also disabled until the release-bound unit
-      convention is confirmed. The source relative L2 is treated as an equal-point prototype, not as the final
+      convention is confirmed. The source relative L2 is treated as an unweighted point prototype, not as the final
       area-weighted primary metric.
     </p>
   </section>
