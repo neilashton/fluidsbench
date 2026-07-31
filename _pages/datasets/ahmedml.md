@@ -143,6 +143,10 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
+    {% include dataset_scoring_contract.html slug="ahmedml" dataset="AhmedML" %}
+  </section>
+
+  <section class="dataset-panel">
     <h3>Cp stations</h3>
     <p>
       AhmedML does not publish a canonical set of one-dimensional pressure traces. FluidsBench therefore defines the
@@ -162,39 +166,22 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Proposed spatial scoring support</h3>
-    <p>
-      <strong>Pending dataset-owner approval; not an official AhmedML scoring definition.</strong> The current proposal is to publish a fixed,
-      versioned support of 500,000 surface locations and 500,000 volume locations per evaluation case. The eventual owner-approved manifest must
-      define the exact source entities, coordinate frame, physical units, domain and masks, deterministic selection procedure, stable support IDs,
-      quadrature weights, dimensional ground-truth arrays, case ordering, files, and cryptographic hashes. The counts alone are not a scientific
-      specification.
-    </p>
-    <p>
-      FluidsBench will fix where final scoring occurs, not where a model must perform inference. A contributor may query fewer or different points,
-      use a grid, or use a native or participant-generated mesh, provided that the declared mapping produces a prediction for every official support
-      ID before the reference evaluator calculates the errors. Until the AhmedML dataset owner approves and publishes that manifest and evaluator,
-      these proposed counts must not be interpreted as official leaderboard locations.
-    </p>
-  </section>
-
-  <section class="dataset-panel">
     <h3>Metric definitions</h3>
     <dl class="metric-definition-list">
       <div>
         <dt>Relative L2 error</dt>
         <dd>
-          For each evaluation/test geometry, first map predictions back to the fixed scoring support and return predictions and targets to dimensional
-          physical space, \(q^\ast = T_q^{-1}(q)\). Apply the official surface-area or volume weights over locations and vector components when
-          calculating the relative L2 norm. Report \(100 E_q\) for each geometry, then take the arithmetic mean of those geometry-level errors.
+          For each evaluation/test geometry, map predictions to every entity in the release-bound public field support and return predictions and
+          targets to dimensional physical space, \(q^\ast = T_q^{-1}(q)\). Calculate both paired relative-L2 values from the accumulated
+          sufficient statistics: physical-area weighting is primary on the boundary, while equal-entity weighting is primary in the flow volume.
+          Report the complete-case percentages first, then take the arithmetic mean of the geometry-level values.
         </dd>
       </div>
       <div>
         <dt>Relative L1 error</dt>
         <dd>
-          For each evaluation/test geometry, calculate the weighted relative L1 norm on the same dimensional fixed scoring support and report it as a
-          percentage. The leaderboard value is the arithmetic mean of the geometry-level percentages; field values are not flattened across
-          geometries before taking the norm.
+          When reported as a supplementary metric, relative L1 uses the same complete dimensional support and the primary weighting for that domain.
+          Calculate a percentage for each geometry, then take the arithmetic mean of the geometry-level percentages.
         </dd>
       </div>
       <div>
@@ -222,18 +209,20 @@ compact_masthead: true
       <div>
         <dt>Volume velocity relative L1/L2</dt>
         <dd>
-          Relative L1 and L2 error for the velocity vector \(u = (u_x, u_y, u_z)\) on the benchmark volume sample points.
+          Relative L1 and L2 error for the velocity vector \(u = (u_x, u_y, u_z)\) on every field-bearing cell in the
+          release-bound <code>volume_&lt;case-id&gt;.vtu</code> file.
         </dd>
       </div>
       <div>
         <dt>Volume pressure relative L1/L2</dt>
-        <dd>Relative L1 and L2 error for pressure on the benchmark volume sample points.</dd>
+        <dd>Relative L1 and L2 error for pressure on every field-bearing cell in the same public volume file.</dd>
       </div>
       <div>
         <dt>AB-UPT convention</dt>
         <dd>
-          This matches the AB-UPT evaluation convention: targets are normalized for training, but evaluation metrics are
-          computed on unnormalized predictions and targets.
+          The equal-entity secondary relative L2 is the AB-UPT-compatible value: targets may be normalized for training,
+          but evaluation uses unnormalized predictions and targets. FluidsBench additionally uses the area-weighted
+          boundary value as its primary surface metric.
         </dd>
       </div>
       <div>
@@ -304,22 +293,22 @@ S_overall  = sum(weight_q * S_q)</code></pre>
         </thead>
         <tbody>
           <tr>
-            <td>Dimensional surface pressure relative L2</td>
+            <td>Dimensional surface pressure, physical-area-weighted relative L2</td>
             <td>15%</td>
             <td>15% cap</td>
           </tr>
           <tr>
-            <td>Dimensional surface wall-shear relative L2</td>
+            <td>Dimensional surface wall shear, physical-area-weighted relative L2</td>
             <td>10%</td>
             <td>20% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume velocity relative L2</td>
+            <td>Dimensional volume velocity, equal-entity relative L2</td>
             <td>15%</td>
             <td>12% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume pressure relative L2</td>
+            <td>Dimensional volume pressure, equal-entity relative L2</td>
             <td>10%</td>
             <td>15% cap</td>
           </tr>

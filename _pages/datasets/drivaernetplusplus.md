@@ -53,7 +53,10 @@ compact_masthead: true
       </div>
       <div>
         <dt>Current FluidsBench status</dt>
-        <dd>Prototype rows use CarBench surface-pressure results; force, volume, and profile metrics require a future evaluator.</dd>
+        <dd>
+          Surface pressure in the released VTK <code>p</code> array is the only confirmed field task. Wall shear, full
+          volume fields, forces, and profiles require a later release-bound evaluator.
+        </dd>
       </div>
     </dl>
   </section>
@@ -64,11 +67,15 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
+    {% include dataset_scoring_contract.html slug="drivaernetplusplus" dataset="DrivAerNet++" %}
+  </section>
+
+  <section class="dataset-panel">
     <h3>Cp stations</h3>
     <p>
       DrivAerNet++ publishes surface pressure over annotated vehicle components but not a canonical set of one-dimensional
-      Cp traces. FluidsBench defines the following benchmark traces using regions described in the
-      <a href="https://arxiv.org/abs/2406.09624">DrivAerNet++ paper</a>. Use the exact ID in <code>station_id</code>.
+      Cp traces. The following traces are retained only as optional prototype interface fixtures; they are not part of the
+      confirmed scoring task and will not become official unless a release-bound extraction rule is approved.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">
@@ -89,23 +96,24 @@ compact_masthead: true
       <div>
         <dt>Relative L2 error</dt>
         <dd>
-          For a target field <code>q</code>, first map predictions and targets back to dimensional physical space:
-          <code>q* = inverse_transform(q)</code>. The score is
-          <code>||q_pred* - q_true*||_2 / ||q_true*||_2</code>, reported as a percentage.
+          For each case, map dataset-native kinematic-pressure predictions to every point carrying <code>p</code> in the release-bound
+          VTK surface. FluidsBench reports a deterministic dual-area-weighted relative L2 as primary and equal-point
+          relative L2 as secondary. Calculate each complete-case percentage first, then macro-average the cases.
         </dd>
       </div>
       <div>
         <dt>Relative L1 error</dt>
         <dd>
-          After the same dimensional inverse transform, the score is
-          <code>||q_pred* - q_true*||_1 / ||q_true*||_1</code>, reported as a percentage.
+          When reported as a supplementary metric, relative L1 uses every required pressure point and the same
+          dual-area weighting as the primary relative L2.
         </dd>
       </div>
       <div>
         <dt>Surface pressure relative L2</dt>
         <dd>
-          CarBench reports this as relative L2 on the DrivAerNet++ geometry-disjoint evaluation set. FluidsBench displays the CarBench
-          fractional values as percentages.
+          CarBench reports an equal-point relative L2 on the DrivAerNet++ geometry-disjoint evaluation set. FluidsBench
+          displays that source-paper value only as a prototype for the equal-point secondary metric; the primary
+          dual-area-weighted value requires a complete evaluator rerun.
         </dd>
       </div>
       <div>
@@ -115,28 +123,15 @@ compact_masthead: true
           <code>1 - sum((q_pred - q_true)^2) / sum((q_true - mean(q_true))^2)</code>.
         </dd>
       </div>
-      <div>
-        <dt>C<sub>d</sub> and C<sub>l</sub> R<sup>2</sup></dt>
-        <dd>
-          Future FluidsBench scoring should compute R<sup>2</sup> over all evaluated cases using predicted drag and lift
-          coefficients. CarBench v1 explicitly does not evaluate global aerodynamic coefficients.
-        </dd>
-      </div>
-      <div>
-        <dt>Cp cut R<sup>2</sup></dt>
-        <dd>
-          One global R<sup>2</sup> over all selected surface pressure coefficient samples from held-out test cases,
-          flattened across <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and sample locations.
-        </dd>
-      </div>
-      <div>
-        <dt>Velocity profile R<sup>2</sup></dt>
-        <dd>
-          R<sup>2</sup> over selected wake profile samples. Unless a benchmark package states otherwise, vector
-          components should be flattened across stations, cases, and sample points.
-        </dd>
-      </div>
     </dl>
+    <p>
+      For the current prototype release, leaderboard rank uses the higher-is-better composite score
+      <code>overall_score = clip(100 - surface_pressure_rel_l2, 0, 100)</code>, where
+      <code>surface_pressure_rel_l2</code> is the primary
+      dual-area-weighted percentage error. This provisional transformation preserves the ordering of the underlying
+      pressure error while giving every FluidsBench dataset the same ranking-column ID. The original pressure metrics
+      remain visible alongside it.
+    </p>
   </section>
 
   <section class="dataset-panel">
@@ -144,8 +139,10 @@ compact_masthead: true
     <p>
       The current leaderboard rows use CarBench Table 1 values for surface pressure relative L2, pressure-field
       R<sup>2</sup>, and parameter count. The paper states that its first release focuses on surface pressure and does
-      not evaluate drag/lift coefficients or volumetric fields, so those non-pressure leaderboard fields are placeholders
-      until a DrivAerNet++ FluidsBench evaluator is available.
+      not evaluate drag/lift coefficients or volumetric fields, so those unsupported fields have been removed from the
+      active prototype metric contract. Absolute pressure MAE/RMSE are also disabled until the release-bound unit
+      convention is confirmed. The source relative L2 is treated as an equal-point prototype, not as the final
+      area-weighted primary metric.
     </p>
   </section>
 

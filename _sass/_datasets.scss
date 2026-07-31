@@ -46,6 +46,24 @@ html[data-theme="dark"] .dataset-page {
   padding: 1rem;
 }
 
+.dataset-scoring-contract {
+  border-left: 4px solid var(--global-theme-color);
+  padding-left: 1rem;
+
+  h4 {
+    font-size: 1rem;
+    margin-top: 1.25rem;
+  }
+}
+
+.dataset-page .dataset-scoring-status {
+  background: var(--dataset-chip-bg);
+  border: 1px solid var(--dataset-border);
+  border-radius: 6px;
+  color: var(--global-text-color);
+  padding: 0.65rem 0.75rem;
+}
+
 .dataset-card {
   align-items: center;
   display: flex;

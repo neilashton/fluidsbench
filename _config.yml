@@ -251,8 +251,14 @@ sass:
 # -----------------------------------------------------------------------------
 
 jekyll-minifier:
-  # These files are byte-addressed by the leaderboard release contract.
-  exclude: ["robots.txt", "assets/data/profile-ground-truth/*.json", "schemas/v2/*.json", "schemas/releases/*.json"]
+  # The JSON files are byte-addressed by the release contract. The leaderboard
+  # JavaScript uses modern syntax that Uglifier 4 cannot parse safely.
+  exclude:
+    - "robots.txt"
+    - "assets/data/profile-ground-truth/*.json"
+    - "schemas/v2/*.json"
+    - "schemas/releases/*.json"
+    - "assets/js/leaderboard.js"
   uglifier_args:
     harmony: true
 

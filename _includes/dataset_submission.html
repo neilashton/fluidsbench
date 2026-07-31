@@ -19,7 +19,10 @@
     official scoring support;
   </li>
   <li><code>discretization/cases.jsonl</code> recording case-level counts, domains, mapping, and declared scoring coverage;</li>
-  <li><code>metrics/cases.json</code> recording the official-support errors and coverage for every declared evaluation case;</li>
+  <li>
+    <code>metrics/cases.json</code> recording the official-support errors, equal-entity and physical-weight sufficient statistics, and exact coverage
+    for every declared evaluation case;
+  </li>
   <li><code>profiles/index.json</code> listing the lightweight profile chunks; and</li>
   <li><code>profiles/chunk-*.json</code> containing profile coordinates and predictions for the declared test cases.</li>
 </ul>
@@ -27,10 +30,12 @@
   FluidsBench uses an <strong>open reproducibility track</strong>. The declared evaluation partition, scored case lists, and ground truth are public.
   Evaluation cases must not be used for fitting, hyperparameter selection, or preprocessing statistics. Contributors will calculate the metrics and
   extract the profiles from their own predictions. Each dataset specification fixes the locations, IDs, weights, targets, and coverage used for final
-  scoring. A model may infer on a different point set, mesh, or grid, but its predictions must be mapped onto that official support before the
-  reference evaluator calculates the errors. Leaderboard field errors are calculated on the declared evaluation/test cases, not on the training cases.
-  Full meshes and volume fields are not committed to the submission repository. Contributors may optionally publish example cases or the complete
-  scored predictions in a public, immutable external repository and link that artifact from the submission. Use the
+  scoring. A model may infer on a different point set, mesh, or grid, but its final predictions must be mapped onto every required entity in the
+  release-bound public field files before the reference evaluator calculates the errors. Large cases may be processed in chunks, but contributors must
+  sum the sufficient statistics across all chunks before calculating a case metric; chunk-level L2 values are never averaged. Leaderboard field errors
+  are calculated on the declared evaluation/test cases, not on the training cases. Full meshes and volume fields are not committed to the submission
+  repository. Contributors may optionally publish example cases or the complete scored predictions in a public, immutable external repository and link
+  that artifact from the submission. Use the
   <a
     href="https://github.com/neilashton/fluidsbench-submission/tree/{{ site.submission_source_ref | default: 'main' }}/benchmark-specs/{{ include.slug }}"
     >{{ include.dataset }} benchmark specification</a

@@ -62,6 +62,10 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
+    {% include dataset_scoring_contract.html slug="airfrans" dataset="AirfRANS" %}
+  </section>
+
+  <section class="dataset-panel">
     <h3>Cp stations</h3>
     <p>
       The <a href="https://arxiv.org/abs/2212.07564">AirfRANS paper</a> evaluates pressure distributions on the two
@@ -84,16 +88,18 @@ compact_masthead: true
       <div>
         <dt>Relative L2 error</dt>
         <dd>
-          For a target field <code>q</code>, first map predictions and targets back to dimensional physical space:
-          <code>q* = inverse_transform(q)</code>. The score is
-          <code>||q_pred* - q_true*||_2 / ||q_true*||_2</code>, reported as a percentage.
+          For each case and target field <code>q</code>, map predictions to every required node and return predictions and
+          targets to dimensional physical space: <code>q* = inverse_transform(q)</code>. Report both the equal-node and
+          physical-weight variants from the complete-case numerators and denominators, then macro-average the case
+          percentages. The airfoil curve uses length weighting as primary; the two-dimensional flow domain uses
+          equal-node weighting as primary.
         </dd>
       </div>
       <div>
         <dt>Relative L1 error</dt>
         <dd>
-          After the same dimensional inverse transform, the score is
-          <code>||q_pred* - q_true*||_1 / ||q_true*||_1</code>, reported as a percentage.
+          When reported as a supplementary metric, relative L1 uses the same complete dimensional support and the
+          primary weighting for that domain. Calculate each case percentage first, then macro-average the cases.
         </dd>
       </div>
       <div>
@@ -104,18 +110,25 @@ compact_masthead: true
         </dd>
       </div>
       <div>
-        <dt>Surface pressure relative L1/L2</dt>
-        <dd>Relative L1 and L2 error for dimensional pressure on the airfoil surface.</dd>
-      </div>
-      <div>
-        <dt>Surface wall-shear relative L1/L2</dt>
-        <dd>Relative L1 and L2 error for the two-dimensional wall-shear vector on the airfoil surface.</dd>
-      </div>
-      <div>
-        <dt>Volume velocity and pressure relative L1/L2</dt>
+        <dt>Airfoil-curve pressure relative L1/L2</dt>
         <dd>
-          Velocity uses the flattened <code>u_x</code> and <code>u_y</code> components across all evaluated cases and mesh
-          points. Pressure uses the flattened volume pressure values.
+          Relative L1 and L2 error for dimensional pressure at every ordered node of the one-dimensional airfoil curve.
+          The primary relative L2 uses deterministic dual-length weights; equal-node relative L2 is secondary.
+        </dd>
+      </div>
+      <div>
+        <dt>Airfoil-curve wall-shear relative L1/L2</dt>
+        <dd>
+          Relative L1 and L2 error for the two-dimensional wall-shear vector derived at every ordered airfoil-curve node
+          by the fixed AirfRANS procedure.
+        </dd>
+      </div>
+      <div>
+        <dt>Two-dimensional flow velocity and pressure relative L1/L2</dt>
+        <dd>
+          Each case uses <code>u_x</code>, <code>u_y</code>, and pressure at every node in the released internal VTU.
+          Equal-node relative L2 is primary and deterministic dual-cell-area weighting is secondary; cases are not
+          flattened together before taking the norm.
         </dd>
       </div>
       <div>
@@ -129,7 +142,7 @@ compact_masthead: true
       <div>
         <dt>Cp cut R<sup>2</sup></dt>
         <dd>
-          One global R<sup>2</sup> over all selected airfoil surface pressure coefficient samples from held-out cases,
+          One global R<sup>2</sup> over all selected airfoil-curve pressure coefficient samples from held-out cases,
           flattened across <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and chordwise sample locations.
         </dd>
       </div>

@@ -15,28 +15,30 @@ compact_masthead: true
     <p>
       VKI-LS59 contains 839 two-dimensional CFD simulations of the LS59 turbine cascade across inlet incidence and
       outlet Mach number. FluidsBench follows the PLAID release: 671 cases form the published training pool and 168
-      cases form the published evaluation set. Under the FluidsBench open-reproducibility policy, the scored case list
-      and ground truth are public.
+      cases form the published evaluation set. The source release does not publish the evaluation targets, so that
+      168-case set cannot be the FluidsBench open-reproducibility scoring split. The official FluidsBench split will
+      identify a separate case list whose field-bearing CGNS files and ground truth are public.
     </p>
     <p>
       The model inputs are <code>angle_in</code>, <code>mach_out</code>, geometry, and signed-distance information.
       Stored outputs are density (<code>ro</code>), momentum (<code>rou</code> and <code>rov</code>), energy
       (<code>roe</code>), turbulent kinematic viscosity (<code>nut</code>), Mach number (<code>mach</code>), and
-      blade-surface isentropic Mach number (<code>M_iso</code>). Scalar targets are the source dataset's unexpanded
+      blade-curve isentropic Mach number (<code>M_iso</code>). Scalar targets are the source dataset's unexpanded
       <code>Q</code> quantity, power, pressure ratio (<code>Pr</code>), temperature ratio (<code>Tr</code>), isentropic
       efficiency (<code>eth_is</code>), and outlet angle (<code>angle_out</code>).
     </p>
   </section>
 
   <section class="dataset-section">
-    <h2>Planned benchmark splits</h2>
+    <h2>Published source splits</h2>
     <p>
-      Set the submission <code>split</code> to the exact ID below. Reduced VKI-LS59 training sets use the first
-      <em>N</em> entries of the published training index sequence; every split uses the same 168-case test set.
+      These source-compatible IDs document the PLAID training regimes. Reduced VKI-LS59 training sets use the first
+      <em>N</em> entries of the published training index sequence. The table's evaluation column records the source
+      benchmark for compatibility, not an open FluidsBench scoring set.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table">
-        <thead><tr><th>Split ID</th><th>Train</th><th>Test</th></tr></thead>
+        <thead><tr><th>Split ID</th><th>Train</th><th>Source evaluation (targets not public)</th></tr></thead>
         <tbody>
           <tr><td><code>train</code></td><td>671</td><td>168</td></tr>
           <tr><td><code>train_500</code></td><td>500</td><td>168</td></tr>
@@ -56,11 +58,19 @@ compact_masthead: true
   </section>
 
   <section class="dataset-section">
+    {% include dataset_scoring_contract.html heading=2 slug="vki-ls59" dataset="VKI-LS59" %}
+  </section>
+
+  <section class="dataset-section">
     <h2>Leaderboard metrics</h2>
     <p>
-      The primary ranking is <code>total_error</code>, the arithmetic mean of the official PLAID RRMSE values for
-      <code>mach</code>, <code>nut</code>, and the six scalar outputs. Lower is better. FluidsBench also displays
-      relative L1, relative L2, and R<sup>2</sup> for each ranked output.
+      The current prototype retains <code>total_error</code>, the arithmetic mean of the PLAID RRMSE values for
+      <code>mach</code>, <code>nut</code>, and the six scalar outputs, as a source-compatible display. On the future
+      public-ground-truth FluidsBench split, the scored <code>mach</code> and <code>nut</code> domain fields will also have paired complete-domain
+      relative-L2 values: equal-vertex is primary and deterministic dual-cell-area weighting is secondary. The
+      one-dimensional <code>M_iso</code> curve reverses the order: dual-length weighting is primary and equal-vertex is
+      secondary. Calculate each case over every required vertex, then macro-average the cases. Lower
+      <code>total_error</code> is better.
     </p>
     <p><code>RRMSE_field = sqrt((1/n) sum_i [((1/N_i) ||fhat_i - f_i||_2^2) / ||f_i||_inf^2])</code></p>
     <p><code>RRMSE_scalar = sqrt((1/n) sum_i [|shat_i - s_i|^2 / |s_i|^2])</code></p>
@@ -69,6 +79,13 @@ compact_masthead: true
     <p><code>L2_rel(%) = 100 sqrt(sum_i w_i (yhat_i-y_i)^2) / sqrt(sum_i w_i y_i^2)</code></p>
     <p><code>R2 = 1 - sum_i (y_i-yhat_i)^2 / sum_i (y_i-mean(y))^2</code></p>
     <p>
+      For the current prototype release, leaderboard rank uses the higher-is-better composite score
+      <code>overall_score = clip(100 * (1 - total_error), 0, 100)</code>. This provisional transformation preserves the
+      ordering of the
+      source-compatible eight-quantity error while giving every FluidsBench dataset the same ranking-column ID.
+      <code>total_error</code> and all component metrics remain visible alongside it.
+    </p>
+    <p>
       Dimensional MAE/RMSE columns are intentionally not enabled until FluidsBench fixes a canonical public
       denormalization and unit convention for every VKI-LS59 output.
     </p>
@@ -76,14 +93,13 @@ compact_masthead: true
 
   <section class="dataset-section">
     <h2>Profile comparisons</h2>
-    <p>The planned submitter-provided profile format uses the following station IDs and quantities:</p>
-    <ul>
-      <li><code>pressure_side</code> and <code>suction_side</code>: <code>M_iso</code> against normalized chord.</li>
-      <li><code>outlet_plane_2</code>: normalized downstream velocity against pitch fraction.</li>
-    </ul>
     <p>
-      The current curves are clearly labelled prototype data for interface testing. The outlet trace is associated with
-      the published LS59 downstream plane at <code>x/c = 2.842</code>; it is not presented as an experimental trace.
+      The planned submitter-provided profile format uses <code>pressure_side</code> and <code>suction_side</code> for
+      <code>M_iso</code> against normalized chord.
+    </p>
+    <p>
+      The current curves are clearly labelled prototype data for interface testing. FluidsBench does not define a
+      downstream-velocity profile because that quantity is not part of the confirmed public field target.
     </p>
   </section>
 

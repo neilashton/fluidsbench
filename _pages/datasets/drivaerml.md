@@ -143,6 +143,10 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
+    {% include dataset_scoring_contract.html slug="drivaerml" dataset="DrivAerML" %}
+  </section>
+
+  <section class="dataset-panel">
     <h3>Cp stations</h3>
     <p>
       These stations reproduce the surface-pressure probe traces in the
@@ -168,17 +172,17 @@ compact_masthead: true
       <div>
         <dt>Relative L2 error</dt>
         <dd>
-          For each evaluation/test geometry, first map predictions back to the fixed scoring support and return predictions and targets to dimensional
-          physical space, \(q^\ast = T_q^{-1}(q)\). Apply the official surface-area or volume weights over locations and vector components when
-          calculating the relative L2 norm. Report \(100 E_q\) for each geometry, then take the arithmetic mean of those geometry-level errors.
+          For each evaluation/test geometry, map predictions to every entity in the release-bound public field support and return predictions and
+          targets to dimensional physical space, \(q^\ast = T_q^{-1}(q)\). Calculate both paired relative-L2 values from the accumulated
+          sufficient statistics: physical-area weighting is primary on the boundary, while equal-entity weighting is primary in the flow volume.
+          Report the complete-case percentages first, then take the arithmetic mean of the geometry-level values.
         </dd>
       </div>
       <div>
         <dt>Relative L1 error</dt>
         <dd>
-          For each evaluation/test geometry, calculate the weighted relative L1 norm on the same dimensional fixed scoring support and report it as a
-          percentage. The leaderboard value is the arithmetic mean of the geometry-level percentages; field values are not flattened across
-          geometries before taking the norm.
+          When reported as a supplementary metric, relative L1 uses the same complete dimensional support and the primary weighting for that domain.
+          Calculate a percentage for each geometry, then take the arithmetic mean of the geometry-level percentages.
         </dd>
       </div>
       <div>
@@ -206,18 +210,20 @@ compact_masthead: true
       <div>
         <dt>Volume velocity relative L1/L2</dt>
         <dd>
-          Relative L1 and L2 error for the velocity vector \(u = (u_x, u_y, u_z)\) on the benchmark volume sample points.
+          Relative L1 and L2 error for the velocity vector \(u = (u_x, u_y, u_z)\) on every field-bearing entity in the
+          release-bound reconstructed volume support.
         </dd>
       </div>
       <div>
         <dt>Volume pressure relative L1/L2</dt>
-        <dd>Relative L1 and L2 error for pressure on the benchmark volume sample points.</dd>
+        <dd>Relative L1 and L2 error for pressure on every field-bearing entity in that same public volume support.</dd>
       </div>
       <div>
         <dt>AB-UPT convention</dt>
         <dd>
-          This matches the AB-UPT evaluation convention: targets are normalized for training, but evaluation metrics are
-          computed on unnormalized predictions and targets.
+          The equal-entity secondary relative L2 is the AB-UPT-compatible value: targets may be normalized for training,
+          but evaluation uses unnormalized predictions and targets. FluidsBench additionally uses the area-weighted
+          boundary value as its primary surface metric.
         </dd>
       </div>
       <div>
@@ -290,22 +296,22 @@ S_overall  = sum(weight_q * S_q)</code></pre>
         </thead>
         <tbody>
           <tr>
-            <td>Dimensional surface pressure relative L2</td>
+            <td>Dimensional surface pressure, physical-area-weighted relative L2</td>
             <td>15%</td>
             <td>15% cap</td>
           </tr>
           <tr>
-            <td>Dimensional surface wall-shear relative L2</td>
+            <td>Dimensional surface wall shear, physical-area-weighted relative L2</td>
             <td>10%</td>
             <td>20% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume velocity relative L2</td>
+            <td>Dimensional volume velocity, equal-entity relative L2</td>
             <td>15%</td>
             <td>12% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume pressure relative L2</td>
+            <td>Dimensional volume pressure, equal-entity relative L2</td>
             <td>10%</td>
             <td>15% cap</td>
           </tr>

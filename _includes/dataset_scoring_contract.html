@@ -1,0 +1,217 @@
+{% if include.heading == 2 %}
+<h2>Scoring support and complete coverage</h2>
+{% else %}
+<h3>Scoring support and complete coverage</h3>
+{% endif %}
+
+<div class="dataset-scoring-contract">
+  <p class="dataset-scoring-status"><strong>Submissions are currently closed.</strong></p>
+  <p>
+    <strong>Final predictions must cover the complete reference support.</strong> For every scored case, this means every required entity, exactly
+    once, in the actual field-bearing mesh or curve file from the named public dataset release. FluidsBench binds those files, their ordering, any
+    masks, and their hashes to the scoring-support release. A method may infer on another representation and may process a large file in chunks, but
+    it must map its predictions back to every required reference entity before calculating the final metrics. Downsampled or partially covered
+    predictions are not complete results.
+  </p>
+
+  <div class="dataset-table-wrap">
+    <table class="dataset-table compact">
+      <thead>
+        <tr>
+          <th>Scored support</th>
+          <th>Public field file and association</th>
+          <th>Required coverage</th>
+          <th>Relative-L2 pair</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% case include.slug %} {% when "ahmedml" %}
+        <tr>
+          <td>Three-dimensional body boundary</td>
+          <td>
+            <code>run_&lt;case-id&gt;/boundary_&lt;case-id&gt;.vtp</code>; <code>pMean</code> and <code>wallShearStressMean</code> in VTK
+            <code>CellData</code> (<code>static(p)_coeffMean</code> is also available for coefficient diagnostics)
+          </td>
+          <td>Every polygon carrying the scored pressure and wall-shear fields</td>
+          <td>Polygon-area weighted primary; equal-polygon secondary</td>
+        </tr>
+        <tr>
+          <td>Three-dimensional flow volume</td>
+          <td>
+            <code>run_&lt;case-id&gt;/volume_&lt;case-id&gt;.vtu</code>; <code>UMean</code> and <code>pMean</code> in VTK
+            <code>CellData</code>
+          </td>
+          <td>Every cell carrying <code>UMean</code> and <code>pMean</code></td>
+          <td>Equal-cell primary; cell-volume weighted secondary</td>
+        </tr>
+        {% when "drivaerml" %}
+        <tr>
+          <td>Three-dimensional vehicle boundary</td>
+          <td>
+            <code>run_&lt;case-id&gt;/boundary_&lt;case-id&gt;.vtp</code>; <code>pMeanTrim</code> and <code>wallShearStressMeanTrim</code> in VTK
+            <code>CellData</code> (<code>CpMeanTrim</code> is also available for coefficient diagnostics)
+          </td>
+          <td>Every polygon carrying the scored pressure and wall-shear fields</td>
+          <td>Polygon-area weighted primary; equal-polygon secondary</td>
+        </tr>
+        <tr>
+          <td>Three-dimensional flow volume</td>
+          <td>
+            <code>run_&lt;case-id&gt;/volume_&lt;case-id&gt;.vtu</code>, reconstructed from the released <code>.00.part</code> and
+            <code>.01.part</code> files; <code>UMeanTrim</code> and <code>pMeanTrim</code> in VTK <code>CellData</code>
+          </td>
+          <td>Every cell carrying <code>UMeanTrim</code> and <code>pMeanTrim</code></td>
+          <td>Equal-cell primary; cell-volume weighted secondary</td>
+        </tr>
+        {% when "windsorml" %}
+        <tr>
+          <td>Three-dimensional body boundary</td>
+          <td>
+            <code>run_&lt;case-id&gt;/boundary_&lt;case-id&gt;.vtu</code>; <code>cpavg</code> and <code>cfxavg</code>/<code>cfyavg</code>/<code
+              >cfzavg</code
+            >
+            in VTK <code>PointData</code>
+          </td>
+          <td>Every point carrying the scored pressure and skin-friction coefficients</td>
+          <td>Dual-area weighted primary; equal-point secondary</td>
+        </tr>
+        <tr>
+          <td>Three-dimensional flow volume</td>
+          <td>
+            <code>run_&lt;case-id&gt;/volume_&lt;case-id&gt;.vtu</code>; <code>velocityxavg</code>, <code>velocityyavg</code>,
+            <code>velocityzavg</code>, and <code>pressureavg</code> in VTK <code>CellData</code>
+          </td>
+          <td>Every cell carrying those velocity components and pressure</td>
+          <td>Equal-cell primary; cell-volume weighted secondary</td>
+        </tr>
+        {% when "hiliftaeroml" %}
+        <tr>
+          <td>Three-dimensional aircraft boundary</td>
+          <td>
+            <code>geo_LHC&lt;id&gt;_AoA_&lt;angle&gt;/boundary_geo_LHC&lt;id&gt;_AoA_&lt;angle&gt;.vtu.tgz</code>, VTK <code>PointData</code>; the
+            owner-approved scoring release will pin the exact scored array names
+          </td>
+          <td>Every point carrying each scored boundary field</td>
+          <td>Dual-area weighted primary; equal-point secondary</td>
+        </tr>
+        <tr>
+          <td>Three-dimensional flow volume</td>
+          <td>
+            <code>geo_LHC&lt;id&gt;_AoA_&lt;angle&gt;/volume_geo_LHC&lt;id&gt;_AoA_&lt;angle&gt;.vtu.tgz</code>, VTK <code>PointData</code>; the
+            owner-approved scoring release will pin the exact scored array names
+          </td>
+          <td>Every point carrying each scored volume field</td>
+          <td>Equal-point primary; dual-volume weighted secondary</td>
+        </tr>
+        {% when "drivaernetplusplus" %}
+        <tr>
+          <td>Three-dimensional vehicle surface</td>
+          <td>
+            <code>SurfacePressureVTK/&lt;design&gt;.vtk</code> in Dataverse DOI <code>10.7910/DVN/K7PWNJ</code>, array <code>p</code> in VTK
+            <code>PointData</code>
+          </td>
+          <td>Every surface point carrying <code>p</code></td>
+          <td>Dual-area weighted primary; equal-point secondary</td>
+        </tr>
+        <tr>
+          <td colspan="4">
+            Surface pressure is the confirmed task. Wall shear and full-volume CFD fields are not scored until their public files and field
+            associations are confirmed in a later scoring-support release.
+          </td>
+        </tr>
+        {% when "airfrans" %}
+        <tr>
+          <td>Two-dimensional flow domain</td>
+          <td>
+            <code>Dataset/&lt;case&gt;/&lt;case&gt;_internal.vtu</code>, arrays <code>U</code>, <code>p</code>, and <code>nut</code> in VTK
+            <code>PointData</code>
+          </td>
+          <td>Every mesh node carrying each scored interior field</td>
+          <td>Equal-node primary; dual-cell-area weighted secondary</td>
+        </tr>
+        <tr>
+          <td>One-dimensional airfoil boundary curve</td>
+          <td>
+            <code>Dataset/&lt;case&gt;/&lt;case&gt;_aerofoil.vtp</code>, pressure in VTK <code>PointData</code>; pressure is kinematic/reduced, and
+            wall shear is derived by the fixed AirfRANS procedure
+          </td>
+          <td>Every ordered boundary node carrying or defining each scored quantity</td>
+          <td>Dual-length weighted primary; equal-node secondary</td>
+        </tr>
+        {% when "blendednet" %}
+        <tr>
+          <td>Three-dimensional aircraft surface</td>
+          <td>
+            Released legacy VTK <code>POLYDATA</code>, arrays <code>cp</code>, <code>cf_x</code>, <code>cf_y</code>, and <code>cf_z</code> in
+            <code>PointData</code>
+          </td>
+          <td>Every surface vertex carrying each scored coefficient</td>
+          <td>Dual-area weighted primary; equal-vertex secondary</td>
+        </tr>
+        <tr>
+          <td colspan="4">The current public FluidsBench field task is surface-only; it does not invent a volume target.</td>
+        </tr>
+        {% when "rotor37" %}
+        <tr>
+          <td>Two-dimensional quadrilateral blade-surface manifold embedded in three dimensions</td>
+          <td>
+            PLAID CGNS <code>/Base_2_3/Zone</code>; <code>Density</code>, <code>Pressure</code>, and <code>Temperature</code> at CGNS
+            <code>Vertex</code> locations
+          </td>
+          <td>Every vertex in the release-bound zone</td>
+          <td>Dual-surface-area weighted primary; equal-vertex secondary</td>
+        </tr>
+        <tr>
+          <td colspan="4">
+            The source evaluation rows omit their targets. FluidsBench will therefore bind scoring to a separate evaluation split whose ground truth
+            is public.
+          </td>
+        </tr>
+        {% when "vki-ls59" %}
+        <tr>
+          <td>Two-dimensional quadrilateral flow domain</td>
+          <td>PLAID CGNS <code>/Base_2_2/Zone</code>; <code>mach</code> and <code>nut</code> at CGNS <code>Vertex</code> locations</td>
+          <td>Every vertex carrying the scored <code>mach</code> and <code>nut</code> fields</td>
+          <td>Equal-vertex primary; dual-cell-area weighted secondary</td>
+        </tr>
+        <tr>
+          <td>One-dimensional blade curve</td>
+          <td>PLAID CGNS <code>/Base_1_2/Zone</code>; <code>M_iso</code> at CGNS <code>Vertex</code> locations</td>
+          <td>Every ordered curve vertex carrying <code>M_iso</code></td>
+          <td>Dual-length weighted primary; equal-vertex secondary</td>
+        </tr>
+        <tr>
+          <td colspan="4">
+            The source evaluation rows omit their targets. FluidsBench will therefore bind scoring to a separate evaluation split whose ground truth
+            is public.
+          </td>
+        </tr>
+        {% endcase %}
+      </tbody>
+    </table>
+  </div>
+
+  <h4>How to calculate large cases</h4>
+  <ul>
+    <li>
+      Surface and one-dimensional curve fields use the physical measure (area or length) as the primary relative L2 and an equal-entity relative L2 as
+      the secondary value. Two- and three-dimensional flow domains reverse that order: equal-entity is primary and physical cell-area or cell-volume
+      weighting is secondary.
+    </li>
+    <li>
+      Face- or cell-associated fields use the face area, cell area, or cell volume directly. For
+      <code>PointData</code> or CGNS <code>Vertex</code> fields, the physical weight is a deterministic mass-lumped dual area, dual volume, or dual
+      length derived from the same reference mesh connectivity.
+    </li>
+    <li>
+      In one pass over each case, accumulate the squared-error numerator and ground-truth denominator for both the equal-entity and physical-weight
+      variants, together with entity count and total physical weight. Chunks may be any convenient size, but their numerators and denominators must be
+      summed before taking the square root; never average chunk-level L2 values.
+    </li>
+    <li>Calculate each complete-case percentage first, then macro-average the case percentages so every case counts equally.</li>
+  </ul>
+  <p>
+    Sharing complete prediction fields is optional. A contributor may link versioned predictions in an external public repository, but the submission
+    package itself stays small and records exact coverage plus the per-case sufficient statistics used to reproduce both relative-L2 values.
+  </p>
+</div>

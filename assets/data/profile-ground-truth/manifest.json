@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0",
   "data_release": {
-    "id": "prototype-profile-ground-truth-2026-07-20",
+    "id": "prototype-profile-ground-truth-2026-07-31",
     "status": "prototype_dummy_data",
-    "generated_at": "2026-07-20T00:00:00Z",
+    "generated_at": "2026-07-31T00:00:00Z",
     "source_repository": "https://github.com/neilashton/fluidsbench",
     "source_ref": "dev",
     "source_commit": null
@@ -260,7 +260,7 @@
         {
           "id": "default",
           "index_file": "datasets/drivaernetplusplus/default/index.json",
-          "index_sha256": "5eb4b3a21c589e5f0bff3554dd473b0019df5c06bcb017c6ec54ccbceb585b81",
+          "index_sha256": "9f32deb0418a245190db5ce16b6b8d06935cec2e3fafa6a1f79aab96dbf2a74b",
           "case_count": 1,
           "case_id_status": "prototype_generated"
         }
@@ -442,57 +442,57 @@
         {
           "id": "train",
           "label": "train",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 168
         },
         {
           "id": "train_500",
           "label": "train_500",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 168
         },
         {
           "id": "train_250",
           "label": "train_250",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 168
         },
         {
           "id": "train_125",
           "label": "train_125",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 168
         },
         {
           "id": "train_64",
           "label": "train_64",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 168
         },
         {
           "id": "train_32",
           "label": "train_32",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 168
         },
         {
           "id": "train_16",
           "label": "train_16",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 168
         },
         {
           "id": "train_8",
           "label": "train_8",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 168
         }
       ],
       "case_sets": [
         {
-          "id": "official_test",
-          "index_file": "datasets/vki-ls59/official_test/index.json",
-          "index_sha256": "6979b62a59d836d9cbde8c322ea778782c4981f4318d5a5d35580a491c3ddb26",
+          "id": "source_evaluation_prototype",
+          "index_file": "datasets/vki-ls59/source_evaluation_prototype/index.json",
+          "index_sha256": "8a22289438556867311a4e8cb1655dac24ad6e57b7e69282545fe424572eb946",
           "case_count": 168,
           "case_id_status": "prototype_generated"
         }
@@ -505,57 +505,57 @@
         {
           "id": "train_1000",
           "label": "train_1000",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 200
         },
         {
           "id": "train_500",
           "label": "train_500",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 200
         },
         {
           "id": "train_250",
           "label": "train_250",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 200
         },
         {
           "id": "train_125",
           "label": "train_125",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 200
         },
         {
           "id": "train_64",
           "label": "train_64",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 200
         },
         {
           "id": "train_32",
           "label": "train_32",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 200
         },
         {
           "id": "train_16",
           "label": "train_16",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 200
         },
         {
           "id": "train_8",
           "label": "train_8",
-          "case_set_id": "official_test",
+          "case_set_id": "source_evaluation_prototype",
           "case_count": 200
         }
       ],
       "case_sets": [
         {
-          "id": "official_test",
-          "index_file": "datasets/rotor37/official_test/index.json",
-          "index_sha256": "ec97a45a7fc0466e69a938224365b68c1b7d68caf8c1c51801db66b85a33905b",
+          "id": "source_evaluation_prototype",
+          "index_file": "datasets/rotor37/source_evaluation_prototype/index.json",
+          "index_sha256": "ed743661737a7ef8377676da812b9cc6f26791e13741fb95c11804cf8b62e8e7",
           "case_count": 200,
           "case_id_status": "prototype_generated"
         }
