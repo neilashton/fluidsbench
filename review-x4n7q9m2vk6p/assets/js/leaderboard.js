@@ -743,7 +743,15 @@
   }
 
   function metricDefinition(metricId) {
-    return state.metrics.get(metricId);
+    const definition = state.metrics.get(metricId);
+    if (!definition) return definition;
+    const override = activeDataset()?.metric_definition_overrides?.[metricId];
+    if (!override || typeof override !== "object" || Array.isArray(override)) return definition;
+    const resolved = { ...definition };
+    ["label", "description"].forEach((key) => {
+      if (typeof override[key] === "string" && override[key].trim()) resolved[key] = override[key];
+    });
+    return resolved;
   }
 
   function trainingRegimeDefinitions() {
