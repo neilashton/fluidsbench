@@ -1,18 +1,20 @@
 ---
-layout: page
+layout: null
 permalink: /organisers/
-title: Organising Committee
-description: 
-nav: false
-nav_order: 6
+sitemap: false
 ---
 
-<h3> Organizering Committee</h3>
-
-* Neil Ashton (NVIDIA)
-* Paola  (Sorbonne University)
-* Astrid Walle (Siemens Energy)
-* Jean Kossai (NVIDIA)
-* Daniel Leibovic (NVIDIA)
-* Richard Dwight (TU Delft)
-
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, follow">
+    <meta http-equiv="refresh" content="0; url={{ '/about/' | relative_url }}#organisers">
+    <link rel="canonical" href="{{ '/about/' | absolute_url }}#organisers">
+    <title>FluidsBench organisers</title>
+  </head>
+  <body>
+    <p>The FluidsBench organisers are now listed on the <a href="{{ '/about/' | relative_url }}#organisers">About page</a>.</p>
+  </body>
+</html>

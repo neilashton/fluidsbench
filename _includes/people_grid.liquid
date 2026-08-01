@@ -1,0 +1,28 @@
+<section class="about-people-group" aria-labelledby="{{ include.id }}">
+  <h3 id="{{ include.id }}">{{ include.heading }}</h3>
+  <div class="about-people-grid">
+    {% for person in include.people %}
+      <article class="about-person-card">
+        <div class="about-person-card__portrait">
+          {% if person.image %}
+            <img
+              class="about-person-card__photo"
+              src="{{ person.image | relative_url }}"
+              alt="Portrait of {{ person.name }}"
+              width="224"
+              height="224"
+              loading="lazy"
+              decoding="async"
+            >
+          {% else %}
+            <span class="about-person-card__initials" aria-hidden="true">{{ person.initials }}</span>
+          {% endif %}
+        </div>
+        <div class="about-person-card__info">
+          <h4>{{ person.name }}</h4>
+          <p>{{ person.affiliation }}</p>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>

@@ -5,52 +5,76 @@ permalink: /about/
 nav: true
 nav_order: 2
 page_title: "About FluidsBench"
-page_subtitle: A benchmark for the next generation of Computational Fluid Dynamics (CFD) AI models
+page_subtitle: A public benchmark for comparing AI surrogate models across computational fluid-dynamics datasets
 hide_header_background: true
 compact_masthead: true
-
-news: true # includes a list of news items
 ---
 
-<iframe data-w-token="adf328a70c8f7ba6edbd" data-w-type="pop-in" frameborder="0" scrolling="yes" marginheight="0" marginwidth="0" src="https://1mrs5.mjt.lu/wgt/1mrs5/06mi/form?c=589f757a" width="100%" style="height: 0;"></iframe>
-<iframe data-w-token="adf328a70c8f7ba6edbd" data-w-type="trigger" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://1mrs5.mjt.lu/wgt/1mrs5/06mi/trigger?c=57078be4" width="100%" style="height: 0;"></iframe>
+<div class="about-page">
+  <section class="about-intro" aria-labelledby="about-overview">
+    <h2 id="about-overview">A shared benchmark for AI in fluid dynamics</h2>
+    <p class="about-lead">
+      FluidsBench brings public datasets, dataset-specific scoring rules, a consistent submission format, and versioned leaderboard releases together in one place. The aim is to make results easier to compare, inspect, and cite.
+    </p>
+    <p>
+      Each dataset defines its evaluation cases, scoring locations, fields, and metrics. Submitters run their own models, calculate the required metrics and profile predictions, and provide the result package. FluidsBench validates the package and publishes approved submitted values, tables, and plots alongside the public ground truth. It does not run submitted models or recalculate the submitted field and force metrics.
+    </p>
+    <div class="about-actions" aria-label="Explore FluidsBench">
+      <a class="about-action about-action--primary" href="{{ '/' | relative_url }}">View the leaderboard</a>
+      <a class="about-action" href="{{ '/datasets/' | relative_url }}">Explore the datasets</a>
+    </div>
+  </section>
 
-<script type="text/javascript" src="https://app.mailjet.com/pas-nc-pop-in-v1.js"></script>
+  <section class="about-benefits" aria-labelledby="about-benefits-title">
+    <h2 id="about-benefits-title">What FluidsBench provides</h2>
+    <div class="about-benefit-grid">
+      <article class="about-benefit-card">
+        <h3>Defined evaluation</h3>
+        <p>Public evaluation cases, scoring locations, ground truth, fields, and metric definitions for every supported dataset.</p>
+      </article>
+      <article class="about-benefit-card">
+        <h3>Clear comparisons</h3>
+        <p>Results compared within the same dataset, split, and release, with the scoring basis stated alongside each leaderboard view.</p>
+      </article>
+      <article class="about-benefit-card">
+        <h3>Durable evidence</h3>
+        <p>Versioned result records and exports that preserve the release, metric, rank, and metadata behind an academic claim.</p>
+      </article>
+    </div>
+  </section>
 
-<h3>Aims and Scope</h3>
-FluidsBench is a benchmark for Computational Fluid Dynamics (CFD) surrogates, designed to accelerate progress in the development of foundational AI models for fluids. Motivated by similar efforts in weather ([WeatherBench 2](https://doi.org/10.1029/2023MS004019)) and early task-specific work ([CarBench](https://doi.org/10.48550/arXiv.2512.07847)), FluidsBench combines an open-source evaluation framework, public training and scored ground-truth data available through external model hubs (e.g., Hugging Face), and a website for versioned benchmark results. In-person and virtual workshops are planned, subject to acceptance, at fluids and machine-learning events (e.g., NeurIPS, ICML, and ML4Fluids) to discuss the latest work and gather community direction for the benchmark. A scientific and industrial advisory board guides the effort to keep the benchmarks relevant across fluid-dynamics sectors in academia and industry.
+  <aside class="about-status" aria-labelledby="about-status-title">
+    <h2 id="about-status-title">Current status</h2>
+    <p>
+      The leaderboard is currently a prototype and submissions are closed. All displayed rows and profile curves are illustrative dummy data, not official results, and should not be cited or promoted as leaderboard claims.
+    </p>
+  </aside>
 
-<h3>Open reproducibility</h3>
-FluidsBench uses an open reproducibility track: declared evaluation partitions, scored case lists, ground truth, and evaluator definitions are public. Evaluation cases must not be used for model fitting, hyperparameter selection, or preprocessing statistics. Submitters calculate and provide all leaderboard metrics and profile predictions. An official result requires a package that passes FluidsBench validation and maintainer approval. Public code, model, and environment artifacts and their documentation are optional; when supplied, the leaderboard reports their links, revisions, digests, and licences. Their absence does not affect accuracy rank, academic-citation eligibility, or promotion eligibility. FluidsBench publishes the submitted values in tables and figures and displays submitted profiles with the public ground truth; it does not execute submitted code or models or recompute base metrics.
+  <section class="about-people" aria-labelledby="about-people-title">
+    <h2 id="about-people-title">People</h2>
+    <p class="about-section-intro">
+      FluidsBench is developed by an organising committee spanning academia and industry, with guidance from its scientific and industrial advisory board.
+    </p>
 
-The current leaderboard remains a prototype, submissions are closed, and all displayed rows and profile curves are illustrative dummy data. They are not official results and should not be cited or promoted as leaderboard claims.
+    {% include people_grid.liquid
+      people=site.data.people.organisers
+      id="organisers"
+      heading="Organising committee"
+    %}
 
-<h3>Organizing Committee</h3>
+    {% include people_grid.liquid
+      people=site.data.people.advisory_board
+      id="advisory-board"
+      heading="Scientific and industrial advisory board"
+    %}
 
-- Neil Ashton (NVIDIA)
-- Paola Cinnella (Sorbonne University)
-- Astrid Walle (Pasteur Labs)
-- Mohamed Elrefaie (MIT)
-- Jean Kossai (NVIDIA)
-- Ricardo Vinuesa (University of Michigan)
-- Daniel Leibovic (NVIDIA)
-- Richard Dwight (TU Delft)
-- Faez Ahmed (MIT)
-- Rishi Ranade (NVIDIA)
+  </section>
 
-<h3>Advisory Board</h3>
-
-- Siddhartha Mishra (ETH)
-- Nils Thuerey (TUM)
-- Nathan Kutz (Autodesk)
-- Michalis Michaelides (PhysicsX)
-- Oriol Lehmkuhl (BSC)
-- Cristian Bodnar (Project Prometheus)
-- Fabien Casenave (Safran)
-- Adam Clarke (Boeing)
-- Dirk Hartmann (Siemens/TU Darmstadt)
-- Sina Hassanli (Arup)
-- Simon Dodman (Cadillac F1)
-- Daniel Morales Brotons (Neural Concept)
-<h3>Questions</h3>
-For questions, email [admin@fluidsbench.org](mailto:admin@fluidsbench.org) or join the mailing list for updates.
+  <section class="about-contact" aria-labelledby="about-contact-title">
+    <h2 id="about-contact-title">Contact</h2>
+    <p>
+      For questions about the benchmark, datasets, or submissions, email
+      <a href="mailto:admin@fluidsbench.org">admin@fluidsbench.org</a>.
+    </p>
+  </section>
+</div>

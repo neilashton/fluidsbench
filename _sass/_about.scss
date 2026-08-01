@@ -1,0 +1,248 @@
+/******************************************************************************
+ * About page
+ ******************************************************************************/
+
+.about-page {
+  display: grid;
+  gap: 2.75rem;
+}
+
+.about-page > section,
+.about-page > aside {
+  margin: 0;
+}
+
+.about-page h2 {
+  font-size: 1.35rem;
+  line-height: 1.3;
+  margin: 0 0 1rem;
+}
+
+.about-intro {
+  max-width: 48rem;
+}
+
+.about-lead {
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.35rem;
+}
+
+.about-action {
+  align-items: center;
+  background: var(--global-card-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: 0.45rem;
+  color: var(--global-theme-color);
+  display: inline-flex;
+  font-weight: 600;
+  justify-content: center;
+  min-height: 2.65rem;
+  padding: 0.55rem 0.9rem;
+  text-decoration: none;
+}
+
+.about-action:hover {
+  border-color: var(--global-theme-color);
+  color: var(--global-theme-color);
+  text-decoration: none;
+}
+
+.about-action:focus-visible {
+  outline: 3px solid var(--global-theme-color);
+  outline-offset: 3px;
+}
+
+.about-action--primary {
+  background: var(--global-theme-color);
+  border-color: var(--global-theme-color);
+  color: var(--global-hover-text-color);
+}
+
+.about-action--primary:hover {
+  color: var(--global-hover-text-color);
+  filter: brightness(0.92);
+}
+
+.about-benefit-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.about-benefit-card {
+  background: var(--global-card-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: 0.7rem;
+  padding: 1rem;
+}
+
+.about-benefit-card h3 {
+  font-size: 1rem;
+  line-height: 1.35;
+  margin: 0 0 0.5rem;
+}
+
+.about-benefit-card p {
+  color: var(--global-text-color-light);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.about-status {
+  background: var(--global-code-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-left: 5px solid var(--global-theme-color);
+  border-radius: 0.55rem;
+  padding: 1rem 1.15rem;
+}
+
+.about-status h2 {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.about-status p {
+  margin: 0;
+}
+
+.about-section-intro {
+  color: var(--global-text-color-light);
+  max-width: 44rem;
+}
+
+.about-people-group {
+  margin-top: 2.35rem;
+}
+
+.about-people-group > h3 {
+  border-bottom: 2px solid var(--global-divider-color);
+  font-size: 1.15rem;
+  margin: 0 0 1rem;
+  padding-bottom: 0.65rem;
+}
+
+.about-people-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.about-person-card {
+  align-items: center;
+  background: var(--global-card-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: 0.8rem;
+  box-shadow: 0 0.2rem 0.8rem var(--global-divider-color);
+  display: flex;
+  gap: 1rem;
+  min-height: 8.25rem;
+  min-width: 0;
+  padding: 0.9rem;
+}
+
+.about-person-card__portrait {
+  align-items: center;
+  background: var(--global-code-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: 0.7rem;
+  display: flex;
+  flex: 0 0 6.5rem;
+  height: 6.5rem;
+  justify-content: center;
+  overflow: hidden;
+  width: 6.5rem;
+}
+
+.about-person-card__photo {
+  display: block;
+  height: 100%;
+  margin: 0;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 30%;
+  width: 100%;
+}
+
+.about-person-card__initials {
+  color: var(--global-theme-color);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.about-person-card__info {
+  min-width: 0;
+}
+
+.about-person-card__info h4 {
+  font-size: 1rem;
+  line-height: 1.3;
+  margin: 0 0 0.3rem;
+}
+
+.about-person-card__info p {
+  color: var(--global-text-color-light);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.about-contact {
+  border-top: 1px solid var(--global-divider-color);
+  padding-top: 1.5rem;
+}
+
+.about-contact p {
+  margin-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .about-benefit-grid,
+  .about-people-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .about-page {
+    gap: 2.25rem;
+  }
+
+  .about-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .about-person-card {
+    gap: 0.8rem;
+    min-height: 7.2rem;
+    padding: 0.8rem;
+  }
+
+  .about-person-card__portrait {
+    flex-basis: 5.5rem;
+    height: 5.5rem;
+    width: 5.5rem;
+  }
+}
+
+@media print {
+  .about-actions {
+    display: none;
+  }
+
+  .about-benefit-card,
+  .about-person-card,
+  .about-status {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+}

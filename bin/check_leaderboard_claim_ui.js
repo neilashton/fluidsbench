@@ -17,6 +17,7 @@ const markerIndex = source.lastIndexOf(marker);
 assert.notEqual(markerIndex, -1, "leaderboard script must end with its IIFE");
 const instrumented = `${source.slice(0, markerIndex)}
 window.__FluidsBenchClaimTest = {
+  activeMetricDefinitions,
   bibtexEscape,
   canonicalResultPermalink,
   citationValues,
@@ -38,6 +39,7 @@ window.__FluidsBenchClaimTest = {
   representationSummary,
   reproducibilityArtifactAvailability,
   mappingSummary,
+  metricDefinition,
   renderReleaseMetadata,
   renderSubmissionAvailability,
   scoringSupportSummary,
@@ -193,6 +195,47 @@ api.state.manifest = manifest;
 api.state.metrics = new Map(manifest.metric_definitions.map((definition) => [definition.id, definition]));
 api.state.rows = new Map(manifest.datasets.map((dataset) => [dataset.name, []]));
 api.state.feedVerified = true;
+
+const baseSurfacePressureDefinition = api.state.metrics.get("surface_pressure_rel_l2");
+const baseSurfacePressureSnapshot = JSON.stringify(baseSurfacePressureDefinition);
+const expectedSurfaceWeighting = new Map([
+  ["AhmedML", "area-weighted"],
+  ["AirfRANS", "length-weighted"],
+  ["DrivAerML", "area-weighted"],
+  ["DrivAerNet++", "area-weighted"],
+  ["HiLiftAeroML", "area-weighted"],
+  ["WindsorML", "area-weighted"],
+]);
+expectedSurfaceWeighting.forEach((weighting, datasetName) => {
+  api.state.dataset = datasetName;
+  const definition = api.metricDefinition("surface_pressure_rel_l2");
+  assert.match(definition.label, new RegExp(`\\(${weighting}\\)$`));
+  assert.match(definition.description, new RegExp(`^${weighting.replace(/^./, (letter) => letter.toUpperCase())}`));
+  assert.notStrictEqual(definition, baseSurfacePressureDefinition, `${datasetName} must receive a resolved presentation copy`);
+});
+assert.equal(
+  JSON.stringify(baseSurfacePressureDefinition),
+  baseSurfacePressureSnapshot,
+  "dataset presentation overrides must not mutate the shared metric definition"
+);
+manifest.datasets.forEach((dataset) => {
+  api.state.dataset = dataset.name;
+  api.activeMetricDefinitions().forEach((definition) => {
+    assert.doesNotMatch(definition.label, /area- or length-weighted/i, `${dataset.name}/${definition.id} must use exact weighting wording`);
+    assert.doesNotMatch(
+      definition.description || "",
+      /area- or length-weighted/i,
+      `${dataset.name}/${definition.id} must use exact weighting wording`
+    );
+    assert.doesNotMatch(definition.label, /flow-domain (?:velocity|pressure)/i, `${dataset.name}/${definition.id} must use simple quantity names`);
+    assert.doesNotMatch(
+      definition.description || "",
+      /flow-domain (?:velocity|pressure)/i,
+      `${dataset.name}/${definition.id} must use simple quantity names`
+    );
+  });
+});
+
 feed.map(api.normalizeRow).forEach((row) => api.state.rows.get(row.dataset)?.push(row));
 manifest.datasets.forEach((dataset) => {
   api.state.dataset = dataset.name;
