@@ -2,16 +2,16 @@
 
 The organiser portraits listed below were downloaded without cropping, resizing, or other modification on 2026-08-01. The profile pages are included to establish identity and provenance; the direct links identify the exact source files.
 
-| Local file | Organiser | Dimensions | Source profile | Direct image source | Retrieved |
-| --- | --- | ---: | --- | --- | --- |
-| `paola-cinnella.jpg` | Paola Cinnella | 582 × 900 | [Sorbonne Université](https://www.sorbonne-universite.fr/portraits/paola-cinnella) | [JPEG](https://www.sorbonne-universite.fr/sites/default/files/media/2026-06/paola_cinnella1.jpg) | 2026-08-01 |
-| `mohamed-elrefaie.jpg` | Mohamed Elrefaie | 921 × 691 | [MIT CCSE](https://cse.mit.edu/people/mohamed-elrefaie/) | [JPEG](https://cse.mit.edu/app/uploads/2025/09/Mohamed-elrefaie-aspect-ratio-4-3.jpg) | 2026-08-01 |
-| `jean-kossaifi.jpg` | Jean Kossaifi | 1674 × 2374 | [NVIDIA Research](https://research.nvidia.com/person/jean-kossaifi) | [JPEG](https://research.nvidia.com/sites/default/files/person/Jean.jpg) | 2026-08-01 |
-| `ricardo-vinuesa.png` | Ricardo Vinuesa | 900 × 1200 | [University of Michigan MICDE](https://micde.umich.edu/member/ricardo-vinuesa/) | [PNG](https://micde.umich.edu/wp-content/uploads/2025/09/Vinuesa-Ricardo-Aerospace.png) | 2026-08-01 |
-| `daniel-leibovici.jpg` | Daniel Leibovici | 270 × 270 | [NVIDIA Learning and Perception Research](https://research.nvidia.com/labs/lpr/author/daniel-leibovici/) | [JPEG](https://research.nvidia.com/labs/lpr/author/daniel-leibovici/avatar_hu_c59c92a675dafaa.jpg) | 2026-08-01 |
-| `richard-dwight.jpg` | Richard Dwight | 140 × 210 | [TU Delft Aerodynamics](https://aerodynamics.lr.tudelft.nl/~rdwight/) | [JPEG](https://aerodynamics.lr.tudelft.nl/~rdwight/Graphics/DSC_5624.jpg) | 2026-08-01 |
-| `faez-ahmed.jpg` | Faez Ahmed | 500 × 500 | [MIT Siegel Family Quest for Intelligence](https://sqi.mit.edu/about/people/faez-ahmed) | [JPEG](https://sqi.mit.edu/system/files/2023-08/Ahmed_Faez.jpeg) | 2026-08-01 |
-| `rishi-ranade.png` | Rishi Ranade | 445 × 445 | [NVIDIA Technical Blog](https://developer.nvidia.com/blog/author/rranade/) | [PNG](https://developer-blogs.nvidia.com/wp-content/uploads/2024/11/Rishi-Ranade-1.png) | 2026-08-01 |
+| Local file             | Organiser        |  Dimensions | Source profile                                                                                           | Direct image source                                                                                | Retrieved  |
+| ---------------------- | ---------------- | ----------: | -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------- |
+| `paola-cinnella.jpg`   | Paola Cinnella   |   582 × 900 | [Sorbonne Université](https://www.sorbonne-universite.fr/portraits/paola-cinnella)                       | [JPEG](https://www.sorbonne-universite.fr/sites/default/files/media/2026-06/paola_cinnella1.jpg)   | 2026-08-01 |
+| `mohamed-elrefaie.jpg` | Mohamed Elrefaie |   800 × 800 | [Personal academic profile](https://mohamedelrefaie.github.io/)                                          | [JPEG](https://mohamedelrefaie.github.io/assets/profile_pic.jpeg)                                  | 2026-08-01 |
+| `jean-kossaifi.jpg`    | Jean Kossaifi    | 1674 × 2374 | [NVIDIA Research](https://research.nvidia.com/person/jean-kossaifi)                                      | [JPEG](https://research.nvidia.com/sites/default/files/person/Jean.jpg)                            | 2026-08-01 |
+| `ricardo-vinuesa.png`  | Ricardo Vinuesa  |  900 × 1200 | [University of Michigan MICDE](https://micde.umich.edu/member/ricardo-vinuesa/)                          | [PNG](https://micde.umich.edu/wp-content/uploads/2025/09/Vinuesa-Ricardo-Aerospace.png)            | 2026-08-01 |
+| `daniel-leibovici.jpg` | Daniel Leibovici |   270 × 270 | [NVIDIA Learning and Perception Research](https://research.nvidia.com/labs/lpr/author/daniel-leibovici/) | [JPEG](https://research.nvidia.com/labs/lpr/author/daniel-leibovici/avatar_hu_c59c92a675dafaa.jpg) | 2026-08-01 |
+| `richard-dwight.jpg`   | Richard Dwight   |   140 × 210 | [TU Delft Aerodynamics](https://aerodynamics.lr.tudelft.nl/~rdwight/)                                    | [JPEG](https://aerodynamics.lr.tudelft.nl/~rdwight/Graphics/DSC_5624.jpg)                          | 2026-08-01 |
+| `faez-ahmed.jpg`       | Faez Ahmed       |   500 × 500 | [MIT Siegel Family Quest for Intelligence](https://sqi.mit.edu/about/people/faez-ahmed)                  | [JPEG](https://sqi.mit.edu/system/files/2023-08/Ahmed_Faez.jpeg)                                   | 2026-08-01 |
+| `rishi-ranade.png`     | Rishi Ranade     |   445 × 445 | [NVIDIA Technical Blog](https://developer.nvidia.com/blog/author/rranade/)                               | [PNG](https://developer-blogs.nvidia.com/wp-content/uploads/2024/11/Rishi-Ranade-1.png)            | 2026-08-01 |
 
 ## Licensing and permission
 
