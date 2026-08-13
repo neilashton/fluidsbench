@@ -80,6 +80,12 @@ advisory_board:
   - name: Fabien Casenave
     affiliation: Safran
     initials: FC
+  - name: Sofiane Haddad
+    affiliation: Airbus
+    initials: SH
+  - name: Johannes Brandstetter
+    affiliation: Mistral
+    initials: JB
   - name: Adam Clarke
     affiliation: Boeing
     initials: AC
