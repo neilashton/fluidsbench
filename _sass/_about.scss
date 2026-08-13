@@ -64,16 +64,12 @@
 }
 
 .about-link-disabled {
-  align-items: baseline;
-  color: var(--global-text-color-light);
+  align-items: center;
+  color: var(--global-theme-color);
   display: inline-flex;
   font-size: 0.9rem;
   font-weight: 600;
-  gap: 0.35rem;
-}
-
-.about-link-disabled span {
-  font-weight: 400;
+  gap: 0.4rem;
 }
 
 .about-process {
