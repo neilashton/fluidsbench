@@ -3,7 +3,7 @@
   "data_release": {
     "id": "prototype-profile-ground-truth-2026-08-21",
     "status": "prototype_dummy_data",
-    "generated_at": "2026-08-21T06:54:40Z",
+    "generated_at": "2026-08-21T00:00:00Z",
     "source_repository": "https://github.com/neilashton/fluidsbench",
     "source_ref": "dev",
     "source_commit": null
@@ -219,37 +219,37 @@
         {
           "id": "standard",
           "index_file": "datasets/drivaerml/standard/index.json",
-          "index_sha256": "e6f84d8aa89c72072b01c1187c4e7cd747efc094d7db4e5012c0e1a11aef1bee",
+          "index_sha256": "bfd42b2cdff775a88d5ed2b5bcd196d3338a4f301b64cfe2887a072de0c34d96",
           "case_count": 50,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official"
         },
         {
           "id": "geometry",
           "index_file": "datasets/drivaerml/geometry/index.json",
-          "index_sha256": "98203351a778344130b18d81516d7518bba3ddd2da6a4684e6835d11ed6870f4",
+          "index_sha256": "4a9d9f221676d3d83340bd596c0a7e0ffd5a2b59b381f0879c3c7cdb6a2dd3f9",
           "case_count": 97,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official"
         },
         {
           "id": "high_drag",
           "index_file": "datasets/drivaerml/high_drag/index.json",
-          "index_sha256": "92421fee4686130b26be7cc5ca5922142886590f94a46a7ccf413dc488d68af7",
+          "index_sha256": "61fe79cd054664566bef33faaf279267b245e3c42b5f5fa562020769fa974987",
           "case_count": 97,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official"
         },
         {
           "id": "low_drag",
           "index_file": "datasets/drivaerml/low_drag/index.json",
-          "index_sha256": "d60e878eb13a2f561bc48952c48d9c52e09ad2b4ac37f76146795796a341451d",
+          "index_sha256": "5d15344b44789aaed29d2d89a146623c5ce256384ae1d592a365543dc21b7c60",
           "case_count": 97,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official"
         },
         {
           "id": "rear_separation",
           "index_file": "datasets/drivaerml/rear_separation/index.json",
-          "index_sha256": "d2953fddbcedc0bd5a383ee1e72afc22fbcc291dfcb74ced71cb3482bd09cb55",
+          "index_sha256": "9d0540abcd4f23398e13a6a0c32292c78a9de764b62903ea6e787e6655034fa7",
           "case_count": 97,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official"
         }
       ]
     },
