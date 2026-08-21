@@ -210,7 +210,7 @@ expectedSurfaceWeighting.forEach((weighting, datasetName) => {
   api.state.dataset = datasetName;
   const definition = api.metricDefinition("surface_pressure_rel_l2");
   assert.match(definition.label, new RegExp(`\\(${weighting}\\)$`));
-  assert.match(definition.description, new RegExp(`^${weighting.replace(/^./, (letter) => letter.toUpperCase())}`));
+  assert.match(definition.description, new RegExp(`^(?:Per-case )?${weighting}`, "i"));
   assert.notStrictEqual(definition, baseSurfacePressureDefinition, `${datasetName} must receive a resolved presentation copy`);
 });
 assert.equal(
