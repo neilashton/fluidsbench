@@ -44,3 +44,15 @@ python3 bin/generate_airfrans_ground_truth.py \
   --release-id prototype-profile-ground-truth-YYYY-MM-DD \
   --generated-at YYYY-MM-DDTHH:MM:SSZ
 ```
+
+The DrivAerML prototype bundle uses the official case IDs, all four continuous
+Cp-cut series, and all sixteen AutoCFD5 velocity lines on the exact candidate
+10 mm grids. Its CFD-like reference values are analytical teaching data, not
+native DrivAerML truth; this is explicit because immutable native Cp-cut
+support remains an activation gate. Regenerate the website bundle from the
+matching submission-contract checkout with:
+
+```bash
+python3 bin/generate_drivaerml_ground_truth.py \
+  --submission-root ../fluidsbench-submission
+```

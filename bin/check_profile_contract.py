@@ -383,7 +383,16 @@ def check(submission_root: Path) -> list[str]:
                                 f"{dataset_id}/{case['case_id']}/{key}: coordinates are not strictly increasing"
                             )
                         panel = panels.get(series.get("panel_id"), {})
-                        sample_count = panel.get("sample_count")
+                        station_sample_counts = panel.get(
+                            "station_sample_counts", {}
+                        )
+                        sample_count = (
+                            station_sample_counts.get(series.get("station_id"))
+                            if isinstance(station_sample_counts, dict)
+                            else None
+                        )
+                        if sample_count is None:
+                            sample_count = panel.get("sample_count")
                         if isinstance(sample_count, int) and (
                             not isinstance(coordinate, list)
                             or len(coordinate) != sample_count
@@ -391,6 +400,57 @@ def check(submission_root: Path) -> list[str]:
                             errors.append(
                                 f"{dataset_id}/{case['case_id']}/{key}: expected {sample_count} profile samples"
                             )
+                        station_intervals = panel.get(
+                            "station_coordinate_intervals", {}
+                        )
+                        interval = (
+                            station_intervals.get(series.get("station_id"))
+                            if isinstance(station_intervals, dict)
+                            else None
+                        )
+                        if interval is None:
+                            interval = panel.get("coordinate_interval")
+                        if (
+                            isinstance(interval, list)
+                            and len(interval) == 2
+                            and finite_numbers(interval)
+                            and isinstance(coordinate, list)
+                            and len(coordinate) >= 2
+                        ):
+                            start, end = interval
+                            if not math.isclose(
+                                coordinate[0], start, rel_tol=0.0, abs_tol=1e-12
+                            ) or not math.isclose(
+                                coordinate[-1], end, rel_tol=0.0, abs_tol=1e-12
+                            ):
+                                errors.append(
+                                    f"{dataset_id}/{case['case_id']}/{key}: coordinate interval differs from the contract"
+                                )
+                            station_spacings = panel.get(
+                                "station_coordinate_spacings", {}
+                            )
+                            spacing = (
+                                station_spacings.get(series.get("station_id"))
+                                if isinstance(station_spacings, dict)
+                                else None
+                            )
+                            if spacing is None:
+                                spacing = panel.get("coordinate_spacing")
+                            if spacing == "uniform":
+                                denominator = len(coordinate) - 1
+                                if any(
+                                    not math.isclose(
+                                        value,
+                                        start
+                                        + (end - start) * index / denominator,
+                                        rel_tol=0.0,
+                                        abs_tol=1e-12,
+                                    )
+                                    for index, value in enumerate(coordinate)
+                                ):
+                                    errors.append(
+                                        f"{dataset_id}/{case['case_id']}/{key}: coordinates are not uniformly spaced over the contract interval"
+                                    )
                     missing = expected_series - provided
                     if missing:
                         errors.append(
