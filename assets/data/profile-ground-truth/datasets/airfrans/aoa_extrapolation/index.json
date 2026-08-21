@@ -3,14 +3,15 @@
   "dataset_id": "airfrans",
   "case_set_id": "aoa_extrapolation",
   "case_count": 1,
-  "case_id_status": "prototype_generated",
+  "coverage": "representative_subset",
+  "case_id_status": "official_split_member_fixture",
   "chunks": [
     {
       "file": "chunk-000.json",
       "case_ids": [
-        "airfrans_aoa_extrapolation_test_0001"
+        "airFoil2D_SST_88.307_-4.328_3.461_7.533_0.0_15.226"
       ],
-      "sha256": "af821eca513f91911cc8aaefe023737f2446600258a10bf915d9d0d8a17f4bd8"
+      "sha256": "aff8b0c5c792c763bcaed724f66fd7ec7acfa32ad686c8a43bce74a8c0a3fe40"
     }
   ]
 }
