@@ -30,6 +30,13 @@ The companion [fluidsbench-submission repository](https://github.com/neilashton/
 
 Changes that alter a shared schema or dataset contract normally require coordinated pull requests in both repositories.
 
+## Result versions
+
+The current table and figures use only the latest published version in each result series. The leaderboard can optionally show
+earlier versions as unranked historical rows, and every result-details panel links the immutable v1/v2/v3 history with dates and
+change summaries. Current scalar feeds and claim records remain latest-only; the companion submission repository publishes the
+complete hash-bound history in `leaderboard/revisions.json`.
+
 ## Local development
 
 ### Docker

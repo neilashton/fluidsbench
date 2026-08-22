@@ -81,6 +81,13 @@ chart:
       <label class="leaderboard-control-title" for="type-filter">Model type</label>
       <select id="type-filter"><option value="">All model types</option></select>
     </div>
+    <div class="leaderboard-control leaderboard-version-control">
+      <span class="leaderboard-control-title">Result versions</span>
+      <label for="show-all-versions" class="leaderboard-version-toggle">
+        <input id="show-all-versions" type="checkbox">
+        <span>Show previous versions</span>
+      </label>
+    </div>
   </section>
 
   <fieldset class="leaderboard-model-picker" aria-describedby="comparison-model-description">

@@ -140,6 +140,7 @@ jobs:
             schemas/scoring-support/v1/case-index.schema.json \
             schemas/scoring-support/v1/case-chunk.schema.json \
             schemas/releases/claim-index.schema.json \
+            schemas/releases/revision-history.schema.json \
             schemas/releases/result-claim.schema.json
           do
             cmp --silent "$SCHEMA" "_submission_release/$SCHEMA" || {
@@ -162,6 +163,8 @@ jobs:
           FEED_SHA256: ${{ steps.release.outputs.feed_sha256 }}
           CLAIMS_INDEX_FILE: ${{ steps.release.outputs.claims_index_file }}
           CLAIMS_INDEX_SHA256: ${{ steps.release.outputs.claims_index_sha256 }}
+          REVISION_HISTORY_FILE: ${{ steps.release.outputs.revision_history_file }}
+          REVISION_HISTORY_SHA256: ${{ steps.release.outputs.revision_history_sha256 }}
           GROUND_TRUTH_MANIFEST_URL: ${{ steps.release.outputs.ground_truth_manifest_url }}
           GROUND_TRUTH_MANIFEST_SHA256: ${{ steps.release.outputs.ground_truth_manifest_sha256 }}
         run: |
@@ -201,6 +204,18 @@ jobs:
           fi
           cmp --silent "_submission_release/$CLAIMS_INDEX_FILE" "$RUNNER_TEMP/published-claims-index.json" || {
             echo "asset_base_url does not serve the exact checked-out claim-index bytes" >&2
+            exit 1
+          }
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail --location --silent --show-error \
+            --output "$RUNNER_TEMP/published-revision-history.json" \
+            "${ASSET_BASE_URL}${REVISION_HISTORY_FILE}"
+          PUBLISHED_REVISION_HISTORY_SHA256=$(sha256sum "$RUNNER_TEMP/published-revision-history.json")
+          if [[ "${PUBLISHED_REVISION_HISTORY_SHA256%% *}" != "$REVISION_HISTORY_SHA256" ]]; then
+            echo "published revision history does not match data_release.revision_history.sha256" >&2
+            exit 1
+          fi
+          cmp --silent "_submission_release/$REVISION_HISTORY_FILE" "$RUNNER_TEMP/published-revision-history.json" || {
+            echo "asset_base_url does not serve the exact checked-out revision-history bytes" >&2
             exit 1
           }
           CLAIM_COUNTER=0
