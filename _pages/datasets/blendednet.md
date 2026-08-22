@@ -10,42 +10,35 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section class="dataset-section">
-    <h2>Overview</h2>
-    <p>
-      BlendedNet is a high-fidelity aerodynamic dataset for parametrically generated blended-wing-body aircraft. The
-      published training and validation pool contains 8,830 cases from 999 geometries. A separate test release contains
-      870 cases from 100 geometries that do not occur in the training pool.
-    </p>
-    <p>
-      The cases use steady RANS simulations in FUN3D with the Spalart-Allmaras turbulence model and meshes of roughly
-      9-14 million volume cells. Inputs combine surface coordinates and normals, nine geometry parameters, altitude,
-      Reynolds number, Mach number, angle of attack, and sideslip angle.
-    </p>
-    <p>
-      The initial FluidsBench field target uses all four surface arrays in the public files: <code>Cp</code>,
-      <code>Cfx</code>, <code>Cfy</code>, and <code>Cfz</code>. The prototype also reports integrated C<sub>D</sub>,
-      C<sub>L</sub>, and C<sub>My</sub> while their final release-bound definitions are reviewed.
-    </p>
+  {% include dataset_intro.html slug="blendednet" %}
+
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html heading=2 slug="blendednet" %}
   </section>
 
   <section class="dataset-section">
-    <h2>Planned benchmark split</h2>
+    <h2>Candidate benchmark split</h2>
     <p>
-      Set the submission <code>split</code> to the exact ID below. Cases are grouped by geometry, and the fixed test
-      geometries must not be used for model fitting, hyperparameter selection, or preprocessing statistics.
+      The public release contains 8,830 converged cases across 999 geometries. The associated baseline uses a deterministic geometry-level 90/10
+      training/validation division. FluidsBench currently proposes the ID below, but its 870 case IDs are prototype-generated and are not a separate
+      official Dataverse test release.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table">
-        <thead><tr><th>Split ID</th><th>Train/validation pool</th><th>Fixed test</th></tr></thead>
+        <thead><tr><th>Split ID</th><th>Public source population</th><th>Candidate test size</th><th>Status</th></tr></thead>
         <tbody>
-          <tr><td><code>geometry_holdout</code></td><td>8,830 cases from 999 geometries</td><td>870 cases from 100 unseen geometries</td></tr>
+          <tr>
+            <td><code>geometry_holdout</code></td>
+            <td>8,830 cases from 999 geometries</td>
+            <td>870 cases</td>
+            <td>Prototype mapping; owner approval required</td>
+          </tr>
         </tbody>
       </table>
     </div>
     <p>
-      The publication divides the 8,830-case pool into 90% training and 10% validation by geometry. FluidsBench records
-      the released pool as one split because submissions are evaluated against the separate geometry-disjoint test set.
+      Before activation, the owner must publish the exact geometry-disjoint train, validation, and test lists against Dataverse version 1.0 and approve
+      the evaluator and native surface-area support. Until then, this row documents intent and cannot be used for an official submission.
     </p>
   </section>
 

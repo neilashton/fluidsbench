@@ -11,20 +11,7 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section>
-    <p class="dataset-kicker">Dataset specification</p>
-    <p class="dataset-intro">
-      WindsorML is a high-fidelity CFD dataset for external automotive aerodynamics using geometric variants of the
-      Windsor body. It provides 3D time-averaged volume and boundary data, geometry, and force and moment coefficients for
-      machine-learning surrogate development.
-    </p>
-    <p>
-      The source dataset is maintained at
-      <a href="https://caemldatasets.org/windsorml/">caemldatasets.org/windsorml</a>. The dataset page describes the
-      Hugging Face layout and links to the NeurIPS dataset paper. The current FluidsBench WindsorML leaderboard rows are
-      illustrative prototype rows until benchmark evaluator outputs are available.
-    </p>
-  </section>
+  {% include dataset_intro.html slug="windsorml" %}
 
   <section class="dataset-panel">
     <h3>Dataset summary</h3>
@@ -51,13 +38,41 @@ compact_masthead: true
       </div>
       <div>
         <dt>Included data</dt>
-        <dd>Geometry, 3D time-averaged volume and boundary fields, and force and moment coefficients.</dd>
+        <dd>Aggregate metadata for 355 cases and complete per-run geometry, fields, images, forces, and boundary weights for runs 0–349.</dd>
       </div>
       <div>
         <dt>License</dt>
         <dd>CC-BY-SA, as stated by the dataset paper and dataset source.</dd>
       </div>
     </dl>
+  </section>
+
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html slug="windsorml" %}
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Published source splits</h3>
+    <p>
+      WindsorML now publishes eight deterministic source split families. These are current source definitions, not yet active FluidsBench case
+      bindings: the submission specification still contains one prototype case and needs an owner-approved policy for the five runs without complete
+      per-run fields.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead><tr><th>Split ID</th><th>Purpose</th><th>Train</th><th>Validation</th><th>Test</th></tr></thead>
+        <tbody>
+          <tr><td><code>full</code></td><td>Random source baseline.</td><td>284</td><td>35</td><td>36</td></tr>
+          <tr><td><code>medium</code></td><td>Nested data-efficiency subset.</td><td>95</td><td>35</td><td>36</td></tr>
+          <tr><td><code>scarce</code></td><td>Smaller nested subset.</td><td>47</td><td>35</td><td>36</td></tr>
+          <tr><td><code>super_scarce</code></td><td>Minimum-data nested subset.</td><td>8</td><td>35</td><td>36</td></tr>
+          <tr><td><code>geometry</code></td><td>Geometry out of distribution.</td><td>248</td><td>36</td><td>71</td></tr>
+          <tr><td><code>high_drag</code></td><td>High-drag out of distribution.</td><td>248</td><td>36</td><td>71</td></tr>
+          <tr><td><code>low_drag</code></td><td>Low-drag out of distribution.</td><td>248</td><td>36</td><td>71</td></tr>
+          <tr><td><code>image_wake</code></td><td>Image-derived wake out of distribution.</td><td>248</td><td>36</td><td>71</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="dataset-panel">

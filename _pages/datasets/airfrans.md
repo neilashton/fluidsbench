@@ -11,20 +11,7 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section>
-    <p class="dataset-kicker">Dataset specification</p>
-    <p class="dataset-intro">
-      AirfRANS is a high-fidelity CFD dataset for two-dimensional incompressible steady-state Reynolds-Averaged
-      Navier-Stokes solutions around airfoils. It targets surrogate models that predict flow fields and aerodynamic
-      coefficients over NACA 4- and 5-digit airfoils.
-    </p>
-    <p>
-      The dataset is described in the
-      <a href="https://arxiv.org/abs/2212.07564">AirfRANS paper</a>. Code and loading utilities are available from
-      <a href="https://github.com/Extrality/AirfRANS">the AirfRANS benchmark repository</a> and
-      <a href="https://github.com/Extrality/airfrans_lib">airfrans_lib</a>.
-    </p>
-  </section>
+  {% include dataset_intro.html slug="airfrans" %}
 
   <section class="dataset-panel">
     <h3>Dataset summary</h3>
@@ -50,10 +37,17 @@ compact_masthead: true
         <dd><code>Full</code>, <code>Scarce</code>, <code>Reynolds extrapolation</code>, and <code>AoA extrapolation</code>.</dd>
       </div>
       <div>
-        <dt>Fields</dt>
-        <dd>Velocity components, reduced pressure, turbulent kinematic viscosity, and surface pressure coefficients.</dd>
+        <dt>Source fields</dt>
+        <dd>
+          Velocity <code>U</code>, reduced or kinematic pressure <code>p</code>, and turbulent kinematic viscosity <code>nut</code>. FluidsBench
+          currently scores <code>U</code> and <code>p</code>, not <code>nut</code>.
+        </dd>
       </div>
     </dl>
+  </section>
+
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html slug="airfrans" %}
   </section>
 
   <section class="dataset-panel">
@@ -66,17 +60,20 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Cp stations</h3>
+    <h3>Required velocity-profile stations</h3>
     <p>
-      The <a href="https://arxiv.org/abs/2212.07564">AirfRANS paper</a> evaluates pressure distributions on the two
-      airfoil sides separately. Use the exact ID in <code>station_id</code>.
+      Extract Cartesian <code>U_x/U_inf</code> and <code>U_y/U_inf</code> along a 0.1 m line normal to the extrados at each station. Every line
+      contains 1,001 uniformly spaced samples, including both endpoints. The pinned extractor fixes surface selection, orientation, interpolation, and
+      arclength checks.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">
-        <thead><tr><th>Station ID</th><th>Displayed station</th></tr></thead>
+        <thead><tr><th>Station ID</th><th>Location</th><th>Purpose</th></tr></thead>
         <tbody>
-          <tr><td><code>upper_surface</code></td><td>Upper surface (extrados).</td></tr>
-          <tr><td><code>lower_surface</code></td><td>Lower surface (intrados).</td></tr>
+          <tr><td><code>upper_x_0_25c</code></td><td>Extrados, x/c = 0.25</td><td>Attached-flow boundary layer.</td></tr>
+          <tr><td><code>upper_x_0_50c</code></td><td>Extrados, x/c = 0.50</td><td>Mid-chord boundary layer.</td></tr>
+          <tr><td><code>upper_x_0_75c</code></td><td>Extrados, x/c = 0.75</td><td>Adverse-pressure-gradient region.</td></tr>
+          <tr><td><code>upper_x_0_95c</code></td><td>Extrados, x/c = 0.95</td><td>Near-trailing-edge or separated-flow region.</td></tr>
         </tbody>
       </table>
     </div>
@@ -89,7 +86,7 @@ compact_masthead: true
         <dt>Relative L2 error</dt>
         <dd>
           For each case and target field <code>q</code>, map predictions to every required node and return predictions and
-          targets to dimensional physical space: <code>q* = inverse_transform(q)</code>. Report both the unweighted node and
+          targets to their release-native physical representation: <code>q* = inverse_transform(q)</code>. Report both the unweighted node and
           area- or length-weighted variants from the complete-case numerators and denominators, then macro-average the case
           percentages. The airfoil curve uses length weighting as primary; the two-dimensional flow domain uses
           unweighted node L2 (each node counts equally) as primary.
@@ -103,16 +100,17 @@ compact_masthead: true
         </dd>
       </div>
       <div>
-        <dt>Dimensional evaluation</dt>
+        <dt>Release-native evaluation</dt>
         <dd>
           AirfRANS models are commonly trained on normalized fields. FluidsBench relative L1/L2 metrics should be
-          computed after undoing those normalizations, not on the normalized fields reported by the original MSE tables.
+          computed after undoing those normalizations, not on the normalized fields reported by the original MSE tables. The released
+          <code>p</code> values are kinematic pressure in m²/s², not pascals.
         </dd>
       </div>
       <div>
         <dt>Airfoil-curve pressure relative L1/L2</dt>
         <dd>
-          Relative L1 and L2 error for dimensional pressure at every ordered node of the one-dimensional airfoil curve.
+          Relative L1 and L2 error for release-native kinematic pressure <code>p</code> at every ordered node of the one-dimensional airfoil curve.
           Length-weighted relative L2 is primary; unweighted node relative L2 (each node counts equally) is secondary.
         </dd>
       </div>
@@ -126,7 +124,7 @@ compact_masthead: true
       <div>
         <dt>Two-dimensional flow velocity and pressure relative L1/L2</dt>
         <dd>
-          Each case uses <code>u_x</code>, <code>u_y</code>, and pressure at every node in the released internal VTU.
+          Each case uses the two components of <code>U</code> and kinematic pressure <code>p</code> at every node in the released internal VTU.
           Unweighted node relative L2 (each node counts equally) is primary and area-weighted relative L2 is secondary; cases are not
           flattened together before taking the norm.
         </dd>
@@ -140,17 +138,17 @@ compact_masthead: true
         </dd>
       </div>
       <div>
-        <dt>Cp cut R<sup>2</sup></dt>
+        <dt>Velocity profile R<sup>2</sup></dt>
         <dd>
-          One global R<sup>2</sup> over all selected airfoil-curve pressure coefficient samples from held-out cases,
-          flattened across <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and chordwise sample locations.
+          One R<sup>2</sup> over the required <code>U_x/U_inf</code> and <code>U_y/U_inf</code> samples, flattened across the four stations, all
+          evaluated cases, 1,001 sample points, and both Cartesian components.
         </dd>
       </div>
       <div>
-        <dt>Velocity profile R<sup>2</sup></dt>
+        <dt>Explicit exclusions</dt>
         <dd>
-          R<sup>2</sup> over selected boundary-layer velocity profiles, flattened across stations, cases, sample points,
-          and velocity components.
+          Turbulent viscosity <code>nut</code> and airfoil pressure-profile <code>cp_cut_r2</code> are not in the current FluidsBench metric list.
+          Their presence in the source dataset must not be interpreted as an active leaderboard target.
         </dd>
       </div>
     </dl>

@@ -11,19 +11,7 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section>
-    <p class="dataset-kicker">Dataset specification</p>
-    <p class="dataset-intro">
-      DrivAerNet++ is a large-scale, high-fidelity CFD dataset for automotive external aerodynamics. CarBench uses it as
-      the basis for a standardized benchmark on surface pressure prediction across realistic car geometries.
-    </p>
-    <p>
-      The source dataset and tooling are maintained by the DrivAerNet++ project, with benchmark training and evaluation
-      code released through <a href="https://github.com/Mohamedelrefaie/CarBench">CarBench</a>. Dataset access is
-      available from <a href="https://github.com/Mohamedelrefaie/DrivAerNet">the DrivAerNet++ repository</a> and the
-      <a href="https://huggingface.co/datasets/MoElrefaie/DrivAerNet">Hugging Face dataset page</a>.
-    </p>
-  </section>
+  {% include dataset_intro.html slug="drivaernetplusplus" %}
 
   <section class="dataset-panel">
     <h3>Dataset summary</h3>
@@ -34,17 +22,17 @@ compact_masthead: true
       </div>
       <div>
         <dt>Cases</dt>
-        <dd>More than 8,000 steady-state high-fidelity car simulations.</dd>
+        <dd>8,150 vehicle designs in the canonical multimodal collection.</dd>
       </div>
       <div>
         <dt>Primary CarBench task</dt>
         <dd>Surface kinematic pressure prediction from geometry.</dd>
       </div>
       <div>
-        <dt>Default split</dt>
+        <dt>Current FluidsBench split</dt>
         <dd>
-          CarBench geometry-disjoint evaluation split. The first leaderboard split is named <code>Default</code>; its scored case list and ground truth
-          are public under the FluidsBench open-reproducibility policy.
+          <code>default</code> currently contains one prototype-generated case. A reviewed 1,154-case proposal exists but is not active in the dev
+          submission specification.
         </dd>
       </div>
       <div>
@@ -58,7 +46,15 @@ compact_masthead: true
           volume fields, forces, and profiles require a later release-bound evaluator.
         </dd>
       </div>
+      <div>
+        <dt>Licence</dt>
+        <dd>CC BY-NC 4.0; downstream use must satisfy the source dataset's non-commercial terms.</dd>
+      </div>
     </dl>
+  </section>
+
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html slug="drivaernetplusplus" %}
   </section>
 
   <section class="dataset-panel">

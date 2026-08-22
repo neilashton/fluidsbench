@@ -32,10 +32,18 @@ Run the website and leaderboard checks:
 ```bash
 npx prettier . --check
 node bin/check_leaderboard_claim_ui.js
-python3 -m unittest discover -s tests -p "test_release_snapshot.py"
+python3 -m unittest discover -s tests -p "test_*.py"
+python3 bin/check_dataset_pages.py \
+  --submission-root ../fluidsbench-submission
 python3 bin/check_profile_contract.py \
   --submission-root ../fluidsbench-submission
 JEKYLL_ENV=production bundle exec jekyll build --lsi
+```
+
+When refreshing a source dataset description or image, also run the live revision audit:
+
+```bash
+python3 bin/check_dataset_pages.py --check-live-sources
 ```
 
 To reproduce the review deployment:

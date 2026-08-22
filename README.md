@@ -65,9 +65,18 @@ With `fluidsbench-submission` cloned alongside this repository:
 ```bash
 python3 bin/check_profile_contract.py \
   --submission-root ../fluidsbench-submission
+python3 bin/check_dataset_pages.py \
+  --submission-root ../fluidsbench-submission
 node bin/check_leaderboard_claim_ui.js
-python3 -m unittest discover -s tests -p "test_release_snapshot.py"
+python3 -m unittest discover -s tests -p "test_*.py"
 bundle exec jekyll build --lsi
+```
+
+The dataset-page check verifies every page's structured source snapshot, visual asset, getting-started guide, split status, and scientific-contract
+digest. Maintainers can also compare the recorded source revisions with Hugging Face, GitHub, and Dataverse:
+
+```bash
+python3 bin/check_dataset_pages.py --check-live-sources
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the protected-branch workflow and review-deployment checks.
