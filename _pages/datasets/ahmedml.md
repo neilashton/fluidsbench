@@ -48,11 +48,11 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Published source splits; FluidsBench bindings under review</h3>
+    <h3>Published source splits</h3>
     <p>
       AhmedML publishes the eight train, validation, and test manifests below. The names and counts are current source definitions, but the matching
-      FluidsBench split files are still labelled <code>prototype_generated</code>; use them for development only until the owner approves the exact
-      scoring bindings.
+      FluidsBench split files are still labelled <code>prototype_generated</code>; use them for development only until the exact scoring bindings are
+      finalized.
     </p>
 
     <div class="dataset-table-wrap">

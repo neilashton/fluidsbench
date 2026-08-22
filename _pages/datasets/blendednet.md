@@ -31,14 +31,14 @@ compact_masthead: true
             <td><code>geometry_holdout</code></td>
             <td>8,830 cases from 999 geometries</td>
             <td>870 cases</td>
-            <td>Prototype mapping; owner approval required</td>
+            <td>Prototype mapping; not active</td>
           </tr>
         </tbody>
       </table>
     </div>
     <p>
-      Before activation, the owner must publish the exact geometry-disjoint train, validation, and test lists against Dataverse version 1.0 and approve
-      the evaluator and native surface-area support. Until then, this row documents intent and cannot be used for an official submission.
+      Before activation, the exact geometry-disjoint train, validation, and test lists must be published against Dataverse version 1.0, together with
+      the finalized evaluator and native surface-area support. Until then, this row documents intent and cannot be used for an official submission.
     </p>
   </section>
 
