@@ -40,6 +40,11 @@ window.__FluidsBenchClaimTest = {
   reproducibilityArtifactAvailability,
   mappingSummary,
   metricDefinition,
+  resultRevision,
+  resultRowById,
+  revisionRowsForActiveSplit,
+  versionsForRow,
+  rowRanking,
   renderReleaseMetadata,
   renderSubmissionAvailability,
   scoringSupportSummary,
@@ -494,6 +499,15 @@ function verifyOfficialAcademicHappyPath() {
       reason_code: "approved_submitted_data_result",
       reason: "Approved submitted-data result in this immutable release.",
     },
+    result_revision: {
+      series_id: "model-rd",
+      version: 2,
+      supersedes: "model-rd-v1",
+      change_summary: "Updated training and evaluation mapping.",
+      is_latest: true,
+      latest_submission_id: submissionId,
+      version_count: 2,
+    },
   };
   const trainingSurfaceSummary = api.representationSummary(row.spatial_discretization.summary.training.surface_input);
   assert.match(trainingSurfaceSummary, /vertex: 1,024 per case/i);
@@ -556,6 +570,25 @@ function verifyOfficialAcademicHappyPath() {
   };
   api.state.metrics = new Map(api.state.manifest.metric_definitions.map((definition) => [definition.id, definition]));
   api.state.rows = new Map([["Example", [row]]]);
+  const previousRow = {
+    ...row,
+    id: "model-rd-v1",
+    submission_id: "model-rd-v1",
+    submitted_at: "2026-07-20",
+    date: "2026-07-20",
+    ranking: undefined,
+    claim_eligibility: undefined,
+    result_revision: {
+      series_id: "model-rd",
+      version: 1,
+      supersedes: null,
+      change_summary: "Initial published result.",
+      is_latest: false,
+      latest_submission_id: submissionId,
+      version_count: 2,
+    },
+  };
+  api.state.revisionRows = new Map([["Example", [previousRow, row]]]);
   api.state.dataset = "Example";
   api.state.split = "Full";
   api.state.resultId = submissionId;
@@ -600,6 +633,14 @@ function verifyOfficialAcademicHappyPath() {
     "missing optional code, model, and environment artifacts must not gate citation"
   );
   assert.equal(api.claimEligibility(rankedRow).promotion, true, "missing optional code, model, and environment artifacts must not gate promotion");
+  assert.equal(api.versionsForRow(rankedRow).length, 2);
+  assert.equal(api.rowRanking(previousRow), null, "superseded versions must not receive a current release rank");
+  assert.equal(api.claimEligibility(previousRow).academic_citation, false);
+  api.openDetails(previousRow, false);
+  const previousVersionDetails = elements.get("details-dialog-body").innerHTML;
+  assert.match(previousVersionDetails, /Not ranked — superseded version/);
+  assert.match(previousVersionDetails, /Initial published result/);
+  assert.match(previousVersionDetails, /data-result-revision="model-rd-v2"/);
   api.openDetails(rankedRow, false);
   const missingArtifactDetails = elements.get("details-dialog-body").innerHTML;
   assert.match(missingArtifactDetails, /Code artifact availability<\/dt><dd>Not supplied \(optional\)/);

@@ -36,6 +36,10 @@
     manifest: null,
     metrics: new Map(),
     rows: new Map(),
+    revisionRows: new Map(),
+    revisionHistoryLoaded: false,
+    loadedRevisionHistorySha256: null,
+    revisionHistoryVerified: false,
     loadedManifestSha256: null,
     manifestPinVerified: false,
     groundTruthManifest: null,
@@ -60,6 +64,7 @@
     dataset: "",
     split: "",
     modelType: "",
+    showAllVersions: false,
     sortKey: "rank",
     sortDirection: "asc",
     visibleGroups: new Set(),
@@ -238,6 +243,7 @@
     if (dataset) params.set("dataset", slug(dataset.name));
     if (split) params.set("split", split.id || slug(split.name));
     if (state.modelType) params.set("model_type", state.modelType);
+    if (state.showAllVersions) params.set("versions", "all");
     params.set("sort", state.sortKey);
     params.set("direction", state.sortDirection);
     params.set(
@@ -268,6 +274,7 @@
       dataset: params.get("dataset") || "",
       split: params.get("split") || "",
       modelType: params.get("model_type") || "",
+      showAllVersions: params.get("versions") === "all",
       sortKey: params.get("sort") || "",
       sortDirection: params.get("direction") || "",
       visibleGroups: (params.get("columns") || "")
@@ -478,7 +485,14 @@
           const expectedClaimId = [loaded.data.release_id, entry.dataset_id, entry.split_id, entry.submission_id].join("/");
           const expectedFile = `leaderboard/claims/${entry.dataset_id}/${entry.split_id}/${entry.submission_id}.json`;
           if (typeof entry.eligible !== "boolean") throw new Error("claim index eligibility values must be booleans");
-          if (entry.claim_id !== expectedClaimId || entry.file !== expectedFile || !/^[a-f0-9]{64}$/.test(entry.sha256 || "")) {
+          if (
+            entry.claim_id !== expectedClaimId ||
+            entry.file !== expectedFile ||
+            !entry.series_id ||
+            !Number.isInteger(entry.version) ||
+            entry.version < 1 ||
+            !/^[a-f0-9]{64}$/.test(entry.sha256 || "")
+          ) {
             throw new Error("claim index contains an invalid claim identity, path, or checksum");
           }
         });
@@ -564,7 +578,8 @@
       result.split_id !== (row.split_id || slug(row.split)) ||
       result.model !== row.model ||
       result.dataset !== row.dataset ||
-      result.split !== row.split
+      result.split !== row.split ||
+      !jsonStructuresEqual(result.result_revision, resultRevision(row))
     ) {
       throw new Error("claim record result binding does not match the hash-verified feed row");
     }
@@ -575,6 +590,12 @@
     const declaredEligible = row.claim_eligibility?.academic_citation === true && row.claim_eligibility?.promotion === true;
     if (entry.eligible !== declaredEligible) {
       throw new Error("claim index eligibility does not match the hash-verified feed row");
+    }
+    if (
+      entry.series_id !== resultRevision(row).series_id ||
+      Number(entry.version) !== resultRevision(row).version
+    ) {
+      throw new Error("claim index revision metadata does not match the hash-verified feed row");
     }
     const bindings = record.bindings || {};
     const resultBinding = bindings.result || {};
@@ -804,6 +825,39 @@
     splitSelects().forEach((select) => populateSelect(select, options, state.split));
   }
 
+  function normalizedResultRevision(entry) {
+    const declared = record(entry?.result_revision);
+    const submissionId = String(entry?.submission_id || entry?.id || "");
+    const legacyMatch = submissionId.match(/^(.*)-v1$/);
+    const version = Number.isInteger(declared.version) && declared.version > 0
+      ? declared.version
+      : legacyMatch
+        ? 1
+        : 1;
+    const seriesId = String(declared.series_id || (legacyMatch ? legacyMatch[1] : submissionId));
+    return {
+      series_id: seriesId,
+      version,
+      supersedes: declared.supersedes ?? (version > 1 ? `${seriesId}-v${version - 1}` : null),
+      change_summary: declared.change_summary ?? null,
+      is_latest: declared.is_latest !== false,
+      latest_submission_id: String(declared.latest_submission_id || submissionId),
+      version_count: Math.max(1, Number(declared.version_count) || 1),
+    };
+  }
+
+  function resultRevision(row) {
+    return normalizedResultRevision(row);
+  }
+
+  function revisionLabel(row) {
+    return `v${resultRevision(row).version}`;
+  }
+
+  function isLatestRevision(row) {
+    return resultRevision(row).is_latest;
+  }
+
   function normalizeRow(entry, feedIndex) {
     const metricValues = {};
     Object.entries(entry.metric_values || {}).forEach(([metricId, value]) => {
@@ -822,6 +876,7 @@
       submitter: entry.submitter_name || entry.institution || "Unknown submitter",
       date: entry.submitted_at || "",
       approvalStatus: entry.approval?.status || "not_supplied",
+      result_revision: normalizedResultRevision(entry),
     };
     normalized.predictionDataRank = predictionAvailability(normalized).rank;
     return normalized;
@@ -1269,6 +1324,92 @@
       .join(" | ");
   }
 
+  function revisionHistoryMetadata() {
+    return record(dataRelease().revision_history);
+  }
+
+  function indexRevisionRows(records) {
+    datasetEntries().forEach((entry) => state.revisionRows.set(entry.name, []));
+    records.map((entry, index) => normalizeRow(entry, index)).forEach((row) => {
+      if (state.revisionRows.has(row.dataset)) state.revisionRows.get(row.dataset).push(row);
+    });
+  }
+
+  function validateRevisionHistory(history, metadata) {
+    if (history?.release_id !== dataRelease().id || history?.release_status !== dataRelease().status) {
+      throw new Error("revision history release binding does not match the selected data release");
+    }
+    if (history?.generated_at !== dataRelease().generated_at || history?.schema_version !== metadata.schema_version) {
+      throw new Error("revision history metadata does not match the selected data release");
+    }
+    if (!Array.isArray(history?.records) || Number(history.record_count) !== history.records.length) {
+      throw new Error("revision history record count is invalid");
+    }
+    if (Number(metadata.record_count) !== history.records.length) {
+      throw new Error("revision history record count does not match the selected data release");
+    }
+    const submissionIds = history.records.map((entry) => entry.submission_id);
+    if (new Set(submissionIds).size !== submissionIds.length) {
+      throw new Error("revision history contains duplicate submission IDs");
+    }
+    const groups = new Map();
+    history.records.forEach((entry) => {
+      const revision = normalizedResultRevision(entry);
+      const key = [entry.dataset_id, entry.split_id, revision.series_id].join("|");
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push({ entry, revision });
+    });
+    if (Number(history.series_count) !== groups.size || Number(metadata.series_count) !== groups.size) {
+      throw new Error("revision history series count does not match the selected data release");
+    }
+    groups.forEach((items) => {
+      const ordered = items.slice().sort((left, right) => left.revision.version - right.revision.version);
+      const versions = ordered.map(({ revision }) => revision.version);
+      if (versions.some((version, index) => version !== index + 1)) {
+        throw new Error("revision history contains a non-sequential result series");
+      }
+      const latest = ordered.filter(({ revision }) => revision.is_latest);
+      if (latest.length !== 1 || latest[0].revision.version !== versions.at(-1)) {
+        throw new Error("revision history does not identify exactly one latest version per series");
+      }
+      const latestSubmissionId = ordered.at(-1).entry.submission_id;
+      ordered.forEach(({ entry, revision }, index) => {
+        const expectedSupersedes = index === 0 ? null : ordered[index - 1].entry.submission_id;
+        if (revision.supersedes !== expectedSupersedes) {
+          throw new Error("revision history does not link each version to its exact predecessor");
+        }
+        if (revision.version_count !== ordered.length || revision.latest_submission_id !== latestSubmissionId) {
+          throw new Error("revision history contains inconsistent derived version metadata");
+        }
+      });
+    });
+    const currentIds = new Set(Array.from(state.rows.values()).flat().map((row) => row.id));
+    const historyLatestIds = new Set(history.records.filter((entry) => normalizedResultRevision(entry).is_latest).map((entry) => entry.submission_id));
+    if (currentIds.size !== historyLatestIds.size || Array.from(currentIds).some((id) => !historyLatestIds.has(id))) {
+      throw new Error("ranked feed rows do not match the latest revision-history records");
+    }
+  }
+
+  async function ensureRevisionHistory() {
+    if (state.revisionHistoryLoaded) return state.revisionRows;
+    const metadata = revisionHistoryMetadata();
+    if (!metadata.file || !metadata.sha256) {
+      indexRevisionRows(Array.from(state.rows.values()).flat());
+      state.revisionHistoryLoaded = true;
+      return state.revisionRows;
+    }
+    const loaded = await fetchJsonWithProvenance(fileUrl(metadata.file), "leaderboard revision history");
+    if (!loaded.sha256 || loaded.sha256 !== metadata.sha256) {
+      throw new Error("revision history checksum does not match the selected data release");
+    }
+    validateRevisionHistory(loaded.data, metadata);
+    indexRevisionRows(loaded.data.records);
+    state.loadedRevisionHistorySha256 = loaded.sha256;
+    state.revisionHistoryVerified = true;
+    state.revisionHistoryLoaded = true;
+    return state.revisionRows;
+  }
+
   async function ensureRows(dataset) {
     if (state.rows.has(dataset.name)) return state.rows.get(dataset.name);
     if (!state.feedRowsLoaded) {
@@ -1289,6 +1430,7 @@
       state.loadedFeedSha256 = loaded.sha256;
       state.feedVerified = true;
       state.feedRowsLoaded = true;
+      await ensureRevisionHistory();
       await ensureClaimsIndex();
     }
     return state.rows.get(dataset.name) || [];
@@ -1580,7 +1722,32 @@
     });
   }
 
+  function revisionRowsForActiveSplit() {
+    const currentRows = rowsForActiveSplit();
+    const currentById = new Map(currentRows.map((row) => [row.id, row]));
+    return (state.revisionRows.get(state.dataset) || [])
+      .filter((row) => row.split === state.split)
+      .map((row) => currentById.get(row.id) || row);
+  }
+
+  function resultRowById(resultId) {
+    if (!resultId) return null;
+    return (
+      rowsForActiveSplit().find((row) => row.id === resultId) ||
+      revisionRowsForActiveSplit().find((row) => row.id === resultId) ||
+      null
+    );
+  }
+
+  function versionsForRow(row) {
+    const revision = resultRevision(row);
+    return revisionRowsForActiveSplit()
+      .filter((candidate) => resultRevision(candidate).series_id === revision.series_id)
+      .sort((left, right) => resultRevision(right).version - resultRevision(left).version);
+  }
+
   function rowRanking(row) {
+    if (row && !isLatestRevision(row)) return null;
     return row?._ranking || generatedRanking(row, rankingPolicy()) || fallbackRankings([row], rankingPolicy())[0]?.ranking || null;
   }
 
@@ -1588,12 +1755,17 @@
     return rowsForActiveSplit().filter((row) => !state.modelType || row.modelTypes.includes(state.modelType));
   }
 
+  function tableRowsForCurrentModelType() {
+    const rows = state.showAllVersions ? revisionRowsForActiveSplit() : rowsForActiveSplit();
+    return rows.filter((row) => !state.modelType || row.modelTypes.includes(state.modelType));
+  }
+
   function figureRows() {
     return rowsForCurrentModelType().filter((row) => state.comparedModelIds.has(row.id));
   }
 
   function filteredRows() {
-    const ranked = rowsForCurrentModelType();
+    const ranked = tableRowsForCurrentModelType();
     if (state.sortKey === "rank") {
       const direction = state.sortDirection === "asc" ? "lower" : "higher";
       return ranked.slice().sort((a, b) => compareNumbers(a.rank, b.rank, direction) || String(a.id).localeCompare(String(b.id)));
@@ -1754,6 +1926,8 @@
     if (release.status) details.push(humanize(release.status));
     if (release.generated_at) details.push(`generated ${formatReleaseDate(release.generated_at)}`);
     if (release.feed_sha256) details.push(`SHA-256 ${release.feed_sha256.slice(0, 12)}...`);
+    if (release.revision_history?.sha256) details.push(`history SHA-256 ${release.revision_history.sha256.slice(0, 12)}...`);
+    if (state.revisionHistoryVerified) details.push("version history verified");
     if (releaseManifestSha256()) details.push(`manifest SHA-256 ${releaseManifestSha256().slice(0, 12)}...`);
     if (state.manifestPinVerified) details.push("manifest bytes match snapshot pin");
     if (release.reproducibility_contract_version) details.push(release.reproducibility_contract_version);
@@ -1777,7 +1951,7 @@
     });
     const citationButton = element("open-citation-dialog");
     if (citationButton) {
-      const citedRow = state.resultId ? rowsForActiveSplit().find((row) => row.id === state.resultId) : null;
+      const citedRow = resultRowById(state.resultId);
       const eligibility = claimEligibility(citedRow);
       const eligible = eligibility.academic_citation;
       citationButton.disabled = !state.dataset || !eligible;
@@ -1854,6 +2028,11 @@
         loaded_sha256: state.claimsIndexProvenance?.sha256 || null,
         url: state.claimsIndexProvenance?.url || null,
       },
+      revision_history: {
+        ...revisionHistoryMetadata(),
+        verified: state.revisionHistoryVerified,
+        loaded_sha256: state.loadedRevisionHistorySha256,
+      },
       publication_scope: publicationScope(),
       license: {
         spdx_id: license.spdxId || null,
@@ -1868,6 +2047,7 @@
         split: state.split,
         split_id: activeSplitDefinition()?.id || null,
         model_type: currentView ? state.modelType || null : null,
+        result_versions: currentView && state.showAllVersions ? "all" : "latest_only",
         sort: currentView ? { key: state.sortKey, direction: state.sortDirection } : { key: "rank", direction: "asc" },
         visible_column_groups: Array.from(state.visibleGroups),
         compared_model_ids: figureRows().map((row) => row.id),
@@ -1897,6 +2077,7 @@
       ["profile_ground_truth_json", () => provenance.profile_ground_truth],
       ["ranking_contract_json", () => provenance.ranking_contract],
       ["claims_index_json", () => provenance.claims_index],
+      ["revision_history_json", () => provenance.revision_history],
       ["view_url", () => provenance.view_url],
       ["release_license_spdx", () => provenance.license.spdx_id],
       ["release_license_name", () => provenance.license.name],
@@ -1938,6 +2119,13 @@
       ["claim_record_verification_status", (row) => claimRecordCheck(row)?.status || "not_checked"],
       ["claim_record_verification_error", (row) => claimRecordCheck(row)?.error],
       ["submission_id", (row) => row.id],
+      ["result_series_id", (row) => resultRevision(row).series_id],
+      ["result_version", (row) => resultRevision(row).version],
+      ["result_is_latest", (row) => resultRevision(row).is_latest],
+      ["result_supersedes", (row) => resultRevision(row).supersedes],
+      ["result_latest_submission_id", (row) => resultRevision(row).latest_submission_id],
+      ["result_version_count", (row) => resultRevision(row).version_count],
+      ["result_change_summary", (row) => resultRevision(row).change_summary],
       ["dataset", (row) => row.dataset],
       ["dataset_version", (row) => row.dataset_version],
       ["split", (row) => row.split],
@@ -2317,7 +2505,7 @@
     const releaseId = release.id || "unversioned";
     const checksum = release.feed_sha256 || "not supplied";
     const manifestChecksum = releaseManifestSha256() || "not supplied";
-    const citedResult = state.resultId ? rowsForActiveSplit().find((row) => row.id === state.resultId) : null;
+    const citedResult = resultRowById(state.resultId);
     const url = citedResult ? resultUrl(citedResult, true) : citedViewUrl();
     const validation = citedResult ? maintainerValidation(citedResult) : {};
     const resultRanking = citedResult ? rowRanking(citedResult) : null;
@@ -2691,7 +2879,13 @@
     }
     if (column.key === "rank") {
       const context = rowRanking(submission);
-      const rankChip = chip("leaderboard-rank", submission.rank ?? "—");
+      const rankChip = chip(
+        `leaderboard-rank${isLatestRevision(submission) ? "" : " is-archived"}`,
+        isLatestRevision(submission) ? submission.rank ?? "—" : "Archived"
+      );
+      if (!isLatestRevision(submission)) {
+        rankChip.title = "This superseded version is retained for history and does not occupy a current ranking position.";
+      }
       if (context?.tied) {
         rankChip.title = `Joint rank ${context.rank}; ${context.tie_count} results share this published value.`;
         rankChip.setAttribute("aria-label", `Joint rank ${context.rank} of ${context.ranked_result_count}, shared by ${context.tie_count} results`);
@@ -2710,6 +2904,15 @@
         openDetails(submission);
       });
       cell.appendChild(link);
+      const revision = resultRevision(submission);
+      const revisionBadge = chip(
+        `leaderboard-revision-badge${revision.is_latest ? "" : " is-superseded"}`,
+        revisionLabel(submission)
+      );
+      revisionBadge.title = revision.is_latest
+        ? `Latest version in this result series (${revision.version_count} version${revision.version_count === 1 ? "" : "s"})`
+        : `Superseded by ${revision.latest_submission_id}`;
+      cell.appendChild(revisionBadge);
       return;
     } else if (column.key === "submitter") {
       cell.classList.add("leaderboard-submitter");
@@ -2778,6 +2981,19 @@
     const types = Array.from(new Set((state.rows.get(state.dataset) || []).flatMap((row) => row.modelTypes))).sort();
     const options = [{ value: "", label: "All model types" }, ...types.map((type) => ({ value: type, label: type }))];
     state.modelType = populateSelect(element("type-filter"), options, state.modelType);
+  }
+
+  function renderVersionControl() {
+    const control = element("show-all-versions");
+    if (!control) return;
+    control.checked = state.showAllVersions;
+    const dataset = activeDataset();
+    const revisionCount = Number(dataset?.revision_count || 0);
+    const currentCount = Number(dataset?.submission_count || 0);
+    control.disabled = revisionCount <= currentCount;
+    control.title = control.disabled
+      ? "No previous result versions are published for this dataset yet."
+      : "Include superseded versions as unranked historical rows.";
   }
 
   function setDefaultComparedModels() {
@@ -3187,7 +3403,7 @@
 
   async function copyResultCitation(kind) {
     const status = element("result-citation-copy-status");
-    const row = state.resultId ? rowsForActiveSplit().find((candidate) => candidate.id === state.resultId) : null;
+    const row = resultRowById(state.resultId);
     const eligibility = claimEligibility(row);
     const allowed = kind === "promotion" ? eligibility.promotion : eligibility.academic_citation;
     if (!row || !allowed) {
@@ -4397,6 +4613,15 @@
         source: "data_release",
       };
     }
+    if (!isLatestRevision(row)) {
+      return {
+        academic_citation: false,
+        promotion: false,
+        reason_code: "superseded_result_revision",
+        reason: "This revision has been superseded and is retained for history; cite its original immutable release record.",
+        source: "revision_history",
+      };
+    }
     const declared = row.claim_eligibility;
     if (!state.feedVerified || !declared || typeof declared !== "object") {
       return {
@@ -4422,6 +4647,12 @@
     const addBlocker = (code, reason, targets = ["academic_citation", "promotion"]) => {
       blockers.push({ code, reason, targets });
     };
+    if (row && !isLatestRevision(row)) {
+      addBlocker(
+        "superseded_result_revision",
+        "This revision is preserved for history but is not ranked in the current release; use its original immutable release to cite its former rank."
+      );
+    }
     if (release.status !== "official") addBlocker("release_not_official", "This data release is not official.");
     if (release.status === "official" && !expectedManifestSha256) {
       addBlocker(
@@ -4669,7 +4900,7 @@
     const focusWasInside = Boolean(focused && dialog.contains?.(focused));
     const focusedHref = focusWasInside && focused.tagName === "A" ? focused.href : "";
     const focusedCopyAction = focusWasInside ? focused.dataset?.copyResultCitation || "" : "";
-    const row = rowsForActiveSplit().find((candidate) => candidate.id === state.resultId);
+    const row = resultRowById(state.resultId);
     if (!row) return;
     openDetails(row, false);
     const body = element("details-dialog-body");
@@ -4681,13 +4912,42 @@
     replacement?.focus();
   }
 
+  function revisionHistoryHtml(row) {
+    const versions = versionsForRow(row);
+    if (!versions.length) return "";
+    const rankingDefinition = metricDefinition(ranking().metric_id);
+    const items = versions
+      .map((versionRow) => {
+        const revision = resultRevision(versionRow);
+        const selected = versionRow.id === row.id;
+        const value = versionRow.metricValues?.[ranking().metric_id];
+        const status = revision.is_latest ? "Latest and currently ranked" : `Superseded by ${revision.latest_submission_id}`;
+        const summary = revision.change_summary || (revision.version === 1 ? "Initial published result." : "No legacy change summary supplied.");
+        return `<li class="leaderboard-revision-item${selected ? " is-selected" : ""}">
+          <a href="${escapeHtml(resultUrl(versionRow))}" data-result-revision="${escapeHtml(versionRow.id)}" ${
+            selected ? 'aria-current="page"' : ""
+          }>${escapeHtml(revisionLabel(versionRow))}</a>
+          <span>${escapeHtml(versionRow.date || "Date not supplied")} · ${escapeHtml(status)}</span>
+          <span>${escapeHtml(plainMetricLabel(rankingDefinition) || ranking().metric_id)}: ${escapeHtml(
+            formatMetric(value, rankingDefinition)
+          )}</span>
+          <p>${escapeHtml(summary)}</p>
+        </li>`;
+      })
+      .join("");
+    return `<section><h4>Version history</h4><p class="details-note">Every published version is immutable. Only the latest version occupies a current leaderboard position.</p><ol class="leaderboard-revision-list">${items}</ol></section>`;
+  }
+
   function openDetails(row, syncUrl = true) {
     state.resultId = row.id;
     if (syncUrl) updateUrl();
     renderReleaseMetadata();
     const dialog = element("details-dialog");
-    element("details-dialog-title").textContent = row.model;
-    element("details-dialog-subtitle").textContent = `${row.dataset} / ${row.split}`;
+    const revision = resultRevision(row);
+    element("details-dialog-title").textContent = `${row.model} — ${revisionLabel(row)}`;
+    element("details-dialog-subtitle").textContent = `${row.dataset} / ${row.split} · ${
+      revision.is_latest ? "latest version" : "superseded version"
+    }`;
     const links = [
       detailsLink("Paper", row.paper_url),
       detailsLink("Legacy code link", row.code_url),
@@ -4768,7 +5028,7 @@
     const scoringCoverage = scoringCoverageSummary(row);
     const validation = maintainerValidation(row);
     void ensureValidationEvidence(row);
-    void ensureClaimRecord(row);
+    if (revision.is_latest) void ensureClaimRecord(row);
     const validationCheck = validationEvidenceCheck(row);
     const claimCheck = claimRecordCheck(row);
     const eligibility = claimEligibility(row);
@@ -4786,6 +5046,31 @@
         return `<section><h4>${escapeHtml(group)}</h4><dl>${values}</dl></section>`;
       })
       .join("");
+    const rankAndClaimSection = rankContext
+      ? `<section><h4>Rank and claim context</h4><dl>
+        ${detailsRow("Rank in this release", resultRankText(rankContext))}
+        ${detailsRow("Ranked result count", rankContext.ranked_result_count)}
+        ${detailsRow("Tied", rankContext.tied ? `Yes — ${rankContext.tie_count} results share this rank` : "No")}
+        ${detailsRow("Ranking metric", plainMetricLabel(metricDefinition(rankContext.metric_id)) || rankContext.metric_id)}
+        ${detailsRow("Published ranking value", rankingValueText(rankContext))}
+        ${detailsRow("Submitter-provided ranking value", rankContext.value)}
+        ${detailsRow("Ranking direction", `${humanize(rankContext.direction)} is better`)}
+        ${detailsRow(
+          "Published ranking precision",
+          `${rankContext.decimal_places} decimal place${rankContext.decimal_places === 1 ? "" : "s"}; decimal-half-up rounding`
+        )}
+        ${detailsRow("Tie method", "Competition ranking (1, 2, 2, 4)")}
+        ${detailsRow("Exact rank scope", `${state.dataset} / ${state.split} / ${dataRelease().id || "unversioned"}`)}
+        ${detailsRow("Claim record SHA-256", claimCheck?.sha256)}
+        ${detailsRow("Claim record bytes", humanize(claimCheck?.status || "not_checked"))}
+        ${detailsRow("Claim record attempted URL", claimCheck?.url)}
+        ${detailsRow("Claim record verification error", claimCheck?.error)}
+      </dl><p class="details-note">This rank is fixed to the exact dataset, split, result version, and data release shown above. It is not a claim about a later leaderboard release.</p></section>`
+      : `<section><h4>Revision status</h4><dl>
+        ${detailsRow("Current rank", "Not ranked — superseded version")}
+        ${detailsRow("Latest submission ID", revision.latest_submission_id)}
+        ${detailsRow("Original submitted score retained", formatMetric(row.metricValues?.[ranking().metric_id], metricDefinition(ranking().metric_id)))}
+      </dl><p class="details-note">This immutable version remains available for audit and comparison, but it does not occupy a position in the current leaderboard. Any former rank belongs to the immutable release that originally published it.</p></section>`;
     const resultCitationActions = `<div class="leaderboard-result-citation-actions">
           <button class="leaderboard-action-button" type="button" data-copy-result-citation="plain" aria-describedby="result-citation-eligibility" ${
             eligibility.academic_citation ? "" : "disabled"
@@ -4806,27 +5091,14 @@
           <p id="result-citation-copy-status" class="leaderboard-copy-status" role="status"></p>
         </div>`;
     element("details-dialog-body").innerHTML = `
-      <section><h4>Rank and claim context</h4><dl>
-        ${detailsRow("Rank in this release", resultRankText(rankContext))}
-        ${detailsRow("Ranked result count", rankContext?.ranked_result_count)}
-        ${detailsRow("Tied", rankContext?.tied ? `Yes — ${rankContext.tie_count} results share this rank` : "No")}
-        ${detailsRow("Ranking metric", plainMetricLabel(metricDefinition(rankContext?.metric_id)) || rankContext?.metric_id)}
-        ${detailsRow("Published ranking value", rankingValueText(rankContext))}
-        ${detailsRow("Submitter-provided ranking value", rankContext?.value)}
-        ${detailsRow("Ranking direction", `${humanize(rankContext?.direction)} is better`)}
-        ${detailsRow(
-          "Published ranking precision",
-          `${rankContext?.decimal_places} decimal place${rankContext?.decimal_places === 1 ? "" : "s"}; decimal-half-up rounding`
-        )}
-        ${detailsRow("Tie method", "Competition ranking (1, 2, 2, 4)")}
-        ${detailsRow("Exact rank scope", `${state.dataset} / ${state.split} / ${dataRelease().id || "unversioned"}`)}
-        ${detailsRow("Claim record SHA-256", claimCheck?.sha256)}
-        ${detailsRow("Claim record bytes", humanize(claimCheck?.status || "not_checked"))}
-        ${detailsRow("Claim record attempted URL", claimCheck?.url)}
-        ${detailsRow("Claim record verification error", claimCheck?.error)}
-      </dl><p class="details-note">This rank is fixed to the exact dataset, split, and data release shown above. It is not a claim about the changing current leaderboard.</p></section>
+      ${rankAndClaimSection}
+      ${revisionHistoryHtml(row)}
       <section><h4>Submission</h4><dl>
         ${detailsRow("Submission ID", row.id)}
+        ${detailsRow("Result series", revision.series_id)}
+        ${detailsRow("Version", revisionLabel(row))}
+        ${detailsRow("Supersedes", revision.supersedes)}
+        ${detailsRow("Change summary", revision.change_summary || (revision.version === 1 ? "Initial published result." : null))}
         ${detailsRow("Dataset version", row.dataset_version)}
         ${detailsRow("Split ID", row.split_id)}
         ${detailsRow("Submitted by", row.submitter)}
@@ -5018,6 +5290,7 @@
 
     const modelTypes = new Set((state.rows.get(state.dataset) || []).flatMap((row) => row.modelTypes));
     if (modelTypes.has(restored.modelType)) state.modelType = restored.modelType;
+    state.showAllVersions = restored.showAllVersions;
 
     const sortKeys = new Set(
       allColumns()
@@ -5054,7 +5327,7 @@
     state.profileCase = restored.profileCase;
 
     state.requestedResultId = restored.resultId;
-    const resultExists = rowsForActiveSplit().some((row) => row.id === restored.resultId);
+    const resultExists = Boolean(resultRowById(restored.resultId));
     state.resultUnavailable = Boolean(restored.resultId && !state.releaseMismatch && !resultExists);
     state.resultId = restored.resultId && !state.releaseMismatch && resultExists ? restored.resultId : "";
 
@@ -5073,6 +5346,7 @@
     renderTable();
     renderRankingPolicy();
     renderTypeFilter();
+    renderVersionControl();
     renderComparisonModelPicker();
     renderComparisonControls();
     renderScatterControls();
@@ -5127,6 +5401,7 @@
       state.dataset = dataset.name;
       state.split = dataset.splits?.[0]?.name || "";
       state.modelType = "";
+      state.showAllVersions = false;
       state.sortKey = "rank";
       state.sortDirection = "asc";
       state.comparisonMetric = dataset.ranking?.metric_id || "";
@@ -5154,7 +5429,7 @@
       element("leaderboard-error").hidden = true;
       renderAll();
       if (state.resultId) {
-        const targetRow = rowsForActiveSplit().find((row) => row.id === state.resultId);
+        const targetRow = resultRowById(state.resultId);
         if (targetRow) openDetails(targetRow, false);
       }
       if (syncUrl) updateUrl();
@@ -5231,6 +5506,11 @@
       renderTable();
       updateFigureSelection();
     });
+    element("show-all-versions")?.addEventListener("change", (event) => {
+      state.showAllVersions = event.target.checked;
+      renderTable();
+      updateUrl();
+    });
     element("comparison-metric")?.addEventListener("change", (event) => {
       state.comparisonMetric = event.target.value;
       renderComparisonChart();
@@ -5283,6 +5563,15 @@
       if (event.target === event.currentTarget) event.currentTarget.close();
     });
     document.addEventListener("click", (event) => {
+      const revisionLink = event.target.closest("[data-result-revision]");
+      if (revisionLink) {
+        const revisionRow = resultRowById(revisionLink.dataset.resultRevision);
+        if (revisionRow) {
+          event.preventDefault();
+          openDetails(revisionRow);
+        }
+        return;
+      }
       const resultCitationButton = event.target.closest("[data-copy-result-citation]");
       if (resultCitationButton) {
         void copyResultCitation(resultCitationButton.dataset.copyResultCitation);

@@ -182,6 +182,18 @@ def validate_manifest(manifest: object, release_id: str, artifact_commit: str) -
         if not isinstance(claims.get("index_sha256"), str) or not SHA256.fullmatch(claims["index_sha256"]):
             errors.append("manifest data_release.claims.index_sha256 must be a lowercase SHA-256 digest")
 
+    revision_history = release.get("revision_history")
+    if not isinstance(revision_history, dict):
+        errors.append("manifest data_release.revision_history must describe the immutable version history")
+    else:
+        if not safe_asset_path(revision_history.get("file")):
+            errors.append("manifest data_release.revision_history.file must be a safe repository-relative asset path")
+        if not isinstance(revision_history.get("sha256"), str) or not SHA256.fullmatch(revision_history["sha256"]):
+            errors.append("manifest data_release.revision_history.sha256 must be a lowercase SHA-256 digest")
+        for key in ("record_count", "series_count"):
+            if not isinstance(revision_history.get(key), int) or isinstance(revision_history[key], bool) or revision_history[key] < 0:
+                errors.append(f"manifest data_release.revision_history.{key} must be a non-negative integer")
+
     ground_truth = release.get("profile_ground_truth")
     if not isinstance(ground_truth, dict):
         errors.append("manifest data_release.profile_ground_truth must pin a public manifest")
@@ -508,6 +520,8 @@ def prepare(args: argparse.Namespace) -> int:
         "feed_sha256": release["feed_sha256"],
         "claims_index_file": release["claims"]["index_file"],
         "claims_index_sha256": release["claims"]["index_sha256"],
+        "revision_history_file": release["revision_history"]["file"],
+        "revision_history_sha256": release["revision_history"]["sha256"],
         "ground_truth_manifest_url": release["profile_ground_truth"]["manifest_url"],
         "ground_truth_manifest_sha256": release["profile_ground_truth"]["manifest_sha256"],
     }

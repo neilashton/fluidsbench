@@ -12,6 +12,13 @@
       "index_file": "leaderboard/claims/index.json",
       "index_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
     },
+    "revision_history": {
+      "schema_version": "1.0",
+      "file": "leaderboard/revisions.json",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "record_count": 3,
+      "series_count": 2
+    },
     "profile_ground_truth": {
       "manifest_url": "https://fluidsbench.org/releases/profile-ground-truth-2026-07/manifest.json",
       "manifest_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"

@@ -40,6 +40,7 @@ SCORING_SUPPORT_SCHEMA_NAMES = (
 PUBLIC_RELEASE_SCHEMA_ROOT = ROOT / "schemas" / "releases"
 RELEASE_SCHEMA_NAMES = (
     "claim-index.schema.json",
+    "revision-history.schema.json",
     "result-claim.schema.json",
 )
 COMPLETE_COVERAGE = "complete_split"
