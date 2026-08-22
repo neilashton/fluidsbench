@@ -52,11 +52,11 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Published source splits; FluidsBench bindings under review</h3>
+    <h3>Published source splits</h3>
     <p>
       The Hugging Face source publishes these fourteen deterministic split families over all 1,800 cases. The table gives the exact manifest IDs and
       counts. The corresponding FluidsBench case files are still marked <code>prototype_generated</code>, so they remain development bindings until
-      the exact scored arrays, masks, weights, evaluator, and case lists receive dataset-owner approval.
+      the exact scored arrays, masks, weights, evaluator, and case lists are finalized.
     </p>
 
     <div class="dataset-table-wrap">

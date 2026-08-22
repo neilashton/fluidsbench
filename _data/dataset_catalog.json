@@ -26,10 +26,10 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Owner review required",
+      "status_label": "Benchmark definition in preparation",
       "submissions_open": false,
       "source_pin": "Not yet frozen",
-      "summary": "The current candidate scores native boundary pMean and wallShearStressMean, native-volume UMean and pMean, forces, and profile diagnostics. Public boundary_cell_area sidecars support area-weighted surface errors, but the eight FluidsBench case lists are still marked prototype-generated and require owner approval.",
+      "summary": "The current candidate scores native boundary pMean and wallShearStressMean, native-volume UMean and pMean, forces, and profile diagnostics. Public boundary_cell_area sidecars support area-weighted surface errors, but the eight FluidsBench case lists are still provisional and not open for submissions.",
       "split_ids": ["full", "medium", "scarce", "super_scarce", "geometry", "high_drag", "low_drag", "image_wake"],
       "case_id_status": "prototype_generated",
       "contract_digest": "1c95ec2d7ea700ad609b658fe90fc8ecbbf4ea897f14ac6cb40e03774630d228"
@@ -67,10 +67,10 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Candidate contract; owner review required",
+      "status_label": "Candidate benchmark definition",
       "submissions_open": false,
       "source_pin": "7a5c0948ce27be709b1116a3a190f806e7a8f79f",
-      "summary": "The candidate contract binds all 484 public cases, eight official split lists, pMeanTrim and wallShearStressMeanTrim on every native surface polygon, UMeanTrim and pMeanTrim on every native volume cell, constant-reference force truth, AutoCFD5 velocity profiles, and continuous Cp cuts. Surface area sidecars and equal-cell volume accumulation are fixed; evaluator freezing, all-case diagnostic replay, genuine-model sensitivity analysis, and owner approval remain activation gates.",
+      "summary": "The candidate contract binds all 484 public cases, eight official split lists, pMeanTrim and wallShearStressMeanTrim on every native surface polygon, UMeanTrim and pMeanTrim on every native volume cell, constant-reference force truth, AutoCFD5 velocity profiles, and continuous Cp cuts. Surface area sidecars and equal-cell volume accumulation are fixed; evaluator freezing, all-case diagnostic replay, and genuine-model sensitivity analysis remain before public submissions can open.",
       "split_ids": ["full", "medium", "scarce", "super_scarce", "geometry", "high_drag", "low_drag", "rear_separation"],
       "case_id_status": "official",
       "contract_digest": "d8b62960b408a96d306922eebf088b76e985563f82044da1098fa925fdef29ae"
@@ -108,7 +108,7 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Prototype pressure task; owner review required",
+      "status_label": "Prototype pressure task",
       "submissions_open": false,
       "source_pin": "Dataverse DOI 10.7910/DVN/K7PWNJ, version 1.0",
       "summary": "The active dev contract is still a one-case prototype. It scores kinematic surface pressure p at every native VTK PointData location with area-weighted relative L2 as primary and equal-point relative L2 as secondary. It does not yet activate the reviewed 1,154-case test proposal, wall shear, volume fields, forces, or profiles.",
@@ -149,7 +149,7 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Prototype contract; owner review required",
+      "status_label": "Prototype benchmark definition",
       "submissions_open": false,
       "source_pin": "Not yet frozen",
       "summary": "The candidate field definition uses cpavg and the cfxavg/cfyavg/cfzavg skin-friction vector on every native boundary point, plus velocityxavg/velocityyavg/velocityzavg and pressureavg on every native volume cell. Public dual-area sidecars and eight source split families now exist, but the FluidsBench contract still contains only one prototype case and has not bound the 350 complete field runs.",
@@ -190,10 +190,10 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Prototype contract; owner review required",
+      "status_label": "Prototype benchmark definition",
       "submissions_open": false,
       "source_pin": "Not yet frozen",
-      "summary": "The source now publishes all fourteen deterministic splits, native-point surface area sidecars, and invalid-volume-row records. FluidsBench has candidate surface, volume, force, Cp-cut, and velocity-profile metrics, but its case lists and exact scored array bindings remain prototype-generated and are not yet owner-approved.",
+      "summary": "The source now publishes all fourteen deterministic splits, native-point surface area sidecars, and invalid-volume-row records. FluidsBench has candidate surface, volume, force, Cp-cut, and velocity-profile metrics, but its case lists and exact scored array bindings remain provisional and are not active for submissions.",
       "split_ids": [
         "full",
         "medium",
@@ -246,7 +246,7 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Official case lists; scoring support under review",
+      "status_label": "Official case lists; scoring definition in preparation",
       "submissions_open": false,
       "source_pin": "d35d4035d8ba6fa98c1a6662be925c2fc777610b",
       "summary": "FluidsBench binds the four official AirfRANS evaluation lists. The current scored flow fields are U and p—not nut—and the boundary task scores pressure plus wall shear derived by the fixed evaluator. Required diagnostics are Ux/U∞ and Uy/U∞ on 1,001-point extrados-normal lines at x/c = 0.25, 0.50, 0.75, and 0.95. Pressure-profile Cp is not a current leaderboard metric.",
@@ -287,10 +287,10 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Prototype geometry holdout; owner review required",
+      "status_label": "Prototype geometry holdout",
       "submissions_open": false,
       "source_pin": "Dataverse DOI 10.7910/DVN/VJT9EP, version 1.0",
-      "summary": "The candidate task is surface-only and uses cp plus cf_x/cf_y/cf_z on every native legacy-VTK surface point, with area-weighted relative L2 as the primary physical metric. The current 870-case geometry-holdout list is prototype-generated; the public Dataverse release does not separately identify it as an official evaluation release, so the mapping still needs dataset-owner approval.",
+      "summary": "The candidate task is surface-only and uses cp plus cf_x/cf_y/cf_z on every native legacy-VTK surface point, with area-weighted relative L2 as the primary physical metric. The current 870-case geometry-holdout list is provisional; the public Dataverse release does not separately identify it as an official evaluation release, so this mapping is not active for submissions.",
       "split_ids": ["geometry_holdout"],
       "case_id_status": "prototype_generated",
       "contract_digest": "10f9edf41794878eb79f51fb9025f253b1f58808c98fbf23620194970650bb0c"
@@ -328,7 +328,7 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Prototype open-ground-truth split required",
+      "status_label": "Public-ground-truth split in preparation",
       "submissions_open": false,
       "source_pin": "Not yet frozen",
       "summary": "The candidate scores Density, Pressure, and Temperature over every vertex of the native blade-surface CGNS zone, together with Massflow, Compression_ratio, and Efficiency. Because the source 200-case evaluation targets are hidden, FluidsBench must publish and approve a separate public-ground-truth evaluation split before submissions can open; the current eight case lists are prototypes.",
@@ -369,7 +369,7 @@
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Prototype open-ground-truth split required",
+      "status_label": "Public-ground-truth split in preparation",
       "submissions_open": false,
       "source_pin": "Not yet frozen",
       "summary": "The candidate scores mach and nut on every native two-dimensional CGNS vertex, M_iso along every blade-curve vertex, and the six public scalar targets. Because the source 168-case evaluation targets are hidden, FluidsBench must publish and approve a separate public-ground-truth evaluation split; all eight current case lists are prototypes.",

@@ -55,8 +55,8 @@ compact_masthead: true
     <h3>Published source splits</h3>
     <p>
       WindsorML now publishes eight deterministic source split families. These are current source definitions, not yet active FluidsBench case
-      bindings: the submission specification still contains one prototype case and needs an owner-approved policy for the five runs without complete
-      per-run fields.
+      bindings: the submission specification still contains one prototype case and needs a fixed policy for the five runs without complete per-run
+      fields.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">

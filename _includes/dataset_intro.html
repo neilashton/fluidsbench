@@ -39,11 +39,11 @@
 
   <div class="dataset-release-grid">
     <article>
-      <p class="dataset-release-label">Source snapshot checked</p>
+      <p class="dataset-release-label">Source release</p>
       <p>
         <a href="{{ dataset.source.revision_url }}"><strong>{{ dataset.source.release }}</strong></a>
       </p>
-      <p>Checked {{ dataset.source.checked_on | date: "%-d %B %Y" }}. This records source freshness; it does not move the scoring pin.</p>
+      <p>Use this immutable revision when following the download example below.</p>
     </article>
     <article>
       <p class="dataset-release-label">Availability and licence</p>
@@ -51,10 +51,7 @@
       <p><a href="{{ dataset.source.license_url }}">{{ dataset.source.license }}</a>. Check the source release for its complete terms.</p>
     </article>
     <article>
-      <p class="dataset-release-label">FluidsBench contract</p>
-      <p>
-        <span class="dataset-status dataset-status--review">{{ dataset.benchmark.status_label }}</span>
-      </p>
+      <p class="dataset-release-label">Benchmark definition</p>
       <p>
         Scoring source pin: <strong>{{ dataset.benchmark.source_pin }}</strong>.
         <a
