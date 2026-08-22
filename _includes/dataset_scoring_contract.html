@@ -30,7 +30,8 @@
           <td>Three-dimensional body boundary</td>
           <td>
             <code>run_&lt;case-id&gt;/boundary_&lt;case-id&gt;.vtp</code>; <code>pMean</code> and <code>wallShearStressMean</code> in VTK
-            <code>CellData</code> (<code>static(p)_coeffMean</code> is also available for coefficient diagnostics)
+            <code>CellData</code>; matching polygon areas are in <code>boundary_cell_area_&lt;case-id&gt;.npy</code> (<code>static(p)_coeffMean</code>
+            is also available for coefficient diagnostics)
           </td>
           <td>Every polygon carrying the scored pressure and wall-shear fields</td>
           <td>Area-weighted primary; unweighted polygon (each polygon counts equally) secondary</td>
@@ -48,8 +49,9 @@
         <tr>
           <td>Three-dimensional vehicle boundary</td>
           <td>
-            <code>run_&lt;case-id&gt;/boundary_&lt;case-id&gt;.vtp</code>; <code>pMeanTrim</code> and <code>wallShearStressMeanTrim</code> in VTK
-            <code>CellData</code> (<code>CpMeanTrim</code> is also available for coefficient diagnostics)
+            <code>&lt;case-id&gt;/boundary_&lt;run-number&gt;.vtp</code>; <code>pMeanTrim</code> and <code>wallShearStressMeanTrim</code> in VTK
+            <code>CellData</code>; matching polygon areas are in <code>boundary_cell_area_&lt;run-number&gt;.npy</code> (<code>CpMeanTrim</code> is
+            also available for coefficient diagnostics)
           </td>
           <td>Every polygon carrying the scored pressure and wall-shear fields</td>
           <td>Area-weighted primary; unweighted polygon (each polygon counts equally) secondary</td>
@@ -57,11 +59,11 @@
         <tr>
           <td>Three-dimensional flow volume</td>
           <td>
-            <code>run_&lt;case-id&gt;/volume_&lt;case-id&gt;.vtu</code>, reconstructed from the released <code>.00.part</code> and
-            <code>.01.part</code> files; <code>UMeanTrim</code> and <code>pMeanTrim</code> in VTK <code>CellData</code>
+            <code>&lt;case-id&gt;/volume_&lt;run-number&gt;.vtu</code>, byte-reconstructed from the exact ordered two- or three-part list in the
+            native source pin; <code>UMeanTrim</code> and <code>pMeanTrim</code> in VTK <code>CellData</code>
           </td>
           <td>Every cell carrying <code>UMeanTrim</code> and <code>pMeanTrim</code></td>
-          <td>Unweighted cell (each cell counts equally) primary; volume-weighted secondary</td>
+          <td>Equal native cell only; geometric cell-volume weights are not required by the candidate contract</td>
         </tr>
         {% when "windsorml" %}
         <tr>
@@ -70,7 +72,8 @@
             <code>run_&lt;case-id&gt;/boundary_&lt;case-id&gt;.vtu</code>; <code>cpavg</code> and <code>cfxavg</code>/<code>cfyavg</code>/<code
               >cfzavg</code
             >
-            in VTK <code>PointData</code>
+            in VTK <code>PointData</code>; matching point dual areas are in <code>boundary_dual_area_&lt;case-id&gt;.npy</code> for the 350 complete
+            public field cases
           </td>
           <td>Every point carrying the scored pressure and skin-friction coefficients</td>
           <td>Area-weighted primary; unweighted point (each point counts equally) secondary</td>
@@ -89,7 +92,8 @@
           <td>Three-dimensional aircraft boundary</td>
           <td>
             <code>geo_LHC&lt;id&gt;_AoA_&lt;angle&gt;/boundary_geo_LHC&lt;id&gt;_AoA_&lt;angle&gt;.vtu.tgz</code>, VTK <code>PointData</code>; the
-            owner-approved scoring release will pin the exact scored array names
+            matching <code>boundary_dual_area_*.npy</code> is public in exact native-point order; the owner-approved scoring release will pin the
+            exact scored array names
           </td>
           <td>Every point carrying each scored boundary field</td>
           <td>Area-weighted primary; unweighted point (each point counts equally) secondary</td>
@@ -123,17 +127,17 @@
         <tr>
           <td>Two-dimensional flow domain</td>
           <td>
-            <code>Dataset/&lt;case&gt;/&lt;case&gt;_internal.vtu</code>, arrays <code>U</code>, <code>p</code>, and <code>nut</code> in VTK
-            <code>PointData</code>
+            <code>Dataset/&lt;case&gt;/&lt;case&gt;_internal.vtu</code>, scored arrays <code>U</code> and <code>p</code> in VTK
+            <code>PointData</code>; source array <code>nut</code> is not scored
           </td>
-          <td>Every mesh node carrying each scored interior field</td>
+          <td>Every mesh node carrying <code>U</code> and <code>p</code></td>
           <td>Unweighted node (each node counts equally) primary; area-weighted secondary</td>
         </tr>
         <tr>
           <td>One-dimensional airfoil boundary curve</td>
           <td>
-            <code>Dataset/&lt;case&gt;/&lt;case&gt;_aerofoil.vtp</code>, pressure in VTK <code>PointData</code>; pressure is kinematic/reduced, and
-            wall shear is derived by the fixed AirfRANS procedure
+            <code>Dataset/&lt;case&gt;/&lt;case&gt;_aerofoil.vtp</code>, <code>p</code> in VTK <code>PointData</code>; pressure is kinematic/reduced,
+            and wall shear is derived by the fixed AirfRANS procedure
           </td>
           <td>Every ordered boundary node carrying or defining each scored quantity</td>
           <td>Length-weighted primary; unweighted node (each node counts equally) secondary</td>
@@ -193,6 +197,16 @@
 
   <h4>How to calculate large cases</h4>
   <ul>
+    {% if include.slug == "drivaerml" %}
+    <li>
+      DrivAerML uses area-weighted relative L2 as the primary surface value and equal-native-polygon relative L2 as its secondary surface value. Its
+      native volume fields use equal-native-cell relative L2 only; the candidate contract deliberately does not require geometric cell-volume weights.
+    </li>
+    <li>
+      Use the public <code>boundary_cell_area_&lt;run&gt;.npy</code> value for each surface polygon in the identical native VTP cell order. Each
+      volume cell contributes one equal unit to the volume numerator and denominator.
+    </li>
+    {% else %}
     <li>
       Surface and one-dimensional curve fields use area- or length-weighted relative L2 as the primary value and unweighted relative L2 as the
       secondary value. Two- and three-dimensional flow domains reverse that order: unweighted relative L2 is primary and area- or volume-weighted
@@ -203,10 +217,11 @@
       <code>PointData</code> or CGNS <code>Vertex</code> fields, FluidsBench supplies the area, volume, or curve length represented by each point or
       vertex, derived from the same reference mesh connectivity.
     </li>
+    {% endif %}
     <li>
-      In one pass over each case, accumulate the squared-error numerator and ground-truth denominator for both the unweighted and area-, length-, or
-      volume-weighted variants, together with entity count and total area, length, or volume. Chunks may be any convenient size, but their numerators
-      and denominators must be summed before taking the square root; never average chunk-level L2 values.
+      In one pass over each case, accumulate the squared-error numerator and ground-truth denominator for every relative-L2 variant required in the
+      table above, together with the corresponding entity count and total physical measure wherever one is used. Chunks may be any convenient size,
+      but their numerators and denominators must be summed before taking the square root; never average chunk-level L2 values.
     </li>
     <li>Calculate each complete-case percentage first, then macro-average the case percentages so every case counts equally.</li>
   </ul>

@@ -10,23 +10,10 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section class="dataset-section">
-    <h2>Overview</h2>
-    <p>
-      Rotor37 contains 1,200 CFD samples derived from NASA Rotor 37 compressor configurations. The published field
-      support is a two-dimensional quadrilateral blade-surface manifold embedded in three-dimensional space, rather
-      than a three-dimensional flow volume.
-      FluidsBench follows the current PLAID release: 1,000 cases form the training pool and 200 cases form the published
-      evaluation set. The source release does not publish the evaluation targets, so that 200-case set cannot be the
-      FluidsBench open-reproducibility scoring split. The official FluidsBench split will identify a separate case list
-      whose field-bearing CGNS files and ground truth are public.
-    </p>
-    <p>
-      Inputs are blade geometry, surface normals, rotational speed <code>Omega</code>, and pressure condition
-      <code>P</code>. The current canonical outputs are <code>Density</code>, <code>Pressure</code>, and
-      <code>Temperature</code> fields plus <code>Massflow</code>, <code>Compression_ratio</code>, and
-      <code>Efficiency</code> scalars. The obsolete polytropic-efficiency target from earlier work is not used.
-    </p>
+  {% include dataset_intro.html slug="rotor37" %}
+
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html heading=2 slug="rotor37" %}
   </section>
 
   <section class="dataset-section">

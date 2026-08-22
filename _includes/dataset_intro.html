@@ -1,0 +1,78 @@
+{% assign dataset = site.data.dataset_catalog[include.slug] %}
+<section class="dataset-overview" data-dataset-id="{{ include.slug }}">
+  <div class="dataset-overview-copy">
+    <p class="dataset-kicker">{{ dataset.category }}</p>
+    <h2>Overview</h2>
+    <p class="dataset-intro">{{ dataset.summary }}</p>
+  </div>
+
+  <div class="dataset-hero-grid">
+    <figure class="dataset-source-figure">
+      <a href="{{ dataset.source.image.source_url }}">
+        <img src="{{ dataset.source.image.path | relative_url }}" alt="{{ dataset.source.image.alt }}" width="1200" height="675" decoding="async" />
+      </a>
+      <figcaption>
+        {{ dataset.source.image.caption }}
+        <a href="{{ dataset.source.image.source_url }}">{{ dataset.source.image.credit }}</a>.
+      </figcaption>
+    </figure>
+
+    <div class="dataset-evaluation-map" aria-label="{{ dataset.name }} FluidsBench evaluation schematic">
+      <p class="dataset-evaluation-title">FluidsBench evaluation schematic</p>
+      <ol>
+        <li>
+          <span>Model inputs</span>
+          <strong>{{ dataset.visual.inputs }}</strong>
+        </li>
+        <li>
+          <span>Scoring support</span>
+          <strong>{{ dataset.visual.support }}</strong>
+        </li>
+        <li>
+          <span>Reported evaluation</span>
+          <strong>{{ dataset.visual.metrics }}</strong>
+        </li>
+      </ol>
+      <p class="dataset-schematic-note">Schematic only; the benchmark specification fixes the exact files, entities, arrays, and equations.</p>
+    </div>
+  </div>
+
+  <div class="dataset-release-grid">
+    <article>
+      <p class="dataset-release-label">Source snapshot checked</p>
+      <p>
+        <a href="{{ dataset.source.revision_url }}"><strong>{{ dataset.source.release }}</strong></a>
+      </p>
+      <p>Checked {{ dataset.source.checked_on | date: "%-d %B %Y" }}. This records source freshness; it does not move the scoring pin.</p>
+    </article>
+    <article>
+      <p class="dataset-release-label">Availability and licence</p>
+      <p><strong>{{ dataset.source.availability }}</strong></p>
+      <p><a href="{{ dataset.source.license_url }}">{{ dataset.source.license }}</a>. Check the source release for its complete terms.</p>
+    </article>
+    <article>
+      <p class="dataset-release-label">FluidsBench contract</p>
+      <p>
+        <span class="dataset-status dataset-status--review">{{ dataset.benchmark.status_label }}</span>
+      </p>
+      <p>
+        Scoring source pin: <strong>{{ dataset.benchmark.source_pin }}</strong>.
+        <a
+          href="https://github.com/neilashton/fluidsbench-submission/tree/{{ site.submission_source_ref | default: 'main' }}/benchmark-specs/{{ include.slug }}"
+          >Open contract</a
+        >.
+      </p>
+    </article>
+  </div>
+
+  <div class="dataset-source-contract">
+    <div>
+      <h3>What the source contains</h3>
+      <p>{{ dataset.source.contents }}</p>
+    </div>
+    <div>
+      <h3>What FluidsBench currently evaluates</h3>
+      <p>{{ dataset.benchmark.summary }}</p>
+    </div>
+  </div>
+</section>

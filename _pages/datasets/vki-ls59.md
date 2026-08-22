@@ -10,23 +10,10 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section class="dataset-section">
-    <h2>Overview</h2>
-    <p>
-      VKI-LS59 contains 839 two-dimensional CFD simulations of the LS59 turbine cascade across inlet incidence and
-      outlet Mach number. FluidsBench follows the PLAID release: 671 cases form the published training pool and 168
-      cases form the published evaluation set. The source release does not publish the evaluation targets, so that
-      168-case set cannot be the FluidsBench open-reproducibility scoring split. The official FluidsBench split will
-      identify a separate case list whose field-bearing CGNS files and ground truth are public.
-    </p>
-    <p>
-      The model inputs are <code>angle_in</code>, <code>mach_out</code>, geometry, and signed-distance information.
-      Stored outputs are density (<code>ro</code>), momentum (<code>rou</code> and <code>rov</code>), energy
-      (<code>roe</code>), turbulent kinematic viscosity (<code>nut</code>), Mach number (<code>mach</code>), and
-      blade-curve isentropic Mach number (<code>M_iso</code>). Scalar targets are the source dataset's unexpanded
-      <code>Q</code> quantity, power, pressure ratio (<code>Pr</code>), temperature ratio (<code>Tr</code>), isentropic
-      efficiency (<code>eth_is</code>), and outlet angle (<code>angle_out</code>).
-    </p>
+  {% include dataset_intro.html slug="vki-ls59" %}
+
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html heading=2 slug="vki-ls59" %}
   </section>
 
   <section class="dataset-section">

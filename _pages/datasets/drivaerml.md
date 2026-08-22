@@ -11,20 +11,7 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section>
-    <p class="dataset-kicker">Dataset specification</p>
-    <p class="dataset-intro">
-      DrivAerML is a high-fidelity CFD dataset for road-car external aerodynamics based on 500 parametrically morphed
-      variants of the DrivAer notchback vehicle. It provides geometry, surface fields, volume fields, slices, and
-      time-averaged forces and moments for machine-learning surrogate development.
-    </p>
-    <p>
-      The source dataset is maintained at
-      <a href="https://caemldatasets.org/drivaerml/">caemldatasets.org/drivaerml</a>. The dataset page describes the full
-      Hugging Face layout, including STL geometry, VTP boundary fields, VTU volume fields, force/moment CSV files, and
-      flow slices.
-    </p>
-  </section>
+  {% include dataset_intro.html slug="drivaerml" %}
 
   <section class="dataset-panel">
     <h3>Dataset summary</h3>
@@ -35,7 +22,7 @@ compact_masthead: true
       </div>
       <div>
         <dt>Cases</dt>
-        <dd>500 CFD simulations.</dd>
+        <dd>500 designed simulations; 484 complete cases are currently public and bound by the candidate contract.</dd>
       </div>
       <div>
         <dt>Solver</dt>
@@ -56,11 +43,16 @@ compact_masthead: true
     </dl>
   </section>
 
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html slug="drivaerml" %}
+  </section>
+
   <section class="dataset-panel">
-    <h3>Planned benchmark splits</h3>
+    <h3>Official source and candidate benchmark splits</h3>
     <p>
-      DrivAerML submissions should set <code>split</code> to one of the benchmark split names below. The public split
-      manifest excludes the 16 unavailable or author-held-back run IDs from every train, validation, and test partition.
+      These eight case lists are published by the source and marked <code>official</code> in the candidate FluidsBench contract. They exclude all 16
+      unavailable or held-back run IDs. Submissions remain closed until the evaluator and complete scoring-support release pass the remaining
+      activation gates.
     </p>
 
     <div class="dataset-table-wrap">
@@ -76,56 +68,56 @@ compact_masthead: true
         </thead>
         <tbody>
           <tr>
-            <td><code>Full</code></td>
+            <td><code>full</code></td>
             <td>Seed-42 random public baseline split.</td>
             <td>400</td>
             <td>34</td>
             <td>50</td>
           </tr>
           <tr>
-            <td><code>Medium</code></td>
+            <td><code>medium</code></td>
             <td>Nested data-efficiency subset with fixed validation and test cases.</td>
             <td>133</td>
             <td>34</td>
             <td>50</td>
           </tr>
           <tr>
-            <td><code>Scarce</code></td>
+            <td><code>scarce</code></td>
             <td>Smaller nested data-efficiency subset with fixed validation and test cases.</td>
             <td>67</td>
             <td>34</td>
             <td>50</td>
           </tr>
           <tr>
-            <td><code>Super scarce</code></td>
+            <td><code>super_scarce</code></td>
             <td>Minimum-data nested training subset with fixed validation and test cases.</td>
             <td>11</td>
             <td>34</td>
             <td>50</td>
           </tr>
           <tr>
-            <td><code>Geometry</code></td>
+            <td><code>geometry</code></td>
             <td>STL-surface Chamfer geometry out-of-distribution split.</td>
             <td>339</td>
             <td>48</td>
             <td>97</td>
           </tr>
           <tr>
-            <td><code>High drag</code></td>
+            <td><code>high_drag</code></td>
             <td>High-drag force-regime out-of-distribution split.</td>
             <td>339</td>
             <td>48</td>
             <td>97</td>
           </tr>
           <tr>
-            <td><code>Low drag</code></td>
+            <td><code>low_drag</code></td>
             <td>Low-drag force-regime out-of-distribution split.</td>
             <td>339</td>
             <td>48</td>
             <td>97</td>
           </tr>
           <tr>
-            <td><code>Rear separation</code></td>
+            <td><code>rear_separation</code></td>
             <td>Image-derived low-speed wake and rear-separation out-of-distribution split.</td>
             <td>339</td>
             <td>48</td>
@@ -147,11 +139,11 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Cp stations</h3>
+    <h3>Candidate continuous Cp cuts</h3>
     <p>
-      These stations reproduce the surface-pressure probe traces in the
-      <a href="https://arxiv.org/abs/2408.11969">DrivAerML validation study</a>. Use the exact ID in
-      <code>station_id</code>.
+      These four FluidsBench cuts follow the validation regions used by DrivAerML but are defined as continuous intersections of each participant's
+      complete native surface prediction. They are distinct from the 209 discrete AutoCFD5 pressure taps, which are explicitly excluded from the
+      DrivAerML submission and score. Immutable all-case extraction support is still an activation gate.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">
@@ -167,56 +159,66 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
+    <h3>Candidate AutoCFD5 velocity profiles</h3>
+    <p>
+      The velocity diagnostic uses all 16 AutoCFD5 lines: <code>V1</code>–<code>V6</code>, <code>U1</code>–<code>U6</code>, <code>L1</code>, and
+      <code>R1</code>–<code>R3</code>. The submitted quantity is <code>|UMeanTrim| / 38.889</code> on the fixed 10 mm candidate grid, giving 3,756
+      samples per case. The ranked reduction is an equal-case, equal-line global R² with normalized trapezoidal arclength support per line; normalized
+      RMSE and the experimental subset are report-only diagnostics. All-case mapping and resolution-convergence validation are not yet complete.
+    </p>
+  </section>
+
+  <section class="dataset-panel">
     <h3>Metric definitions</h3>
     <dl class="metric-definition-list">
       <div>
         <dt>Relative L2 error</dt>
         <dd>
           For each evaluation/test geometry, map predictions to every entity in the release-bound public field support and return predictions and
-          targets to dimensional physical space, \(q^\ast = T_q^{-1}(q)\). Calculate both paired relative-L2 values from the accumulated
+          targets to their release-native representation, \(q^\ast = T_q^{-1}(q)\). Calculate both paired relative-L2 values from the accumulated
           sufficient statistics: area-weighted L2 is primary on the boundary, while unweighted cell L2 (each cell counts equally) is primary in the flow volume.
           Report the complete-case percentages first, then take the arithmetic mean of the geometry-level values.
         </dd>
       </div>
       <div>
-        <dt>Relative L1 error</dt>
+        <dt>MAE and RMSE diagnostics</dt>
         <dd>
-          When reported as a supplementary metric, relative L1 uses the same complete dimensional support and the primary weighting for that domain.
-          Calculate a percentage for each geometry, then take the arithmetic mean of the geometry-level percentages.
+          The current candidate reports area-weighted and equal-polygon MAE/RMSE for both surface arrays, and equal-cell MAE/RMSE for both volume
+          arrays. Relative L1 is not part of the active DrivAerML metric list.
         </dd>
       </div>
       <div>
-        <dt>Dimensional evaluation</dt>
+        <dt>Release-native evaluation</dt>
         <dd>
-          Relative L1 and L2 metrics are not computed on normalized, standardized, or non-dimensional training targets. If
+          Field metrics are not computed on normalized or standardized training targets. If
           a model predicts normalized values, the submission/evaluator must undo that transform before scoring.
-          C<sub>d</sub>, C<sub>l</sub>, and Cp-cut comparisons remain coefficient-based by definition.
+          <code>pMeanTrim</code> and <code>wallShearStressMeanTrim</code> are stored in m²/s², while <code>UMeanTrim</code> is in m/s.
+          Force and Cp-cut comparisons remain coefficient-based by definition.
         </dd>
       </div>
       <div>
-        <dt>Surface pressure relative L1/L2</dt>
+        <dt>Surface pressure relative L2</dt>
         <dd>
-          Relative L1 and L2 error for dimensional surface pressure <code>p_surface_pred</code> against the evaluator
-          surface pressure values. Cp is used only for the Cp-cut comparisons and plots.
+          Area-weighted primary and equal-polygon secondary relative L2 for <code>pMeanTrim</code> on every native boundary VTP cell. Cp is derived
+          only for the continuous-cut comparison.
         </dd>
       </div>
       <div>
-        <dt>Surface wall-shear relative L1/L2</dt>
+        <dt>Surface wall-shear relative L2</dt>
         <dd>
-          Relative L1 and L2 error for the wall-shear vector \(\tau_w = (\tau_{w,x}, \tau_{w,y}, \tau_{w,z})\) on the
-          vehicle surface.
+          Area-weighted primary and equal-polygon secondary relative L2 for the three-component
+          <code>wallShearStressMeanTrim</code> array on every native boundary VTP cell.
         </dd>
       </div>
       <div>
-        <dt>Volume velocity relative L1/L2</dt>
+        <dt>Volume velocity relative L2</dt>
         <dd>
-          Relative L1 and L2 error for the velocity vector \(u = (u_x, u_y, u_z)\) on every field-bearing entity in the
-          release-bound reconstructed volume support.
+          Equal-native-cell relative L2 for the three-component <code>UMeanTrim</code> array on every cell in the release-bound reconstructed VTU.
         </dd>
       </div>
       <div>
-        <dt>Volume pressure relative L1/L2</dt>
-        <dd>Relative L1 and L2 error for pressure on every field-bearing entity in that same public volume support.</dd>
+        <dt>Volume pressure relative L2</dt>
+        <dd>Equal-native-cell relative L2 for <code>pMeanTrim</code> on every cell in that same reconstructed VTU.</dd>
       </div>
       <div>
         <dt>AB-UPT convention</dt>
@@ -234,24 +236,22 @@ compact_masthead: true
         </dd>
       </div>
       <div>
-        <dt>C<sub>d</sub> and C<sub>l</sub> R<sup>2</sup></dt>
+        <dt>C<sub>d</sub>, C<sub>l</sub>, and C<sub>m,pitch</sub> R<sup>2</sup></dt>
         <dd>
-          R<sup>2</sup> computed over all evaluated cases using predicted drag coefficient <code>cd_pred</code> and lift
-          coefficient <code>cl_pred</code>. AB-UPT computes these forces from high-resolution surface pressure and wall
-          shear stress predictions.
+          Separate equal-case R² values computed from forces and moments integrated from the submitted complete surface fields. The authoritative truth
+          is <code>force_mom_constref_all.csv</code>; pitching moment is reconstructed casewise as <code>(clf - clr) / 2</code>. Cd, Cl, and pitch
+          weights are 15%, 5%, and 5% of the overall score respectively.
         </dd>
       </div>
       <div>
-        <dt>Force R<sup>2</sup></dt>
-        <dd>Mean of C<sub>d</sub> R<sup>2</sup> and C<sub>l</sub> R<sup>2</sup>.</dd>
+        <dt>Force score</dt>
+        <dd>Normalized weighted mean of the bounded C<sub>d</sub>, C<sub>l</sub>, and C<sub>m,pitch</sub> component scores.</dd>
       </div>
       <div>
         <dt>Cp cut R<sup>2</sup></dt>
         <dd>
-          One global R<sup>2</sup> over all selected surface pressure coefficient samples from the held-out test cases.
-          The evaluator flattens <code>cp_pred</code> and ground-truth <code>cp</code> across
-          <code>case_id</code>, <code>cut_id</code>, <code>station_id</code>, and cut sample locations before computing
-          R<sup>2</sup>. The plotted trace is chosen with the leaderboard station selector.
+          Equal-case, equal-cut global R² over the four continuous native-surface intersections, with normalized native intersection-segment length
+          within each cut. The report-only companion is <code>cp_cut_rmse</code>.
         </dd>
       </div>
       <div>
@@ -265,9 +265,8 @@ compact_masthead: true
       <div>
         <dt>Velocity profile R<sup>2</sup></dt>
         <dd>
-          R<sup>2</sup> over selected wake profile samples behind the vehicle. Unless the benchmark package states
-          otherwise, the score is computed on the velocity vector components flattened across stations, cases, and sample
-          points.
+          Equal-case, equal-line global R² for <code>|UMeanTrim| / 38.889</code> over all 16 fixed AutoCFD5 lines, using normalized trapezoidal
+          arclength support within each line.
         </dd>
       </div>
     </dl>
@@ -279,8 +278,8 @@ compact_masthead: true
       The leaderboard can be ranked by any individual metric. Its default ranking is a bounded 0-100 weighted score:
     </p>
     <p>
-      Relative L1 fields are reported as sortable supplementary metrics, but they are not included in this default score unless a
-      future benchmark rule assigns them weights.
+      The four field components contribute 50%, the three field-integrated force components 25%, and the two profile components 25%. Diagnostic
+      MAE/RMSE values remain visible but do not enter the composite.
     </p>
     <pre><code>S_error(q) = 100 * max(0, 1 - E_q / cap_q)
 S_R2(q)    = 100 * min(1, max(0, R2_q))
@@ -296,22 +295,22 @@ S_overall  = sum(weight_q * S_q)</code></pre>
         </thead>
         <tbody>
           <tr>
-            <td>Dimensional surface pressure, area-weighted relative L2</td>
+            <td>Surface <code>pMeanTrim</code>, area-weighted relative L2</td>
             <td>15%</td>
             <td>15% cap</td>
           </tr>
           <tr>
-            <td>Dimensional surface wall shear, area-weighted relative L2</td>
+            <td>Surface <code>wallShearStressMeanTrim</code>, area-weighted relative L2</td>
             <td>10%</td>
             <td>20% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume velocity, unweighted cell relative L2</td>
+            <td>Volume <code>UMeanTrim</code>, equal-cell relative L2</td>
             <td>15%</td>
             <td>12% cap</td>
           </tr>
           <tr>
-            <td>Dimensional volume pressure, unweighted cell relative L2</td>
+            <td>Volume <code>pMeanTrim</code>, equal-cell relative L2</td>
             <td>10%</td>
             <td>15% cap</td>
           </tr>
@@ -322,7 +321,12 @@ S_overall  = sum(weight_q * S_q)</code></pre>
           </tr>
           <tr>
             <td>C<sub>l</sub> R<sup>2</sup></td>
-            <td>10%</td>
+            <td>5%</td>
+            <td>Clamped to [0, 1]</td>
+          </tr>
+          <tr>
+            <td>C<sub>m,pitch</sub> R<sup>2</sup></td>
+            <td>5%</td>
             <td>Clamped to [0, 1]</td>
           </tr>
           <tr>

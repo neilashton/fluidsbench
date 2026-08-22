@@ -11,20 +11,7 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section>
-    <p class="dataset-kicker">Dataset specification</p>
-    <p class="dataset-intro">
-      AhmedML is a high-fidelity CFD dataset for incompressible, low-speed bluff-body aerodynamics using the Ahmed car
-      body. It contains 500 geometric variants, with boundary fields, volume fields, geometry, slices, and time-averaged
-      force and moment data.
-    </p>
-    <p>
-      The source dataset is maintained at
-      <a href="https://caemldatasets.org/ahmedml/">caemldatasets.org/ahmedml</a>. The dataset page describes the full
-      download layout, including Hugging Face access, OpenFOAM case setup, STL files, VTP/VTU fields, and force/moment
-      CSV files.
-    </p>
-  </section>
+  {% include dataset_intro.html slug="ahmedml" %}
 
   <section class="dataset-panel">
     <h3>Dataset summary</h3>
@@ -56,11 +43,16 @@ compact_masthead: true
     </dl>
   </section>
 
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html slug="ahmedml" %}
+  </section>
+
   <section class="dataset-panel">
-    <h3>Planned benchmark splits</h3>
+    <h3>Published source splits; FluidsBench bindings under review</h3>
     <p>
-      AhmedML submissions should set <code>split</code> to one of the benchmark split names below. The split files are
-      distributed as a flat manifest with train, validation, and test run IDs for each split.
+      AhmedML publishes the eight train, validation, and test manifests below. The names and counts are current source definitions, but the matching
+      FluidsBench split files are still labelled <code>prototype_generated</code>; use them for development only until the owner approves the exact
+      scoring bindings.
     </p>
 
     <div class="dataset-table-wrap">
@@ -76,56 +68,56 @@ compact_masthead: true
         </thead>
         <tbody>
           <tr>
-            <td><code>Full</code></td>
+            <td><code>full</code></td>
             <td>Seed-42 random public baseline split.</td>
             <td>400</td>
             <td>50</td>
             <td>50</td>
           </tr>
           <tr>
-            <td><code>Medium</code></td>
+            <td><code>medium</code></td>
             <td>Nested data-efficiency subset with fixed validation and test cases.</td>
             <td>133</td>
             <td>50</td>
             <td>50</td>
           </tr>
           <tr>
-            <td><code>Scarce</code></td>
+            <td><code>scarce</code></td>
             <td>Smaller nested data-efficiency subset with fixed validation and test cases.</td>
             <td>67</td>
             <td>50</td>
             <td>50</td>
           </tr>
           <tr>
-            <td><code>Super scarce</code></td>
+            <td><code>super_scarce</code></td>
             <td>Minimum-data nested training subset with fixed validation and test cases.</td>
             <td>11</td>
             <td>50</td>
             <td>50</td>
           </tr>
           <tr>
-            <td><code>Geometry</code></td>
+            <td><code>geometry</code></td>
             <td>STL-Chamfer geometry out-of-distribution split.</td>
             <td>350</td>
             <td>50</td>
             <td>100</td>
           </tr>
           <tr>
-            <td><code>High drag</code></td>
+            <td><code>high_drag</code></td>
             <td>High-drag force-regime out-of-distribution split.</td>
             <td>350</td>
             <td>50</td>
             <td>100</td>
           </tr>
           <tr>
-            <td><code>Low drag</code></td>
+            <td><code>low_drag</code></td>
             <td>Low-drag force-regime out-of-distribution split.</td>
             <td>350</td>
             <td>50</td>
             <td>100</td>
           </tr>
           <tr>
-            <td><code>Image wake</code></td>
+            <td><code>image_wake</code></td>
             <td>Image-derived UxMean wake out-of-distribution split.</td>
             <td>350</td>
             <td>50</td>

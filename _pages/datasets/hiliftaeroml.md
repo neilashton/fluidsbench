@@ -11,21 +11,7 @@ compact_masthead: true
 ---
 
 <div class="dataset-page">
-  <section>
-    <p class="dataset-kicker">Dataset specification</p>
-    <p class="dataset-intro">
-      HiLiftAeroML is a high-fidelity CFD dataset for high-lift aircraft aerodynamics using the NASA Common Research
-      Model High-Lift (CRM-HL) configuration. It provides CAD geometry, time-averaged surface and volume fields, flow
-      visualisations, and integrated aerodynamic coefficients for machine-learning surrogate development.
-    </p>
-    <p>
-      The source dataset is maintained at
-      <a href="https://caemldatasets.org/hiliftaeroml/">caemldatasets.org/hiliftaeroml</a> and hosted on Hugging Face.
-      The current FluidsBench prototype rows are seeded from 200k-point inference results in the HiLiftAeroML paper. That
-      source-paper support does not define final FluidsBench coverage: complete results use every required point in the
-      release-bound public boundary and volume VTU files.
-    </p>
-  </section>
+  {% include dataset_intro.html slug="hiliftaeroml" %}
 
   <section class="dataset-panel">
     <h3>Dataset summary</h3>
@@ -61,13 +47,16 @@ compact_masthead: true
     </dl>
   </section>
 
+  <section class="dataset-panel dataset-getting-started">
+    {% include dataset_getting_started.html slug="hiliftaeroml" %}
+  </section>
+
   <section class="dataset-panel">
-    <h3>Planned benchmark splits</h3>
+    <h3>Published source splits; FluidsBench bindings under review</h3>
     <p>
-      HiLiftAeroML submissions should set <code>split</code> to one of the benchmark split names below. The split
-      manifest covers the 1,800 complete LHC cases: 180 geometries across 10 angles of attack from 4 to 22 degrees.
-      The raw Hugging Face manifest IDs are accepted as aliases by the leaderboard, but the table below shows the
-      readable names used on FluidsBench.
+      The Hugging Face source publishes these fourteen deterministic split families over all 1,800 cases. The table gives the exact manifest IDs and
+      counts. The corresponding FluidsBench case files are still marked <code>prototype_generated</code>, so they remain development bindings until
+      the exact scored arrays, masks, weights, evaluator, and case lists receive dataset-owner approval.
     </p>
 
     <div class="dataset-table-wrap">
