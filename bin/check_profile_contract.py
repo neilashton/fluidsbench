@@ -14,6 +14,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 GROUND_TRUTH_ROOT = ROOT / "assets" / "data" / "profile-ground-truth"
+PUBLIC_TOP_LEVEL_SCHEMA_ROOT = ROOT / "schemas"
+TOP_LEVEL_SCHEMA_NAMES = ("methodology-contract-v1.schema.json",)
 PUBLIC_SCHEMA_ROOT = ROOT / "schemas" / "v2"
 V2_SCHEMA_NAMES = (
     "submission.schema.json",
@@ -97,6 +99,18 @@ def case_coverage_errors(
 
 def check(submission_root: Path) -> list[str]:
     errors: list[str] = []
+    for schema_name in TOP_LEVEL_SCHEMA_NAMES:
+        source_schema = submission_root / "schemas" / schema_name
+        public_schema = PUBLIC_TOP_LEVEL_SCHEMA_ROOT / schema_name
+        if not source_schema.is_file():
+            errors.append(f"submission repository is missing schemas/{schema_name}")
+        elif not public_schema.is_file():
+            errors.append(f"website is missing public schema schemas/{schema_name}")
+        elif public_schema.read_bytes() != source_schema.read_bytes():
+            errors.append(
+                f"public schema schemas/{schema_name} differs from the submission contract"
+            )
+
     for schema_name in V2_SCHEMA_NAMES:
         source_schema = submission_root / "schemas" / "v2" / schema_name
         public_schema = PUBLIC_SCHEMA_ROOT / schema_name
@@ -483,7 +497,8 @@ def main() -> int:
         len(dataset.get("case_sets", [])) for dataset in manifest["datasets"]
     )
     print(
-        f"Validated {len(V2_SCHEMA_NAMES)} public v2 schemas, {len(V3_SCHEMA_NAMES)} public v3 schemas, "
+        f"Validated {len(TOP_LEVEL_SCHEMA_NAMES)} public methodology schema, "
+        f"{len(V2_SCHEMA_NAMES)} public v2 schemas, {len(V3_SCHEMA_NAMES)} public v3 schemas, "
         f"{len(SCORING_SUPPORT_SCHEMA_NAMES)} public scoring-support schemas, "
         f"{len(RELEASE_SCHEMA_NAMES)} public release schemas, and profile ground truth for "
         f"{len(manifest['datasets'])} datasets and {case_set_count} case sets."
