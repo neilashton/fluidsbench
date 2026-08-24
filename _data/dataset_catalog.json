@@ -2,7 +2,7 @@
   "ahmedml": {
     "name": "AhmedML",
     "category": "Automotive external aerodynamics",
-    "summary": "High-fidelity steady RANS data for 500 parametrically varied Ahmed bodies, with native three-dimensional boundary and volume fields, geometry, force coefficients, slices, images, and deterministic data-efficiency and out-of-distribution splits.",
+    "summary": "High-fidelity, time-averaged data from transient hybrid RANS–LES simulations of 500 parametrically varied Ahmed bodies, with native three-dimensional boundary and volume fields, geometry, force coefficients, slices, images, and deterministic data-efficiency and out-of-distribution splits.",
     "source": {
       "provider": "huggingface",
       "repository_id": "neashton/ahmedml",
@@ -24,6 +24,30 @@
         "source_url": "https://huggingface.co/datasets/neashton/ahmedml/blob/02688c727cdb8dc8678e28abc6bbbb7e93c5fa15/run_1/images/UxMean/run_1-slice-UMean-0-X-16.png"
       }
     },
+    "design_space": {
+      "archetype_count": "1 parent shape",
+      "archetypes": [
+        {
+          "name": "Ahmed body",
+          "description": "A single simplified automotive bluff-body family; every case is a continuous variant of this parent geometry."
+        }
+      ],
+      "parameter_count": "6 continuous geometry parameters",
+      "parameter_summary": "The source varies the rear treatment and the main body dimensions while retaining the recognizable Ahmed-body topology.",
+      "parameters": [
+        {"name": "Rear-window angle", "range": "10°–60°"},
+        {"name": "Tilted-surface length", "range": "150–250 mm"},
+        {"name": "Body length", "range": "800–1,200 mm"},
+        {"name": "Body height", "range": "250–315 mm"},
+        {"name": "Body width", "range": "300–500 mm"},
+        {"name": "Front-body radius", "range": "80–120 mm"}
+      ],
+      "operating_conditions": "The operating setup is fixed across the dataset, so the intended breadth comes from geometry rather than a boundary-condition sweep.",
+      "sampling": "Latin hypercube sampling fills the six-dimensional parameter box with 500 geometry cases.",
+      "coverage": "The eight published source splits separate the random full-data task, nested data-efficiency tasks, and held-out geometry, force, and wake regimes. Their FluidsBench case bindings are still candidate definitions.",
+      "source_url": "https://arxiv.org/abs/2407.20801",
+      "source_label": "AhmedML paper and design-space table"
+    },
     "benchmark": {
       "status": "owner_review_required",
       "status_label": "Benchmark definition in preparation",
@@ -43,7 +67,7 @@
   "drivaerml": {
     "name": "DrivAerML",
     "category": "Automotive external aerodynamics",
-    "summary": "High-fidelity steady RANS data for 500 designed DrivAer notchback variants. The public release currently provides 484 complete CFD cases, native surface and volume fields, geometry, forces, diagnostic images, and eight official split families.",
+    "summary": "High-fidelity, time-averaged data from scale-resolving simulations of 500 designed DrivAer notchback variants. The public release currently provides 484 complete CFD cases, native surface and volume fields, geometry, forces, diagnostic images, and eight official split families.",
     "source": {
       "provider": "huggingface",
       "repository_id": "neashton/drivaerml",
@@ -64,6 +88,40 @@
         "credit": "DrivAerML source dataset",
         "source_url": "https://huggingface.co/datasets/neashton/drivaerml/blob/7a5c0948ce27be709b1116a3a190f806e7a8f79f/run_1/images/fig_run1_SRS_iso-QNorm100_ySide_Ux.png"
       }
+    },
+    "design_space": {
+      "archetype_count": "1 parent configuration",
+      "archetypes": [
+        {
+          "name": "Ford OCDA DrivAer notchback",
+          "description": "The AutoCFD reference configuration with static wheels, sealed cooling inlets, and a detailed underbody."
+        }
+      ],
+      "parameter_count": "16 continuous morphing parameters",
+      "parameter_summary": "ANSA morphing boxes introduce deliberately subtle, industry-like changes around one notchback parent while preserving component topology.",
+      "parameters": [
+        {"name": "Vehicle length", "range": "−150 to +200 mm"},
+        {"name": "Vehicle width", "range": "−100 to +100 mm"},
+        {"name": "Vehicle height", "range": "−100 to +100 mm"},
+        {"name": "Front overhang", "range": "−150 to +100 mm"},
+        {"name": "Front plan-view", "range": "−75 to +75 mm"},
+        {"name": "Hood angle morph", "range": "−50 to +50 mm"},
+        {"name": "Approach angle morph", "range": "−40 to +30 mm"},
+        {"name": "Windscreen-angle morph", "range": "−150 to +150 mm"},
+        {"name": "Greenhouse tapering", "range": "−100 to +100 mm"},
+        {"name": "Backlight-angle morph", "range": "−100 to +200 mm"},
+        {"name": "Decklid height", "range": "−50 to +50 mm"},
+        {"name": "Rear-end tapering", "range": "−90 to +70 mm"},
+        {"name": "Rear overhang", "range": "−150 to +100 mm"},
+        {"name": "Rear diffuser-angle morph", "range": "−50 to +50 mm"},
+        {"name": "Vehicle ride height", "range": "−50 to +50 mm"},
+        {"name": "Vehicle pitch", "range": "−1° to +1°"}
+      ],
+      "operating_conditions": "All designs use the same open-road setup at 38.889 m/s and wheelbase Reynolds number 7.19 × 10⁶; Reynolds number and incoming-flow angle are not sampled.",
+      "sampling": "A modified extensible lattice sequence distributes 500 designs through the 16-dimensional morphing space; 484 complete cases are public.",
+      "coverage": "Eight official source split families cover random and nested-data tasks plus held-out geometry, force, and rear-separation regimes over the 484 public cases. FluidsBench scoring remains candidate rather than open.",
+      "source_url": "https://arxiv.org/abs/2408.11969",
+      "source_label": "DrivAerML paper and morphing-parameter table"
     },
     "benchmark": {
       "status": "owner_review_required",
@@ -106,6 +164,58 @@
         "source_url": "https://github.com/Mohamedelrefaie/DrivAerNet/blob/8b8c053053aa0f27c30f73af00be070a20205858/README.md"
       }
     },
+    "design_space": {
+      "archetype_count": "3 body archetypes plus component choices",
+      "archetypes": [
+        {
+          "name": "Fastback",
+          "description": "DrivAer-derived fastback rear-body category."
+        },
+        {
+          "name": "Estateback",
+          "description": "DrivAer-derived estateback rear-body category."
+        },
+        {
+          "name": "Notchback",
+          "description": "DrivAer-derived notchback rear-body category."
+        }
+      ],
+      "parameter_count": "26 documented design parameters",
+      "parameter_summary": "Twenty-three bounded or stepped shape variables are combined with underbody, rear-body, and wheel choices. The discrete choices include two underbodies and three wheel treatments in addition to the three rear-body archetypes.",
+      "parameters": [
+        {"name": "Car width", "range": "−60 to +150 mm"},
+        {"name": "Car length", "range": "−60 to +130 mm"},
+        {"name": "Car roof height", "range": "−60 to +90 mm"},
+        {"name": "Car greenhouse angle", "range": "source morph bounds −200 to +150"},
+        {"name": "Diffuser angle", "range": "−8° to +15°"},
+        {"name": "Ramp angle", "range": "−8° to +15°"},
+        {"name": "Trunklid angle", "range": "−8° to +20°"},
+        {"name": "Side-mirror rotation", "range": "−20° to +20°"},
+        {"name": "Side-mirror X translation", "range": "−10 to +20 mm"},
+        {"name": "Side-mirror Z translation", "range": "−5 to +10 mm"},
+        {"name": "Rear-window inclination", "range": "−1.8° to +2.5°"},
+        {"name": "Rear-window length", "range": "−95 to +150 mm"},
+        {"name": "Windscreen inclination", "range": "−1.8° to +2.5°"},
+        {"name": "Windscreen length", "range": "−50 to +50 mm"},
+        {"name": "A/B/C-pillar thickness", "range": "−15% to +5%"},
+        {"name": "Fender-arch offset", "range": "−25 to +55 mm"},
+        {"name": "Door-handle thickness", "range": "−20 to +30 mm"},
+        {"name": "Door-handle X position", "range": "−50 to +50 mm"},
+        {"name": "Door-handle Z position", "range": "−30 to +30 mm"},
+        {"name": "Trunklid curvature", "range": "−0.4% to +0.8%"},
+        {"name": "Trunklid length", "range": "−40 to +40 mm"},
+        {"name": "Front-bumper curvature", "range": "−0.4% to +1%"},
+        {"name": "Front-bumper length", "range": "−25 to +60 mm"},
+        {"name": "Underbody", "range": "smooth or detailed"},
+        {"name": "Car rear", "range": "fastback, estateback, or notchback"},
+        {"name": "Wheels", "range": "open detailed, open smooth, or closed smooth"}
+      ],
+      "operating_conditions": "The CFD condition is fixed at 30 m/s. Geometry-dependent vehicle length gives a reported Reynolds-number range of 8.366 × 10⁶ to 1.006 × 10⁷ rather than a separately sampled flow sweep.",
+      "sampling": "Optimal Latin hypercube sampling with an enhanced stochastic evolutionary algorithm populates the mixed continuous/discrete design space; the current canonical collection lists 8,150 designs.",
+      "coverage": "The source spans several production-car-like categories, but the active FluidsBench dev contract still contains only one prototype pressure case. Its leaderboard coverage therefore does not yet represent the full source design space.",
+      "source_url": "https://proceedings.neurips.cc/paper_files/paper/2024/file/013cf29a9e68e4411d0593040a8a1eb3-Paper-Datasets_and_Benchmarks_Track.pdf",
+      "source_label": "DrivAerNet++ paper and design-parameter table"
+    },
     "benchmark": {
       "status": "owner_review_required",
       "status_label": "Prototype pressure task",
@@ -147,6 +257,31 @@
         "source_url": "https://huggingface.co/datasets/neashton/windsorml/blob/8a6ca32ae22c94f54df2186d1b0ccf9662a294c2/run_1/images/velocityxavg/view1_constz_scan_0005.png"
       }
     },
+    "design_space": {
+      "archetype_count": "1 parent configuration",
+      "archetypes": [
+        {
+          "name": "Wheel-less squareback Windsor body",
+          "description": "The AutoCFD4 squareback reference is the common parent for all parameterized variants."
+        }
+      ],
+      "parameter_count": "7 continuous geometry parameters",
+      "parameter_summary": "The parametric CAD model changes front/rear proportions, fastback transition, taper, ground clearance, and underbody angle.",
+      "parameters": [
+        {"name": "Front/rear length ratio", "range": "0–0.8"},
+        {"name": "Back/fast length ratio", "range": "0.08–0.5"},
+        {"name": "Nose/windscreen height ratio", "range": "0.3–0.7"},
+        {"name": "Fastback height ratio", "range": "0–0.9"},
+        {"name": "Side taper", "range": "50–100 mm"},
+        {"name": "Ground clearance", "range": "10–200 mm"},
+        {"name": "Bottom taper angle", "range": "1°–50°"}
+      ],
+      "operating_conditions": "All cases use the AutoCFD wind-tunnel-style setup at nominal 40 m/s, Reynolds number 2.9 × 10⁶, and 2.5° yaw; flow conditions are fixed.",
+      "sampling": "A deterministic, extendable Halton sequence samples 355 points in the seven-dimensional geometry space; complete per-run fields are available for 350.",
+      "coverage": "Eight source split families cover random, data-efficiency, and held-out regimes across the aggregate design list. The current FluidsBench contract still binds only one prototype case.",
+      "source_url": "https://arxiv.org/abs/2407.19320",
+      "source_label": "WindsorML paper and geometry-variant table"
+    },
     "benchmark": {
       "status": "owner_review_required",
       "status_label": "Prototype benchmark definition",
@@ -187,6 +322,32 @@
         "credit": "HiLiftAeroML source dataset",
         "source_url": "https://huggingface.co/datasets/nvidia/HiLiftAeroML/blob/dd186e13724f39fc94186308519748cca32399eb/geo_LHC001_AoA_4/img_wss_LHC001_AoA_4.png"
       }
+    },
+    "design_space": {
+      "archetype_count": "1 high-lift aircraft configuration",
+      "archetypes": [
+        {
+          "name": "NASA CRM-HL",
+          "description": "One semi-span high-lift aircraft parent with independently positioned inboard and outboard slats and flaps."
+        }
+      ],
+      "parameter_count": "8 continuous high-lift-device parameters",
+      "parameter_summary": "Inboard and outboard slat and flap deflections are varied independently, together with multipliers applied to their reference gap schedules.",
+      "parameters": [
+        {"name": "Inboard slat deflection", "range": "10°–35°"},
+        {"name": "Outboard slat deflection", "range": "10°–35°"},
+        {"name": "Inboard flap deflection", "range": "10°–45°"},
+        {"name": "Outboard flap deflection", "range": "10°–45°"},
+        {"name": "Inboard slat-gap multiplier", "range": "0.5–1.5"},
+        {"name": "Outboard slat-gap multiplier", "range": "0.5–1.5"},
+        {"name": "Inboard flap-gap multiplier", "range": "0.5–1.5"},
+        {"name": "Outboard flap-gap multiplier", "range": "0.5–1.5"}
+      ],
+      "operating_conditions": "Each geometry is simulated at ten angles of attack from 4° to 22° in 2° steps, at Mach 0.2 and chord Reynolds number 1.6 × 10⁶.",
+      "sampling": "Latin hypercube sampling supplies 180 geometry variants, crossed with the ten-angle sweep for 1,800 CFD cases.",
+      "coverage": "Fourteen published split families distinguish data efficiency, unseen geometry, single-angle tasks, angle extrapolation, high-deflection geometry, and stall behaviour. FluidsBench scoring bindings remain provisional.",
+      "source_url": "https://arxiv.org/abs/2605.19565",
+      "source_label": "HiLiftAeroML paper and parameter-range table"
     },
     "benchmark": {
       "status": "owner_review_required",
@@ -244,6 +405,35 @@
         "source_url": "https://github.com/Extrality/airfrans_lib/blob/d35d4035d8ba6fa98c1a6662be925c2fc777610b/docs/source/_figures/fields.png"
       }
     },
+    "design_space": {
+      "archetype_count": "2 parametric airfoil families",
+      "archetypes": [
+        {
+          "name": "NACA 4-digit",
+          "description": "Single-camber-line family parameterized by maximum camber, its chordwise position, and thickness."
+        },
+        {
+          "name": "NACA 5-digit",
+          "description": "Family parameterized by design-lift/camber terms, a standard-or-reflex choice, and thickness."
+        }
+      ],
+      "parameter_count": "3 or 4 airfoil-code parameters, depending on family",
+      "parameter_summary": "Four-digit profiles use M, P, and XX; five-digit profiles use L, P, Q, and XX. The source applies explicit sampling restrictions to avoid unusable camber locations.",
+      "parameters": [
+        {"name": "NACA 4-digit M", "range": "0–7"},
+        {"name": "NACA 4-digit P", "range": "0 or 1.5–7"},
+        {"name": "NACA 4-digit XX", "range": "5–20"},
+        {"name": "NACA 5-digit L", "range": "0–4"},
+        {"name": "NACA 5-digit P", "range": "3–8"},
+        {"name": "NACA 5-digit Q", "range": "0 or 1"},
+        {"name": "NACA 5-digit XX", "range": "5–20"}
+      ],
+      "operating_conditions": "The joint design space spans Reynolds numbers from 2 × 10⁶ to 6 × 10⁶ and angles of attack from −5° to 15°.",
+      "sampling": "The source draws 1,000 joint airfoil-and-condition simulations from the stated geometry and flight-condition distributions; it is not a full Cartesian sweep of every shape.",
+      "coverage": "The four official tasks provide a full-data reference, a scarce-data regime, Reynolds-number extrapolation, and angle-of-attack extrapolation. FluidsBench binds those official evaluation lists.",
+      "source_url": "https://arxiv.org/abs/2212.07564",
+      "source_label": "AirfRANS paper and airfoil-sampling table"
+    },
     "benchmark": {
       "status": "owner_review_required",
       "status_label": "Official case lists; scoring definition in preparation",
@@ -284,6 +474,33 @@
         "credit": "Based on the BlendedNet dataset description",
         "source_url": "https://github.com/nicksungg/clarc_blended_wing_body"
       }
+    },
+    "design_space": {
+      "archetype_count": "1 blended-wing-body family",
+      "archetypes": [
+        {
+          "name": "OpenVSP blended wing body",
+          "description": "One integrated lifting-body planform family; the airfoil-section coefficients are held fixed in this release."
+        }
+      ],
+      "parameter_count": "9 continuous planform parameters",
+      "parameter_summary": "Six normalized chord/span dimensions and three sweep angles define the planform; airfoil cross-sections are not varied.",
+      "parameters": [
+        {"name": "C2/C1", "range": "0.55–0.85"},
+        {"name": "C3/C1", "range": "0.18–0.28"},
+        {"name": "C4/C1", "range": "0.06–0.09"},
+        {"name": "B1/C1", "range": "0.10–0.20"},
+        {"name": "B2/C1", "range": "0.05–0.20"},
+        {"name": "B3/C1", "range": "0.20–0.70"},
+        {"name": "S1", "range": "40°–60°"},
+        {"name": "S2", "range": "40°–60°"},
+        {"name": "S3", "range": "24°–40°"}
+      ],
+      "operating_conditions": "Flight-condition sampling spans altitude 0–40 kft, Mach 0.05–0.5, Reynolds reference length 0.1–10 m, and angle of attack −10° to 20°.",
+      "sampling": "Latin hypercube sampling produces 999 planforms and approximately nine flight conditions per geometry, with 8,830 simulations converging successfully.",
+      "coverage": "The current candidate proposes a geometry-disjoint 870-case holdout, but that list is not a separately published official Dataverse evaluation set and is not active.",
+      "source_url": "https://arxiv.org/abs/2509.07209",
+      "source_label": "BlendedNet paper and design/flight-condition tables"
     },
     "benchmark": {
       "status": "owner_review_required",
@@ -326,6 +543,23 @@
         "source_url": "https://huggingface.co/datasets/PLAID-datasets/Rotor37/blob/bac06c0caa7254120eecc6711a5fb85c58dfbdbc/README.md"
       }
     },
+    "design_space": {
+      "archetype_count": "1 compressor-blade family",
+      "archetypes": [
+        {
+          "name": "NASA Rotor 37",
+          "description": "Geometrical variants remain within the Rotor 37 compressor-blade family."
+        }
+      ],
+      "parameter_count": "Mesh-native geometry; no published low-dimensional parameter vector",
+      "parameter_summary": "PLAID exposes each blade surface directly as a non-parameterized mesh. Shape variation is therefore an input geometry, not a fixed list of scalar design variables.",
+      "parameters": [],
+      "operating_conditions": "Two scalar inputs accompany the mesh: pressure P and rotational speed Ω. The public challenge description does not publish a compact range table for them.",
+      "sampling": "The source contains 1,200 rows: 1,000 with public targets and 200 source-evaluation rows whose outputs are hidden.",
+      "coverage": "Eight nested training-size tasks are published. Because the 200 source-test targets are hidden, FluidsBench still needs a separate public-ground-truth evaluation split before its design coverage can be scored openly.",
+      "source_url": "https://plaid-lib.readthedocs.io/en/0.1.5/source/data_challenges/rotor37.html",
+      "source_label": "PLAID Rotor37 challenge description"
+    },
     "benchmark": {
       "status": "owner_review_required",
       "status_label": "Public-ground-truth split in preparation",
@@ -366,6 +600,23 @@
         "credit": "PLAID VKI-LS59 dataset card",
         "source_url": "https://huggingface.co/datasets/PLAID-datasets/VKI-LS59/blob/1aad0a69c26462c039305a931a300f80bdf34827/README.md"
       }
+    },
+    "design_space": {
+      "archetype_count": "1 turbine-blade family",
+      "archetypes": [
+        {
+          "name": "VKI LS59 cascade blade",
+          "description": "Every case is a geometrical variation based on the same two-dimensional turbine-cascade reference."
+        }
+      ],
+      "parameter_count": "Mesh-native geometry; no published low-dimensional parameter vector",
+      "parameter_summary": "The geometry and its signed-distance field are provided directly. The public record does not define a fixed scalar parameterization for the blade variations.",
+      "parameters": [],
+      "operating_conditions": "Two scalar inputs vary with geometry: inlet angle and outlet Mach number. The public record does not provide a compact range table for these inputs.",
+      "sampling": "The source contains 839 rows: 671 with public targets and 168 source-evaluation rows whose outputs are hidden.",
+      "coverage": "Eight nested training-size tasks are published. FluidsBench requires a public-ground-truth evaluation split because the source-test outputs are not released.",
+      "source_url": "https://zenodo.org/records/14840512",
+      "source_label": "VKI-LS59 dataset record"
     },
     "benchmark": {
       "status": "owner_review_required",
