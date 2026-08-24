@@ -591,10 +591,7 @@
     if (entry.eligible !== declaredEligible) {
       throw new Error("claim index eligibility does not match the hash-verified feed row");
     }
-    if (
-      entry.series_id !== resultRevision(row).series_id ||
-      Number(entry.version) !== resultRevision(row).version
-    ) {
+    if (entry.series_id !== resultRevision(row).series_id || Number(entry.version) !== resultRevision(row).version) {
       throw new Error("claim index revision metadata does not match the hash-verified feed row");
     }
     const bindings = record.bindings || {};
@@ -829,11 +826,7 @@
     const declared = record(entry?.result_revision);
     const submissionId = String(entry?.submission_id || entry?.id || "");
     const legacyMatch = submissionId.match(/^(.*)-v1$/);
-    const version = Number.isInteger(declared.version) && declared.version > 0
-      ? declared.version
-      : legacyMatch
-        ? 1
-        : 1;
+    const version = Number.isInteger(declared.version) && declared.version > 0 ? declared.version : legacyMatch ? 1 : 1;
     const seriesId = String(declared.series_id || (legacyMatch ? legacyMatch[1] : submissionId));
     return {
       series_id: seriesId,
@@ -1330,9 +1323,11 @@
 
   function indexRevisionRows(records) {
     datasetEntries().forEach((entry) => state.revisionRows.set(entry.name, []));
-    records.map((entry, index) => normalizeRow(entry, index)).forEach((row) => {
-      if (state.revisionRows.has(row.dataset)) state.revisionRows.get(row.dataset).push(row);
-    });
+    records
+      .map((entry, index) => normalizeRow(entry, index))
+      .forEach((row) => {
+        if (state.revisionRows.has(row.dataset)) state.revisionRows.get(row.dataset).push(row);
+      });
   }
 
   function validateRevisionHistory(history, metadata) {
@@ -1383,8 +1378,14 @@
         }
       });
     });
-    const currentIds = new Set(Array.from(state.rows.values()).flat().map((row) => row.id));
-    const historyLatestIds = new Set(history.records.filter((entry) => normalizedResultRevision(entry).is_latest).map((entry) => entry.submission_id));
+    const currentIds = new Set(
+      Array.from(state.rows.values())
+        .flat()
+        .map((row) => row.id)
+    );
+    const historyLatestIds = new Set(
+      history.records.filter((entry) => normalizedResultRevision(entry).is_latest).map((entry) => entry.submission_id)
+    );
     if (currentIds.size !== historyLatestIds.size || Array.from(currentIds).some((id) => !historyLatestIds.has(id))) {
       throw new Error("ranked feed rows do not match the latest revision-history records");
     }
@@ -1725,18 +1726,12 @@
   function revisionRowsForActiveSplit() {
     const currentRows = rowsForActiveSplit();
     const currentById = new Map(currentRows.map((row) => [row.id, row]));
-    return (state.revisionRows.get(state.dataset) || [])
-      .filter((row) => row.split === state.split)
-      .map((row) => currentById.get(row.id) || row);
+    return (state.revisionRows.get(state.dataset) || []).filter((row) => row.split === state.split).map((row) => currentById.get(row.id) || row);
   }
 
   function resultRowById(resultId) {
     if (!resultId) return null;
-    return (
-      rowsForActiveSplit().find((row) => row.id === resultId) ||
-      revisionRowsForActiveSplit().find((row) => row.id === resultId) ||
-      null
-    );
+    return rowsForActiveSplit().find((row) => row.id === resultId) || revisionRowsForActiveSplit().find((row) => row.id === resultId) || null;
   }
 
   function versionsForRow(row) {
@@ -2140,6 +2135,10 @@
       ["pretraining_data", (row) => row.pretraining_data],
       ["training_regime_explanation", (row) => row.training_regime_explanation],
       ["parameter_count_millions", (row) => row.parameter_count_millions ?? row.parameterCount],
+      ["methodology_format", (row) => row.methodology?.format],
+      ["methodology_record_kind", (row) => row.methodology?.record_kind],
+      ["methodology_total_parameter_count", (row) => row.methodology?.architecture?.total_parameter_count],
+      ["methodology_json", (row) => row.methodology],
       ["submitted_at", (row) => row.date],
       ["evaluation_reference_version", (row) => row.evaluation?.reference_version],
       ["evaluation_code_revision", (row) => row.evaluation?.code_revision],
@@ -2905,10 +2904,7 @@
       });
       cell.appendChild(link);
       const revision = resultRevision(submission);
-      const revisionBadge = chip(
-        `leaderboard-revision-badge${revision.is_latest ? "" : " is-superseded"}`,
-        revisionLabel(submission)
-      );
+      const revisionBadge = chip(`leaderboard-revision-badge${revision.is_latest ? "" : " is-superseded"}`, revisionLabel(submission));
       revisionBadge.title = revision.is_latest
         ? `Latest version in this result series (${revision.version_count} version${revision.version_count === 1 ? "" : "s"})`
         : `Superseded by ${revision.latest_submission_id}`;
@@ -4542,6 +4538,256 @@
     return url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` : "";
   }
 
+  function methodologyArray(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
+  function methodologyBoolean(value) {
+    if (value === true) return "Yes";
+    if (value === false) return "No";
+    return null;
+  }
+
+  function methodologyCount(value) {
+    return finiteNumber(value) === null ? null : formatNumber(value, 0);
+  }
+
+  function methodologyComponentIds(value) {
+    const ids = methodologyArray(value).filter((item) => typeof item === "string" && item.trim());
+    return ids.length ? ids.join(", ") : null;
+  }
+
+  function methodologyCard(title, rows, description = "") {
+    return `<article class="leaderboard-methodology-card">
+      <h6>${escapeHtml(title)}</h6>
+      <dl>${rows.join("")}</dl>
+      ${description ? `<p>${escapeHtml(description)}</p>` : ""}
+    </article>`;
+  }
+
+  function methodologyCards(items, render, emptyText) {
+    if (!items.length) return `<p class="details-note">${escapeHtml(emptyText)}</p>`;
+    return `<div class="leaderboard-methodology-card-grid">${items.map(render).join("")}</div>`;
+  }
+
+  function methodologyArchitectureHtml(methodology) {
+    const architecture = record(methodology.architecture);
+    const components = methodologyArray(architecture.components);
+    const hyperparameters = methodologyArray(architecture.key_hyperparameters);
+    const inputs = methodologyArray(architecture.input_features);
+    const outputs = methodologyArray(architecture.predicted_fields);
+    const componentCards = methodologyCards(
+      components,
+      (component) =>
+        methodologyCard(
+          `${component.id || "Unnamed component"} — ${component.family || "family not supplied"}`,
+          [detailsRow("Role", component.role), detailsRow("Parameters", methodologyCount(component.parameter_count))],
+          component.description
+        ),
+      "No architecture components were supplied."
+    );
+    const hyperparameterCards = methodologyCards(
+      hyperparameters,
+      (parameter) =>
+        methodologyCard(
+          parameter.name || parameter.id || "Unnamed hyperparameter",
+          [detailsRow("Value", parameter.value), detailsRow("Components", methodologyComponentIds(parameter.component_ids))],
+          parameter.description
+        ),
+      "No key hyperparameters were supplied."
+    );
+    const inputCards = methodologyCards(
+      inputs,
+      (input) =>
+        methodologyCard(
+          input.name || input.id || "Unnamed input",
+          [
+            detailsRow("Domain", humanize(input.domain)),
+            detailsRow("Components per entity", methodologyCount(input.component_count)),
+            detailsRow("Architecture components", methodologyComponentIds(input.component_ids)),
+          ],
+          input.description
+        ),
+      "No model inputs were supplied."
+    );
+    const outputCards = methodologyCards(
+      outputs,
+      (output) =>
+        methodologyCard(
+          output.field_id || "Unnamed predicted field",
+          [
+            detailsRow("Domain", humanize(output.domain)),
+            detailsRow("Components per entity", methodologyCount(output.component_count)),
+            detailsRow("Production", humanize(output.production)),
+            detailsRow("Architecture components", methodologyComponentIds(output.component_ids)),
+          ],
+          output.description
+        ),
+      "No predicted fields were supplied."
+    );
+    return `<details class="leaderboard-methodology-disclosure">
+      <summary>Architecture components, hyperparameters, inputs and outputs</summary>
+      <div class="leaderboard-methodology-detail-body">
+        <h5>Components</h5>${componentCards}
+        <h5>Key hyperparameters</h5>${hyperparameterCards}
+        <h5>Input features</h5>${inputCards}
+        <h5>Predicted fields</h5>${outputCards}
+      </div>
+    </details>`;
+  }
+
+  function methodologyOptimizerSummary(procedure) {
+    const optimizers = methodologyArray(record(procedure).optimizers);
+    if (!optimizers.length) return null;
+    return optimizers
+      .map((optimizer) => {
+        const fields = [optimizer.name];
+        if (finiteNumber(optimizer.learning_rate) !== null) fields.push(`learning rate ${optimizer.learning_rate}`);
+        if (optimizer.schedule) fields.push(optimizer.schedule);
+        return fields.filter(Boolean).join(" · ");
+      })
+      .join("; ");
+  }
+
+  function methodologyDurationSummary(procedure) {
+    const duration = record(record(procedure).duration);
+    const values = [];
+    if (finiteNumber(duration.epochs) !== null) values.push(`${formatNumber(duration.epochs, 0)} epochs`);
+    if (finiteNumber(duration.optimizer_steps) !== null) values.push(`${formatNumber(duration.optimizer_steps, 0)} optimizer steps`);
+    if (duration.description) values.push(duration.description);
+    return values.length ? values.join(" · ") : null;
+  }
+
+  function methodologyTrainingStageCard(stage) {
+    const procedure = record(stage.procedure);
+    const loss = record(procedure.loss);
+    const batch = record(procedure.batch);
+    const compute = record(stage.compute);
+    const batchSummary = finiteNumber(batch.value) === null ? null : `${formatNumber(batch.value, 0)} ${batch.unit || "items"}`;
+    const rows = [
+      detailsRow("Status", humanize(stage.status)),
+      detailsRow("Architecture components", methodologyComponentIds(stage.component_ids)),
+      detailsRow("Procedure", humanize(procedure.kind)),
+      detailsRow("Procedure description", procedure.description),
+      detailsRow("Loss", loss.description),
+      detailsRow("Loss weighting", loss.weighting),
+      detailsRow("Optimizer", methodologyOptimizerSummary(procedure)),
+      detailsRow("Batch", batchSummary),
+      detailsRow("Gradient accumulation", methodologyCount(batch.gradient_accumulation_steps)),
+      detailsRow("Duration", methodologyDurationSummary(procedure)),
+      detailsRow("Run count", methodologyCount(stage.run_count)),
+      detailsRow("Stochastic", methodologyBoolean(stage.stochastic)),
+      detailsRow("Random seeds", methodologyArray(stage.random_seeds).join(", ") || null),
+      detailsRow("Upstream reference", stage.upstream_reference),
+      detailsRow("Training hardware", compute.hardware),
+      detailsRow("Maximum concurrent devices", methodologyCount(compute.max_concurrent_device_count)),
+      detailsRow(
+        "Campaign wall time",
+        finiteNumber(compute.campaign_wall_time_hours) === null ? null : `${formatNumber(compute.campaign_wall_time_hours, 2)} hours`
+      ),
+      detailsRow(
+        "Aggregate device time",
+        finiteNumber(compute.aggregate_device_hours) === null ? null : `${formatNumber(compute.aggregate_device_hours, 2)} device-hours`
+      ),
+      detailsRow("Compute measurement notes", compute.measurement_notes),
+    ];
+    return methodologyCard(stage.id || "Unnamed training stage", rows, stage.description);
+  }
+
+  function methodologyCheckpointCard(checkpoint) {
+    return methodologyCard(
+      checkpoint.id || "Unnamed checkpoint",
+      [
+        detailsRow("Architecture components", methodologyComponentIds(checkpoint.component_ids)),
+        detailsRow("SHA-256", checkpoint.sha256),
+        detailsRow("Digest scope", humanize(checkpoint.digest_scope)),
+        detailsRow("Bytes hashed", checkpoint.bytes_description),
+        detailsRow("Role", checkpoint.role),
+        detailsRow("Selection rule", checkpoint.selection_rule),
+      ],
+      ""
+    );
+  }
+
+  function methodologyTrainingHtml(methodology) {
+    const dataHandling = record(methodology.data_handling);
+    const trainingStages = methodologyArray(record(methodology.training).stages);
+    const checkpoints = methodologyArray(methodology.checkpoints);
+    const inference = record(methodology.inference_compute);
+    const trainingCards = methodologyCards(trainingStages, methodologyTrainingStageCard, "No training stages were supplied.");
+    const checkpointCards = methodologyCards(
+      checkpoints,
+      methodologyCheckpointCard,
+      "No retained model checkpoint is associated with this methodology record."
+    );
+    const measuredInference = inference.status === "measured";
+    return `<details class="leaderboard-methodology-disclosure">
+      <summary>Data handling, training, checkpoints and compute</summary>
+      <div class="leaderboard-methodology-detail-body">
+        <h5>Data handling</h5><dl>
+          ${detailsRow("Normalization", dataHandling.normalization)}
+          ${detailsRow("Preprocessing", dataHandling.preprocessing)}
+          ${detailsRow("Sampling", dataHandling.sampling)}
+        </dl>
+        <h5>Training stages</h5>${trainingCards}
+        <h5>Loaded checkpoints</h5>${checkpointCards}
+        <h5>Inference compute</h5><dl>
+          ${detailsRow("Measurement status", humanize(inference.status))}
+          ${detailsRow("Reason not measured", inference.reason)}
+          ${detailsRow("Hardware", inference.hardware)}
+          ${detailsRow("Maximum concurrent devices", methodologyCount(inference.max_concurrent_device_count))}
+          ${detailsRow("Cases timed", methodologyCount(inference.case_count))}
+          ${detailsRow(
+            "Campaign wall time",
+            measuredInference && finiteNumber(inference.campaign_wall_time_seconds) !== null
+              ? `${formatNumber(inference.campaign_wall_time_seconds, 2)} seconds`
+              : null
+          )}
+          ${detailsRow(
+            "Aggregate device time",
+            measuredInference && finiteNumber(inference.aggregate_device_time_seconds) !== null
+              ? `${formatNumber(inference.aggregate_device_time_seconds, 2)} device-seconds`
+              : null
+          )}
+          ${detailsRow("Includes preprocessing", methodologyBoolean(inference.includes_preprocessing))}
+          ${detailsRow("Includes scoring mapping", methodologyBoolean(inference.includes_mapping))}
+          ${detailsRow("Measurement notes", inference.measurement_notes)}
+        </dl>
+      </div>
+    </details>`;
+  }
+
+  function methodologySectionHtml(row) {
+    const methodology = record(row.methodology);
+    if (!Object.keys(methodology).length) {
+      return `<section class="leaderboard-methodology"><h4>Detailed model methodology</h4><p class="details-note">Detailed methodology was not recorded under this result's schema.</p></section>`;
+    }
+    const architecture = record(methodology.architecture);
+    const prototype = methodology.record_kind === "prototype_fixture";
+    const noteTitle = prototype
+      ? "Prototype fixture metadata — not author-verified"
+      : methodology.record_kind === "format_example"
+        ? "Illustrative format example — not a benchmark result"
+        : "Submitter-reported methodology";
+    return `<section class="leaderboard-methodology">
+      <h4>Detailed model methodology</h4>
+      <div class="leaderboard-methodology-note${prototype ? " is-prototype" : ""}" role="note">
+        <strong>${escapeHtml(noteTitle)}</strong>
+        <p>${escapeHtml(methodology.record_note || "No record note was supplied.")}</p>
+      </div>
+      <dl>
+        ${detailsRow("Record format", methodology.format)}
+        ${detailsRow("Record kind", humanize(methodology.record_kind))}
+        ${detailsRow("Architecture", architecture.description)}
+        ${detailsRow("Total parameters", methodologyCount(architecture.total_parameter_count))}
+        ${detailsRow("Parameter-count basis", humanize(architecture.parameter_count_basis))}
+        ${detailsRow("Submitter-verified trainable parameters", methodologyCount(architecture.submitter_trainable_parameter_count))}
+      </dl>
+      ${methodologyArchitectureHtml(methodology)}
+      ${methodologyTrainingHtml(methodology)}
+    </section>`;
+  }
+
   function evaluationEvidenceUrl(row) {
     const indexFile = row.profile_data?.index_file;
     const evidenceFile = row.evaluation?.evidence_file;
@@ -5069,7 +5315,10 @@
       : `<section><h4>Revision status</h4><dl>
         ${detailsRow("Current rank", "Not ranked — superseded version")}
         ${detailsRow("Latest submission ID", revision.latest_submission_id)}
-        ${detailsRow("Original submitted score retained", formatMetric(row.metricValues?.[ranking().metric_id], metricDefinition(ranking().metric_id)))}
+        ${detailsRow(
+          "Original submitted score retained",
+          formatMetric(row.metricValues?.[ranking().metric_id], metricDefinition(ranking().metric_id))
+        )}
       </dl><p class="details-note">This immutable version remains available for audit and comparison, but it does not occupy a position in the current leaderboard. Any former rank belongs to the immutable release that originally published it.</p></section>`;
     const resultCitationActions = `<div class="leaderboard-result-citation-actions">
           <button class="leaderboard-action-button" type="button" data-copy-result-citation="plain" aria-describedby="result-citation-eligibility" ${
@@ -5107,6 +5356,7 @@
         ${detailsRow("Parameters", row.parameterCount === null ? null : `${formatNumber(row.parameterCount, 2)} M`)}
         ${detailsRow("Date", row.date)}
       </dl>${links ? `<p>${links}</p>` : ""}${row.note ? `<p>${escapeHtml(row.note)}</p>` : ""}</section>
+      ${methodologySectionHtml(row)}
       <section><h4>Training</h4><dl>
         ${detailsRow("Regime", trainingLabel(row))}
         ${detailsRow("Target-dataset data", targetDataLabel(row.target_data_used))}
