@@ -11,12 +11,14 @@ const { webcrypto } = require("node:crypto");
 const root = path.resolve(__dirname, "..");
 const submissionRoot = path.resolve(process.env.FLUIDSBENCH_SUBMISSION_ROOT || path.resolve(root, "../fluidsbench-submission"));
 const scriptPath = path.join(root, "assets/js/leaderboard.js");
+const displayConfig = JSON.parse(fs.readFileSync(path.join(root, "_data/leaderboard_display.json"), "utf8"));
 const source = fs.readFileSync(scriptPath, "utf8");
 const marker = "})();";
 const markerIndex = source.lastIndexOf(marker);
 assert.notEqual(markerIndex, -1, "leaderboard script must end with its IIFE");
 const instrumented = `${source.slice(0, markerIndex)}
 window.__FluidsBenchClaimTest = {
+  activeColumns,
   activeMetricDefinitions,
   bibtexEscape,
   canonicalResultPermalink,
@@ -29,6 +31,7 @@ window.__FluidsBenchClaimTest = {
   exportProvenance,
   fallbackRankings,
   generatedRankingMatches,
+  headlineMetricDefinitions,
   leaderboardManifestProvenance,
   claimRecordCheck,
   normalizeRow,
@@ -100,6 +103,7 @@ const context = {
     FluidsBenchLeaderboardBaseUrl: "https://example.test/assets/",
     FluidsBenchLeaderboardManifestUrl: "https://example.test/assets/leaderboard/manifest.json",
     FluidsBenchLeaderboardManifestSha256: "9".repeat(64),
+    FluidsBenchLeaderboardDisplay: displayConfig,
     FluidsBenchProfileGroundTruthBaseUrl: "https://example.test/profile-ground-truth/",
     addEventListener() {},
     clearTimeout,
@@ -200,6 +204,45 @@ api.state.manifest = manifest;
 api.state.metrics = new Map(manifest.metric_definitions.map((definition) => [definition.id, definition]));
 api.state.rows = new Map(manifest.datasets.map((dataset) => [dataset.name, []]));
 api.state.feedVerified = true;
+
+assert.deepEqual(
+  Object.keys(displayConfig).sort(),
+  manifest.datasets.map((dataset) => dataset.slug).sort(),
+  "every dataset must have exactly one headline-metric configuration"
+);
+manifest.datasets.forEach((dataset) => {
+  api.state.dataset = dataset.name;
+  const configuredIds = displayConfig[dataset.slug].headline_metric_ids;
+  assert.equal(configuredIds.length, 5, `${dataset.name} must declare five headline metrics`);
+  assert.equal(configuredIds[0], dataset.ranking.metric_id, `${dataset.name} must foreground its ranking metric`);
+  configuredIds.forEach((metricId) => {
+    assert.ok(dataset.metric_ids.includes(metricId), `${dataset.name} headline metric ${metricId} must exist in its feed`);
+  });
+  assert.deepEqual(
+    Array.from(api.headlineMetricDefinitions(), (definition) => definition.id),
+    configuredIds,
+    `${dataset.name} summary metric order must follow its display configuration`
+  );
+  api.state.metricView = "summary";
+  assert.deepEqual(
+    Array.from(
+      api
+        .activeColumns()
+        .filter((column) => column.definition)
+        .map((column) => column.definition.id)
+    ),
+    configuredIds,
+    `${dataset.name} summary table must contain only its headline metrics`
+  );
+  api.state.metricView = "full";
+  api.state.visibleGroups = new Set(["absolute", "relative", "integral", "diagnostics", "scores", "model-details"]);
+  assert.equal(
+    api.activeColumns().filter((column) => column.definition).length,
+    dataset.metric_ids.length,
+    `${dataset.name} full table must retain every metric`
+  );
+});
+api.state.metricView = "summary";
 
 const baseSurfacePressureDefinition = api.state.metrics.get("surface_pressure_rel_l2");
 const baseSurfacePressureSnapshot = JSON.stringify(baseSurfacePressureDefinition);

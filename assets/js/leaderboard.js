@@ -5,6 +5,7 @@
   const manifestUrl = window.FluidsBenchLeaderboardManifestUrl;
   const expectedManifestSha256 = String(window.FluidsBenchLeaderboardManifestSha256 || "").trim();
   const groundTruthBaseUrl = window.FluidsBenchProfileGroundTruthBaseUrl;
+  const leaderboardDisplay = window.FluidsBenchLeaderboardDisplay || {};
   const palette = [
     "#0072b2",
     "#d55e00",
@@ -28,9 +29,11 @@
     { id: "absolute", label: "Absolute", className: "metric-group-absolute" },
     { id: "relative", label: "Relative", className: "metric-group-relative" },
     { id: "integral", label: "Integral forces / moments", className: "metric-group-integral" },
+    { id: "diagnostics", label: "Diagnostics", className: "metric-group-diagnostics" },
     { id: "scores", label: "Scores", className: "metric-group-scores" },
     { id: "model-details", label: "Model details", className: "metric-group-neutral" },
   ];
+  const summaryColumnKeys = new Set(["rank", "model", "submitter", "modelTypes", "parameters", "details"]);
 
   const state = {
     manifest: null,
@@ -67,6 +70,7 @@
     showAllVersions: false,
     sortKey: "rank",
     sortDirection: "asc",
+    metricView: "summary",
     visibleGroups: new Set(),
     exportScope: "current",
     comparedModelIds: new Set(),
@@ -246,13 +250,16 @@
     if (state.showAllVersions) params.set("versions", "all");
     params.set("sort", state.sortKey);
     params.set("direction", state.sortDirection);
-    params.set(
-      "columns",
-      columnGroups
-        .map(({ id }) => id)
-        .filter((id) => state.visibleGroups.has(id))
-        .join(",")
-    );
+    params.set("metric_view", state.metricView);
+    if (state.metricView === "full") {
+      params.set(
+        "columns",
+        columnGroups
+          .map(({ id }) => id)
+          .filter((id) => state.visibleGroups.has(id))
+          .join(",")
+      );
+    }
     params.set("models", Array.from(state.comparedModelIds).join(","));
     if (state.comparisonMetric) params.set("comparison", state.comparisonMetric);
     if (state.scatterX) params.set("scatter_x", state.scatterX);
@@ -277,6 +284,8 @@
       showAllVersions: params.get("versions") === "all",
       sortKey: params.get("sort") || "",
       sortDirection: params.get("direction") || "",
+      metricView: params.get("metric_view") === "full" ? "full" : "summary",
+      hasMetricView: params.has("metric_view"),
       visibleGroups: (params.get("columns") || "")
         .split(",")
         .map((value) => value.trim())
@@ -2648,6 +2657,39 @@
     return activeDataset()?.column_group_labels?.[group] || defaultLabel;
   }
 
+  function activeDatasetDisplay() {
+    const dataset = activeDataset();
+    const datasetSlug = dataset?.slug || slug(dataset?.name || "");
+    const configured = leaderboardDisplay?.[datasetSlug];
+    return configured && typeof configured === "object" && !Array.isArray(configured) ? configured : {};
+  }
+
+  function headlineMetricDefinitions() {
+    const definitions = activeMetricDefinitions();
+    if (!definitions.length) return [];
+    const definitionsById = new Map(definitions.map((definition) => [definition.id, definition]));
+    const requested = Array.isArray(activeDatasetDisplay().headline_metric_ids) ? activeDatasetDisplay().headline_metric_ids : [];
+    const orderedIds = [ranking().metric_id, ...requested];
+    const selected = [];
+    const selectedIds = new Set();
+    orderedIds.forEach((metricId) => {
+      if (!definitionsById.has(metricId) || selectedIds.has(metricId)) return;
+      selected.push(definitionsById.get(metricId));
+      selectedIds.add(metricId);
+    });
+    const targetCount = Math.min(5, definitions.length);
+    definitions.forEach((definition) => {
+      if (selected.length >= targetCount || selectedIds.has(definition.id)) return;
+      selected.push(definition);
+      selectedIds.add(definition.id);
+    });
+    return selected;
+  }
+
+  function headlineMetricIds() {
+    return new Set(headlineMetricDefinitions().map((definition) => definition.id));
+  }
+
   function allColumns() {
     const columns = [
       { key: "rank", label: "Rank", sortKey: "rank" },
@@ -2678,7 +2720,12 @@
   }
 
   function activeColumns() {
-    return allColumns().filter((column) => !column.group || state.visibleGroups.has(column.group));
+    const columns = allColumns();
+    if (state.metricView === "summary") {
+      const headlineIds = headlineMetricIds();
+      return columns.filter((column) => (column.definition ? headlineIds.has(column.definition.id) : summaryColumnKeys.has(column.key)));
+    }
+    return columns.filter((column) => !column.group || state.visibleGroups.has(column.group));
   }
 
   function initializeVisibleGroups() {
@@ -2686,7 +2733,33 @@
     state.visibleGroups.add("model-details");
   }
 
+  function renderMetricViewControls() {
+    const button = element("leaderboard-metric-view-toggle");
+    const status = element("leaderboard-metric-view-status");
+    const fullViewControls = element("leaderboard-column-controls");
+    const table = element("leaderboard-table");
+    const headlineCount = headlineMetricDefinitions().length;
+    const totalCount = activeMetricDefinitions().length;
+    const hiddenMetricCount = Math.max(0, totalCount - headlineCount);
+    const fullView = state.metricView === "full";
+    const visibleFullMetricCount = activeMetricDefinitions().filter((definition) => state.visibleGroups.has(metricColumnGroup(definition))).length;
+    if (button) {
+      button.textContent = fullView ? "Show headline metrics" : `Show all metrics${hiddenMetricCount ? ` (${hiddenMetricCount} more)` : ""}`;
+      button.setAttribute("aria-expanded", String(fullView));
+    }
+    if (status) {
+      status.textContent = fullView
+        ? visibleFullMetricCount === totalCount
+          ? `Showing the full ${totalCount}-metric table.`
+          : `Showing ${visibleFullMetricCount} of ${totalCount} metrics in the customised full view.`
+        : `Showing ${headlineCount} dataset-specific headline metric${headlineCount === 1 ? "" : "s"}.`;
+    }
+    if (fullViewControls) fullViewControls.hidden = !fullView;
+    table?.classList.toggle("leaderboard-columns-reduced", !fullView);
+  }
+
   function renderColumnToggles() {
+    renderMetricViewControls();
     const container = element("leaderboard-column-toggles");
     if (!container) return;
     container.replaceChildren();
@@ -5286,10 +5359,22 @@
     ]
       .filter(Boolean)
       .join(" &middot; ");
+    const headlineIds = headlineMetricIds();
     const metricSections = Array.from(detailsMetricGroups(row).entries())
       .map(([group, metrics]) => {
-        const values = metrics.map(({ definition, value }) => detailsRow(definition.label, formatMetric(value, definition), true)).join("");
-        return `<section><h4>${escapeHtml(group)}</h4><dl>${values}</dl></section>`;
+        const values = metrics
+          .map(({ definition, value }) => {
+            const headlineBadge = headlineIds.has(definition.id) ? '<span class="leaderboard-headline-metric-badge">Headline</span>' : "";
+            return `<div><dt>${formattedMetricLabelHtml(definition.label)}${headlineBadge}</dt><dd>${escapeHtml(
+              formatMetric(value, definition)
+            )}</dd></div>`;
+          })
+          .join("");
+        const containsRankingMetric = metrics.some(({ definition }) => definition.id === ranking().metric_id);
+        return `<details class="leaderboard-metric-disclosure"${containsRankingMetric ? " open" : ""}>
+          <summary><span>${escapeHtml(group)}</span><span>${metrics.length} metric${metrics.length === 1 ? "" : "s"}</span></summary>
+          <div class="leaderboard-metric-detail-body"><dl>${values}</dl></div>
+        </details>`;
       })
       .join("");
     const rankAndClaimSection = rankContext
@@ -5494,7 +5579,10 @@
         ${detailsRow("Validation record SHA-256", validation.evidence_sha256)}
         ${detailsRow("Validation record bytes", humanize(validationCheck?.status || "not_checked"))}
       </dl>${approvalLinks ? `<p>${approvalLinks}</p>` : ""}${resultCitationActions}</section>
-      ${metricSections}`;
+      <section class="leaderboard-result-metrics"><h4>Metrics</h4>
+        <p class="details-note">Headline metrics form the compact leaderboard view. Expand any group below to inspect every submitted metric.</p>
+        ${metricSections}
+      </section>`;
     if (dialog.open) return;
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
@@ -5549,6 +5637,9 @@
     );
     if (sortKeys.has(restored.sortKey)) state.sortKey = restored.sortKey;
     if (["asc", "desc"].includes(restored.sortDirection)) state.sortDirection = restored.sortDirection;
+
+    state.metricView = restored.metricView;
+    if (restored.hasVisibleGroups && !restored.hasMetricView) state.metricView = "full";
 
     if (restored.hasVisibleGroups) {
       const availableGroups = new Set(activeMetricDefinitions().map(metricColumnGroup));
@@ -5654,6 +5745,7 @@
       state.showAllVersions = false;
       state.sortKey = "rank";
       state.sortDirection = "asc";
+      state.metricView = "summary";
       state.comparisonMetric = dataset.ranking?.metric_id || "";
       state.scatterX = "";
       state.scatterY = dataset.ranking?.metric_id || "";
@@ -5758,6 +5850,16 @@
     });
     element("show-all-versions")?.addEventListener("change", (event) => {
       state.showAllVersions = event.target.checked;
+      renderTable();
+      updateUrl();
+    });
+    element("leaderboard-metric-view-toggle")?.addEventListener("click", () => {
+      if (state.metricView === "full") state.metricView = "summary";
+      else {
+        state.metricView = "full";
+        initializeVisibleGroups();
+      }
+      renderColumnToggles();
       renderTable();
       updateUrl();
     });

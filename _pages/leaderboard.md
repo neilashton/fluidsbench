@@ -110,12 +110,31 @@ chart:
   <div id="leaderboard-profile-warning" class="leaderboard-profile-warning" role="status" hidden></div>
 
   <div class="leaderboard-table-area">
-    <div class="leaderboard-table-toolbar" id="leaderboard-column-controls" role="group" aria-label="Visible table column groups">
-      <span class="leaderboard-column-controls-label">Columns</span>
-      <div class="leaderboard-column-toggles" id="leaderboard-column-toggles"></div>
+    <div class="leaderboard-table-toolbar">
+      <div class="leaderboard-metric-view-controls" role="group" aria-label="Leaderboard metric detail level">
+        <span class="leaderboard-column-controls-label">Metric columns</span>
+        <button
+          id="leaderboard-metric-view-toggle"
+          class="leaderboard-metric-view-toggle"
+          type="button"
+          aria-controls="leaderboard-table leaderboard-column-controls"
+          aria-expanded="false"
+        >Show all metrics</button>
+        <span id="leaderboard-metric-view-status" class="leaderboard-metric-view-status" role="status"></span>
+      </div>
+      <div
+        class="leaderboard-column-controls"
+        id="leaderboard-column-controls"
+        role="group"
+        aria-label="Visible full-view column groups"
+        hidden
+      >
+        <span class="leaderboard-column-controls-label">Full-view groups</span>
+        <div class="leaderboard-column-toggles" id="leaderboard-column-toggles"></div>
+      </div>
     </div>
     <section class="leaderboard-table-wrap" aria-label="CFD leaderboard table">
-      <table class="leaderboard-table">
+      <table class="leaderboard-table" id="leaderboard-table">
         <thead><tr id="leaderboard-header-row"></tr></thead>
         <tbody id="leaderboard-body"></tbody>
       </table>
@@ -290,6 +309,8 @@ chart:
     {{ site.leaderboard_manifest_sha256 | default: "" | jsonify }};
   window.FluidsBenchSubmissionSourceRef =
     {{ site.submission_source_ref | default: "main" | jsonify }};
+  window.FluidsBenchLeaderboardDisplay =
+    {{ site.data.leaderboard_display | default: empty | jsonify }};
   window.FluidsBenchProfileGroundTruthBaseUrl =
     new URL("{{ '/assets/data/profile-ground-truth/' | relative_url }}", window.location.origin).href;
 </script>
