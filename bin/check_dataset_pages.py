@@ -68,6 +68,7 @@ def check_local(catalog: dict[str, Any]) -> list[str]:
         item = catalog[dataset_id]
         source = item.get("source", {})
         benchmark = item.get("benchmark", {})
+        design_space = item.get("design_space", {})
         image = source.get("image", {})
         prefix = f"{dataset_id}:"
 
@@ -82,6 +83,36 @@ def check_local(catalog: dict[str, Any]) -> list[str]:
         require(source.get("license") and source.get("license_url"), f"{prefix} missing licence metadata", errors)
         require(source.get("availability") and source.get("contents"), f"{prefix} missing source availability/content description", errors)
         require(image.get("alt") and image.get("caption") and image.get("source_url"), f"{prefix} incomplete image attribution", errors)
+
+        archetypes = design_space.get("archetypes")
+        parameters = design_space.get("parameters")
+        require(design_space.get("archetype_count"), f"{prefix} missing parent-shape/archetype count", errors)
+        require(isinstance(archetypes, list) and bool(archetypes), f"{prefix} missing parent-shape/archetype definitions", errors)
+        if isinstance(archetypes, list):
+            for index, archetype in enumerate(archetypes, start=1):
+                require(
+                    isinstance(archetype, dict) and archetype.get("name") and archetype.get("description"),
+                    f"{prefix} incomplete archetype {index}",
+                    errors,
+                )
+        require(design_space.get("parameter_count"), f"{prefix} missing geometry-parameter count", errors)
+        require(design_space.get("parameter_summary"), f"{prefix} missing geometry-parameter summary", errors)
+        require(isinstance(parameters, list), f"{prefix} geometry parameters must be a list", errors)
+        if isinstance(parameters, list):
+            for index, parameter in enumerate(parameters, start=1):
+                require(
+                    isinstance(parameter, dict) and parameter.get("name") and parameter.get("range"),
+                    f"{prefix} incomplete geometry parameter {index}",
+                    errors,
+                )
+        require(design_space.get("operating_conditions"), f"{prefix} missing operating-condition coverage", errors)
+        require(design_space.get("sampling"), f"{prefix} missing design-space sampling description", errors)
+        require(design_space.get("coverage"), f"{prefix} missing benchmark design-space coverage", errors)
+        require(
+            str(design_space.get("source_url", "")).startswith("https://") and design_space.get("source_label"),
+            f"{prefix} missing design-space source attribution",
+            errors,
+        )
 
         try:
             checked = dt.date.fromisoformat(str(source.get("checked_on")))

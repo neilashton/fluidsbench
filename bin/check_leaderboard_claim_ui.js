@@ -647,6 +647,88 @@ function verifyOfficialAcademicHappyPath() {
   assert.match(missingArtifactDetails, /Model artifact availability<\/dt><dd>Not supplied \(optional\)/);
   assert.match(missingArtifactDetails, /Environment artifact availability<\/dt><dd>Not supplied \(optional\)/);
   assert.match(missingArtifactDetails, /Their absence does not affect accuracy rank, academic-citation eligibility, or promotion eligibility/);
+  assert.match(missingArtifactDetails, /Detailed methodology was not recorded under this result's schema/);
+
+  const rowWithPrototypeMethodology = {
+    ...rankedRow,
+    methodology: {
+      format: "fluidsbench-method-v1",
+      record_kind: "prototype_fixture",
+      record_note: "Fixture only <not author-verified>.",
+      architecture: {
+        description: "A compact graph surrogate used to exercise the leaderboard interface.",
+        total_parameter_count: 1250000,
+        parameter_count_basis: "rounded_from_reported_millions",
+        submitter_trainable_parameter_count: 0,
+        components: [
+          {
+            id: "prototype-surrogate",
+            family: "Graph neural network",
+            role: "Surface-field predictor.",
+            description: "Aggregate component; internal layers were not recorded.",
+            parameter_count: 1250000,
+          },
+        ],
+        key_hyperparameters: [
+          {
+            id: "reported-variant",
+            component_ids: ["prototype-surrogate"],
+            name: "reported_model_variant",
+            value: "GraphNet",
+            description: "Only the displayed model family was retained.",
+          },
+        ],
+        input_features: [
+          {
+            id: "surface-coordinates",
+            component_ids: ["prototype-surrogate"],
+            name: "surface_coordinates",
+            domain: "surface",
+            component_count: 3,
+            description: "Three-dimensional surface coordinates.",
+          },
+        ],
+        predicted_fields: [
+          {
+            field_id: "surface.p",
+            domain: "surface",
+            component_count: 1,
+            component_ids: ["prototype-surrogate"],
+            production: "direct_model_output",
+            description: "Surface pressure fixture output.",
+          },
+        ],
+      },
+      data_handling: {
+        normalization: "Not recorded for this prototype fixture.",
+        preprocessing: "Not recorded for this prototype fixture.",
+        sampling: "Not recorded for this prototype fixture.",
+      },
+      training: {
+        stages: [
+          {
+            id: "prototype-training-not-recorded",
+            status: "prototype_not_recorded",
+            component_ids: ["prototype-surrogate"],
+            description: "No executable training run accompanies this fixture.",
+          },
+        ],
+      },
+      checkpoints: [],
+      inference_compute: {
+        status: "not_measured",
+        reason: "No retained model checkpoint is associated with this fixture.",
+      },
+    },
+  };
+  api.openDetails(rowWithPrototypeMethodology, false);
+  const prototypeMethodologyDetails = elements.get("details-dialog-body").innerHTML;
+  assert.match(prototypeMethodologyDetails, /Prototype fixture metadata — not author-verified/);
+  assert.match(prototypeMethodologyDetails, /Fixture only &lt;not author-verified&gt;\./);
+  assert.match(prototypeMethodologyDetails, /1,250,000/);
+  assert.match(prototypeMethodologyDetails, /surface\.p/);
+  assert.match(prototypeMethodologyDetails, /No retained model checkpoint is associated with this methodology record/);
+  assert.match(prototypeMethodologyDetails, /Reason not measured<\/dt><dd>No retained model checkpoint is associated with this fixture/);
 
   const citation = api.citationValues();
   assert.match(citation.plain, /exact data release release-2026-07/);
@@ -684,6 +766,10 @@ function verifyOfficialAcademicHappyPath() {
     "reproducibility_model_artifact_availability",
     "reproducibility_environment_artifact_availability",
     "reproducibility_artifact_documentation_availability",
+    "methodology_format",
+    "methodology_record_kind",
+    "methodology_total_parameter_count",
+    "methodology_json",
   ].forEach((name) => assert.equal(columnNames.has(name), true, `${name} must be present in CSV exports`));
   const exportValues = new Map(exportColumns.map(([name, value]) => [name, value(rankedRow)]));
   assert.equal(exportValues.get("prediction_artifact_check_record_file"), `submissions/example/${submissionId}/prediction-artifact-checks.json`);
