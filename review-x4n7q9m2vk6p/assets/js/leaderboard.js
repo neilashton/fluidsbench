@@ -1910,13 +1910,16 @@
     const status = element("submission-status");
     const button = element("open-submission-repo");
     if (status) {
-      status.textContent = open
-        ? `${dataset.name} submissions are open. Final scores use ${support.release_id || "the official scoring-support release"}.`
-        : "Submissions are currently closed.";
+      status.textContent = open ? "Submissions open" : "Submissions closed";
+      status.className = `leaderboard-submit-status${open ? " is-open" : ""}`;
+      status.title = open
+        ? `${dataset.name} submissions use ${support.release_id || "the official scoring-support release"}.`
+        : "This dataset is not currently accepting leaderboard submissions.";
     }
     if (button) {
       button.disabled = !open;
-      button.textContent = open ? "Submit a result" : "Submit a result — closed";
+      button.hidden = !open;
+      button.textContent = "Submit a result";
     }
   }
 
@@ -1928,11 +1931,11 @@
     const dataWarningText = element("leaderboard-data-warning-text");
     const officialRelease = release.status === "official";
     if (dataWarning) dataWarning.className = `leaderboard-data-warning${officialRelease ? " is-official" : ""}`;
-    if (dataWarningTitle) dataWarningTitle.textContent = officialRelease ? "Official submitted-data release:" : "Prototype only:";
+    if (dataWarningTitle) dataWarningTitle.textContent = officialRelease ? "Official release" : "Prototype results";
     if (dataWarningText) {
       dataWarningText.textContent = officialRelease
-        ? " results use submitter-provided metrics, spatial declarations, and profile predictions from open, versioned submission packages. FluidsBench validates and approves each submitted package but does not run the model. Any prediction-artifact checks and metric recomputation are reported separately for each result."
-        : " all results currently shown are illustrative dummy data. They are not official results and must not be cited or promoted as leaderboard claims. Official open-track results will use submitter-provided metrics and profile predictions, pass FluidsBench package validation, and receive maintainer approval.";
+        ? " — submitted packages are validated and maintainer-approved."
+        : " — illustrative dummy data; not citable or suitable for leaderboard claims.";
     }
     element("leaderboard-release-id").textContent = release.id || "Unversioned";
     const details = [];
@@ -1949,6 +1952,13 @@
     const meta = element("leaderboard-release-meta");
     meta.textContent = details.join(" | ");
     if (release.feed_sha256) meta.title = `Feed SHA-256: ${release.feed_sha256}`;
+    const compact = element("leaderboard-release-compact");
+    if (compact) {
+      const compactDetails = [];
+      if (release.generated_at) compactDetails.push(`Updated ${formatReleaseDate(release.generated_at)}`);
+      if (state.feedVerified && (!expectedManifestSha256 || state.manifestPinVerified)) compactDetails.push("integrity checks passed");
+      compact.textContent = compactDetails.join(" · ") || "Release details";
+    }
     const source = element("leaderboard-release-source");
     const sourceUrl = releaseSourceUrl();
     source.hidden = !sourceUrl;
@@ -1968,6 +1978,7 @@
       const eligibility = claimEligibility(citedRow);
       const eligible = eligibility.academic_citation;
       citationButton.disabled = !state.dataset || !eligible;
+      citationButton.hidden = !state.dataset || !eligible;
       citationButton.title = eligible
         ? citedRow
           ? "Cite this approved result from a hash-verified official release"
@@ -3116,6 +3127,8 @@
     const revisionCount = Number(dataset?.revision_count || 0);
     const currentCount = Number(dataset?.submission_count || 0);
     control.disabled = revisionCount <= currentCount;
+    const wrapper = element("leaderboard-version-control");
+    if (wrapper) wrapper.hidden = control.disabled;
     control.title = control.disabled
       ? "No previous result versions are published for this dataset yet."
       : "Include superseded versions as unranked historical rows.";
@@ -3360,10 +3373,13 @@
     if (summary) summary.textContent = text;
   }
 
-  function setFigureCaption(key, text) {
+  function setFigureCaption(key, text, visibleText = text) {
     state.figureCaptions.set(key, text);
     const caption = element(`${key}-figure-caption`);
-    if (caption) caption.textContent = text;
+    if (caption) {
+      caption.textContent = visibleText;
+      caption.title = "The copied caption and exported figure retain the complete release provenance.";
+    }
   }
 
   function renderNumericTable(containerId, captionText, columns, rows) {
@@ -3836,7 +3852,11 @@
       omittedRows,
       "metric unavailable"
     )} ${releaseStamp()}. Open reproducibility track with public scored ground truth.`;
-    setFigureCaption("comparison", caption);
+    setFigureCaption(
+      "comparison",
+      caption,
+      `${state.dataset} · ${state.split} · ${plainMetricLabel(definition)} · ${rows.length} selected model${rows.length === 1 ? "" : "s"}`
+    );
     const figureValues = rows.map((row, index) => ({
       model: rowLabel(row),
       submission_id: row.id,
@@ -3996,7 +4016,13 @@
       omittedRows,
       "one or both axis values unavailable"
     )} ${releaseStamp()}. Open reproducibility track with public scored ground truth.`;
-    setFigureCaption("scatter", caption);
+    setFigureCaption(
+      "scatter",
+      caption,
+      `${state.dataset} · ${state.split} · ${plainMetricLabel(xDefinition)} versus ${plainMetricLabel(yDefinition)} · ${
+        points.length
+      } selected model${points.length === 1 ? "" : "s"}`
+    );
     const figureValues = points.map((point, index) => ({
       model: rowLabel(point.row),
       submission_id: point.row.id,
@@ -4172,14 +4198,6 @@
           <p id="profile-${index}-description"></p>
         </div>
         <div class="chart-control-row">
-          <div class="chart-control">
-            <label class="chart-control-title" for="profile-${index}-dataset">Dataset</label>
-            <select id="profile-${index}-dataset" data-leaderboard-dataset-select></select>
-          </div>
-          <div class="chart-control">
-            <label class="chart-control-title" for="profile-${index}-split">Split</label>
-            <select id="profile-${index}-split" data-leaderboard-split-select></select>
-          </div>
           <div class="chart-control profile-case-control">
             <label class="chart-control-title" for="profile-${index}-case">Public evaluation geometry</label>
             <select id="profile-${index}-case" data-profile-case-select disabled></select>
@@ -4461,7 +4479,7 @@
     }. Lines preserve native source order and join finite source coordinate/value pairs without smoothing, interpolation, resampling, or sorting; ${
       droppedPointCount || "no"
     } invalid or unpaired source point${droppedPointCount === 1 ? " was" : "s were"} omitted.${profileOmissionText} ${releaseStamp()}.`;
-    setFigureCaption(figureKey, caption);
+    setFigureCaption(figureKey, caption, `${state.dataset} · ${state.split} · ${panel.title} · ${station.label} · ${datasets.length} plotted series`);
     const domain = datasets.map((dataset) => dataset.label);
     const range = datasets.map((dataset) => dataset.borderColor);
     state.figureSpecs.set(figureKey, {
@@ -4765,24 +4783,34 @@
     }. The selected dataset controls the table columns and all chart choices. ${
       plainMetricLabel(rankMetric) || policy.metric_id
     } is displayed and ranked at ${policy.decimal_places} decimal place${policy.decimal_places === 1 ? "" : "s"}.`;
+    const headlineIds = headlineMetricIds();
     activeMetricDefinitions().forEach((definition) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = groupClass(metricColumnGroup(definition));
-      const term = document.createElement("dt");
-      appendFormattedMetricLabel(term, definition.label);
-      if (definition.unit) term.appendChild(document.createTextNode(` (${definition.unit})`));
-      const description = document.createElement("dd");
-      description.appendChild(document.createTextNode(`${metricDescription(definition)} `));
+      const wrapper = document.createElement("details");
+      wrapper.className = `leaderboard-metric-definition ${groupClass(metricColumnGroup(definition))}`;
+      const summary = document.createElement("summary");
+      const label = document.createElement("span");
+      appendFormattedMetricLabel(label, definition.label);
+      if (definition.unit) label.appendChild(document.createTextNode(` (${definition.unit})`));
+      const metadata = document.createElement("span");
+      metadata.className = "leaderboard-metric-definition-meta";
+      metadata.textContent = `${definition.direction === "lower" ? "Lower" : "Higher"} is better`;
+      if (headlineIds.has(definition.id)) metadata.appendChild(definitionStatus("Headline"));
+      summary.append(label, metadata);
+      const description = document.createElement("div");
+      description.className = "leaderboard-metric-definition-body";
+      const explanation = document.createElement("p");
+      explanation.appendChild(document.createTextNode(`${metricDescription(definition)} `));
       const direction = document.createElement("strong");
       direction.textContent = `${definition.direction === "lower" ? "Lower" : "Higher"} is better.`;
-      description.appendChild(direction);
+      explanation.appendChild(direction);
+      description.appendChild(explanation);
       if (definition.equation) {
         const line = document.createElement("div");
         line.className = "leaderboard-metric-equation";
         line.textContent = `\\(${definition.equation}\\)`;
         description.appendChild(line);
       }
-      wrapper.append(term, description);
+      wrapper.append(summary, description);
       list.appendChild(wrapper);
     });
     const typeset = () => {
@@ -5716,7 +5744,51 @@
           )}</p>
           <p id="result-citation-copy-status" class="leaderboard-copy-status" role="status"></p>
         </div>`;
+    const summaryMetrics = activeMetricDefinitions()
+      .filter((definition) => headlineIds.has(definition.id) && definition.id !== ranking().metric_id)
+      .slice(0, 4)
+      .map(
+        (definition) =>
+          `<div><dt>${formattedMetricLabelHtml(definition.label)}</dt><dd>${escapeHtml(
+            formatMetric(row.metricValues?.[definition.id], definition)
+          )}</dd></div>`
+      )
+      .join("");
+    const summaryRank = rankContext ? `#${rankContext.rank} of ${rankContext.ranked_result_count}` : "Superseded version";
+    const summaryRankingLabel = plainMetricLabel(metricDefinition(ranking().metric_id)) || "Ranking score";
+    const packageValidationLabel =
+      dataRelease().status === "official" ? humanize(validation.status || "not recorded") : "Prototype fixture — not applicable";
+    const summaryStatus = (label, value) =>
+      `<span class="leaderboard-result-status"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "Not supplied")}</span>`;
     element("details-dialog-body").innerHTML = `
+      <section class="leaderboard-result-summary" aria-label="Result summary">
+        <div class="leaderboard-result-summary-heading">
+          <div><span>Leaderboard position</span><strong>${escapeHtml(summaryRank)}</strong></div>
+          <div><span>${escapeHtml(summaryRankingLabel)}</span><strong>${escapeHtml(
+            formatMetric(row.metricValues?.[ranking().metric_id], metricDefinition(ranking().metric_id))
+          )}</strong></div>
+        </div>
+        ${summaryMetrics ? `<dl class="leaderboard-result-headline-metrics">${summaryMetrics}</dl>` : ""}
+        <dl class="leaderboard-result-identity">
+          ${detailsRow("Submitted by", row.submitter)}
+          ${detailsRow("Institution", row.institution)}
+          ${detailsRow("Model types", row.modelTypes.join(", "))}
+          ${detailsRow("Parameters", row.parameterCount === null ? null : `${formatNumber(row.parameterCount, 2)} M`)}
+          ${detailsRow("Training", trainingLabel(row))}
+          ${detailsRow("Published", row.date)}
+        </dl>
+        <div class="leaderboard-result-statuses" aria-label="Validation and artifact status">
+          ${summaryStatus("Package validation", packageValidationLabel)}
+          ${summaryStatus("Prediction data", predictionAvailability(row).label)}
+          ${summaryStatus("Metric recomputation", predictionMetricRecomputation(row).label)}
+          ${summaryStatus("Code", optionalArtifactAvailabilityLabel(reproducibilityArtifacts.code))}
+          ${summaryStatus("Model artifact", optionalArtifactAvailabilityLabel(reproducibilityArtifacts.model))}
+          ${summaryStatus("Environment", optionalArtifactAvailabilityLabel(reproducibilityArtifacts.environment))}
+        </div>
+      </section>
+      <details class="leaderboard-details-disclosure">
+        <summary>Ranking and submission record</summary>
+        <div class="leaderboard-details-disclosure-body">
       ${rankAndClaimSection}
       ${revisionHistoryHtml(row)}
       <section><h4>Submission</h4><dl>
@@ -5733,6 +5805,11 @@
         ${detailsRow("Parameters", row.parameterCount === null ? null : `${formatNumber(row.parameterCount, 2)} M`)}
         ${detailsRow("Date", row.date)}
       </dl>${links ? `<p>${links}</p>` : ""}${row.note ? `<p>${escapeHtml(row.note)}</p>` : ""}</section>
+        </div>
+      </details>
+      <details class="leaderboard-details-disclosure">
+        <summary>Model and training methodology</summary>
+        <div class="leaderboard-details-disclosure-body">
       ${methodologySectionHtml(row)}
       <section><h4>Training</h4><dl>
         ${detailsRow("Regime", trainingLabel(row))}
@@ -5741,6 +5818,11 @@
         ${detailsRow("Pretraining data", pretrainingDataLabel(row.pretraining_data))}
         ${detailsRow("Protocol explanation", row.training_regime_explanation)}
       </dl></section>
+        </div>
+      </details>
+      <details class="leaderboard-details-disclosure leaderboard-technical-provenance">
+        <summary>Technical provenance and validation</summary>
+        <div class="leaderboard-details-disclosure-body">
       <section><h4>Result scoring support</h4><dl>
         ${detailsRow("Scoring-support release", support.release_id)}
         ${detailsRow("Scoring-support status", humanize(support.status))}
@@ -5871,10 +5953,17 @@
         ${detailsRow("Validation record SHA-256", validation.evidence_sha256)}
         ${detailsRow("Validation record bytes", humanize(validationCheck?.status || "not_checked"))}
       </dl>${approvalLinks ? `<p>${approvalLinks}</p>` : ""}${resultCitationActions}</section>
+        </div>
+      </details>
+      <details class="leaderboard-details-disclosure leaderboard-result-metrics-disclosure">
+        <summary>All submitted metrics</summary>
+        <div class="leaderboard-details-disclosure-body">
       <section class="leaderboard-result-metrics"><h4>Metrics</h4>
         <p class="details-note">Headline metrics form the compact leaderboard view. Expand any group below to inspect every submitted metric.</p>
         ${metricSections}
-      </section>`;
+      </section>
+        </div>
+      </details>`;
     if (dialog.open) return;
     if (typeof dialog.showModal === "function") dialog.showModal();
     else dialog.setAttribute("open", "");
@@ -5997,6 +6086,23 @@
     renderComparisonChart();
     renderScatterChart();
     void refreshProfileContext();
+  }
+
+  function resizeVisibleCharts() {
+    Object.values(state.charts).forEach((chart) => chart?.resize?.());
+  }
+
+  function activateAnalysisTab(name) {
+    const activeName = ["comparison", "scatter", "profiles"].includes(name) ? name : "comparison";
+    document.querySelectorAll("[data-analysis-tab]").forEach((tab) => {
+      const selected = tab.dataset.analysisTab === activeName;
+      tab.setAttribute("aria-selected", String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    document.querySelectorAll("[data-analysis-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.analysisPanel !== activeName;
+    });
+    window.requestAnimationFrame(resizeVisibleCharts);
   }
 
   function showError(error, message = "Could not load leaderboard data") {
@@ -6224,6 +6330,26 @@
       state.comparedModelIds = new Set();
       state.staleComparedModelIds = new Set();
       updateFigureSelection();
+    });
+    document.querySelectorAll("[data-analysis-tab]").forEach((tab) => {
+      tab.addEventListener("click", () => activateAnalysisTab(tab.dataset.analysisTab));
+      tab.addEventListener("keydown", (event) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+        const tabs = Array.from(document.querySelectorAll("[data-analysis-tab]"));
+        const index = tabs.indexOf(event.currentTarget);
+        const nextIndex =
+          event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? tabs.length - 1
+              : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+        event.preventDefault();
+        tabs[nextIndex]?.focus();
+        activateAnalysisTab(tabs[nextIndex]?.dataset.analysisTab);
+      });
+    });
+    element("leaderboard-advanced-analysis")?.addEventListener("toggle", (event) => {
+      if (event.currentTarget.open) window.requestAnimationFrame(resizeVisibleCharts);
     });
     element("open-citation-dialog")?.addEventListener("click", openCitationDialog);
     element("copy-citation-text")?.addEventListener("click", () => void copyCitation("plain"));
