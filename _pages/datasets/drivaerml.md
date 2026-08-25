@@ -47,6 +47,8 @@ compact_masthead: true
     {% include dataset_getting_started.html slug="drivaerml" %}
   </section>
 
+  {% include dataset_design_space.html slug="drivaerml" %}
+
   <section class="dataset-panel">
     <h3>Official source and candidate benchmark splits</h3>
     <p>

@@ -138,9 +138,16 @@ def check_local(catalog: dict[str, Any]) -> list[str]:
         if page_path.is_file():
             page = page_path.read_text(encoding="utf-8")
             intro = f'{{% include dataset_intro.html slug="{dataset_id}" %}}'
+            design_space = f'{{% include dataset_design_space.html slug="{dataset_id}" %}}'
             getting_started = f'dataset_getting_started.html'
             require(intro in page, f"{prefix} page does not use the structured intro", errors)
             require(getting_started in page and f'slug="{dataset_id}"' in page, f"{prefix} page lacks Getting started content", errors)
+            require(design_space in page, f"{prefix} page does not expose structured design-space coverage", errors)
+            require(
+                page.index(getting_started) < page.index(design_space),
+                f"{prefix} design-space detail must follow Getting started",
+                errors,
+            )
 
     if "airfrans" in catalog:
         airfrans = catalog["airfrans"]["benchmark"]["summary"].lower()

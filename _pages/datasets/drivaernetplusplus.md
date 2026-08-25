@@ -57,6 +57,8 @@ compact_masthead: true
     {% include dataset_getting_started.html slug="drivaernetplusplus" %}
   </section>
 
+  {% include dataset_design_space.html slug="drivaernetplusplus" %}
+
   <section class="dataset-panel">
     {% include dataset_submission.html slug="drivaernetplusplus" dataset="DrivAerNet++" %}
 

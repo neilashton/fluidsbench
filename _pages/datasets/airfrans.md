@@ -50,6 +50,8 @@ compact_masthead: true
     {% include dataset_getting_started.html slug="airfrans" %}
   </section>
 
+  {% include dataset_design_space.html slug="airfrans" %}
+
   <section class="dataset-panel">
     {% include dataset_submission.html slug="airfrans" dataset="AirfRANS" %}
 

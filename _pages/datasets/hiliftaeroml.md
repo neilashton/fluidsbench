@@ -51,6 +51,8 @@ compact_masthead: true
     {% include dataset_getting_started.html slug="hiliftaeroml" %}
   </section>
 
+  {% include dataset_design_space.html slug="hiliftaeroml" %}
+
   <section class="dataset-panel">
     <h3>Published source splits</h3>
     <p>

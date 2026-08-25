@@ -16,6 +16,8 @@ compact_masthead: true
     {% include dataset_getting_started.html heading=2 slug="vki-ls59" %}
   </section>
 
+  {% include dataset_design_space.html slug="vki-ls59" %}
+
   <section class="dataset-section">
     <h2>Published source splits</h2>
     <p>

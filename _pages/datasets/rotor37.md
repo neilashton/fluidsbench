@@ -16,6 +16,8 @@ compact_masthead: true
     {% include dataset_getting_started.html heading=2 slug="rotor37" %}
   </section>
 
+  {% include dataset_design_space.html slug="rotor37" %}
+
   <section class="dataset-section">
     <h2>Published source splits</h2>
     <p>

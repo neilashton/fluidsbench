@@ -47,6 +47,8 @@ compact_masthead: true
     {% include dataset_getting_started.html slug="ahmedml" %}
   </section>
 
+  {% include dataset_design_space.html slug="ahmedml" %}
+
   <section class="dataset-panel">
     <h3>Published source splits</h3>
     <p>

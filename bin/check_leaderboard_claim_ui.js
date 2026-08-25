@@ -168,8 +168,8 @@ api.state.manifest = {
   },
 };
 api.renderReleaseMetadata();
-assert.equal(elements.get("leaderboard-data-warning-title").textContent, "Official submitted-data release:");
-assert.match(elements.get("leaderboard-data-warning-text").textContent, /submitter-provided metrics, spatial declarations, and profile predictions/);
+assert.equal(elements.get("leaderboard-data-warning-title").textContent, "Official release");
+assert.equal(elements.get("leaderboard-data-warning-text").textContent, " — submitted packages are validated and maintainer-approved.");
 assert.match(elements.get("leaderboard-data-warning").className, /is-official/);
 
 api.state.manifest = {
@@ -279,6 +279,13 @@ assert.ok(
     leaderboardPageSource.indexOf('id="leaderboard-radar-panel"') < leaderboardPageSource.indexOf('class="leaderboard-table-wrap"'),
   "radar comparison must sit between the metric-view controls and leaderboard table"
 );
+assert.match(leaderboardPageSource, /id="leaderboard-release-details"/);
+assert.match(leaderboardPageSource, /id="leaderboard-advanced-analysis"/);
+assert.match(leaderboardPageSource, /data-analysis-tab="comparison"/);
+assert.match(leaderboardPageSource, /data-analysis-panel="profiles"/);
+assert.match(leaderboardPageSource, /id="leaderboard-methodology"/);
+assert.match(source, /Technical provenance and validation/);
+assert.match(source, /leaderboard-result-summary/);
 
 const baseSurfacePressureDefinition = api.state.metrics.get("surface_pressure_rel_l2");
 const baseSurfacePressureSnapshot = JSON.stringify(baseSurfacePressureDefinition);
@@ -1101,7 +1108,8 @@ function verifyDatasetSubmissionAvailability() {
   api.state.dataset = "Pending";
   api.renderSubmissionAvailability();
   assert.equal(elements.get("open-submission-repo").disabled, true);
-  assert.equal(elements.get("submission-status").textContent, "Submissions are currently closed.");
+  assert.equal(elements.get("open-submission-repo").hidden, true);
+  assert.equal(elements.get("submission-status").textContent, "Submissions closed");
 
   api.state.manifest.datasets[0].scoring_support = {
     status: "official",
@@ -1110,7 +1118,8 @@ function verifyDatasetSubmissionAvailability() {
   };
   api.renderSubmissionAvailability();
   assert.equal(elements.get("open-submission-repo").disabled, false);
-  assert.match(elements.get("submission-status").textContent, /submissions are open/);
+  assert.equal(elements.get("open-submission-repo").hidden, false);
+  assert.equal(elements.get("submission-status").textContent, "Submissions open");
   assert.equal(
     api.scoringSupportSummary({ schema_version: "2.0" }).release_id,
     undefined,

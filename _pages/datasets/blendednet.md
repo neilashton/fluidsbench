@@ -16,6 +16,8 @@ compact_masthead: true
     {% include dataset_getting_started.html heading=2 slug="blendednet" %}
   </section>
 
+  {% include dataset_design_space.html slug="blendednet" %}
+
   <section class="dataset-section">
     <h2>Candidate benchmark split</h2>
     <p>

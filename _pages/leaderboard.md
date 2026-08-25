@@ -14,7 +14,10 @@ chart:
 
 <div class="leaderboard-page">
   <header class="leaderboard-masthead">
-    <h1>FluidsBench Leaderboard</h1>
+    <div class="leaderboard-masthead-copy">
+      <h1>FluidsBench Leaderboard</h1>
+      <p>Compare published surrogate-model results across fluid-dynamics datasets.</p>
+    </div>
     <div class="leaderboard-source-row">
       <span id="submission-status" class="leaderboard-submit-status">Submissions are currently closed.</span>
       <button
@@ -32,40 +35,47 @@ chart:
     <span id="leaderboard-data-warning-text">checking the selected leaderboard data release.</span>
   </aside>
 
-  <section class="leaderboard-release-bar" aria-label="Leaderboard data release">
-    <div class="leaderboard-release-summary">
-      <span class="leaderboard-release-label">Data release</span>
-      <strong id="leaderboard-release-id">Loading...</strong>
-      <span id="leaderboard-release-meta" class="leaderboard-release-meta"></span>
-      <a id="leaderboard-release-source" href="#" target="_blank" rel="noopener noreferrer" hidden>Source</a>
+  <details class="leaderboard-release-disclosure" id="leaderboard-release-details">
+    <summary>
+      <span id="leaderboard-release-compact">Loading release details...</span>
+      <span class="leaderboard-summary-action">Release details and downloads</span>
+    </summary>
+    <div class="leaderboard-release-bar" aria-label="Leaderboard data release">
+      <div class="leaderboard-release-summary">
+        <span class="leaderboard-release-label">Full release identifier</span>
+        <strong id="leaderboard-release-id">Loading...</strong>
+        <span id="leaderboard-release-meta" class="leaderboard-release-meta"></span>
+        <a id="leaderboard-release-source" href="#" target="_blank" rel="noopener noreferrer" hidden>View source</a>
+      </div>
+      <div class="leaderboard-release-actions" aria-label="Research data actions">
+        <label class="leaderboard-export-scope" for="leaderboard-export-scope">
+          <span>Download rows</span>
+          <select id="leaderboard-export-scope">
+            <option value="current">Current filtered view</option>
+            <option value="full">Full selected split</option>
+          </select>
+        </label>
+        <button id="export-leaderboard-csv" class="leaderboard-action-button" type="button" disabled>
+          <i class="fa-solid fa-file-csv" aria-hidden="true"></i><span>CSV</span>
+        </button>
+        <button id="export-leaderboard-json" class="leaderboard-action-button" type="button" disabled>
+          <i class="fa-solid fa-file-code" aria-hidden="true"></i><span>JSON</span>
+        </button>
+        <button
+          id="open-citation-dialog"
+          class="leaderboard-action-button"
+          type="button"
+          aria-describedby="leaderboard-claim-eligibility"
+          disabled
+          hidden
+        >
+          <i class="fa-solid fa-quote-left" aria-hidden="true"></i><span>Cite this release</span>
+        </button>
+      </div>
+      <p id="leaderboard-claim-eligibility" class="leaderboard-claim-eligibility" role="status" hidden></p>
+      <p id="leaderboard-release-action-status" class="leaderboard-sr-only" role="status"></p>
     </div>
-    <div class="leaderboard-release-actions" aria-label="Research data actions">
-      <label class="leaderboard-export-scope" for="leaderboard-export-scope">
-        <span>Table export rows</span>
-        <select id="leaderboard-export-scope">
-          <option value="current">Current filtered view</option>
-          <option value="full">Full selected split</option>
-        </select>
-      </label>
-      <button id="export-leaderboard-csv" class="leaderboard-action-button" type="button" disabled>
-        <i class="fa-solid fa-file-csv" aria-hidden="true"></i><span>Table CSV</span>
-      </button>
-      <button id="export-leaderboard-json" class="leaderboard-action-button" type="button" disabled>
-        <i class="fa-solid fa-file-code" aria-hidden="true"></i><span>Table JSON</span>
-      </button>
-      <button
-        id="open-citation-dialog"
-        class="leaderboard-action-button"
-        type="button"
-        aria-describedby="leaderboard-claim-eligibility"
-        disabled
-      >
-        <i class="fa-solid fa-quote-left" aria-hidden="true"></i><span>Cite official release</span>
-      </button>
-    </div>
-    <p id="leaderboard-claim-eligibility" class="leaderboard-claim-eligibility" role="status" hidden></p>
-    <p id="leaderboard-release-action-status" class="leaderboard-sr-only" role="status"></p>
-  </section>
+  </details>
   <div id="leaderboard-release-warning" class="leaderboard-profile-warning" role="alert" hidden></div>
 
   <section class="leaderboard-controls" aria-label="Leaderboard filters">
@@ -81,7 +91,7 @@ chart:
       <label class="leaderboard-control-title" for="type-filter">Model type</label>
       <select id="type-filter"><option value="">All model types</option></select>
     </div>
-    <div class="leaderboard-control leaderboard-version-control">
+    <div class="leaderboard-control leaderboard-version-control" id="leaderboard-version-control">
       <span class="leaderboard-control-title">Result versions</span>
       <label for="show-all-versions" class="leaderboard-version-toggle">
         <input id="show-all-versions" type="checkbox">
@@ -136,10 +146,13 @@ chart:
             <p id="radar-chart-summary" class="leaderboard-sr-only"></p>
             <p id="radar-chart-unavailable" class="leaderboard-radar-unavailable" role="status" hidden></p>
           </div>
-          <p id="radar-normalization-note" class="leaderboard-radar-note">
-            Axes use the selected dataset's published bounded-error or bounded-quality score transform. Raw metric values remain available in the
-            tooltip and table; the overall score is shown separately and is not plotted as an axis.
-          </p>
+          <details class="leaderboard-radar-explanation">
+            <summary>How these scores are normalized</summary>
+            <p id="radar-normalization-note" class="leaderboard-radar-note">
+              Axes use the selected dataset's published bounded-error or bounded-quality score transform. Raw metric values remain available in the
+              tooltip and table; the overall score is shown separately and is not plotted as an axis.
+            </p>
+          </details>
         </div>
         <aside class="leaderboard-radar-controls" aria-labelledby="radar-model-heading">
           <div>
@@ -167,16 +180,23 @@ chart:
         <tbody id="leaderboard-body"></tbody>
       </table>
     </section>
-    <p id="leaderboard-ranking-policy" class="leaderboard-ranking-policy"></p>
+    <details class="leaderboard-ranking-disclosure">
+      <summary>How ranking works</summary>
+      <p id="leaderboard-ranking-policy" class="leaderboard-ranking-policy"></p>
+    </details>
 
   </div>
 
+  <details class="leaderboard-progressive-panel leaderboard-analysis" id="leaderboard-advanced-analysis">
+    <summary>
+      <span>Explore detailed figures</span>
+      <small>Metric comparison, scatter plots and profile curves</small>
+    </summary>
+    <div class="leaderboard-progressive-body">
   <fieldset class="leaderboard-model-picker" aria-describedby="comparison-model-description">
     <legend>Models shown in detailed figures</legend>
     <p id="comparison-model-description">
-      Request the same models for the metric, scatter, and profile figures below. The first five ranked rows are selected initially; each caption lists
-      any requested model that cannot be plotted because the required metric or profile is unavailable. Table-export scope does not affect this choice.
-      Up to twelve models may be shown at once so colors remain consistent across screen and exported figures.
+      Choose models for the figures below. Up to twelve can be shown; any unavailable values are identified in the figure summary.
     </p>
     <div class="leaderboard-model-picker-actions">
       <button id="select-all-comparison-models" class="leaderboard-action-button" type="button">Select up to 12</button>
@@ -186,21 +206,19 @@ chart:
     <div id="comparison-model-options" class="leaderboard-model-options"></div>
   </fieldset>
 
-  <section class="leaderboard-panel leaderboard-comparison-panel">
+  <div class="leaderboard-analysis-tabs" role="tablist" aria-label="Detailed figure type">
+    <button id="analysis-tab-comparison" type="button" role="tab" aria-selected="true" aria-controls="analysis-panel-comparison" data-analysis-tab="comparison">Metric comparison</button>
+    <button id="analysis-tab-scatter" type="button" role="tab" aria-selected="false" aria-controls="analysis-panel-scatter" data-analysis-tab="scatter">Metric scatter</button>
+    <button id="analysis-tab-profiles" type="button" role="tab" aria-selected="false" aria-controls="analysis-panel-profiles" data-analysis-tab="profiles">Profiles</button>
+  </div>
+
+  <section class="leaderboard-panel leaderboard-comparison-panel" id="analysis-panel-comparison" role="tabpanel" aria-labelledby="analysis-tab-comparison" data-analysis-panel="comparison">
     <div class="leaderboard-panel-heading">
       <div>
         <h3>Metric comparison</h3>
         <p id="comparison-description">Compare the leading submissions for one metric.</p>
       </div>
       <div class="chart-control-row">
-        <div class="chart-control">
-          <label class="chart-control-title" for="comparison-dataset-filter">Dataset</label>
-          <select id="comparison-dataset-filter" data-leaderboard-dataset-select></select>
-        </div>
-        <div class="chart-control">
-          <label class="chart-control-title" for="comparison-split-filter">Split</label>
-          <select id="comparison-split-filter" data-leaderboard-split-select></select>
-        </div>
         <div class="chart-control">
           <label class="chart-control-title" for="comparison-metric">Metric</label>
           <select id="comparison-metric"></select>
@@ -224,21 +242,13 @@ chart:
     </details>
   </section>
 
-  <section class="leaderboard-panel leaderboard-scatter-panel">
+  <section class="leaderboard-panel leaderboard-scatter-panel" id="analysis-panel-scatter" role="tabpanel" aria-labelledby="analysis-tab-scatter" data-analysis-panel="scatter" hidden>
     <div class="leaderboard-panel-heading">
       <div>
         <h3>Metric scatter</h3>
         <p>Choose any two numeric columns available for the selected dataset.</p>
       </div>
       <div class="chart-control-row">
-        <div class="chart-control">
-          <label class="chart-control-title" for="scatter-dataset-filter">Dataset</label>
-          <select id="scatter-dataset-filter" data-leaderboard-dataset-select></select>
-        </div>
-        <div class="chart-control">
-          <label class="chart-control-title" for="scatter-split-filter">Split</label>
-          <select id="scatter-split-filter" data-leaderboard-split-select></select>
-        </div>
         <div class="chart-control">
           <label class="chart-control-title" for="scatter-x-axis">X axis</label>
           <select id="scatter-x-axis"></select>
@@ -266,28 +276,45 @@ chart:
     </details>
   </section>
 
-  <div id="leaderboard-profile-panels" class="leaderboard-profile-panels"></div>
-
-  <div class="leaderboard-definitions" aria-label="Leaderboard definitions">
-    <section class="metric-definitions" id="metric-definitions">
-      <h3>Metric definitions</h3>
-      <p id="metric-definitions-intro"></p>
-      <dl id="metric-definitions-list"></dl>
-    </section>
-
-    <section class="metric-definitions" id="split-definitions">
-      <h3>Split definitions</h3>
-      <p id="split-definitions-intro"></p>
-      <dl id="split-definitions-list"></dl>
-    </section>
-
-    <section class="metric-definitions" id="training-definitions">
-      <h3>Training definitions</h3>
-      <p id="training-definitions-intro"></p>
-      <dl id="training-definitions-list"></dl>
-    </section>
-
+  <div id="analysis-panel-profiles" role="tabpanel" aria-labelledby="analysis-tab-profiles" data-analysis-panel="profiles" hidden>
+    <div id="leaderboard-profile-panels" class="leaderboard-profile-panels"></div>
   </div>
+    </div>
+  </details>
+
+  <details class="leaderboard-progressive-panel leaderboard-methodology" id="leaderboard-methodology">
+    <summary>
+      <span>Methodology and definitions</span>
+      <small>Ranking, metrics, splits and training terminology</small>
+    </summary>
+    <div class="leaderboard-progressive-body leaderboard-definitions" aria-label="Leaderboard definitions">
+    <details class="metric-definitions" id="metric-definitions">
+      <summary>Metric definitions</summary>
+      <div class="leaderboard-definition-body">
+        <p id="metric-definitions-intro"></p>
+        <div id="metric-definitions-list" class="leaderboard-definition-list"></div>
+      </div>
+    </details>
+
+    <details class="metric-definitions" id="split-definitions">
+      <summary>Split definitions</summary>
+      <div class="leaderboard-definition-body">
+        <p id="split-definitions-intro"></p>
+        <dl id="split-definitions-list"></dl>
+      </div>
+    </details>
+
+    <details class="metric-definitions" id="training-definitions">
+      <summary>Training definitions</summary>
+      <div class="leaderboard-definition-body">
+        <p id="training-definitions-intro"></p>
+        <dl id="training-definitions-list"></dl>
+      </div>
+    </details>
+
+    </div>
+
+  </details>
 
   <dialog class="details-dialog" id="details-dialog" aria-labelledby="details-dialog-title">
     <article class="details-dialog-card">
