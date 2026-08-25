@@ -21,6 +21,8 @@
     "#17becf",
   ];
   const maxFigureModels = palette.length;
+  const maxRadarModels = 4;
+  const defaultRadarModels = 3;
   const reproducibilityContractVersions = {
     2: "open-reproducibility-2.0",
     3: "open-reproducibility-3.0",
@@ -73,6 +75,7 @@
     metricView: "summary",
     visibleGroups: new Set(),
     exportScope: "current",
+    radarModelIds: new Set(),
     comparedModelIds: new Set(),
     staleComparedModelIds: new Set(),
     comparisonMetric: "",
@@ -261,6 +264,7 @@
       );
     }
     params.set("models", Array.from(state.comparedModelIds).join(","));
+    params.set("radar_models", Array.from(state.radarModelIds).join(","));
     if (state.comparisonMetric) params.set("comparison", state.comparisonMetric);
     if (state.scatterX) params.set("scatter_x", state.scatterX);
     if (state.scatterY) params.set("scatter_y", state.scatterY);
@@ -296,6 +300,11 @@
         .map((value) => value.trim())
         .filter(Boolean),
       hasComparedModelIds: params.has("models"),
+      radarModelIds: (params.get("radar_models") || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+      hasRadarModelIds: params.has("radar_models"),
       comparisonMetric: params.get("comparison") || "",
       scatterX: params.get("scatter_x") || "",
       scatterY: params.get("scatter_y") || "",
@@ -2690,6 +2699,53 @@
     return new Set(headlineMetricDefinitions().map((definition) => definition.id));
   }
 
+  function radarMetricAxes() {
+    const configuredIds = Array.isArray(activeDatasetDisplay().radar_metric_ids) ? activeDatasetDisplay().radar_metric_ids : [];
+    const components = new Map((activeDataset()?.overall_score_composite?.components || []).map((component) => [component.metric_id, component]));
+    return configuredIds
+      .map((metricId) => {
+        const definition = metricDefinition(metricId);
+        const component = components.get(metricId);
+        return definition && component ? { definition, component } : null;
+      })
+      .filter(Boolean);
+  }
+
+  function radarNormalizedValue(value, component) {
+    const numericValue = finiteNumber(value);
+    if (numericValue === null || !component) return null;
+    if (component.transform === "bounded_quality") return Math.max(0, Math.min(100, 100 * numericValue));
+    if (component.transform === "bounded_error") {
+      const cap = finiteNumber(component.cap);
+      if (cap === null || cap <= 0) return null;
+      return Math.max(0, Math.min(100, 100 * (1 - numericValue / cap)));
+    }
+    return null;
+  }
+
+  function radarTransformDescription(axis) {
+    if (axis.component.transform === "bounded_quality") return "quality clipped to 0–1";
+    const cap = formatMetric(axis.component.cap, axis.definition);
+    return `error cap ${cap}`;
+  }
+
+  function radarAxisLabel(definition) {
+    const compact = plainMetricLabel(definition)
+      .replace(/\s*\([^)]*\)\s*/g, " ")
+      .replace(/coefficient/gi, "coeff.")
+      .replace(/relative/gi, "rel.")
+      .replace(/\s+/g, " ")
+      .trim();
+    const words = compact.split(" ");
+    const lines = [];
+    words.forEach((word) => {
+      const current = lines[lines.length - 1] || "";
+      if (!current || `${current} ${word}`.length > 18) lines.push(word);
+      else lines[lines.length - 1] = `${current} ${word}`;
+    });
+    return lines;
+  }
+
   function allColumns() {
     const columns = [
       { key: "rank", label: "Rank", sortKey: "rank" },
@@ -3063,6 +3119,89 @@
     control.title = control.disabled
       ? "No previous result versions are published for this dataset yet."
       : "Include superseded versions as unranked historical rows.";
+  }
+
+  function radarCandidateRows() {
+    return tableRowsForCurrentModelType()
+      .slice()
+      .sort((left, right) => {
+        const latestOrder = Number(!isLatestRevision(left)) - Number(!isLatestRevision(right));
+        if (latestOrder) return latestOrder;
+        return compareNumbers(left.rank, right.rank, "lower") || String(left.id).localeCompare(String(right.id));
+      });
+  }
+
+  function selectedRadarRows() {
+    return radarCandidateRows().filter((row) => state.radarModelIds.has(row.id));
+  }
+
+  function setDefaultRadarModels() {
+    state.radarModelIds = new Set(
+      radarCandidateRows()
+        .slice(0, defaultRadarModels)
+        .map((row) => row.id)
+    );
+  }
+
+  function renderRadarModelPicker() {
+    const container = element("radar-model-options");
+    const summary = element("radar-model-summary");
+    if (!container || !summary) return;
+    const pickerContext = [state.dataset, state.split, state.modelType, state.showAllVersions ? "all" : "latest"].join("|");
+    const resetScroll = container.dataset.pickerContext !== pickerContext;
+    container.replaceChildren();
+    summary.replaceChildren();
+    container.dataset.pickerContext = pickerContext;
+    if (resetScroll) container.scrollTop = 0;
+    const rows = radarCandidateRows();
+    const selectedRows = rows.filter((row) => state.radarModelIds.has(row.id));
+    const selectedCount = selectedRows.length;
+    rows.forEach((row) => {
+      const label = document.createElement("label");
+      label.className = "leaderboard-radar-model-option";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.value = row.id;
+      input.checked = state.radarModelIds.has(row.id);
+      input.disabled = !input.checked && selectedCount >= maxRadarModels;
+      input.dataset.radarModel = "";
+      const swatch = document.createElement("span");
+      swatch.className = "leaderboard-radar-swatch";
+      swatch.setAttribute("aria-hidden", "true");
+      const selectedIndex = selectedRows.findIndex((candidate) => candidate.id === row.id);
+      swatch.style.backgroundColor = selectedIndex >= 0 ? palette[selectedIndex] : "transparent";
+      const text = document.createElement("span");
+      const context = rowRanking(row);
+      const rankText = context?.rank ? `${context.tied ? "joint " : ""}rank ${context.rank}` : "previous version";
+      text.textContent = `${rowLabel(row)} — ${rankText}`;
+      label.classList.toggle("is-selected", input.checked);
+      label.append(input, swatch, text);
+      container.appendChild(label);
+    });
+    const count = element("radar-model-count");
+    if (count) count.textContent = `${selectedCount} of ${rows.length} selected · maximum ${maxRadarModels}`;
+
+    const overallDefinition = metricDefinition(ranking().metric_id);
+    selectedRows.forEach((row, index) => {
+      const item = document.createElement("li");
+      const swatch = document.createElement("span");
+      swatch.className = "leaderboard-radar-swatch";
+      swatch.style.backgroundColor = palette[index];
+      swatch.setAttribute("aria-hidden", "true");
+      const name = document.createElement("span");
+      name.className = "leaderboard-radar-model-name";
+      name.textContent = rowLabel(row);
+      const score = document.createElement("strong");
+      score.textContent = `Overall ${formatMetric(row.metricValues[ranking().metric_id], overallDefinition)}`;
+      item.append(swatch, name, score);
+      summary.appendChild(item);
+    });
+  }
+
+  function updateRadarSelection() {
+    renderRadarModelPicker();
+    renderRadarChart();
+    updateUrl();
   }
 
   function setDefaultComparedModels() {
@@ -3513,6 +3652,159 @@
       ctx.restore();
     },
   };
+
+  function colorWithAlpha(color, alpha) {
+    const suffix = Math.round(Math.max(0, Math.min(1, alpha)) * 255)
+      .toString(16)
+      .padStart(2, "0");
+    return /^#[0-9a-f]{6}$/i.test(color) ? `${color}${suffix}` : color;
+  }
+
+  function renderRadarChart() {
+    const canvas = element("radar-chart");
+    const unavailable = element("radar-chart-unavailable");
+    if (!canvas || !unavailable) return;
+    destroyChart("radar");
+    const axes = radarMetricAxes();
+    const rows = selectedRadarRows();
+    const overallDefinition = metricDefinition(ranking().metric_id);
+    const tableColumns = [
+      { label: "Model", value: (row) => rowLabel(row) },
+      { label: "Submission ID", value: "id" },
+      { label: "Overall score", value: (row) => formatMetric(row.metricValues[ranking().metric_id], overallDefinition) },
+    ];
+    axes.forEach((axis) => {
+      tableColumns.push(
+        {
+          label: `${plainMetricLabel(axis.definition)} — raw`,
+          value: (row) => formatMetric(row.metricValues[axis.definition.id], axis.definition),
+        },
+        {
+          label: `${plainMetricLabel(axis.definition)} — normalized /100`,
+          value: (row) => {
+            const normalized = radarNormalizedValue(row.metricValues[axis.definition.id], axis.component);
+            return normalized === null ? "N/A" : normalized.toFixed(1);
+          },
+        }
+      );
+    });
+    renderNumericTable(
+      "radar-data-table",
+      `${state.dataset}, ${state.split}: raw metrics and stable normalized values used in the radar comparison.`,
+      tableColumns,
+      rows
+    );
+
+    if (axes.length < 3) {
+      canvas.hidden = true;
+      unavailable.hidden = false;
+      unavailable.textContent =
+        activeDatasetDisplay().radar_unavailable_reason ||
+        "This dataset does not yet define enough independently scored components for a scientifically meaningful radar chart.";
+      setChartSummary("radar-chart-summary", unavailable.textContent);
+      return;
+    }
+    if (!rows.length) {
+      canvas.hidden = true;
+      unavailable.hidden = false;
+      unavailable.textContent = "Select at least one model to draw the comparison.";
+      setChartSummary("radar-chart-summary", unavailable.textContent);
+      return;
+    }
+    if (typeof Chart === "undefined") return;
+    canvas.hidden = false;
+    unavailable.hidden = true;
+    const missingValues = [];
+    rows.forEach((row) => {
+      axes.forEach((axis) => {
+        if (radarNormalizedValue(row.metricValues[axis.definition.id], axis.component) === null) {
+          missingValues.push(`${rowLabel(row)}: ${plainMetricLabel(axis.definition)}`);
+        }
+      });
+    });
+    const axisNames = axes.map((axis) => plainMetricLabel(axis.definition));
+    const modelNames = rows.map(rowLabel);
+    canvas.setAttribute("aria-label", `${state.dataset}, ${state.split} normalized performance comparison for ${modelNames.join(", ")}`);
+    setChartSummary(
+      "radar-chart-summary",
+      `${state.dataset}, ${state.split} radar chart. Models: ${modelNames.join(", ")}. Axes: ${axisNames.join(", ")}. ` +
+        "Each axis runs from 0 to 100, where 100 is better, using the published score transform. " +
+        (missingValues.length ? `Unavailable values: ${missingValues.join("; ")}.` : "All selected values are available.")
+    );
+    state.charts.radar = new Chart(canvas, {
+      type: "radar",
+      data: {
+        labels: axes.map((axis) => radarAxisLabel(axis.definition)),
+        datasets: rows.map((row, index) => ({
+          label: rowLabel(row),
+          data: axes.map((axis) => radarNormalizedValue(row.metricValues[axis.definition.id], axis.component)),
+          backgroundColor: colorWithAlpha(palette[index], 0.13),
+          borderColor: palette[index],
+          borderWidth: 2,
+          pointBackgroundColor: palette[index],
+          pointBorderColor: "#ffffff",
+          pointHoverBackgroundColor: "#ffffff",
+          pointHoverBorderColor: palette[index],
+          pointRadius: 3,
+          pointHoverRadius: 5,
+          spanGaps: false,
+          submissionRow: row,
+        })),
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "nearest", intersect: false },
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            beginAtZero: true,
+            angleLines: { color: chartGridColor() },
+            grid: { color: chartGridColor() },
+            pointLabels: {
+              color: chartTextColor(),
+              font: { family: "system-ui, sans-serif", size: 11, weight: "600" },
+              padding: 10,
+            },
+            ticks: {
+              backdropColor: "transparent",
+              color: chartTextColor(),
+              maxTicksLimit: 5,
+              stepSize: 25,
+              showLabelBackdrop: false,
+            },
+          },
+        },
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { color: chartTextColor(), boxHeight: 10, boxWidth: 18, padding: 16, usePointStyle: true },
+          },
+          tooltip: {
+            callbacks: {
+              title(contexts) {
+                const axis = axes[contexts[0]?.dataIndex];
+                return axis ? plainMetricLabel(axis.definition) : "Metric";
+              },
+              label(context) {
+                const axis = axes[context.dataIndex];
+                const row = context.dataset.submissionRow;
+                const rawValue = finiteNumber(row?.metricValues?.[axis.definition.id]);
+                if (rawValue === null) return `${context.dataset.label}: unavailable`;
+                const normalized = radarNormalizedValue(rawValue, axis.component);
+                return [
+                  `${context.dataset.label}: ${normalized.toFixed(1)} / 100`,
+                  `Raw: ${formatMetric(rawValue, axis.definition)}`,
+                  `Scale: ${radarTransformDescription(axis)}`,
+                ];
+              },
+            },
+          },
+        },
+      },
+    });
+  }
 
   function renderComparisonChart() {
     const canvas = element("comparison-chart");
@@ -5662,6 +5954,13 @@
       setDefaultComparedModels();
     }
 
+    const availableRadarIds = new Set(radarCandidateRows().map((row) => row.id));
+    if (restored.hasRadarModelIds) {
+      state.radarModelIds = new Set(restored.radarModelIds.filter((id) => availableRadarIds.has(id)).slice(0, maxRadarModels));
+    } else {
+      setDefaultRadarModels();
+    }
+
     const scatterIds = new Set(scatterDefinitions().map((definition) => definition.id));
     if (scatterIds.has(restored.scatterX)) state.scatterX = restored.scatterX;
     if (scatterIds.has(restored.scatterY)) state.scatterY = restored.scatterY;
@@ -5688,11 +5987,13 @@
     renderRankingPolicy();
     renderTypeFilter();
     renderVersionControl();
+    renderRadarModelPicker();
     renderComparisonModelPicker();
     renderComparisonControls();
     renderScatterControls();
     renderDiagnosticPanels();
     renderDefinitions();
+    renderRadarChart();
     renderComparisonChart();
     renderScatterChart();
     void refreshProfileContext();
@@ -5749,6 +6050,7 @@
       state.comparisonMetric = dataset.ranking?.metric_id || "";
       state.scatterX = "";
       state.scatterY = dataset.ranking?.metric_id || "";
+      state.radarModelIds = new Set();
       state.comparedModelIds = new Set();
       state.staleComparedModelIds = new Set();
       state.profileCaseIds = [];
@@ -5765,7 +6067,10 @@
       }
       initializeVisibleGroups();
       if (restored) applyRestoredState(restored);
-      else setDefaultComparedModels();
+      else {
+        setDefaultRadarModels();
+        setDefaultComparedModels();
+      }
       syncDatasetSelects();
       syncSplitSelects();
       element("leaderboard-error").hidden = true;
@@ -5803,6 +6108,7 @@
     state.requestedResultId = "";
     state.resultUnavailable = false;
     state.staleComparedModelIds = new Set();
+    setDefaultRadarModels();
     setDefaultComparedModels();
     state.profileCaseIds = [];
     state.profileCase = "";
@@ -5841,16 +6147,30 @@
         else state.comparedModelIds.delete(event.target.value);
         state.staleComparedModelIds.delete(event.target.value);
         updateFigureSelection();
+      } else if (event.target.matches("[data-radar-model]")) {
+        if (event.target.checked && state.radarModelIds.size >= maxRadarModels) {
+          event.target.checked = false;
+          element("radar-model-count").textContent = `Choose at most ${maxRadarModels} models for a readable radar comparison.`;
+          return;
+        }
+        if (event.target.checked) state.radarModelIds.add(event.target.value);
+        else state.radarModelIds.delete(event.target.value);
+        updateRadarSelection();
       }
     });
     element("type-filter")?.addEventListener("change", (event) => {
       state.modelType = event.target.value;
+      setDefaultRadarModels();
       renderTable();
+      renderRadarModelPicker();
+      renderRadarChart();
       updateFigureSelection();
     });
     element("show-all-versions")?.addEventListener("change", (event) => {
       state.showAllVersions = event.target.checked;
       renderTable();
+      renderRadarModelPicker();
+      renderRadarChart();
       updateUrl();
     });
     element("leaderboard-metric-view-toggle")?.addEventListener("click", () => {
@@ -5882,6 +6202,14 @@
     element("export-leaderboard-json")?.addEventListener("click", exportJson);
     element("leaderboard-export-scope")?.addEventListener("change", (event) => {
       state.exportScope = event.target.value === "full" ? "full" : "current";
+    });
+    element("select-top-radar-models")?.addEventListener("click", () => {
+      setDefaultRadarModels();
+      updateRadarSelection();
+    });
+    element("clear-radar-models")?.addEventListener("click", () => {
+      state.radarModelIds = new Set();
+      updateRadarSelection();
     });
     element("select-all-comparison-models")?.addEventListener("click", () => {
       state.comparedModelIds = new Set(
