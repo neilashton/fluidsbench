@@ -89,6 +89,9 @@ advisory_board:
   - name: Adam Clarke
     affiliation: Boeing
     initials: AC
+  - name: Burkhard Hupertz
+    affiliation: Ford
+    initials: BH
   - name: Dirk Hartmann
     affiliation: Siemens / TU Darmstadt
     initials: DH
