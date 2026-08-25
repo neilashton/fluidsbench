@@ -39,6 +39,8 @@ window.__FluidsBenchClaimTest = {
   predictionArtifactStatus,
   predictionAvailability,
   predictionMetricRecomputation,
+  radarMetricAxes,
+  radarNormalizedValue,
   representationSummary,
   reproducibilityArtifactAvailability,
   mappingSummary,
@@ -200,6 +202,7 @@ assert.equal(
 
 const manifest = JSON.parse(fs.readFileSync(path.join(submissionRoot, "leaderboard/manifest.json"), "utf8"));
 const feed = JSON.parse(fs.readFileSync(path.join(submissionRoot, manifest.all_file), "utf8"));
+const leaderboardPageSource = fs.readFileSync(path.join(root, "_pages/leaderboard.md"), "utf8");
 api.state.manifest = manifest;
 api.state.metrics = new Map(manifest.metric_definitions.map((definition) => [definition.id, definition]));
 api.state.rows = new Map(manifest.datasets.map((dataset) => [dataset.name, []]));
@@ -218,6 +221,27 @@ manifest.datasets.forEach((dataset) => {
   configuredIds.forEach((metricId) => {
     assert.ok(dataset.metric_ids.includes(metricId), `${dataset.name} headline metric ${metricId} must exist in its feed`);
   });
+  const configuredRadarIds = displayConfig[dataset.slug].radar_metric_ids;
+  const compositeComponents = new Map((dataset.overall_score_composite?.components || []).map((component) => [component.metric_id, component]));
+  assert.equal(new Set(configuredRadarIds).size, configuredRadarIds.length, `${dataset.name} radar axes must be unique`);
+  configuredRadarIds.forEach((metricId) => {
+    assert.ok(dataset.metric_ids.includes(metricId), `${dataset.name} radar metric ${metricId} must exist in its feed`);
+    assert.ok(compositeComponents.has(metricId), `${dataset.name} radar metric ${metricId} must use a published score transform`);
+  });
+  if (configuredRadarIds.length < 3) {
+    assert.match(
+      displayConfig[dataset.slug].radar_unavailable_reason || "",
+      /scored/i,
+      `${dataset.name} must explain why a radar chart is scientifically unavailable`
+    );
+  } else {
+    assert.equal(configuredRadarIds.length, 4, `${dataset.name} must declare four radar axes`);
+  }
+  assert.deepEqual(
+    Array.from(api.radarMetricAxes(), (axis) => axis.definition.id),
+    configuredRadarIds,
+    `${dataset.name} radar order must follow its display configuration`
+  );
   assert.deepEqual(
     Array.from(api.headlineMetricDefinitions(), (definition) => definition.id),
     configuredIds,
@@ -243,6 +267,18 @@ manifest.datasets.forEach((dataset) => {
   );
 });
 api.state.metricView = "summary";
+
+assert.equal(api.radarNormalizedValue(0, { transform: "bounded_error", cap: 20 }), 100);
+assert.equal(api.radarNormalizedValue(10, { transform: "bounded_error", cap: 20 }), 50);
+assert.equal(api.radarNormalizedValue(25, { transform: "bounded_error", cap: 20 }), 0);
+assert.equal(api.radarNormalizedValue(0.82, { transform: "bounded_quality" }), 82);
+assert.equal(api.radarNormalizedValue(-0.3, { transform: "bounded_quality" }), 0);
+assert.equal(api.radarNormalizedValue(null, { transform: "bounded_quality" }), null);
+assert.ok(
+  leaderboardPageSource.indexOf('id="leaderboard-metric-view-toggle"') < leaderboardPageSource.indexOf('id="leaderboard-radar-panel"') &&
+    leaderboardPageSource.indexOf('id="leaderboard-radar-panel"') < leaderboardPageSource.indexOf('class="leaderboard-table-wrap"'),
+  "radar comparison must sit between the metric-view controls and leaderboard table"
+);
 
 const baseSurfacePressureDefinition = api.state.metrics.get("surface_pressure_rel_l2");
 const baseSurfacePressureSnapshot = JSON.stringify(baseSurfacePressureDefinition);
