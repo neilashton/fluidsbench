@@ -90,21 +90,6 @@ chart:
     </div>
   </section>
 
-  <fieldset class="leaderboard-model-picker" aria-describedby="comparison-model-description">
-    <legend>Models shown in figures</legend>
-    <p id="comparison-model-description">
-      Request the same models for the comparison, scatter, and profile figures. The first five ranked rows are selected initially; each caption lists
-      any requested model that cannot be plotted because the required metric or profile is unavailable. Table-export scope does not affect this choice.
-      Up to twelve models may be shown at once so colors remain consistent across screen and exported figures.
-    </p>
-    <div class="leaderboard-model-picker-actions">
-      <button id="select-all-comparison-models" class="leaderboard-action-button" type="button">Select up to 12</button>
-      <button id="clear-comparison-models" class="leaderboard-action-button" type="button">Clear</button>
-      <span id="comparison-model-count" role="status"></span>
-    </div>
-    <div id="comparison-model-options" class="leaderboard-model-options"></div>
-  </fieldset>
-
   <div id="leaderboard-error" class="leaderboard-load-error" role="alert" hidden></div>
   <div id="leaderboard-load-status" class="leaderboard-load-status" role="status" hidden></div>
   <div id="leaderboard-profile-warning" class="leaderboard-profile-warning" role="status" hidden></div>
@@ -133,6 +118,49 @@ chart:
         <div class="leaderboard-column-toggles" id="leaderboard-column-toggles"></div>
       </div>
     </div>
+
+    <details class="leaderboard-radar-panel" id="leaderboard-radar-panel" open>
+      <summary>
+        <span class="leaderboard-radar-title">Compare model strengths</span>
+        <span class="leaderboard-radar-subtitle">Published score transforms · 100 is better</span>
+      </summary>
+      <div class="leaderboard-radar-content">
+        <div class="leaderboard-radar-visual">
+          <div class="leaderboard-radar-chart-frame">
+            <canvas
+              id="radar-chart"
+              role="img"
+              aria-label="Normalized model performance radar chart"
+              aria-describedby="radar-chart-summary radar-normalization-note"
+            ></canvas>
+            <p id="radar-chart-summary" class="leaderboard-sr-only"></p>
+            <p id="radar-chart-unavailable" class="leaderboard-radar-unavailable" role="status" hidden></p>
+          </div>
+          <p id="radar-normalization-note" class="leaderboard-radar-note">
+            Axes use the selected dataset's published bounded-error or bounded-quality score transform. Raw metric values remain available in the
+            tooltip and table; the overall score is shown separately and is not plotted as an axis.
+          </p>
+        </div>
+        <aside class="leaderboard-radar-controls" aria-labelledby="radar-model-heading">
+          <div>
+            <h3 id="radar-model-heading">Models compared</h3>
+            <p>Choose up to four results. The leading three visible results are selected initially.</p>
+          </div>
+          <div class="leaderboard-radar-actions">
+            <button id="select-top-radar-models" class="leaderboard-action-button" type="button">Select top 3</button>
+            <button id="clear-radar-models" class="leaderboard-action-button" type="button">Clear</button>
+            <span id="radar-model-count" role="status"></span>
+          </div>
+          <div id="radar-model-options" class="leaderboard-radar-model-options"></div>
+          <ul id="radar-model-summary" class="leaderboard-radar-model-summary" aria-label="Selected model overall scores"></ul>
+        </aside>
+      </div>
+      <details class="leaderboard-numeric-data leaderboard-radar-data">
+        <summary>View normalized comparison data</summary>
+        <div id="radar-data-table" class="leaderboard-data-table-wrap"></div>
+      </details>
+    </details>
+
     <section class="leaderboard-table-wrap" aria-label="CFD leaderboard table">
       <table class="leaderboard-table" id="leaderboard-table">
         <thead><tr id="leaderboard-header-row"></tr></thead>
@@ -140,7 +168,23 @@ chart:
       </table>
     </section>
     <p id="leaderboard-ranking-policy" class="leaderboard-ranking-policy"></p>
+
   </div>
+
+  <fieldset class="leaderboard-model-picker" aria-describedby="comparison-model-description">
+    <legend>Models shown in detailed figures</legend>
+    <p id="comparison-model-description">
+      Request the same models for the metric, scatter, and profile figures below. The first five ranked rows are selected initially; each caption lists
+      any requested model that cannot be plotted because the required metric or profile is unavailable. Table-export scope does not affect this choice.
+      Up to twelve models may be shown at once so colors remain consistent across screen and exported figures.
+    </p>
+    <div class="leaderboard-model-picker-actions">
+      <button id="select-all-comparison-models" class="leaderboard-action-button" type="button">Select up to 12</button>
+      <button id="clear-comparison-models" class="leaderboard-action-button" type="button">Clear</button>
+      <span id="comparison-model-count" role="status"></span>
+    </div>
+    <div id="comparison-model-options" class="leaderboard-model-options"></div>
+  </fieldset>
 
   <section class="leaderboard-panel leaderboard-comparison-panel">
     <div class="leaderboard-panel-heading">
