@@ -64,11 +64,41 @@ NATIVE_DRIVAERML_PROVENANCE_SCHEMA = (
 NATIVE_DRIVAERML_RELEASE_SCHEMA = (
     "fluidsbench-drivaerml-native-profile-truth-release-v2"
 )
+NATIVE_DRIVAERML_CONTRACTS = {
+    "2.0": {
+        "index": NATIVE_DRIVAERML_INDEX_SCHEMA,
+        "split": NATIVE_DRIVAERML_SPLIT_SCHEMA,
+        "chunk": NATIVE_DRIVAERML_CHUNK_SCHEMA,
+        "case": NATIVE_DRIVAERML_CASE_SCHEMA,
+        "provenance": NATIVE_DRIVAERML_PROVENANCE_SCHEMA,
+        "release": NATIVE_DRIVAERML_RELEASE_SCHEMA,
+    },
+    "3.0": {
+        "index": "fluidsbench-drivaerml-native-profile-truth-index-v3",
+        "split": "fluidsbench-drivaerml-native-profile-truth-split-index-v3",
+        "chunk": "fluidsbench-drivaerml-native-profile-truth-chunk-v3",
+        "case": "fluidsbench-drivaerml-native-profile-truth-case-v3",
+        "provenance": "fluidsbench-drivaerml-native-profile-truth-provenance-v3",
+        "release": "fluidsbench-drivaerml-native-profile-truth-release-v3",
+    },
+}
 NATIVE_DRIVAERML_DATASET_REVISION = "7a5c0948ce27be709b1116a3a190f806e7a8f79f"
 COORDINATE_IDENTITY_DOMAIN = b"fluidsbench-drivaerml-coordinate-array-v1\x00"
 VALUE_IDENTITY_DOMAIN = b"fluidsbench-drivaerml-native-value-array-v1\x00"
 ID_ARRAY_IDENTITY_DOMAIN = b"fluidsbench-drivaerml-native-id-array-v1\x00"
 NATIVE_SERIES_IDENTITY_SCHEMA = "fluidsbench-drivaerml-native-series-identity-v1"
+NATIVE_SERIES_IDENTITY_SCHEMA_V2 = "fluidsbench-drivaerml-native-series-identity-v2"
+NATIVE_CP_DISPLAY_FIELDS = {
+    "display_coordinate_id",
+    "display_coordinate_unit",
+    "display_coordinate_identity_sha256",
+    "display_coordinate",
+}
+NATIVE_CP_DISPLAY_COORDINATE_ID = "streamwise_x_m"
+NATIVE_CP_DISPLAY_COORDINATE_UNIT = "m"
+NATIVE_CP_DISPLAY_COORDINATE_DEFINITION = (
+    "retained_plane_intersection_segment_endpoint_midpoint_x"
+)
 NATIVE_TRUTH_SOURCE = {
     "source_kind": "native_cfd",
     "analytical_dummy": False,
@@ -130,16 +160,74 @@ DRIVAERML_EXPECTED_ALL484_COVERAGE = {
         "unsupported_sample_count": 0,
     },
 }
+DRIVAERML_EXPECTED_ALL484_COVERAGE_V3 = {
+    family_id: {
+        **counts,
+        "display_coordinate_sample_count": (
+            counts["sample_count"] if family_id.startswith("drivaerml_cp_") else 0
+        ),
+    }
+    for family_id, counts in DRIVAERML_EXPECTED_ALL484_COVERAGE.items()
+}
 DRIVAERML_NATIVE_TRUTH_DEFINITIONS = {
     "velocity_ratio": "numpy.linalg.norm(Float32 UMeanTrim cast exactly to binary64, axis=-1) / 38.889",
     "cp": "2.0 * binary64(directly selected native boundary Float32 pMeanTrim) / (38.889 * 38.889)",
     "sampling": "zeroth-order native CellData/raw polygon CellData; every boundary file is fully SHA-256 verified against the immutable pin; producer pMeanTrim is exact-cross-checked but is not the published value source; no interpolation, snapping, remeshing, or gap filling",
+}
+DRIVAERML_NATIVE_TRUTH_DEFINITIONS_V3 = {
+    "velocity_ratio": DRIVAERML_NATIVE_TRUTH_DEFINITIONS["velocity_ratio"],
+    "cp": DRIVAERML_NATIVE_TRUTH_DEFINITIONS["cp"],
+    "cp_display_coordinate": (
+        "binary64 midpoint x = 0.5 * (endpoint_start_m[0] + "
+        "endpoint_end_m[0]) from each retained producer plane-intersection "
+        "segment, in source order and raw VTP metres; display only, with no "
+        "shift, normalization, sorting, interpolation, or resampling"
+    ),
+    "cp_scoring_coordinate": (
+        "the unchanged retained arc_length_m array and its existing identity"
+    ),
+    "sampling": DRIVAERML_NATIVE_TRUTH_DEFINITIONS["sampling"],
 }
 DRIVAERML_NATIVE_IDENTITY_ENCODINGS = {
     "coordinate": "ASCII domain fluidsbench-drivaerml-coordinate-array-v1 plus NUL, uint64_be count, finite IEEE-754 binary64_be values, signed zero normalized",
     "value": "ASCII domain fluidsbench-drivaerml-native-value-array-v1 plus NUL, uint64_be count, finite IEEE-754 binary64_be values, signed zero normalized",
     "native_id": "ASCII domain fluidsbench-drivaerml-native-id-array-v1 plus NUL, uint64_be count, non-negative uint64_be IDs",
     "series": "SHA-256 of UTF-8 sorted-key compact JSON plus LF over schema fluidsbench-drivaerml-native-series-identity-v1 descriptors, component identities/counts, segments, and unsupported_samples",
+}
+DRIVAERML_NATIVE_IDENTITY_ENCODINGS_V3 = {
+    "coordinate": DRIVAERML_NATIVE_IDENTITY_ENCODINGS["coordinate"],
+    "display_coordinate": (
+        "the same platform-independent coordinate-array encoding as coordinate; "
+        "its SHA-256 is bound into native-series-identity-v2"
+    ),
+    "value": DRIVAERML_NATIVE_IDENTITY_ENCODINGS["value"],
+    "native_id": DRIVAERML_NATIVE_IDENTITY_ENCODINGS["native_id"],
+    "series": (
+        "SHA-256 of UTF-8 sorted-key compact JSON plus LF; velocity and aliases "
+        "retain native-series-identity-v1, while materialized Cp uses "
+        "native-series-identity-v2 to additionally bind display coordinate "
+        "id, unit, and identity"
+    ),
+}
+NATIVE_CP_CASE_DISPLAY_DECLARATION = {
+    "coordinate_id": NATIVE_CP_DISPLAY_COORDINATE_ID,
+    "coordinate_unit": NATIVE_CP_DISPLAY_COORDINATE_UNIT,
+    "definition": NATIVE_CP_DISPLAY_COORDINATE_DEFINITION,
+    "source": "retained_cp_plane_intersection_segment_endpoints",
+    "native_coordinate_frame": "raw_vtp_coordinates_metres",
+    "transformation": "none_no_shift_normalization_sort_or_resampling",
+    "endpoint_geometry_verification": (
+        "three_finite_binary64_components_and_replayed_segment_length_all_rows"
+    ),
+    "purpose": "display_only_arc_length_remains_scoring_coordinate",
+}
+NATIVE_CP_INDEX_DISPLAY_DECLARATION = {
+    "coordinate_id": NATIVE_CP_DISPLAY_COORDINATE_ID,
+    "coordinate_unit": NATIVE_CP_DISPLAY_COORDINATE_UNIT,
+    "definition": NATIVE_CP_DISPLAY_COORDINATE_DEFINITION,
+    "default_website_axis": True,
+    "display_only": True,
+    "scoring_coordinate_unchanged": "arc_length_m",
 }
 
 
@@ -251,12 +339,32 @@ def identity_bound_document_errors(
         return [f"{label}: {identity_field} has an invalid SHA-256"]
     body = dict(document)
     body.pop(identity_field, None)
-    if canonical_json_identity_sha256(body) != identity["sha256"]:
+    try:
+        actual_identity = canonical_json_identity_sha256(body)
+    except (TypeError, ValueError):
+        return [
+            f"{label}: {identity_field} body is not finite canonical JSON"
+        ]
+    if actual_identity != identity["sha256"]:
         return [f"{label}: {identity_field} does not bind the canonical document body"]
     return []
 
 
-def native_series_identity_projection(series: dict[str, Any]) -> dict[str, Any]:
+def drivaerml_native_contract_version(document: Any, kind: str) -> str | None:
+    """Return the one coherently matched native contract version, if any."""
+
+    if not isinstance(document, dict):
+        return None
+    version = document.get("schema_version")
+    contract = NATIVE_DRIVAERML_CONTRACTS.get(version)
+    if contract is None or kind not in contract:
+        return None
+    return version if document.get("schema") == contract[kind] else None
+
+
+def native_series_identity_projection(
+    series: dict[str, Any], version: str = "2.0"
+) -> dict[str, Any]:
     projection = {
         "schema": NATIVE_SERIES_IDENTITY_SCHEMA,
         "panel_id": series.get("panel_id"),
@@ -295,6 +403,23 @@ def native_series_identity_projection(series: dict[str, Any]) -> dict[str, Any]:
             "unsupported_samples": series.get("unsupported_samples"),
         }
     )
+    native_v3_materialized_cp = (
+        version == "3.0"
+        and series.get("representation") == "materialized"
+        and series.get("panel_id") == "pressure_profiles"
+        and series.get("quantity_id") == "cp"
+    )
+    if native_v3_materialized_cp:
+        projection["schema"] = NATIVE_SERIES_IDENTITY_SCHEMA_V2
+        projection.update(
+            {
+                "display_coordinate_id": series.get("display_coordinate_id"),
+                "display_coordinate_unit": series.get("display_coordinate_unit"),
+                "display_coordinate_identity_sha256": series.get(
+                    "display_coordinate_identity_sha256"
+                ),
+            }
+        )
     return projection
 
 
@@ -345,7 +470,20 @@ def drivaerml_native_expected_series() -> dict[
     return expected
 
 
-def _native_coverage_accumulator() -> dict[str, dict[str, int]]:
+def _native_expected_coverage(version: str) -> dict[str, dict[str, int]]:
+    return (
+        DRIVAERML_EXPECTED_ALL484_COVERAGE_V3
+        if version == "3.0"
+        else DRIVAERML_EXPECTED_ALL484_COVERAGE
+    )
+
+
+def _native_coverage_accumulator(
+    version: str = "2.0",
+) -> dict[str, dict[str, int]]:
+    display_fields = (
+        {"display_coordinate_sample_count": 0} if version == "3.0" else {}
+    )
     return {
         family_id: {
             "materialized_series_count": 0,
@@ -353,13 +491,16 @@ def _native_coverage_accumulator() -> dict[str, dict[str, int]]:
             "sample_count": 0,
             "unsupported_sample_count": 0,
             "segment_count": 0,
+            **display_fields,
         }
-        for family_id in DRIVAERML_EXPECTED_ALL484_COVERAGE
+        for family_id in _native_expected_coverage(version)
     }
 
 
 def _accumulate_native_coverage(
-    accumulator: dict[str, dict[str, int]], case: dict[str, Any]
+    accumulator: dict[str, dict[str, int]],
+    case: dict[str, Any],
+    version: str = "2.0",
 ) -> None:
     for series in case.get("series", []):
         if not isinstance(series, dict) or series.get("family_id") not in accumulator:
@@ -374,6 +515,10 @@ def _accumulate_native_coverage(
                 series.get("unsupported_samples", [])
             )
             family["segment_count"] += len(series.get("segments", []))
+            if version == "3.0":
+                display = series.get("display_coordinate")
+                if isinstance(display, list):
+                    family["display_coordinate_sample_count"] += len(display)
 
 
 def _finalize_native_coverage(
@@ -391,6 +536,8 @@ def _finalize_native_coverage(
         "requested_sample_count",
         "segment_count",
     )
+    if all("display_coordinate_sample_count" in family for family in accumulator.values()):
+        total_fields += ("display_coordinate_sample_count",)
     return {
         "derivation": "recomputed_from_all_484_case_series_arrays",
         "producer_expected_counts_verified": True,
@@ -551,10 +698,29 @@ def _unsupported_sample_errors(
     return errors
 
 
-def drivaerml_native_case_series_errors(case: Any, label: str) -> list[str]:
+def drivaerml_native_case_series_errors(
+    case: Any, label: str, expected_version: str | None = None
+) -> list[str]:
     errors: list[str] = []
     if not isinstance(case, dict):
         return [f"{label}: case record is not an object"]
+    contract_version = drivaerml_native_contract_version(case, "case")
+    claimed_version = case.get("schema_version")
+    version = (
+        contract_version
+        or (claimed_version if claimed_version in NATIVE_DRIVAERML_CONTRACTS else None)
+        or expected_version
+        or "2.0"
+    )
+    contract = NATIVE_DRIVAERML_CONTRACTS[version]
+    if contract_version is None:
+        errors.append(
+            f"{label}: native case schema and schema_version do not form a supported coherent pair"
+        )
+    if expected_version is not None and contract_version != expected_version:
+        errors.append(
+            f"{label}: native case contract version differs from enclosing native {expected_version} bundle"
+        )
     expected_case_fields = {
         "schema",
         "schema_version",
@@ -571,13 +737,15 @@ def drivaerml_native_case_series_errors(case: Any, label: str) -> list[str]:
         "series",
         "case_identity",
     }
+    if version == "3.0":
+        expected_case_fields.add("cp_display_coordinate")
     if set(case) != expected_case_fields:
         errors.append(
-            f"{label}: native case fields differ from schema 2.0; expected exactly {sorted(expected_case_fields)}"
+            f"{label}: native case fields differ from schema {version}; expected exactly {sorted(expected_case_fields)}"
         )
     if (
-        case.get("schema") != NATIVE_DRIVAERML_CASE_SCHEMA
-        or case.get("schema_version") != "2.0"
+        case.get("schema") != contract["case"]
+        or case.get("schema_version") != version
         or case.get("dataset_id") != "drivaerml"
         or case.get("dataset_revision") != NATIVE_DRIVAERML_DATASET_REVISION
         or case.get("series_count") != 40
@@ -622,6 +790,7 @@ def drivaerml_native_case_series_errors(case: Any, label: str) -> list[str]:
         "unsupported_samples",
         "coordinate_identity_sha256",
         "value_identity_sha256",
+        *NATIVE_CP_DISPLAY_FIELDS,
     }
     for index, series in enumerate(series_records):
         series_label = f"{label}/series[{index}]"
@@ -678,6 +847,13 @@ def drivaerml_native_case_series_errors(case: Any, label: str) -> list[str]:
                 "unsupported_samples",
             }
         )
+        materialized_cp = (
+            expected_representation == "materialized"
+            and series.get("panel_id") == "pressure_profiles"
+            and series.get("quantity_id") == "cp"
+        )
+        if version == "3.0" and materialized_cp:
+            expected_fields |= NATIVE_CP_DISPLAY_FIELDS
         if set(series) != expected_fields:
             errors.append(
                 f"{series_label}: {expected_representation} series fields differ; expected exactly {sorted(expected_fields)}"
@@ -710,6 +886,10 @@ def drivaerml_native_case_series_errors(case: Any, label: str) -> list[str]:
             if not valid_sha256(series.get(identity_field)):
                 errors.append(f"{series_label}: invalid {identity_field}")
         if expected_representation == "shared_alias":
+            if NATIVE_CP_DISPLAY_FIELDS.intersection(series):
+                errors.append(
+                    f"{series_label}: shared alias must not declare display-coordinate fields"
+                )
             present_arrays = sorted(forbidden_alias_arrays.intersection(series))
             if present_arrays:
                 errors.append(
@@ -774,6 +954,48 @@ def drivaerml_native_case_series_errors(case: Any, label: str) -> list[str]:
         values = series.get("value")
         sample_index = series.get("sample_index")
         native_cell_ids = series.get("raw_native_cell_id")
+        present_display_fields = NATIVE_CP_DISPLAY_FIELDS.intersection(series)
+        display_coordinate = series.get("display_coordinate")
+        if version == "3.0" and materialized_cp:
+            if present_display_fields != NATIVE_CP_DISPLAY_FIELDS:
+                errors.append(
+                    f"{series_label}: native-v3 materialized Cp requires the exact display-coordinate fields"
+                )
+            if (
+                series.get("display_coordinate_id")
+                != NATIVE_CP_DISPLAY_COORDINATE_ID
+                or series.get("display_coordinate_unit")
+                != NATIVE_CP_DISPLAY_COORDINATE_UNIT
+            ):
+                errors.append(
+                    f"{series_label}: display-coordinate ID/unit differ from the native-v3 Cp contract"
+                )
+            if not finite_numbers(display_coordinate) or not display_coordinate:
+                errors.append(
+                    f"{series_label}: display_coordinate must be nonempty and contain only finite values"
+                )
+            elif not isinstance(coordinate, list) or len(display_coordinate) != len(
+                coordinate
+            ):
+                errors.append(
+                    f"{series_label}: display_coordinate is not aligned with the retained scoring coordinate"
+                )
+            if not valid_sha256(
+                series.get("display_coordinate_identity_sha256")
+            ):
+                errors.append(
+                    f"{series_label}: invalid display_coordinate_identity_sha256"
+                )
+            elif finite_numbers(display_coordinate) and series.get(
+                "display_coordinate_identity_sha256"
+            ) != coordinate_identity_sha256(display_coordinate):
+                errors.append(
+                    f"{series_label}: display_coordinate_identity_sha256 does not bind the ordered display-coordinate array"
+                )
+        elif present_display_fields:
+            errors.append(
+                f"{series_label}: display-coordinate fields are forbidden on native-v{version[0]} velocity or non-v3 series"
+            )
         if not finite_numbers(coordinate) or not finite_numbers(values):
             errors.append(f"{series_label}: coordinate/value arrays are not finite")
             continue
@@ -829,10 +1051,40 @@ def drivaerml_native_case_series_errors(case: Any, label: str) -> list[str]:
             and _strictly_increasing_integers(sample_index)
             and _nonnegative_integers(native_cell_ids)
             and series.get("series_identity_sha256")
-            != canonical_json_identity_sha256(native_series_identity_projection(series))
+            != canonical_json_identity_sha256(
+                native_series_identity_projection(series, version)
+            )
         ):
             errors.append(
                 f"{series_label}: series_identity_sha256 does not bind the exact materialized projection"
+            )
+
+    if version == "3.0":
+        materialized_cp_row_count = sum(
+            len(series.get("coordinate", []))
+            for series in series_records
+            if isinstance(series, dict)
+            and series.get("representation") == "materialized"
+            and series.get("panel_id") == "pressure_profiles"
+            and series.get("quantity_id") == "cp"
+            and isinstance(series.get("coordinate"), list)
+        )
+        expected_display_declaration = {
+            **NATIVE_CP_CASE_DISPLAY_DECLARATION,
+            "materialized_row_count": materialized_cp_row_count,
+        }
+        if case.get("cp_display_coordinate") != expected_display_declaration:
+            errors.append(
+                f"{label}: cp_display_coordinate does not exactly declare the native-v3 materialized Cp display contract and row count"
+            )
+        native_boundary = case.get("native_boundary")
+        if (
+            not isinstance(native_boundary, dict)
+            or native_boundary.get("referenced_producer_row_count")
+            != materialized_cp_row_count
+        ):
+            errors.append(
+                f"{label}: native-v3 Cp display row count differs from native_boundary referenced producer rows"
             )
 
     missing = set(expected) - set(provided)
@@ -1230,7 +1482,7 @@ def drivaerml_native_bundle_errors(
     submission_root: Path,
 ) -> list[str]:
     errors: list[str] = []
-    label = "drivaerml/native-profile-truth-v2"
+    label = "drivaerml/native-profile-truth"
     declaration = dataset_manifest.get("native_profile_truth")
     native_pin_path = (
         submission_root
@@ -1263,6 +1515,24 @@ def drivaerml_native_bundle_errors(
     if master_path is None or not master_path.is_file():
         return errors
     master = load_json(master_path)
+    contract_version = drivaerml_native_contract_version(master, "index")
+    claimed_version = master.get("schema_version") if isinstance(master, dict) else None
+    version = (
+        contract_version
+        or (claimed_version if claimed_version in NATIVE_DRIVAERML_CONTRACTS else None)
+        or "2.0"
+    )
+    contract = NATIVE_DRIVAERML_CONTRACTS[version]
+    label = f"drivaerml/native-profile-truth-v{version[0]}"
+    if contract_version is None:
+        errors.append(
+            f"{label}: master index schema and schema_version do not form a supported coherent pair"
+        )
+    expected_master_file = f"datasets/drivaerml/native-v{version[0]}/index.json"
+    if declaration.get("master_index_file") != expected_master_file:
+        errors.append(
+            f"{label}: declaration master_index_file must be {expected_master_file}"
+        )
     expected_master_fields = {
         "schema",
         "schema_version",
@@ -1285,14 +1555,17 @@ def drivaerml_native_bundle_errors(
         "release_receipt_path",
         "index_identity",
     }
+    if version == "3.0":
+        expected_master_fields.add("cp_display_coordinate")
     if set(master) != expected_master_fields:
         errors.append(
-            f"{label}: master index fields differ from schema 2.0; expected exactly {sorted(expected_master_fields)}"
+            f"{label}: master index fields differ from schema {version}; expected exactly {sorted(expected_master_fields)}"
         )
-    if master.get("schema") != NATIVE_DRIVAERML_INDEX_SCHEMA or master.get(
-        "schema_version"
-    ) != "2.0":
-        errors.append(f"{label}: master index schema must be native v2")
+    if (
+        master.get("schema") != contract["index"]
+        or master.get("schema_version") != version
+    ):
+        errors.append(f"{label}: master index schema must be coherent native v{version[0]}")
     if (
         master.get("dataset_id") != "drivaerml"
         or master.get("dataset_repository") != "neashton/drivaerml"
@@ -1329,17 +1602,24 @@ def drivaerml_native_bundle_errors(
         errors.append(
             f"{label}: master index lacks the exact pinned non-analytical native CFD truth_source declaration"
         )
+    if version == "3.0" and master.get(
+        "cp_display_coordinate"
+    ) != NATIVE_CP_INDEX_DISPLAY_DECLARATION:
+        errors.append(
+            f"{label}: master index cp_display_coordinate declaration differs from the exact native-v3 display contract"
+        )
 
     native_pin_cases = {
         record.get("case_id"): record for record in source_pin.get("cases", [])
     }
-    coverage_accumulator = _native_coverage_accumulator()
+    coverage_accumulator = _native_coverage_accumulator(version)
     evaluator_revisions: set[str] = set()
     case_exporter_bindings: set[str] = set()
     staging_case_bindings: list[dict[str, Any]] = []
     case_input_inventory: list[dict[str, Any]] = []
     native_volume_inventory: list[dict[str, Any]] = []
     native_boundary_inventory: list[dict[str, Any]] = []
+    cp_display_coordinate_inventory: list[dict[str, Any]] = []
     master_chunk_records: dict[str, dict[str, Any]] = {}
     master_base = master_path.parent
     chunks = master.get("chunks")
@@ -1360,7 +1640,9 @@ def drivaerml_native_bundle_errors(
             "case_ids",
             "series_count",
         }:
-            errors.append(f"{entry_label}: master chunk binding fields differ from schema 2.0")
+            errors.append(
+                f"{entry_label}: master chunk binding fields differ from schema {version}"
+            )
         chunk_id = entry.get("chunk_id")
         if not isinstance(chunk_id, str) or not chunk_id or chunk_id in master_chunk_records:
             errors.append(f"{entry_label}: chunk_id is missing or duplicated")
@@ -1406,10 +1688,10 @@ def drivaerml_native_bundle_errors(
             "cases",
             "chunk_identity",
         }:
-            errors.append(f"{entry_label}: chunk fields differ from schema 2.0")
+            errors.append(f"{entry_label}: chunk fields differ from schema {version}")
         if (
-            chunk.get("schema") != NATIVE_DRIVAERML_CHUNK_SCHEMA
-            or chunk.get("schema_version") != "2.0"
+            chunk.get("schema") != contract["chunk"]
+            or chunk.get("schema_version") != version
             or chunk.get("dataset_id") != "drivaerml"
             or chunk.get("dataset_revision") != NATIVE_DRIVAERML_DATASET_REVISION
             or chunk.get("chunk_id") != chunk_id
@@ -1438,9 +1720,13 @@ def drivaerml_native_bundle_errors(
                 errors.append(
                     f"{case_label}: case lacks the exact pinned non-analytical native CFD truth_source declaration"
                 )
-            errors.extend(drivaerml_native_case_series_errors(case, case_label))
+            errors.extend(
+                drivaerml_native_case_series_errors(
+                    case, case_label, expected_version=version
+                )
+            )
             if isinstance(case, dict):
-                _accumulate_native_coverage(coverage_accumulator, case)
+                _accumulate_native_coverage(coverage_accumulator, case, version)
                 if isinstance(case_id, str):
                     canonical_case = canonical_json_bytes(case)
                     staging_case_bindings.append(
@@ -1492,6 +1778,35 @@ def drivaerml_native_bundle_errors(
                             ),
                         }
                     )
+                    if version == "3.0":
+                        cp_display_coordinate_inventory.append(
+                            {
+                                "case_id": case_id,
+                                "series": [
+                                    {
+                                        "family_id": item.get("family_id"),
+                                        "station_id": item.get("station_id"),
+                                        "sample_count": (
+                                            len(item.get("display_coordinate"))
+                                            if isinstance(
+                                                item.get("display_coordinate"), list
+                                            )
+                                            else None
+                                        ),
+                                        "display_coordinate_identity_sha256": item.get(
+                                            "display_coordinate_identity_sha256"
+                                        ),
+                                        "series_identity_sha256": item.get(
+                                            "series_identity_sha256"
+                                        ),
+                                    }
+                                    for item in case.get("series", [])
+                                    if isinstance(item, dict)
+                                    and item.get("representation") == "materialized"
+                                    and item.get("quantity_id") == "cp"
+                                ],
+                            }
+                        )
                 revision = case.get("generator", {}).get("evaluator_git_revision")
                 if isinstance(revision, str):
                     evaluator_revisions.add(revision)
@@ -1540,7 +1855,7 @@ def drivaerml_native_bundle_errors(
         errors.append(
             f"{label}: coverage_summary does not replay from all 484 materialized/alias series"
         )
-    for family_id, expected_counts in DRIVAERML_EXPECTED_ALL484_COVERAGE.items():
+    for family_id, expected_counts in _native_expected_coverage(version).items():
         observed = actual_coverage["families"][family_id]
         for field, expected_count in expected_counts.items():
             if observed[field] != expected_count:
@@ -1576,7 +1891,9 @@ def drivaerml_native_bundle_errors(
             "size_bytes",
             "case_count",
         }:
-            errors.append(f"{split_label}: master split binding fields differ from schema 2.0")
+            errors.append(
+                f"{split_label}: master split binding fields differ from schema {version}"
+            )
         split_path = _safe_profile_path(
             ground_truth_root, master_base, binding.get("path")
         )
@@ -1616,10 +1933,12 @@ def drivaerml_native_bundle_errors(
             "chunk_refs",
             "split_identity",
         }:
-            errors.append(f"{split_label}: thin index fields differ from schema 2.0")
+            errors.append(
+                f"{split_label}: thin index fields differ from schema {version}"
+            )
         if (
-            thin.get("schema") != NATIVE_DRIVAERML_SPLIT_SCHEMA
-            or thin.get("schema_version") != "2.0"
+            thin.get("schema") != contract["split"]
+            or thin.get("schema_version") != version
             or thin.get("dataset_id") != "drivaerml"
             or thin.get("dataset_revision") != NATIVE_DRIVAERML_DATASET_REVISION
             or thin.get("split_id") != split_id
@@ -1748,14 +2067,28 @@ def drivaerml_native_bundle_errors(
                 "identity_encodings",
                 "provenance_identity",
             }
+            if version == "3.0":
+                expected_provenance_fields.add(
+                    "cp_display_coordinate_inventory_sha256"
+                )
             if set(provenance_record) != expected_provenance_fields:
                 errors.append(
-                    f"{label}/provenance: fields differ from schema 2.0"
+                    f"{label}/provenance: fields differ from schema {version}"
                 )
+            expected_truth_definitions = (
+                DRIVAERML_NATIVE_TRUTH_DEFINITIONS_V3
+                if version == "3.0"
+                else DRIVAERML_NATIVE_TRUTH_DEFINITIONS
+            )
+            expected_identity_encodings = (
+                DRIVAERML_NATIVE_IDENTITY_ENCODINGS_V3
+                if version == "3.0"
+                else DRIVAERML_NATIVE_IDENTITY_ENCODINGS
+            )
             if (
                 provenance_record.get("schema")
-                != NATIVE_DRIVAERML_PROVENANCE_SCHEMA
-                or provenance_record.get("schema_version") != "2.0"
+                != contract["provenance"]
+                or provenance_record.get("schema_version") != version
                 or provenance_record.get("dataset_id") != "drivaerml"
                 or provenance_record.get("dataset_repository")
                 != "neashton/drivaerml"
@@ -1768,9 +2101,9 @@ def drivaerml_native_bundle_errors(
                 or provenance_record.get("run_419_selected_values_sha256")
                 != "a1cd9c5bad71b720e6434fbb821aa480fc2f7555516375329bfd02ced43752d0"
                 or provenance_record.get("truth_definitions")
-                != DRIVAERML_NATIVE_TRUTH_DEFINITIONS
+                != expected_truth_definitions
                 or provenance_record.get("identity_encodings")
-                != DRIVAERML_NATIVE_IDENTITY_ENCODINGS
+                != expected_identity_encodings
             ):
                 errors.append(
                     f"{label}/provenance: dataset, truth, coverage, or inactive binding differs"
@@ -1803,6 +2136,10 @@ def drivaerml_native_bundle_errors(
                     native_boundary_inventory
                 ),
             }
+            if version == "3.0":
+                expected_inventory_hashes[
+                    "cp_display_coordinate_inventory_sha256"
+                ] = canonical_json_identity_sha256(cp_display_coordinate_inventory)
             for field, expected_sha256 in expected_inventory_hashes.items():
                 if provenance_record.get(field) != expected_sha256:
                     errors.append(
@@ -1915,10 +2252,12 @@ def drivaerml_native_bundle_errors(
             "release_identity",
         }
         if set(release) != expected_release_fields:
-            errors.append(f"{label}/release: fields differ from release schema 2.0")
+            errors.append(
+                f"{label}/release: fields differ from release schema {version}"
+            )
         if (
-            release.get("schema") != NATIVE_DRIVAERML_RELEASE_SCHEMA
-            or release.get("schema_version") != "2.0"
+            release.get("schema") != contract["release"]
+            or release.get("schema_version") != version
             or release.get("dataset_id") != "drivaerml"
             or release.get("dataset_revision")
             != NATIVE_DRIVAERML_DATASET_REVISION
@@ -2171,8 +2510,10 @@ def check(submission_root: Path) -> list[str]:
             or any(
                 (
                     lambda path: path.is_file()
-                    and load_json(path).get("schema")
-                    == NATIVE_DRIVAERML_SPLIT_SCHEMA
+                    and drivaerml_native_contract_version(
+                        load_json(path), "split"
+                    )
+                    in NATIVE_DRIVAERML_CONTRACTS
                 )(
                     GROUND_TRUTH_ROOT / case_set.get("index_file", "")
                 )
