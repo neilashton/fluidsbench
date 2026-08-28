@@ -23,9 +23,20 @@
   const maxFigureModels = palette.length;
   const maxRadarModels = 4;
   const defaultRadarModels = 3;
-  const nativeProfileTruthIndexSchema = "fluidsbench-drivaerml-native-profile-truth-index-v2";
-  const nativeProfileTruthSplitIndexSchema = "fluidsbench-drivaerml-native-profile-truth-split-index-v2";
-  const nativeProfileTruthChunkSchema = "fluidsbench-drivaerml-native-profile-truth-chunk-v2";
+  const nativeProfileTruthSchemas = {
+    2: {
+      index: "fluidsbench-drivaerml-native-profile-truth-index-v2",
+      split: "fluidsbench-drivaerml-native-profile-truth-split-index-v2",
+      chunk: "fluidsbench-drivaerml-native-profile-truth-chunk-v2",
+      version: "2.0",
+    },
+    3: {
+      index: "fluidsbench-drivaerml-native-profile-truth-index-v3",
+      split: "fluidsbench-drivaerml-native-profile-truth-split-index-v3",
+      chunk: "fluidsbench-drivaerml-native-profile-truth-chunk-v3",
+      version: "3.0",
+    },
+  };
   const drivaermlRelativeProfileSchemaVersion = "3.0-drivaerml-relative-candidate";
   const nativeDrivaermlDatasetRevision = "7a5c0948ce27be709b1116a3a190f806e7a8f79f";
   const nativeDrivaermlSourcePinSha256 = "4fc9077f8f23f4994c98f4d0e7a17aef7b998de4c996638e3a8a616b6d923fdd";
@@ -284,6 +295,78 @@
     return family?.stations || panel.stations || [];
   }
 
+  function isDrivaermlCpPanel(panel) {
+    return activeDatasetSlug() === "drivaerml" && panel?.id === "pressure_profiles";
+  }
+
+  function profileCoordinateViews(panel) {
+    if (!isDrivaermlCpPanel(panel)) return [{ id: "support", label: "Profile coordinate" }];
+    return [
+      { id: "physical_x", label: "Physical streamwise x coordinate, m" },
+      { id: "arc_length", label: "Surface arc length (scoring coordinate), m" },
+    ];
+  }
+
+  function defaultProfileCoordinateView(panel) {
+    return isDrivaermlCpPanel(panel) ? "physical_x" : "support";
+  }
+
+  function resolvedProfileCoordinateView(panel, requestedView, series = null, station = null) {
+    if (!isDrivaermlCpPanel(panel)) {
+      return {
+        id: "support",
+        label: station?.x_label || series?.coordinateId || "Profile coordinate",
+        coordinateId: series?.coordinateId || null,
+        coordinateUnit: series?.coordinateUnit || null,
+      };
+    }
+    const requested = profileCoordinateViews(panel).some((view) => view.id === requestedView)
+      ? requestedView
+      : defaultProfileCoordinateView(panel);
+    if (requested === "physical_x" && Array.isArray(series?.displayCoordinates)) {
+      return {
+        id: "physical_x",
+        label: "Physical streamwise x coordinate, m",
+        coordinateId: series.displayCoordinateId,
+        coordinateUnit: series.displayCoordinateUnit,
+      };
+    }
+    return {
+      id: "arc_length",
+      label: "Surface arc length (scoring coordinate), m",
+      coordinateId: series?.coordinateId || "arc_length_m",
+      coordinateUnit: series?.coordinateUnit || "m",
+    };
+  }
+
+  function profilePointForCoordinateView(point, coordinateView) {
+    if (point?.gapSeparator) return { ...point, x: null, y: null };
+    const x = coordinateView?.id === "physical_x" ? point?.displayCoordinate : point?.coordinate;
+    if (typeof x !== "number" || !Number.isFinite(x)) {
+      throw new Error(`profile ${coordinateView?.id || "support"} coordinate is unavailable or non-finite`);
+    }
+    return { ...point, x };
+  }
+
+  function projectProfileSeries(series, coordinateView) {
+    return {
+      points: series.points.map((point) => profilePointForCoordinateView(point, coordinateView)),
+      chartPoints: series.chartPoints.map((point) => profilePointForCoordinateView(point, coordinateView)),
+    };
+  }
+
+  function profileTooltipLines(dataset, point, panel, quantity, coordinateView) {
+    const lines = [dataset?.label || "Series"];
+    if (isDrivaermlCpPanel(panel) && typeof point?.displayCoordinate === "number") {
+      lines.push(`Physical streamwise x coordinate, m: ${point.displayCoordinate}`);
+      lines.push(`Surface arc length (scoring coordinate), m: ${point.coordinate}`);
+    } else {
+      lines.push(`${coordinateView?.label || "Profile coordinate"}: ${point?.x}`);
+    }
+    lines.push(`${quantity?.y_label || quantity?.label || "Value"}: ${point?.y}`);
+    return lines;
+  }
+
   function isLocalUrl(value) {
     try {
       return ["127.0.0.1", "localhost", "::1"].includes(new URL(value, window.location.href).hostname);
@@ -406,6 +489,7 @@
       if (selection.family) params.set(`family_${panel.id}`, selection.family);
       if (selection.quantity) params.set(`quantity_${panel.id}`, selection.quantity);
       if (selection.station) params.set(`station_${panel.id}`, selection.station);
+      if (selection.coordinateView) params.set(`coordinate_${panel.id}`, selection.coordinateView);
     });
     if (includeResult && state.resultId) params.set("result", state.resultId);
     return params;
@@ -532,16 +616,42 @@
         if (series._fluidsbenchCoordinateIdentitySha256 !== identity) {
           throw new Error("cached profile coordinate identity differs from recomputed bytes");
         }
-        continue;
+      } else {
+        Object.defineProperty(series, "_fluidsbenchCoordinateIdentitySha256", {
+          configurable: false,
+          enumerable: false,
+          value: identity,
+          writable: false,
+        });
       }
-      Object.defineProperty(series, "_fluidsbenchCoordinateIdentitySha256", {
-        configurable: false,
-        enumerable: false,
-        value: identity,
-        writable: false,
-      });
+      if (Object.hasOwn(series, "display_coordinate")) {
+        const displayIdentity = await coordinateArrayIdentitySha256(series.display_coordinate);
+        if (Object.hasOwn(series, "_fluidsbenchDisplayCoordinateIdentitySha256")) {
+          if (series._fluidsbenchDisplayCoordinateIdentitySha256 !== displayIdentity) {
+            throw new Error("cached profile display-coordinate identity differs from recomputed bytes");
+          }
+        } else {
+          Object.defineProperty(series, "_fluidsbenchDisplayCoordinateIdentitySha256", {
+            configurable: false,
+            enumerable: false,
+            value: displayIdentity,
+            writable: false,
+          });
+        }
+      }
     }
     return profileCase;
+  }
+
+  function nativeProfileTruthVersion(document, kind) {
+    for (const [rawVersion, schemas] of Object.entries(nativeProfileTruthSchemas)) {
+      if (document?.schema === schemas[kind] && document?.schema_version === schemas.version) return Number(rawVersion);
+    }
+    return null;
+  }
+
+  function isNativeProfileTruthSplitIndex(index) {
+    return nativeProfileTruthVersion(index, "split") !== null;
   }
 
   async function fetchJsonWithProvenance(url, label) {
@@ -1671,11 +1781,12 @@
     if (!caseSet.index_sha256 || !cached.sha256 || cached.sha256 !== caseSet.index_sha256) {
       throw new Error(`${datasetName} profile ground-truth index checksum does not match its release manifest`);
     }
-    const nativeProfileTruth = cached.data?.schema === nativeProfileTruthSplitIndexSchema;
+    const nativeTruthVersion = nativeProfileTruthVersion(cached.data, "split");
+    const nativeProfileTruth = nativeTruthVersion !== null;
     const drivaermlDataset = datasetName === "DrivAerML" || dataset?.id === "drivaerml";
     if (drivaermlDataset && !nativeProfileTruth) {
       throw new Error(
-        `${datasetName} profile ground truth must use the checksum-bound native CFD v2 release; legacy or analytical indexes are unavailable`
+        `${datasetName} profile ground truth must use a checksum-bound native CFD v2 or v3 release; legacy or analytical indexes are unavailable`
       );
     }
     if (nativeProfileTruth && !drivaermlDataset) {
@@ -1685,7 +1796,7 @@
     let nativeMasterChunks = null;
     if (nativeProfileTruth) {
       if (
-        cached.data.schema_version !== "2.0" ||
+        cached.data.schema_version !== nativeProfileTruthSchemas[nativeTruthVersion].version ||
         cached.data.dataset_id !== "drivaerml" ||
         cached.data.dataset_revision !== nativeDrivaermlDatasetRevision ||
         !exactNativeTruthSource(cached.data.truth_source)
@@ -1728,8 +1839,8 @@
       }
       const master = masterLoaded.data;
       if (
-        master?.schema !== nativeProfileTruthIndexSchema ||
-        master?.schema_version !== "2.0" ||
+        master?.schema !== nativeProfileTruthSchemas[nativeTruthVersion].index ||
+        master?.schema_version !== nativeProfileTruthSchemas[nativeTruthVersion].version ||
         master?.dataset_id !== "drivaerml" ||
         master?.dataset_revision !== nativeDrivaermlDatasetRevision ||
         cached.data.dataset_revision !== nativeDrivaermlDatasetRevision ||
@@ -1793,6 +1904,7 @@
       indexSha256: cached.sha256,
       caseSetId: caseSet.id,
       nativeProfileTruth,
+      nativeTruthVersion,
       datasetRevision: cached.data?.dataset_revision || null,
       nativeChunkBaseUrl,
       nativeMasterChunks,
@@ -1814,7 +1926,7 @@
   }
 
   function caseIds(index) {
-    const references = index?.schema === nativeProfileTruthSplitIndexSchema ? index?.chunk_refs : index?.chunks;
+    const references = isNativeProfileTruthSplitIndex(index) ? index?.chunk_refs : index?.chunks;
     return (references || []).flatMap((chunk) => chunk.case_ids || []);
   }
 
@@ -1830,7 +1942,7 @@
   }
 
   async function indexedProfileCase(context, caseId, cache, label) {
-    const references = context.index?.schema === nativeProfileTruthSplitIndexSchema ? context.index?.chunk_refs : context.index?.chunks;
+    const references = isNativeProfileTruthSplitIndex(context.index) ? context.index?.chunk_refs : context.index?.chunks;
     const entry = (references || []).find((chunk) => (chunk.case_ids || []).includes(caseId));
     if (!entry) return null;
     const chunkPath = entry.path || entry.file;
@@ -1852,8 +1964,8 @@
     }
     if (context.nativeProfileTruth) {
       if (
-        cached.data?.schema !== nativeProfileTruthChunkSchema ||
-        cached.data?.schema_version !== "2.0" ||
+        cached.data?.schema !== nativeProfileTruthSchemas[context.nativeTruthVersion]?.chunk ||
+        cached.data?.schema_version !== nativeProfileTruthSchemas[context.nativeTruthVersion]?.version ||
         cached.data?.dataset_id !== "drivaerml" ||
         cached.data?.dataset_revision !== context.datasetRevision ||
         !exactNativeTruthSource(cached.data?.truth_source)
@@ -1886,6 +1998,7 @@
     return {
       ...profileCase,
       _fluidsbenchNativeProfileTruth: Boolean(context.nativeProfileTruth),
+      _fluidsbenchNativeProfileTruthVersion: context.nativeTruthVersion || null,
       _fluidsbenchRelativeProfileV3: relativeProfileV3,
       _fluidsbenchProfileSchema: cached.data?.schema || cached.data?.schema_version || null,
       _fluidsbenchProvenance: {
@@ -4482,6 +4595,7 @@
         family: family?.id || "",
         quantity: panel.quantities?.[0]?.id || "",
         station: profileStations(panel, family)?.[0]?.id || "",
+        coordinateView: defaultProfileCoordinateView(panel),
       });
     }
     return state.panelSelections.get(key);
@@ -4575,8 +4689,15 @@
       }),
       selection.station
     );
+    selection.coordinateView = populateSelect(
+      element(`profile-${index}-coordinate`),
+      profileCoordinateViews(panel).map((view) => ({ value: view.id, label: view.label })),
+      selection.coordinateView || defaultProfileCoordinateView(panel)
+    );
     const quantityControl = element(`profile-${index}-quantity`)?.closest(".chart-control");
     if (quantityControl) quantityControl.hidden = (panel.quantities || []).length <= 1;
+    const coordinateControl = element(`profile-${index}-coordinate`)?.closest(".chart-control");
+    if (coordinateControl) coordinateControl.hidden = !isDrivaermlCpPanel(panel);
     syncProfileCaseSelects();
   }
 
@@ -4602,6 +4723,10 @@
           <div class="chart-control">
             <label class="chart-control-title" for="profile-${index}-station">Station</label>
             <select id="profile-${index}-station"></select>
+          </div>
+          <div class="chart-control profile-coordinate-control">
+            <label class="chart-control-title" for="profile-${index}-coordinate">Horizontal coordinate</label>
+            <select id="profile-${index}-coordinate"></select>
           </div>
         </div>
       </div>
@@ -4648,6 +4773,11 @@
       });
       element(`profile-${index}-station`)?.addEventListener("change", (event) => {
         panelSelection(panel).station = event.target.value;
+        renderProfileChart(index);
+        updateUrl();
+      });
+      element(`profile-${index}-coordinate`)?.addEventListener("change", (event) => {
+        panelSelection(panel).coordinateView = event.target.value;
         renderProfileChart(index);
         updateUrl();
       });
@@ -4795,7 +4925,11 @@
     });
   }
 
-  function nativeProfileSeriesFields(representation, valueField = "") {
+  function nativeCpDisplayCoordinateRequired(series, nativeTruthVersion) {
+    return nativeTruthVersion === 3 && series?.panel_id === "pressure_profiles" && series?.quantity_id === "cp";
+  }
+
+  function nativeProfileSeriesFields(representation, valueField = "", series = null, nativeTruthVersion = 2) {
     const common = [
       "family_id",
       "panel_id",
@@ -4810,7 +4944,7 @@
       "units",
     ];
     if (representation === "shared_alias") return [...common, "shared_support_ref"].sort();
-    return [
+    const fields = [
       ...common,
       "coordinate",
       "coordinate_id",
@@ -4823,11 +4957,15 @@
       "unsupported_samples",
       valueField,
       "value_identity_sha256",
-    ].sort();
+    ];
+    if (nativeCpDisplayCoordinateRequired(series, nativeTruthVersion)) {
+      fields.push("display_coordinate", "display_coordinate_id", "display_coordinate_identity_sha256", "display_coordinate_unit");
+    }
+    return fields.sort();
   }
 
-  function requireExactNativeSeriesFields(series, representation, valueField, label) {
-    const expected = nativeProfileSeriesFields(representation, valueField);
+  function requireExactNativeSeriesFields(series, representation, valueField, label, nativeTruthVersion = 2) {
+    const expected = nativeProfileSeriesFields(representation, valueField, series, nativeTruthVersion);
     if (JSON.stringify(Object.keys(series || {}).sort()) !== JSON.stringify(expected)) {
       throw new Error(`${label} does not use the exact native ${representation} series schema`);
     }
@@ -4857,7 +4995,7 @@
     }
   }
 
-  function requireProfileDescriptors(series, label, nativeTruth) {
+  function requireProfileDescriptors(series, label, nativeTruth, nativeTruthVersion = 2) {
     const relative = ["drivaerml-velocity-relative-v3", "drivaerml_cp_relative_v1"].includes(series.family_id);
     const expectedPlacement = relative ? "relative" : "constant";
     const expectedRole = relative ? "report_only" : "inherits_parent_candidate";
@@ -4888,25 +5026,41 @@
     if (series.coordinate_id !== expectedCoordinate[0] || series.coordinate_unit !== expectedCoordinate[1]) {
       throw new Error(`${label} coordinate ID or unit differs from the closed profile contract`);
     }
+    if (
+      nativeTruth &&
+      nativeCpDisplayCoordinateRequired(series, nativeTruthVersion) &&
+      (series.display_coordinate_id !== "streamwise_x_m" || series.display_coordinate_unit !== "m")
+    ) {
+      throw new Error(`${label} display-coordinate ID or unit differs from the native-v3 Cp contract`);
+    }
   }
 
-  function nativeMaterializedProfileSeries(series, label) {
-    requireExactNativeSeriesFields(series, "materialized", "value", label);
-    requireProfileDescriptors(series, label, true);
+  function nativeMaterializedProfileSeries(series, label, nativeTruthVersion = 2) {
+    requireExactNativeSeriesFields(series, "materialized", "value", label, nativeTruthVersion);
+    requireProfileDescriptors(series, label, true, nativeTruthVersion);
     const coordinates = series.coordinate;
+    const hasDisplayCoordinates = nativeCpDisplayCoordinateRequired(series, nativeTruthVersion);
+    const displayCoordinates = hasDisplayCoordinates ? series.display_coordinate : null;
     const values = series.value;
     const sampleIndex = series.sample_index;
     const rawNativeCellId = series.raw_native_cell_id;
-    if (!Array.isArray(coordinates) || !Array.isArray(values) || !Array.isArray(sampleIndex) || !Array.isArray(rawNativeCellId)) {
+    if (
+      !Array.isArray(coordinates) ||
+      !Array.isArray(values) ||
+      !Array.isArray(sampleIndex) ||
+      !Array.isArray(rawNativeCellId) ||
+      (hasDisplayCoordinates && !Array.isArray(displayCoordinates))
+    ) {
       throw new Error(`${label} is unavailable because its coordinate, value, sample-index, or native-cell lineage is missing`);
     }
     if (
       !coordinates.length ||
       coordinates.length !== values.length ||
       coordinates.length !== sampleIndex.length ||
-      coordinates.length !== rawNativeCellId.length
+      coordinates.length !== rawNativeCellId.length ||
+      (hasDisplayCoordinates && coordinates.length !== displayCoordinates.length)
     ) {
-      throw new Error(`${label} has unaligned coordinate, value, sample-index, or native-cell arrays`);
+      throw new Error(`${label} has unaligned coordinate, display-coordinate, value, sample-index, or native-cell arrays`);
     }
     coordinates.forEach((coordinate, index) => {
       if (typeof coordinate !== "number" || !Number.isFinite(coordinate)) throw new Error(`${label} coordinate ${index} is not finite`);
@@ -4914,6 +5068,13 @@
     values.forEach((value, index) => {
       if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${label} value ${index} is not finite`);
     });
+    if (hasDisplayCoordinates) {
+      displayCoordinates.forEach((coordinate, index) => {
+        if (typeof coordinate !== "number" || !Number.isFinite(coordinate)) {
+          throw new Error(`${label} display coordinate ${index} is not finite`);
+        }
+      });
+    }
     sampleIndex.forEach((sample, index) => {
       if (!Number.isSafeInteger(sample) || sample < 0 || (index && sample <= sampleIndex[index - 1])) {
         throw new Error(`${label} sample_index is not strictly increasing non-negative integer lineage`);
@@ -4931,9 +5092,19 @@
       coordinateIdentity: requiredSeriesIdentity(series, "coordinate_identity_sha256", label),
       valueIdentity: requiredSeriesIdentity(series, "value_identity_sha256", label),
       seriesIdentity: requiredSeriesIdentity(series, "series_identity_sha256", label),
+      displayCoordinateIdentity: hasDisplayCoordinates
+        ? requiredSeriesIdentity(series, "display_coordinate_identity_sha256", label)
+        : null,
     };
     if (!validSha256(computedCoordinateIdentity) || computedCoordinateIdentity !== identity.coordinateIdentity) {
       throw new Error(`${label} coordinate identity does not bind the submitted ordered coordinate bytes`);
+    }
+    const computedDisplayCoordinateIdentity = series._fluidsbenchDisplayCoordinateIdentitySha256;
+    if (
+      hasDisplayCoordinates &&
+      (!validSha256(computedDisplayCoordinateIdentity) || computedDisplayCoordinateIdentity !== identity.displayCoordinateIdentity)
+    ) {
+      throw new Error(`${label} display-coordinate identity does not bind the ordered streamwise-x bytes`);
     }
     const points = [];
     const chartPoints = [];
@@ -4947,6 +5118,8 @@
       const point = {
         x: Number(coordinate),
         y: Number(values[index]),
+        coordinate: Number(coordinate),
+        displayCoordinate: hasDisplayCoordinates ? Number(displayCoordinates[index]) : null,
         sourcePointIndex: index,
         sampleIndex: sampleIndex[index],
         rawNativeCellId: rawNativeCellId[index],
@@ -4965,12 +5138,15 @@
       segmentCount: series.segments.length,
       unsupportedSampleCount: series.unsupported_samples.length,
       coordinates,
+      displayCoordinates: hasDisplayCoordinates ? displayCoordinates : null,
       sampleIndex,
       rawNativeCellId,
       segments: series.segments,
       unsupportedSamples: series.unsupported_samples,
       coordinateId: series.coordinate_id,
       coordinateUnit: series.coordinate_unit,
+      displayCoordinateId: hasDisplayCoordinates ? series.display_coordinate_id : null,
+      displayCoordinateUnit: hasDisplayCoordinates ? series.display_coordinate_unit : null,
       ...identity,
     };
   }
@@ -4997,6 +5173,8 @@
     const points = coordinates.map((coordinate, index) => ({
       x: coordinate,
       y: predictions[index],
+      coordinate,
+      displayCoordinate: null,
       sourcePointIndex: index,
       sampleIndex: null,
       rawNativeCellId: null,
@@ -5012,6 +5190,7 @@
       segmentCount: 1,
       unsupportedSampleCount: 0,
       coordinates,
+      displayCoordinates: null,
       sampleIndex: [],
       rawNativeCellId: [],
       segments: [],
@@ -5021,6 +5200,9 @@
       coordinateIdentity,
       coordinateId: series.coordinate_id,
       coordinateUnit: series.coordinate_unit,
+      displayCoordinateIdentity: null,
+      displayCoordinateId: null,
+      displayCoordinateUnit: null,
     };
   }
 
@@ -5036,6 +5218,8 @@
         points.push({
           x,
           y,
+          coordinate: x,
+          displayCoordinate: null,
           sourcePointIndex: index,
           sampleIndex: index,
           rawNativeCellId: null,
@@ -5054,6 +5238,7 @@
           segmentCount: 1,
           unsupportedSampleCount: 0,
           coordinates: points.map((point) => point.x),
+          displayCoordinates: null,
           sampleIndex: points.map((point) => point.sourcePointIndex),
           rawNativeCellId: [],
           segments: [],
@@ -5096,15 +5281,25 @@
       return legacy ? { ...legacy, selectedSeries: selected, materializedSeries: selected } : null;
     }
     const nativeTruth = source?._fluidsbenchNativeProfileTruth === true;
+    const nativeTruthVersion = nativeTruth ? Number(source?._fluidsbenchNativeProfileTruthVersion || 2) : null;
     const currentPrediction = source?._fluidsbenchRelativeProfileV3 === true;
-    if (!nativeTruth && !currentPrediction) throw new Error(`${label} namespaced series has no verified native-v2 or current-v3 format binding`);
+    if (!nativeTruth && !currentPrediction) throw new Error(`${label} namespaced series has no verified native-v2/native-v3 truth or current-v3 prediction binding`);
     let materialized = selected;
     if (selected.representation === "shared_alias") {
-      if (nativeTruth) requireExactNativeSeriesFields(selected, "shared_alias", "", label);
+      if (nativeTruth) requireExactNativeSeriesFields(selected, "shared_alias", "", label, nativeTruthVersion);
       else requireExactSubmittedSeriesFields(selected, "shared_alias", label);
-      requireProfileDescriptors(selected, label, nativeTruth);
+      requireProfileDescriptors(selected, label, nativeTruth, nativeTruthVersion);
       if (
-        ["coordinate", "value", "prediction", "sample_index", "raw_native_cell_id", "segments", "unsupported_samples"].some(
+        [
+          "coordinate",
+          "display_coordinate",
+          "value",
+          "prediction",
+          "sample_index",
+          "raw_native_cell_id",
+          "segments",
+          "unsupported_samples",
+        ].some(
           (field) => field in selected
         )
       ) {
@@ -5129,7 +5324,9 @@
     } else if (selected.representation !== "materialized") {
       throw new Error(`${label} has unsupported representation ${selected.representation || "missing"}`);
     }
-    const parsed = nativeTruth ? nativeMaterializedProfileSeries(materialized, label) : submittedMaterializedProfileSeries(materialized, label);
+    const parsed = nativeTruth
+      ? nativeMaterializedProfileSeries(materialized, label, nativeTruthVersion)
+      : submittedMaterializedProfileSeries(materialized, label);
     return {
       ...parsed,
       legacy: false,
@@ -5141,11 +5338,13 @@
       scoringRole: selected.scoring_role || null,
       supportIdentity: parsed.supportIdentity,
       placementReceiptIdentity: selected.placement_receipt_identity_sha256,
+      seriesIdentity: nativeTruth ? selected.series_identity_sha256 : parsed.seriesIdentity,
       selectedSeries: selected,
       materializedSeries: materialized,
       nativeTruth,
       nativeTruthSource: nativeTruth ? source.truth_source : null,
       nativeDatasetRevision: nativeTruth ? source.dataset_revision : null,
+      nativeTruthVersion,
     };
   }
 
@@ -5175,6 +5374,8 @@
     }
     candidate.points = candidate.points.map((point, index) => ({
       ...point,
+      coordinate: reference.points[index].coordinate,
+      displayCoordinate: reference.points[index].displayCoordinate,
       sampleIndex: reference.points[index].sampleIndex,
       rawNativeCellId: reference.points[index].rawNativeCellId,
       segmentId: reference.points[index].segmentId,
@@ -5187,6 +5388,10 @@
       candidate.chartPoints.push(point);
     });
     candidate.sampleIndex = reference.sampleIndex;
+    candidate.displayCoordinates = reference.displayCoordinates;
+    candidate.displayCoordinateIdentity = reference.displayCoordinateIdentity;
+    candidate.displayCoordinateId = reference.displayCoordinateId;
+    candidate.displayCoordinateUnit = reference.displayCoordinateUnit;
     candidate.rawNativeCellId = reference.rawNativeCellId;
     candidate.segments = reference.segments;
     candidate.unsupportedSamples = reference.unsupportedSamples;
@@ -5194,6 +5399,57 @@
     candidate.unsupportedSampleCount = reference.unsupportedSampleCount;
     candidate.lineageInheritedFromNativeTruth = true;
     return true;
+  }
+
+  function profilePlotValues(datasets, coordinateView) {
+    return datasets.flatMap((dataset, seriesIndex) =>
+      dataset.finitePoints.map((point, pointIndex) => ({
+        series: dataset.label,
+        series_role: dataset.seriesRole,
+        submission_id: dataset.submissionId,
+        rank: dataset.rank ?? null,
+        series_order: seriesIndex,
+        line_style: dataset.lineStyle,
+        point_index: pointIndex,
+        source_point_index: point.sourcePointIndex,
+        support_sample_index: point.sampleIndex,
+        raw_native_cell_id: point.rawNativeCellId,
+        segment_id: point.segmentId,
+        segment_ordinal: point.segmentOrdinal,
+        gap_before: point.gapBefore,
+        segment_count: dataset.segmentCount,
+        unsupported_sample_count: dataset.unsupportedSampleCount,
+        source_point_count: dataset.sourcePointCount,
+        dropped_point_count: dataset.droppedPointCount,
+        family_id: dataset.profileIdentity?.familyId || null,
+        placement_mode: dataset.profileIdentity?.placementMode || null,
+        representation: dataset.profileIdentity?.representation || null,
+        scoring_role: dataset.profileIdentity?.scoringRole || null,
+        support_identity_sha256: dataset.profileIdentity?.supportIdentity || null,
+        placement_receipt_identity_sha256: dataset.profileIdentity?.placementReceiptIdentity || null,
+        coordinate_id: dataset.profileIdentity?.coordinateId || null,
+        coordinate_unit: dataset.profileIdentity?.coordinateUnit || null,
+        coordinate_identity_sha256: dataset.profileIdentity?.coordinateIdentity || null,
+        display_coordinate_id: dataset.profileIdentity?.displayCoordinateId || null,
+        display_coordinate_unit: dataset.profileIdentity?.displayCoordinateUnit || null,
+        display_coordinate_identity_sha256: dataset.profileIdentity?.displayCoordinateIdentity || null,
+        value_identity_sha256: dataset.profileIdentity?.valueIdentity || null,
+        series_identity_sha256: dataset.profileIdentity?.seriesIdentity || null,
+        native_truth_source: dataset.profileIdentity?.nativeTruthSource || null,
+        native_dataset_revision: dataset.profileIdentity?.nativeDatasetRevision || null,
+        coordinate_view: coordinateView.id,
+        coordinate: point.coordinate,
+        display_coordinate: point.displayCoordinate,
+        x: point.x,
+        y: point.y,
+        source_index_url: dataset.sourceProvenance?.index_url || null,
+        source_index_sha256: dataset.sourceProvenance?.index_sha256 || null,
+        source_chunk_url: dataset.sourceProvenance?.chunk_url || null,
+        source_chunk_declared_sha256: dataset.sourceProvenance?.chunk_declared_sha256 || null,
+        source_chunk_downloaded_sha256: dataset.sourceProvenance?.chunk_downloaded_sha256 || null,
+        ...(dataset.validationMetadata || validationMetadata(null)),
+      }))
+    );
   }
 
   async function refreshProfileContext() {
@@ -5319,16 +5575,23 @@
       syncProfileActionAvailability();
       return;
     }
+    const coordinateView = resolvedProfileCoordinateView(panel, selection.coordinateView, groundTruthSeries, station);
+    if (selection.coordinateView !== coordinateView.id) {
+      selection.coordinateView = coordinateView.id;
+      const coordinateSelect = element(`profile-${index}-coordinate`);
+      if (coordinateSelect) coordinateSelect.value = coordinateView.id;
+    }
     if (groundTruthSeries) {
       const groundTruthLabel = state.groundTruthCase?._fluidsbenchNativeProfileTruth ? "Native CFD ground truth" : "Ground truth";
+      const projected = projectProfileSeries(groundTruthSeries, coordinateView);
       datasets.push({
         label: groundTruthLabel,
         seriesRole: "public_ground_truth",
         submissionId: null,
         sourceProvenance: state.groundTruthCase?._fluidsbenchProvenance || {},
         lineStyle: "solid",
-        data: groundTruthSeries.chartPoints,
-        finitePoints: groundTruthSeries.points,
+        data: projected.chartPoints,
+        finitePoints: projected.points,
         sourcePointCount: groundTruthSeries.sourcePointCount,
         droppedPointCount: groundTruthSeries.droppedPointCount,
         segmentCount: groundTruthSeries.segmentCount,
@@ -5357,6 +5620,7 @@
         });
         return;
       }
+      const projected = projectProfileSeries(series, coordinateView);
       datasets.push({
         label: rowLabel(row),
         seriesRole: "submission_prediction",
@@ -5365,8 +5629,8 @@
         validationMetadata: validationMetadata(row),
         sourceProvenance: state.profileCases.get(row.id)?._fluidsbenchProvenance || {},
         lineStyle: rowIndex % 2 ? "dashed" : "solid",
-        data: series.chartPoints,
-        finitePoints: series.points,
+        data: projected.chartPoints,
+        finitePoints: projected.points,
         sourcePointCount: series.sourcePointCount,
         droppedPointCount: series.droppedPointCount,
         segmentCount: series.segmentCount,
@@ -5394,12 +5658,15 @@
     }
     canvas.hidden = datasets.length === 0;
     const familyLabel = family?.label ? `, ${family.label}` : "";
-    canvas.setAttribute("aria-label", `${panel.title}${familyLabel}: ${quantity.label} at ${station.label} for ${state.profileCase}`);
+    canvas.setAttribute(
+      "aria-label",
+      `${panel.title}${familyLabel}: ${quantity.label} at ${station.label} for ${state.profileCase}, plotted against ${coordinateView.label}`
+    );
     setChartSummary(
       `profile-${index}-chart-summary`,
       `${panel.title} for ${state.dataset}, ${state.split}, geometry ${state.profileCase}${familyLabel}. Showing ${quantity.label} at ${
         station.label
-      }. ${
+      } against ${coordinateView.label}. ${
         groundTruthSeries
           ? state.groundTruthCase?._fluidsbenchNativeProfileTruth
             ? "Pinned Native CFD ground truth is included."
@@ -5412,48 +5679,7 @@
       syncProfileActionAvailability();
       return;
     }
-    const plottedValues = datasets.flatMap((dataset, seriesIndex) =>
-      dataset.finitePoints.map((point, pointIndex) => ({
-        series: dataset.label,
-        series_role: dataset.seriesRole,
-        submission_id: dataset.submissionId,
-        rank: dataset.rank ?? null,
-        series_order: seriesIndex,
-        line_style: dataset.lineStyle,
-        point_index: pointIndex,
-        source_point_index: point.sourcePointIndex,
-        support_sample_index: point.sampleIndex,
-        raw_native_cell_id: point.rawNativeCellId,
-        segment_id: point.segmentId,
-        segment_ordinal: point.segmentOrdinal,
-        gap_before: point.gapBefore,
-        segment_count: dataset.segmentCount,
-        unsupported_sample_count: dataset.unsupportedSampleCount,
-        source_point_count: dataset.sourcePointCount,
-        dropped_point_count: dataset.droppedPointCount,
-        family_id: dataset.profileIdentity?.familyId || null,
-        placement_mode: dataset.profileIdentity?.placementMode || null,
-        representation: dataset.profileIdentity?.representation || null,
-        scoring_role: dataset.profileIdentity?.scoringRole || null,
-        support_identity_sha256: dataset.profileIdentity?.supportIdentity || null,
-        placement_receipt_identity_sha256: dataset.profileIdentity?.placementReceiptIdentity || null,
-        coordinate_id: dataset.profileIdentity?.coordinateId || null,
-        coordinate_unit: dataset.profileIdentity?.coordinateUnit || null,
-        coordinate_identity_sha256: dataset.profileIdentity?.coordinateIdentity || null,
-        value_identity_sha256: dataset.profileIdentity?.valueIdentity || null,
-        series_identity_sha256: dataset.profileIdentity?.seriesIdentity || null,
-        native_truth_source: dataset.profileIdentity?.nativeTruthSource || null,
-        native_dataset_revision: dataset.profileIdentity?.nativeDatasetRevision || null,
-        x: point.x,
-        y: point.y,
-        source_index_url: dataset.sourceProvenance?.index_url || null,
-        source_index_sha256: dataset.sourceProvenance?.index_sha256 || null,
-        source_chunk_url: dataset.sourceProvenance?.chunk_url || null,
-        source_chunk_declared_sha256: dataset.sourceProvenance?.chunk_declared_sha256 || null,
-        source_chunk_downloaded_sha256: dataset.sourceProvenance?.chunk_downloaded_sha256 || null,
-        ...(dataset.validationMetadata || validationMetadata(null)),
-      }))
-    );
+    const plottedValues = profilePlotValues(datasets, coordinateView);
     const droppedPointCount = datasets.reduce((total, dataset) => total + dataset.droppedPointCount, 0);
     const gapCount = datasets.reduce((total, dataset) => total + Math.max(0, dataset.segmentCount - 1), 0);
     const nativeProfileContext = Boolean(state.groundTruthCase?._fluidsbenchNativeProfileTruth);
@@ -5464,7 +5690,7 @@
       : "Lines preserve source coordinate/value order and join finite pairs without smoothing, interpolation, resampling, or sorting.";
     const caption = `${state.dataset}, ${state.split}, public evaluation geometry ${state.profileCase}: ${quantity.label} at ${station.label}${
       family?.label ? ` using ${family.label}` : ""
-    }, showing ${
+    }, plotted against ${coordinateView.label} and showing ${
       groundTruthSeries
         ? state.groundTruthCase?._fluidsbenchNativeProfileTruth
           ? `pinned Native CFD ground truth (${nativeDrivaermlDatasetRevision}) and `
@@ -5476,11 +5702,17 @@
     setFigureCaption(figureKey, caption, `${state.dataset} · ${state.split} · ${panel.title} · ${station.label} · ${datasets.length} plotted series`);
     const domain = datasets.map((dataset) => dataset.label);
     const range = datasets.map((dataset) => dataset.borderColor);
+    const coordinateTooltips = isDrivaermlCpPanel(panel)
+      ? [
+          { field: "display_coordinate", type: "quantitative", title: "Physical streamwise x coordinate, m" },
+          { field: "coordinate", type: "quantitative", title: "Surface arc length (scoring coordinate), m" },
+        ]
+      : [{ field: "x", type: "quantitative", title: coordinateView.label }];
     state.figureSpecs.set(figureKey, {
       ...figureSpecBase(`${state.dataset}: ${panel.title}`, plottedValues),
       mark: { type: "line", interpolate: "linear", point: false, tooltip: true },
       encoding: {
-        x: { field: "x", type: "quantitative", title: station.x_label },
+        x: { field: "x", type: "quantitative", title: coordinateView.label },
         y: {
           field: "y",
           type: "quantitative",
@@ -5514,7 +5746,7 @@
         tooltip: [
           { field: "series", type: "nominal", title: "Series" },
           { field: "submission_id", type: "nominal", title: "Submission ID" },
-          { field: "x", type: "quantitative", title: station.x_label },
+          ...coordinateTooltips,
           { field: "y", type: "quantitative", title: quantity.y_label },
         ],
       },
@@ -5538,7 +5770,12 @@
         { label: "Gap before", value: "gap_before" },
         { label: "Source points", value: "source_point_count" },
         { label: "Dropped points", value: "dropped_point_count" },
-        { label: station.x_label, value: "x" },
+        ...(isDrivaermlCpPanel(panel)
+          ? [
+              { label: "Physical streamwise x coordinate, m", value: "display_coordinate" },
+              { label: "Surface arc length (scoring coordinate), m", value: "coordinate" },
+            ]
+          : [{ label: coordinateView.label, value: "x" }]),
         { label: quantity.y_label, value: "y" },
       ],
       plottedValues
@@ -5557,7 +5794,7 @@
         scales: {
           x: {
             type: "linear",
-            title: { display: true, text: station.x_label, color: chartTextColor() },
+            title: { display: true, text: coordinateView.label, color: chartTextColor() },
             ticks: { color: chartTextColor() },
             grid: { color: chartGridColor() },
           },
@@ -5570,7 +5807,12 @@
         },
         plugins: {
           legend: { labels: { color: chartTextColor(), usePointStyle: true } },
-          tooltip: { callbacks: { title: () => station.label } },
+          tooltip: {
+            callbacks: {
+              title: () => station.label,
+              label: (context) => profileTooltipLines(context.dataset, context.raw, panel, quantity, coordinateView),
+            },
+          },
         },
       },
     });
@@ -5590,7 +5832,7 @@
     if (!panel || !quantity || !station || !points.length) throw new Error("No plotted profile data are available");
     const license = releaseLicenseMetadata();
     return {
-      schema_version: "fluidsbench-profile-plot-export-v2",
+      schema_version: "fluidsbench-profile-plot-export-v3",
       exported_at: new Date().toISOString(),
       provenance: {
         export_scope: "exact_displayed_profile_figure",
@@ -5632,12 +5874,19 @@
         station_label: station.label,
         quantity_id: quantity.id,
         quantity_label: quantity.label,
-        x_label: station.x_label,
+        coordinate_view: selection.coordinateView,
+        x_label: spec?.encoding?.x?.title || station.x_label,
+        support_coordinate_id: points[0]?.coordinate_id || null,
+        support_coordinate_unit: points[0]?.coordinate_unit || null,
+        support_coordinate_identity_sha256: points[0]?.coordinate_identity_sha256 || null,
+        display_coordinate_id: points[0]?.display_coordinate_id || null,
+        display_coordinate_unit: points[0]?.display_coordinate_unit || null,
+        display_coordinate_identity_sha256: points[0]?.display_coordinate_identity_sha256 || null,
         y_label: quantity.y_label,
         requested_model_ids: figureRows().map((row) => row.id),
         plotted_model_ids: Array.from(new Set(points.map((point) => point.submission_id).filter(Boolean))),
         processing: state.groundTruthCase?._fluidsbenchNativeProfileTruth
-          ? "Checksum- and identity-bound submitted/reference coordinate-value pairs in native source order; explicit support segments preserve unsupported-sample gaps; no smoothing, interpolation, resampling, sorting, or cross-family fallback"
+          ? "Checksum- and identity-bound submitted/reference support and display coordinates with values in native source order; explicit support segments preserve unsupported-sample gaps; no smoothing, interpolation, resampling, sorting, or cross-family fallback"
           : "Finite submitted/reference coordinate-value pairs in source order; no smoothing, interpolation, resampling, or sorting; dropped and source point counts are recorded per row",
         caption: state.figureCaptions.get(`profile-${index}`),
       },
@@ -5651,6 +5900,8 @@
     return figureFilename(
       `profile-data-${panel?.id || index}-${selection.family || "legacy"}-${state.profileCase}-${selection.station || "station"}-${
         selection.quantity || "quantity"
+      }-${
+        selection.coordinateView || "support"
       }`,
       extension
     );
@@ -5692,6 +5943,14 @@
         "placement_mode",
         "station_id",
         "quantity_id",
+        "coordinate_view",
+        "x_label",
+        "support_coordinate_id",
+        "support_coordinate_unit",
+        "support_coordinate_identity_sha256",
+        "display_coordinate_id",
+        "display_coordinate_unit",
+        "display_coordinate_identity_sha256",
         "processing",
         "series",
         "series_role",
@@ -5717,6 +5976,8 @@
         "coordinate_id",
         "coordinate_unit",
         "coordinate_identity_sha256",
+        "coordinate",
+        "display_coordinate",
         "value_identity_sha256",
         "series_identity_sha256",
         "native_truth_source",
@@ -5767,6 +6028,14 @@
           figure.placement_mode,
           figure.station_id,
           figure.quantity_id,
+          figure.coordinate_view,
+          figure.x_label,
+          figure.support_coordinate_id,
+          figure.support_coordinate_unit,
+          figure.support_coordinate_identity_sha256,
+          figure.display_coordinate_id,
+          figure.display_coordinate_unit,
+          figure.display_coordinate_identity_sha256,
           figure.processing,
           point.series,
           point.series_role,
@@ -5792,6 +6061,8 @@
           point.coordinate_id,
           point.coordinate_unit,
           point.coordinate_identity_sha256,
+          point.coordinate,
+          point.display_coordinate,
           point.value_identity_sha256,
           point.series_identity_sha256,
           point.native_truth_source,
@@ -7114,11 +7385,13 @@
       const familyId = restored.params.get(`family_${panel.id}`);
       const quantity = restored.params.get(`quantity_${panel.id}`);
       const station = restored.params.get(`station_${panel.id}`);
+      const coordinateView = restored.params.get(`coordinate_${panel.id}`);
       const selection = panelSelection(panel);
       const families = profileFamilies(panel);
       if (families.some((candidate) => candidate.id === familyId)) selection.family = familyId;
       if ((panel.quantities || []).some((candidate) => candidate.id === quantity)) selection.quantity = quantity;
       if (profileStations(panel, selectedProfileFamily(panel)).some((candidate) => candidate.id === station)) selection.station = station;
+      if (profileCoordinateViews(panel).some((candidate) => candidate.id === coordinateView)) selection.coordinateView = coordinateView;
     });
   }
 

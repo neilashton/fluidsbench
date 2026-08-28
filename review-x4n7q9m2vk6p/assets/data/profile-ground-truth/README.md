@@ -5,11 +5,14 @@ uses an open reproducibility track: scored ground truth and case lists are publi
 submissions. Evaluation cases remain a declared test partition and must not be used for model fitting, hyperparameter selection, or
 preprocessing statistics.
 
-The current files are explicitly marked `prototype_dummy_data` and must be replaced with dataset-owner-approved values before
-submissions open. An official result requires a validated submission package and maintainer approval; none of the current rows is
-official or approved. Public code, model, environment, and artifact-documentation links are optional and do not affect rank,
-academic-citation eligibility, or promotion eligibility. Submitted metrics and profile predictions are provided by the submitter.
-FluidsBench does not execute submitted code or models or recompute base metrics.
+The top-level review release and legacy analytical fixtures remain explicitly marked `prototype_dummy_data`; they are not native CFD
+truth and must not be presented as such. DrivAerML is the exception within this review release: its separately declared,
+checksum-bound `native_cfd` bundle contains dataset-owner-produced native values and is never sourced from the analytical fixture
+generator. Publishing that reference bundle does not make a leaderboard result official. An official result still requires a
+validated submission package and maintainer approval; none of the current rows is official or approved. Public code, model,
+environment, and artifact-documentation links are optional and do not affect rank, academic-citation eligibility, or promotion
+eligibility. Submitted metrics and profile predictions are provided by the submitter. FluidsBench does not execute submitted code or
+models or recompute base metrics.
 
 A prototype case set may declare `coverage: representative_subset` so the review site can inspect a small number of genuine,
 checksum-verified dataset profiles without copying the complete evaluation partition into this repository. Every representative
@@ -22,7 +25,7 @@ the selected evaluation geometry. The scalar leaderboard release pins the profil
 manifest in turn pins every case-set index, and each index pins its chunks. The browser verifies this complete chain before plotting
 or exporting profile data. Official ground-truth releases must also name an immutable source commit.
 
-DrivAerML native CFD truth uses the separate schema-2.0 master/thin-index
+DrivAerML native CFD truth uses the separate versioned master/thin-index
 contract. One all-484 master index binds the pinned public dataset revision,
 the non-analytical `native_cfd` declaration, every shared chunk, and all eight
 official split indexes. The split indexes contain only ordered case references
@@ -31,6 +34,18 @@ Every materialized curve binds its support, placement receipt, ordered sample
 and native-cell lineage, coordinates, values, unsupported samples, and segment
 boundaries with canonical SHA-256 identities. Shared Cp aliases contain no
 arrays and resolve only to their exact canonical constant support.
+
+Native schema 3.0 keeps each Cp curve's cumulative surface arc length as its
+unchanged support, compatibility, and scoring coordinate. It also binds an
+aligned display-only `streamwise_x_m` array, derived in source order from the
+midpoint x of the exact retained plane-intersection segment. The dashboard
+defaults to **Physical streamwise x coordinate, m** for comparison with
+AutoCFD and published plots, while **Surface arc length (scoring coordinate),
+m** remains selectable and is included with physical x in tooltips and data
+exports. Predictions continue to submit only the approved arc coordinate; the
+browser uses reference physical x only after the existing support and arc-byte
+compatibility checks pass. Neither view sorts, interpolates, resamples, or
+joins across a retained segment break.
 
 The DrivAerML velocity and Cp panels keep fixed locations and
 geometry-relative locations in separate selectors. Geometry-relative profiles
