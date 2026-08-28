@@ -1606,7 +1606,8 @@ html[data-theme="dark"] .leaderboard-data-warning.is-official {
 }
 
 .profile-family-tabs[hidden],
-.profile-family-notice[hidden] {
+.profile-family-notice[hidden],
+.profile-coordinate-control[hidden] {
   display: none;
 }
 
@@ -1682,7 +1683,7 @@ html[data-theme="dark"] .leaderboard-data-warning.is-official {
 }
 
 .leaderboard-panel-heading .chart-control-row {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
 }
 
 .comparison-header {

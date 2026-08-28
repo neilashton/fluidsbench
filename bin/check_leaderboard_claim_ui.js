@@ -52,6 +52,7 @@ window.__FluidsBenchClaimTest = {
   citationValues,
   claimEligibility,
   decimalHalfUp,
+  defaultProfileCoordinateView,
   ensureClaimRecord,
   ensureClaimsIndex,
   exactNativeTruthSource,
@@ -65,6 +66,7 @@ window.__FluidsBenchClaimTest = {
   leaderboardManifestProvenance,
   claimRecordCheck,
   nativeProfileIndexSplitId,
+  nativeProfileTruthVersion,
   normalizeRow,
   nativeSegmentIds,
   openDetails,
@@ -72,9 +74,14 @@ window.__FluidsBenchClaimTest = {
   predictionAvailability,
   predictionMetricRecomputation,
   profileFamilies,
+  profileCoordinateViews,
+  profilePlotValues,
+  profileTooltipLines,
+  projectProfileSeries,
   profileSeries,
   profileSeriesCompatibility,
   profileStations,
+  resolvedProfileCoordinateView,
   radarMetricAxes,
   radarNormalizedValue,
   representationSummary,
@@ -321,6 +328,31 @@ function currentProfileSeries(overrides = {}) {
   return series;
 }
 
+function nativeV3CpSeries(overrides = {}) {
+  const series = nativeProfileSeries({
+    panel_id: "pressure_profiles",
+    family_id: "drivaerml_cp_relative_v1",
+    placement_mode: "relative",
+    station_id: "sidewall_front_wheelhouse_relative",
+    quantity_id: "cp",
+    quantity: "pressure_coefficient",
+    scoring_role: "report_only",
+    coordinate_id: "arc_length_m",
+    coordinate_unit: "m",
+    display_coordinate_id: "streamwise_x_m",
+    display_coordinate_unit: "m",
+    display_coordinate_identity_sha256: "b".repeat(64),
+    display_coordinate: [-0.8, -0.9, -0.7, -0.6],
+    ...overrides,
+  });
+  Object.defineProperty(series, "_fluidsbenchDisplayCoordinateIdentitySha256", {
+    enumerable: false,
+    value: overrides.computedDisplayCoordinateIdentity || series.display_coordinate_identity_sha256,
+  });
+  delete series.computedDisplayCoordinateIdentity;
+  return series;
+}
+
 {
   api.state.dataset = "DrivAerML";
   const drivaerml = manifest.datasets.find((dataset) => dataset.slug === "drivaerml");
@@ -338,10 +370,13 @@ function currentProfileSeries(overrides = {}) {
   assert.equal(api.nativeProfileIndexSplitId("geometry", "geometry"), "geometry");
   assert.equal(api.profileStations(velocityPanel, families[0])[0].id, "autocfd5_v1");
   assert.equal(api.profileStations(velocityPanel, families[1])[0].id, "V1");
+  assert.deepEqual(Array.from(api.profileCoordinateViews(velocityPanel), (view) => view.id), ["support"]);
+  assert.equal(api.defaultProfileCoordinateView(velocityPanel), "support", "velocity profiles must retain their one existing coordinate");
   assert.deepEqual(
     Array.from(
       api.caseIds({
         schema: "fluidsbench-drivaerml-native-profile-truth-split-index-v2",
+        schema_version: "2.0",
         chunk_refs: [{ case_ids: ["run_1"] }, { case_ids: ["run_3"] }],
       })
     ),
@@ -483,6 +518,259 @@ assert.match(source, /spanGaps: false/);
 assert.match(source, /detail: \[\{ field: "series" \}, \{ field: "segment_ordinal" \}\]/);
 assert.match(source, /legacy profile series cannot be overlaid on identity-bound native ground truth/);
 assert.match(source, /Native CFD ground truth/);
+assert.match(source, /fluidsbench-profile-plot-export-v3/);
+assert.match(source, /"coordinate",\s*\n\s*"display_coordinate"/);
+
+async function verifyNativeV3CpDisplayCoordinates() {
+  api.state.dataset = "DrivAerML";
+  const drivaerml = manifest.datasets.find((dataset) => dataset.slug === "drivaerml");
+  const cpPanel = drivaerml.diagnostic_panels.find((panel) => panel.id === "pressure_profiles");
+  const cpFamily = api.profileFamilies(cpPanel).find((family) => family.id === "drivaerml_cp_relative_v1");
+  const cpStation = api.profileStations(cpPanel, cpFamily).find(
+    (station) => station.id === "sidewall_front_wheelhouse_relative"
+  );
+  const quantity = cpPanel.quantities[0];
+  const materialized = nativeV3CpSeries();
+  const truthSource = {
+    case_id: "run_419",
+    _fluidsbenchNativeProfileTruth: true,
+    _fluidsbenchNativeProfileTruthVersion: 3,
+    series: [materialized],
+  };
+  const truth = api.profileSeries(truthSource, cpPanel, materialized.station_id, quantity, cpFamily);
+  assert.deepEqual(
+    Array.from(api.profileCoordinateViews(cpPanel), (view) => [view.id, view.label]),
+    [
+      ["physical_x", "Physical streamwise x coordinate, m"],
+      ["arc_length", "Surface arc length (scoring coordinate), m"],
+    ],
+    "Cp must expose physical-x and arc-length coordinate views"
+  );
+  assert.equal(api.defaultProfileCoordinateView(cpPanel), "physical_x", "Cp must default to physical x");
+  assert.deepEqual(Array.from(truth.displayCoordinates), materialized.display_coordinate);
+  assert.equal(truth.displayCoordinateId, "streamwise_x_m");
+  assert.equal(truth.displayCoordinateUnit, "m");
+
+  const byteBound = JSON.parse(JSON.stringify(nativeV3CpSeries()));
+  const byteBoundCase = { series: [byteBound] };
+  await api.bindProfileCoordinateIdentities(byteBoundCase);
+  byteBound.coordinate_identity_sha256 = byteBound._fluidsbenchCoordinateIdentitySha256;
+  byteBound.display_coordinate_identity_sha256 = byteBound._fluidsbenchDisplayCoordinateIdentitySha256;
+  assert.ok(
+    api.profileSeries(
+      {
+        case_id: "run_419",
+        _fluidsbenchNativeProfileTruth: true,
+        _fluidsbenchNativeProfileTruthVersion: 3,
+        series: [byteBound],
+      },
+      cpPanel,
+      byteBound.station_id,
+      quantity,
+      cpFamily
+    ),
+    "native-v3 Cp must parse when both coordinate identities bind their canonical binary64 bytes"
+  );
+  byteBound.display_coordinate[0] = 1234.0;
+  await assert.rejects(
+    api.bindProfileCoordinateIdentities(byteBoundCase),
+    /cached profile display-coordinate identity differs from recomputed bytes/
+  );
+
+  const physicalView = api.resolvedProfileCoordinateView(cpPanel, "physical_x", truth, cpStation);
+  const physical = api.projectProfileSeries(truth, physicalView);
+  assert.deepEqual(Array.from(physical.points, (point) => point.x), materialized.display_coordinate);
+  assert.equal(physical.chartPoints[3].x, null, "physical-x projection must retain the native segment gap");
+  assert.deepEqual(
+    Array.from(physical.points, (point) => point.sourcePointIndex),
+    [0, 1, 2, 3],
+    "physical-x projection must not sort a non-monotone physical coordinate"
+  );
+  const exportedRows = api.profilePlotValues(
+    [
+      {
+        label: "Native CFD",
+        seriesRole: "public_ground_truth",
+        submissionId: null,
+        lineStyle: "solid",
+        finitePoints: physical.points,
+        sourcePointCount: truth.sourcePointCount,
+        droppedPointCount: truth.droppedPointCount,
+        segmentCount: truth.segmentCount,
+        unsupportedSampleCount: truth.unsupportedSampleCount,
+        profileIdentity: truth,
+        sourceProvenance: {},
+      },
+    ],
+    physicalView
+  );
+  assert.equal(exportedRows[0].coordinate_view, "physical_x");
+  assert.equal(exportedRows[0].coordinate, materialized.coordinate[0]);
+  assert.equal(exportedRows[0].display_coordinate, materialized.display_coordinate[0]);
+  assert.equal(exportedRows[0].x, materialized.display_coordinate[0]);
+  assert.equal(exportedRows[0].coordinate_identity_sha256, materialized.coordinate_identity_sha256);
+  assert.equal(exportedRows[0].display_coordinate_identity_sha256, materialized.display_coordinate_identity_sha256);
+  assert.deepEqual(
+    Array.from(exportedRows, (row) => [row.source_point_index, row.segment_ordinal, row.gap_before]),
+    [
+      [0, 0, false],
+      [1, 0, false],
+      [2, 0, false],
+      [3, 1, true],
+    ],
+    "JSON/CSV row projection must preserve exact source order and segment provenance"
+  );
+
+  const arcView = api.resolvedProfileCoordinateView(cpPanel, "arc_length", truth, cpStation);
+  const arc = api.projectProfileSeries(truth, arcView);
+  assert.deepEqual(Array.from(arc.points, (point) => point.x), materialized.coordinate);
+  assert.equal(arc.chartPoints[3].x, null, "arc projection must retain the same native segment gap");
+  assert.deepEqual(
+    Array.from(api.profileTooltipLines({ label: "Native CFD" }, physical.points[0], cpPanel, quantity, physicalView)),
+    [
+      "Native CFD",
+      `Physical streamwise x coordinate, m: ${materialized.display_coordinate[0]}`,
+      `Surface arc length (scoring coordinate), m: ${materialized.coordinate[0]}`,
+      `${quantity.y_label}: ${materialized.value[0]}`,
+    ]
+  );
+
+  const predictionSeries = currentProfileSeries({
+    panel_id: "pressure_profiles",
+    family_id: materialized.family_id,
+    placement_mode: "relative",
+    station_id: materialized.station_id,
+    quantity_id: "cp",
+    scoring_role: "report_only",
+    coordinate_id: "arc_length_m",
+    coordinate_unit: "m",
+  });
+  const prediction = api.profileSeries(
+    { case_id: "run_419", _fluidsbenchRelativeProfileV3: true, series: [predictionSeries] },
+    cpPanel,
+    materialized.station_id,
+    quantity,
+    cpFamily
+  );
+  assert.equal(api.profileSeriesCompatibility(truth, prediction), true);
+  assert.deepEqual(Array.from(prediction.displayCoordinates), materialized.display_coordinate);
+  assert.deepEqual(
+    Array.from(api.projectProfileSeries(prediction, physicalView).points, (point) => point.x),
+    materialized.display_coordinate,
+    "current submissions must inherit physical-x display data only after exact support compatibility"
+  );
+
+  const wrongDisplayIdentity = nativeV3CpSeries({ computedDisplayCoordinateIdentity: "c".repeat(64) });
+  assert.throws(
+    () =>
+      api.profileSeries(
+        {
+          case_id: "run_419",
+          _fluidsbenchNativeProfileTruth: true,
+          _fluidsbenchNativeProfileTruthVersion: 3,
+          series: [wrongDisplayIdentity],
+        },
+        cpPanel,
+        wrongDisplayIdentity.station_id,
+        quantity,
+        cpFamily
+      ),
+    /display-coordinate identity does not bind/
+  );
+  const unalignedDisplay = nativeV3CpSeries({ display_coordinate: [-0.8, -0.9, -0.7] });
+  assert.throws(
+    () =>
+      api.profileSeries(
+        {
+          case_id: "run_419",
+          _fluidsbenchNativeProfileTruth: true,
+          _fluidsbenchNativeProfileTruthVersion: 3,
+          series: [unalignedDisplay],
+        },
+        cpPanel,
+        unalignedDisplay.station_id,
+        quantity,
+        cpFamily
+      ),
+    /unaligned coordinate, display-coordinate/
+  );
+
+  const canonical = nativeV3CpSeries({
+    family_id: "drivaerml_cp_constant_v1",
+    placement_mode: "constant",
+    station_id: "upperbody_centerline",
+    scoring_role: "inherits_parent_candidate",
+  });
+  const alias = {
+    panel_id: "pressure_profiles",
+    family_id: "drivaerml_cp_relative_v1",
+    placement_mode: "relative",
+    station_id: "upperbody_centerline",
+    quantity_id: "cp",
+    quantity: "pressure_coefficient",
+    units: "1",
+    scoring_role: "report_only",
+    representation: "shared_alias",
+    placement_receipt_identity_sha256: "9".repeat(64),
+    series_identity_sha256: "a".repeat(64),
+    shared_support_ref: {
+      canonical_family_id: "drivaerml_cp_constant_v1",
+      canonical_station_id: "upperbody_centerline",
+      canonical_support_identity_sha256: canonical.support_identity_sha256,
+      shared_support_id: "drivaerml-cp-upperbody-centerline-y0-v1",
+    },
+  };
+  const resolvedAlias = api.profileSeries(
+    {
+      case_id: "run_419",
+      _fluidsbenchNativeProfileTruth: true,
+      _fluidsbenchNativeProfileTruthVersion: 3,
+      series: [canonical, alias],
+    },
+    cpPanel,
+    alias.station_id,
+    quantity,
+    cpFamily
+  );
+  assert.equal(resolvedAlias.representation, "shared_alias");
+  assert.deepEqual(Array.from(resolvedAlias.displayCoordinates), canonical.display_coordinate);
+  assert.equal(resolvedAlias.seriesIdentity, alias.series_identity_sha256, "a shared alias must retain its own series identity");
+  const aliasRows = api.profilePlotValues(
+    [
+      {
+        label: "Native CFD alias",
+        seriesRole: "public_ground_truth",
+        submissionId: null,
+        lineStyle: "solid",
+        finitePoints: api.projectProfileSeries(resolvedAlias, physicalView).points,
+        sourcePointCount: resolvedAlias.sourcePointCount,
+        droppedPointCount: resolvedAlias.droppedPointCount,
+        segmentCount: resolvedAlias.segmentCount,
+        unsupportedSampleCount: resolvedAlias.unsupportedSampleCount,
+        profileIdentity: resolvedAlias,
+        sourceProvenance: {},
+      },
+    ],
+    physicalView
+  );
+  assert.equal(
+    aliasRows[0].series_identity_sha256,
+    alias.series_identity_sha256,
+    "plot exports must identify the selected alias rather than its canonical materialization"
+  );
+  assert.notEqual(aliasRows[0].series_identity_sha256, canonical.series_identity_sha256);
+
+  assert.equal(
+    api.nativeProfileTruthVersion(
+      {
+        schema: "fluidsbench-drivaerml-native-profile-truth-split-index-v3",
+        schema_version: "3.0",
+      },
+      "split"
+    ),
+    3
+  );
+}
 
 async function verifyCurrentRun419ProfileFixture() {
   api.state.dataset = "DrivAerML";
@@ -568,7 +856,7 @@ async function verifyDrivaerLegacyTruthFailsClosed() {
   try {
     await assert.rejects(
       api.groundTruthIndex("DrivAerML", "Full"),
-      /must use the checksum-bound native CFD v2 release; legacy or analytical indexes are unavailable/,
+      /must use a checksum-bound native CFD v2 or v3 release; legacy or analytical indexes are unavailable/,
       "DrivAerML must never fall back to the former analytical v1 ground truth"
     );
   } finally {
@@ -582,6 +870,7 @@ async function verifyNativeRun419AgainstCurrentFixture(nativeRecord) {
   const nativeCase = {
     ...nativeRecord,
     _fluidsbenchNativeProfileTruth: true,
+    _fluidsbenchNativeProfileTruthVersion: 3,
   };
   await api.bindProfileCoordinateIdentities(nativeCase);
   assert.equal(nativeCase.case_id, "run_419");
@@ -600,9 +889,11 @@ async function verifyNativeRun419AgainstCurrentFixture(nativeRecord) {
 
   const drivaerml = manifest.datasets.find((dataset) => dataset.slug === "drivaerml");
   const compared = [];
+  let materializedCpCount = 0;
   nativeCase.series.forEach((series) => {
     const panel = drivaerml.diagnostic_panels.find((candidate) => candidate.id === series.panel_id);
     const family = api.profileFamilies(panel).find((candidate) => candidate.id === series.family_id);
+    const station = api.profileStations(panel, family).find((candidate) => candidate.id === series.station_id);
     const quantity = panel.quantities.find((candidate) => candidate.id === series.quantity_id);
     const truth = api.profileSeries(nativeCase, panel, series.station_id, quantity, family);
     const prediction = api.profileSeries(currentCase, panel, series.station_id, quantity, family);
@@ -611,9 +902,49 @@ async function verifyNativeRun419AgainstCurrentFixture(nativeRecord) {
     assert.equal(api.profileSeriesCompatibility(truth, prediction), true);
     assert.equal(prediction.lineageInheritedFromNativeTruth, true);
     assert.equal(prediction.points.length, truth.points.length);
+    if (series.panel_id === "pressure_profiles" && series.representation === "materialized") {
+      materializedCpCount += 1;
+      const physicalView = api.resolvedProfileCoordinateView(panel, "physical_x", truth, station);
+      const arcView = api.resolvedProfileCoordinateView(panel, "arc_length", truth, station);
+      const physical = api.projectProfileSeries(truth, physicalView);
+      const arc = api.projectProfileSeries(truth, arcView);
+      const physicalPrediction = api.projectProfileSeries(prediction, physicalView);
+      const arcPrediction = api.projectProfileSeries(prediction, arcView);
+      assert.equal(physicalView.id, "physical_x");
+      assert.equal(arcView.id, "arc_length");
+      assert.deepEqual(Array.from(physical.points, (point) => point.x), Array.from(series.display_coordinate));
+      assert.deepEqual(Array.from(arc.points, (point) => point.x), Array.from(series.coordinate));
+      assert.deepEqual(
+        Array.from(physicalPrediction.points, (point) => point.x),
+        Array.from(series.display_coordinate),
+        `${series.family_id}/${series.station_id} prediction must inherit physical x only after compatibility passes`
+      );
+      assert.deepEqual(Array.from(arcPrediction.points, (point) => point.x), Array.from(series.coordinate));
+      assert.deepEqual(
+        Array.from(physical.points, (point) => point.sourcePointIndex),
+        Array.from(arc.points, (point) => point.sourcePointIndex),
+        `${series.family_id}/${series.station_id} coordinate views must preserve producer source order`
+      );
+      assert.equal(
+        physical.chartPoints.filter((point) => point.gapSeparator).length,
+        series.segments.length - 1,
+        `${series.family_id}/${series.station_id} physical x must preserve every producer segment break`
+      );
+      assert.equal(
+        arc.chartPoints.filter((point) => point.gapSeparator).length,
+        series.segments.length - 1,
+        `${series.family_id}/${series.station_id} arc length must preserve every producer segment break`
+      );
+      assert.equal(
+        physicalPrediction.chartPoints.filter((point) => point.gapSeparator).length,
+        series.segments.length - 1,
+        `${series.family_id}/${series.station_id} prediction must inherit every producer segment break`
+      );
+    }
     compared.push(`${series.family_id}/${series.station_id}/${series.representation}`);
   });
   assert.equal(new Set(compared).size, 40, "native and current run_419 fixtures must match all 40 exact series");
+  assert.equal(materializedCpCount, 6, "real native-v3 run_419 must exercise all six materialized Cp series in both coordinate views");
 }
 
 async function verifyRetainedNativeRun419Bundle() {
@@ -627,8 +958,8 @@ async function verifyRetainedNativeRun419Bundle() {
     dataset_revision: "7a5c0948ce27be709b1116a3a190f806e7a8f79f",
     native_source_pin_sha256: "4fc9077f8f23f4994c98f4d0e7a17aef7b998de4c996638e3a8a616b6d923fdd",
     case_count: 484,
-    master_index_file: "datasets/drivaerml/native-v2/index.json",
-    master_index_sha256: "d12365d52554c10e59f07cb289e62ed77d49a5ad813fd94d1a07b61f796d4bec",
+    master_index_file: "datasets/drivaerml/native-v3/index.json",
+    master_index_sha256: "e7cf14f161fc7dbf22794e6f66db4e157329be960d2a4368140e08cf0608a5ae",
   });
 
   const masterPath = path.join(groundTruthRoot, declaration.master_index_file);
@@ -680,6 +1011,7 @@ async function verifyRetainedNativeRun419Bundle() {
     const extremeCase = {
       ...extremeChunk.cases[extremeLocation.case_offset],
       _fluidsbenchNativeProfileTruth: true,
+      _fluidsbenchNativeProfileTruthVersion: 3,
     };
     assert.equal(extremeCase.case_id, caseId);
     assert.equal(extremeCase.series.length, 40);
@@ -1632,6 +1964,7 @@ function verifyDatasetSubmissionAvailability() {
 }
 
 verifyDrivaerLegacyTruthFailsClosed()
+  .then(() => verifyNativeV3CpDisplayCoordinates())
   .then(() => verifyCurrentRun419ProfileFixture())
   .then(() => verifyRetainedNativeRun419Bundle())
   .then(() => verifyGeneratedClaimRecords())

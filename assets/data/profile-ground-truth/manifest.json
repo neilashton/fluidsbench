@@ -171,8 +171,8 @@
         "dataset_revision": "7a5c0948ce27be709b1116a3a190f806e7a8f79f",
         "native_source_pin_sha256": "4fc9077f8f23f4994c98f4d0e7a17aef7b998de4c996638e3a8a616b6d923fdd",
         "case_count": 484,
-        "master_index_file": "datasets/drivaerml/native-v2/index.json",
-        "master_index_sha256": "d12365d52554c10e59f07cb289e62ed77d49a5ad813fd94d1a07b61f796d4bec"
+        "master_index_file": "datasets/drivaerml/native-v3/index.json",
+        "master_index_sha256": "e7cf14f161fc7dbf22794e6f66db4e157329be960d2a4368140e08cf0608a5ae"
       },
       "splits": [
         {
@@ -227,36 +227,36 @@
       "case_sets": [
         {
           "id": "standard",
-          "index_file": "datasets/drivaerml/native-v2/splits/full.json",
-          "index_sha256": "d4995cd69809f5934b9c60c26c1466ecc7337d06fb7badb7487aadb7299e22a1",
+          "index_file": "datasets/drivaerml/native-v3/splits/full.json",
+          "index_sha256": "7c5ecc3627ba53443ba94fac58d104e1d2df8d89cccfec76eafb4c59ef12eb05",
           "case_count": 50,
           "case_id_status": "official"
         },
         {
           "id": "geometry",
-          "index_file": "datasets/drivaerml/native-v2/splits/geometry.json",
-          "index_sha256": "01fb5c8b7a674db2722056d106eccc34c393dc3e8179e4b1dd11a589da912673",
+          "index_file": "datasets/drivaerml/native-v3/splits/geometry.json",
+          "index_sha256": "ccd59a28290c89597b2d3e209a6742d818e5b4e15645f2a319988abf953057a3",
           "case_count": 97,
           "case_id_status": "official"
         },
         {
           "id": "high_drag",
-          "index_file": "datasets/drivaerml/native-v2/splits/high_drag.json",
-          "index_sha256": "16ef179049117efb46f1fa817fe8513e64d377226e6f4fcae312f3ae795d19ec",
+          "index_file": "datasets/drivaerml/native-v3/splits/high_drag.json",
+          "index_sha256": "2d75228039f0208d34ccb28ca5e83debc028bb401d86ba6027754267e8bd9eff",
           "case_count": 97,
           "case_id_status": "official"
         },
         {
           "id": "low_drag",
-          "index_file": "datasets/drivaerml/native-v2/splits/low_drag.json",
-          "index_sha256": "5f07f785c89e79464921d45d7bf1e33651434d0f74d84ffe7c1f97b5aa39799f",
+          "index_file": "datasets/drivaerml/native-v3/splits/low_drag.json",
+          "index_sha256": "849bb07534fb0c993f2f0058a6aed885089559ff3b4654d91268a6a9f7d5adc5",
           "case_count": 97,
           "case_id_status": "official"
         },
         {
           "id": "rear_separation",
-          "index_file": "datasets/drivaerml/native-v2/splits/rear_separation.json",
-          "index_sha256": "a7e4024ed679758d1c7f4d7cff7f7dcd2f742ed6b59ef3b4ad8ff1d77751f665",
+          "index_file": "datasets/drivaerml/native-v3/splits/rear_separation.json",
+          "index_sha256": "37877106a111963e796d93622466b74f67fedb7a1c25cded013fe8a96eec4559",
           "case_count": 97,
           "case_id_status": "official"
         }

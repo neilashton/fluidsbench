@@ -79,6 +79,16 @@ class ProfileCaseCoverageTests(unittest.TestCase):
 
 class DrivAerMLNativeProfileSeriesTests(unittest.TestCase):
     @staticmethod
+    def rebind_case_identity(case: dict) -> None:
+        body = dict(case)
+        body.pop("case_identity", None)
+        case["case_identity"] = {
+            "algorithm": "sha256",
+            "scope": "canonical_json_body_without_case_identity",
+            "sha256": check_profile_contract.canonical_json_identity_sha256(body),
+        }
+
+    @staticmethod
     def native_case() -> dict:
         series_records = []
         digest = "1" * 64
@@ -211,12 +221,301 @@ class DrivAerMLNativeProfileSeriesTests(unittest.TestCase):
         }
         return case
 
+    @classmethod
+    def native_v3_case(cls) -> dict:
+        case = cls.native_case()
+        case["schema"] = check_profile_contract.NATIVE_DRIVAERML_CONTRACTS["3.0"][
+            "case"
+        ]
+        case["schema_version"] = "3.0"
+        materialized_cp_row_count = 0
+        for series in case["series"]:
+            if (
+                series["representation"] == "materialized"
+                and series["quantity_id"] == "cp"
+            ):
+                # Physical x is deliberately non-monotone. It is a retained display
+                # coordinate in producer order, not the scoring/segment coordinate.
+                display_coordinate = [-0.8, -0.9, -0.7]
+                series.update(
+                    {
+                        "display_coordinate_id": check_profile_contract.NATIVE_CP_DISPLAY_COORDINATE_ID,
+                        "display_coordinate_unit": check_profile_contract.NATIVE_CP_DISPLAY_COORDINATE_UNIT,
+                        "display_coordinate": display_coordinate,
+                        "display_coordinate_identity_sha256": check_profile_contract.coordinate_identity_sha256(
+                            display_coordinate
+                        ),
+                    }
+                )
+                materialized_cp_row_count += len(display_coordinate)
+            series["series_identity_sha256"] = (
+                check_profile_contract.canonical_json_identity_sha256(
+                    check_profile_contract.native_series_identity_projection(
+                        series, "3.0"
+                    )
+                )
+            )
+        case["cp_display_coordinate"] = {
+            **check_profile_contract.NATIVE_CP_CASE_DISPLAY_DECLARATION,
+            "materialized_row_count": materialized_cp_row_count,
+        }
+        case["native_boundary"][
+            "referenced_producer_row_count"
+        ] = materialized_cp_row_count
+        cls.rebind_case_identity(case)
+        return case
+
     def test_exact_40_series_native_case_passes(self) -> None:
         self.assertEqual(
             check_profile_contract.drivaerml_native_case_series_errors(
                 self.native_case(), "drivaerml/run_419"
             ),
             [],
+        )
+
+    def test_exact_native_v3_case_passes_with_conditional_series_identities(
+        self,
+    ) -> None:
+        case = self.native_v3_case()
+        self.assertEqual(
+            check_profile_contract.drivaerml_native_case_series_errors(
+                case, "drivaerml/run_419", expected_version="3.0"
+            ),
+            [],
+        )
+        velocity = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "materialized"
+            and series["quantity_id"] == "velocity_ratio"
+        )
+        materialized_cp = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "materialized"
+            and series["quantity_id"] == "cp"
+        )
+        alias = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "shared_alias"
+        )
+        self.assertEqual(
+            check_profile_contract.native_series_identity_projection(
+                velocity, "3.0"
+            )["schema"],
+            check_profile_contract.NATIVE_SERIES_IDENTITY_SCHEMA,
+        )
+        self.assertEqual(
+            check_profile_contract.native_series_identity_projection(
+                alias, "3.0"
+            )["schema"],
+            check_profile_contract.NATIVE_SERIES_IDENTITY_SCHEMA,
+        )
+        self.assertEqual(
+            check_profile_contract.native_series_identity_projection(
+                materialized_cp, "3.0"
+            )["schema"],
+            check_profile_contract.NATIVE_SERIES_IDENTITY_SCHEMA_V2,
+        )
+
+    def test_native_v3_rejects_mutated_display_array_with_retained_hash(
+        self,
+    ) -> None:
+        case = self.native_v3_case()
+        materialized_cp = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "materialized"
+            and series["quantity_id"] == "cp"
+        )
+        materialized_cp["display_coordinate"][1] = 1234.0
+        self.rebind_case_identity(case)
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419", expected_version="3.0"
+        )
+        self.assertTrue(
+            any("ordered display-coordinate array" in error for error in errors)
+        )
+
+    def test_native_v3_rejects_rehashed_display_array_with_stale_series_identity(
+        self,
+    ) -> None:
+        case = self.native_v3_case()
+        materialized_cp = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "materialized"
+            and series["quantity_id"] == "cp"
+        )
+        materialized_cp["display_coordinate"][1] = 1234.0
+        materialized_cp["display_coordinate_identity_sha256"] = (
+            check_profile_contract.coordinate_identity_sha256(
+                materialized_cp["display_coordinate"]
+            )
+        )
+        self.rebind_case_identity(case)
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419", expected_version="3.0"
+        )
+        self.assertTrue(
+            any("exact materialized projection" in error for error in errors)
+        )
+
+    def test_native_v3_rejects_display_fields_on_alias_or_velocity(self) -> None:
+        for representation in ("shared_alias", "velocity"):
+            with self.subTest(representation=representation):
+                case = self.native_v3_case()
+                if representation == "shared_alias":
+                    selected = next(
+                        series
+                        for series in case["series"]
+                        if series["representation"] == "shared_alias"
+                    )
+                else:
+                    selected = next(
+                        series
+                        for series in case["series"]
+                        if series["representation"] == "materialized"
+                        and series["quantity_id"] == "velocity_ratio"
+                    )
+                selected["display_coordinate"] = [0.0, 0.5, 1.0]
+                self.rebind_case_identity(case)
+                errors = check_profile_contract.drivaerml_native_case_series_errors(
+                    case, "drivaerml/run_419", expected_version="3.0"
+                )
+                self.assertTrue(
+                    any("display-coordinate" in error for error in errors)
+                )
+
+    def test_native_v3_rejects_extra_nested_alias_metadata(self) -> None:
+        case = self.native_v3_case()
+        alias = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "shared_alias"
+        )
+        alias["shared_support_ref"]["unexpected"] = True
+        alias["series_identity_sha256"] = (
+            check_profile_contract.canonical_json_identity_sha256(
+                check_profile_contract.native_series_identity_projection(
+                    alias, "3.0"
+                )
+            )
+        )
+        self.rebind_case_identity(case)
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419", expected_version="3.0"
+        )
+        self.assertTrue(any("exact canonical" in error for error in errors))
+
+    def test_native_v3_display_contract_rejects_partial_unaligned_and_nonfinite(
+        self,
+    ) -> None:
+        def selected_cp(case: dict) -> dict:
+            return next(
+                series
+                for series in case["series"]
+                if series["representation"] == "materialized"
+                and series["quantity_id"] == "cp"
+            )
+
+        partial = self.native_v3_case()
+        partial_cp = selected_cp(partial)
+        partial_cp.pop("display_coordinate_unit")
+        partial_cp["series_identity_sha256"] = (
+            check_profile_contract.canonical_json_identity_sha256(
+                check_profile_contract.native_series_identity_projection(
+                    partial_cp, "3.0"
+                )
+            )
+        )
+        self.rebind_case_identity(partial)
+        partial_errors = check_profile_contract.drivaerml_native_case_series_errors(
+            partial, "drivaerml/run_419", expected_version="3.0"
+        )
+        self.assertTrue(
+            any("exact display-coordinate fields" in error for error in partial_errors)
+        )
+
+        unaligned = self.native_v3_case()
+        unaligned_cp = selected_cp(unaligned)
+        unaligned_cp["display_coordinate"] = [-0.8, -0.9]
+        unaligned_cp["display_coordinate_identity_sha256"] = (
+            check_profile_contract.coordinate_identity_sha256(
+                unaligned_cp["display_coordinate"]
+            )
+        )
+        unaligned_cp["series_identity_sha256"] = (
+            check_profile_contract.canonical_json_identity_sha256(
+                check_profile_contract.native_series_identity_projection(
+                    unaligned_cp, "3.0"
+                )
+            )
+        )
+        self.rebind_case_identity(unaligned)
+        unaligned_errors = check_profile_contract.drivaerml_native_case_series_errors(
+            unaligned, "drivaerml/run_419", expected_version="3.0"
+        )
+        self.assertTrue(
+            any("not aligned" in error for error in unaligned_errors)
+        )
+
+        nonfinite = self.native_v3_case()
+        selected_cp(nonfinite)["display_coordinate"][0] = float("nan")
+        nonfinite_errors = check_profile_contract.drivaerml_native_case_series_errors(
+            nonfinite, "drivaerml/run_419", expected_version="3.0"
+        )
+        self.assertTrue(
+            any("nonempty and contain only finite" in error for error in nonfinite_errors)
+        )
+
+    def test_native_v3_requires_coherent_case_schema_and_version(self) -> None:
+        case = self.native_v3_case()
+        case["schema"] = check_profile_contract.NATIVE_DRIVAERML_CASE_SCHEMA
+        self.rebind_case_identity(case)
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419", expected_version="3.0"
+        )
+        self.assertTrue(any("supported coherent pair" in error for error in errors))
+
+    def test_native_v3_coverage_counts_display_samples_separately(self) -> None:
+        accumulator = check_profile_contract._native_coverage_accumulator("3.0")
+        check_profile_contract._accumulate_native_coverage(
+            accumulator, self.native_v3_case(), "3.0"
+        )
+        coverage = check_profile_contract._finalize_native_coverage(accumulator)
+        self.assertEqual(
+            coverage["families"]["drivaerml_cp_constant_v1"][
+                "display_coordinate_sample_count"
+            ],
+            12,
+        )
+        self.assertEqual(
+            coverage["families"]["drivaerml_cp_relative_v1"][
+                "display_coordinate_sample_count"
+            ],
+            6,
+        )
+        self.assertEqual(
+            coverage["totals"]["display_coordinate_sample_count"], 18
+        )
+
+    def test_native_v2_rejects_display_coordinate_extension(self) -> None:
+        case = self.native_case()
+        materialized_cp = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "materialized"
+            and series["quantity_id"] == "cp"
+        )
+        materialized_cp["display_coordinate"] = [-0.8, -0.9, -0.7]
+        self.rebind_case_identity(case)
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419", expected_version="2.0"
+        )
+        self.assertTrue(
+            any("forbidden on native-v2" in error for error in errors)
         )
 
     def test_changed_coordinate_with_retained_identity_is_rejected(self) -> None:
