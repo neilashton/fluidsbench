@@ -23,6 +23,26 @@
   const maxFigureModels = palette.length;
   const maxRadarModels = 4;
   const defaultRadarModels = 3;
+  const nativeProfileTruthIndexSchema = "fluidsbench-drivaerml-native-profile-truth-index-v2";
+  const nativeProfileTruthSplitIndexSchema = "fluidsbench-drivaerml-native-profile-truth-split-index-v2";
+  const nativeProfileTruthChunkSchema = "fluidsbench-drivaerml-native-profile-truth-chunk-v2";
+  const drivaermlRelativeProfileSchemaVersion = "3.0-drivaerml-relative-candidate";
+  const nativeDrivaermlDatasetRevision = "7a5c0948ce27be709b1116a3a190f806e7a8f79f";
+  const nativeDrivaermlSourcePinSha256 = "4fc9077f8f23f4994c98f4d0e7a17aef7b998de4c996638e3a8a616b6d923fdd";
+  const coordinateIdentityDomain = "fluidsbench-drivaerml-coordinate-array-v1\u0000";
+  const nativeProfileTruthSource = {
+    source_kind: "native_cfd",
+    analytical_dummy: false,
+    native_quantity_source: "pinned_drivaerml_cell_data",
+  };
+  const sha256Pattern = /^[a-f0-9]{64}$/;
+  const drivaermlRelativeVelocityStationIds = ["V1", "V2", "V3", "V4", "V5", "V6", "U1", "U2", "U3", "U4", "U5", "U6", "L1", "R1", "R2", "R3"];
+  const drivaermlRelativeCpStationIds = [
+    "upperbody_centerline",
+    "underbody_centerline",
+    "sidewall_front_wheelhouse_relative",
+    "front_left_wheelhouse_relative",
+  ];
   const reproducibilityContractVersions = {
     2: "open-reproducibility-2.0",
     3: "open-reproducibility-3.0",
@@ -152,6 +172,118 @@
     return Number.isFinite(number) ? number : null;
   }
 
+  function validSha256(value) {
+    return sha256Pattern.test(String(value || "")) && !/^0{64}$/.test(String(value));
+  }
+
+  function exactNativeTruthSource(value) {
+    return (
+      value?.source_kind === nativeProfileTruthSource.source_kind &&
+      value?.analytical_dummy === false &&
+      value?.native_quantity_source === nativeProfileTruthSource.native_quantity_source &&
+      Object.keys(value || {}).length === 3
+    );
+  }
+
+  function activeDatasetSlug() {
+    return activeDataset()?.slug || slug(state.dataset || "");
+  }
+
+  function profileFamilies(panel) {
+    if (activeDatasetSlug() !== "drivaerml") {
+      return [
+        {
+          id: "",
+          placementMode: "",
+          label: "",
+          description: "",
+          stations: panel.stations || [],
+        },
+      ];
+    }
+    if (panel.id === "velocity_profiles") {
+      const constantStations = panel.stations || [];
+      const relativeStations = drivaermlRelativeVelocityStationIds.map((stationId) => {
+        const constantId = `autocfd5_${stationId.toLowerCase()}`;
+        const constantStation = constantStations.find((station) => station.id === constantId) || {};
+        return {
+          ...constantStation,
+          id: stationId,
+          label: `Geometry-relative ${stationId}`,
+          x_label: "Normalized arc length along geometry-relative line",
+          description: `${stationId} follows the retained geometry-relative placement for this case. This diagnostic is not scored.`,
+        };
+      });
+      return [
+        {
+          id: "drivaerml-autocfd5-constant-v1",
+          placementMode: "constant",
+          label: "Fixed locations",
+          description: "Pinned AutoCFD5 locations used by the current candidate diagnostic.",
+          stations: constantStations,
+        },
+        {
+          id: "drivaerml-velocity-relative-v3",
+          placementMode: "relative",
+          label: "Geometry-relative locations — diagnostic, not scored",
+          description: "Geometry-relative placement is report-only and does not activate or change scoring.",
+          stations: relativeStations,
+        },
+      ];
+    }
+    if (panel.id === "pressure_profiles") {
+      const constantStations = (panel.stations || []).map((station) => ({
+        ...station,
+        description: "Continuous native-surface Cp cut on retained producer support.",
+      }));
+      const relativeStations = drivaermlRelativeCpStationIds.map((stationId) => {
+        const canonical = constantStations.find((station) => station.id === stationId);
+        if (canonical) {
+          return {
+            ...canonical,
+            description: `${
+              canonical.description || canonical.label
+            } This shared centreline support is shown in the report-only geometry-relative family.`,
+          };
+        }
+        const wheelhouse = stationId === "front_left_wheelhouse_relative";
+        return {
+          id: stationId,
+          label: wheelhouse ? "Geometry-relative front-left wheelhouse" : "Geometry-relative sidewall / front wheelhouse",
+          x_label: "Ordered local arc length within each disconnected native-surface interval, m",
+          description: "Materialized moving native-surface Cp cut. Disconnected producer intervals remain separate. This diagnostic is not scored.",
+        };
+      });
+      return [
+        {
+          id: "drivaerml_cp_constant_v1",
+          placementMode: "constant",
+          label: "Fixed locations",
+          description: "",
+          stations: constantStations,
+        },
+        {
+          id: "drivaerml_cp_relative_v1",
+          placementMode: "relative",
+          label: "Geometry-relative locations — diagnostic, not scored",
+          description: "Geometry-relative Cp placement is report-only and does not activate or change scoring.",
+          stations: relativeStations,
+        },
+      ];
+    }
+    return [{ id: "", placementMode: "", label: "", description: "", stations: panel.stations || [] }];
+  }
+
+  function selectedProfileFamily(panel) {
+    const families = profileFamilies(panel);
+    const selection = panelSelection(panel);
+    return families.find((family) => family.id === selection.family) || families[0];
+  }
+
+  function profileStations(panel, family = selectedProfileFamily(panel)) {
+    return family?.stations || panel.stations || [];
+  }
+
   function isLocalUrl(value) {
     try {
       return ["127.0.0.1", "localhost", "::1"].includes(new URL(value, window.location.href).hostname);
@@ -271,6 +403,7 @@
     if (state.profileCase) params.set("case", state.profileCase);
     (dataset?.diagnostic_panels || []).forEach((panel) => {
       const selection = panelSelection(panel);
+      if (selection.family) params.set(`family_${panel.id}`, selection.family);
       if (selection.quantity) params.set(`quantity_${panel.id}`, selection.quantity);
       if (selection.station) params.set(`station_${panel.id}`, selection.station);
     });
@@ -370,6 +503,45 @@
     if (!window.crypto?.subtle) return null;
     const digest = await window.crypto.subtle.digest("SHA-256", value);
     return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  async function coordinateArrayIdentitySha256(values) {
+    if (!Array.isArray(values) || values.some((value) => typeof value !== "number" || !Number.isFinite(value))) {
+      throw new Error("profile coordinate array cannot be encoded as finite binary64 values");
+    }
+    const domain = new TextEncoder().encode(coordinateIdentityDomain);
+    const encoded = new ArrayBuffer(domain.length + 8 + values.length * 8);
+    const bytes = new Uint8Array(encoded);
+    bytes.set(domain);
+    const view = new DataView(encoded);
+    view.setBigUint64(domain.length, BigInt(values.length), false);
+    values.forEach((rawValue, index) => {
+      const value = Object.is(rawValue, -0) ? 0 : rawValue;
+      view.setFloat64(domain.length + 8 + index * 8, value, false);
+    });
+    const identity = await sha256Hex(encoded);
+    if (!validSha256(identity)) throw new Error("this browser cannot verify canonical profile coordinate identities");
+    return identity;
+  }
+
+  async function bindProfileCoordinateIdentities(profileCase) {
+    for (const series of profileCase?.series || []) {
+      if (series?.representation !== "materialized") continue;
+      const identity = await coordinateArrayIdentitySha256(series.coordinate);
+      if (Object.hasOwn(series, "_fluidsbenchCoordinateIdentitySha256")) {
+        if (series._fluidsbenchCoordinateIdentitySha256 !== identity) {
+          throw new Error("cached profile coordinate identity differs from recomputed bytes");
+        }
+        continue;
+      }
+      Object.defineProperty(series, "_fluidsbenchCoordinateIdentitySha256", {
+        configurable: false,
+        enumerable: false,
+        value: identity,
+        writable: false,
+      });
+    }
+    return profileCase;
   }
 
   async function fetchJsonWithProvenance(url, label) {
@@ -1499,7 +1671,132 @@
     if (!caseSet.index_sha256 || !cached.sha256 || cached.sha256 !== caseSet.index_sha256) {
       throw new Error(`${datasetName} profile ground-truth index checksum does not match its release manifest`);
     }
-    return { index: cached.data, indexUrl, indexSha256: cached.sha256, caseSetId: caseSet.id };
+    const nativeProfileTruth = cached.data?.schema === nativeProfileTruthSplitIndexSchema;
+    const drivaermlDataset = datasetName === "DrivAerML" || dataset?.id === "drivaerml";
+    if (drivaermlDataset && !nativeProfileTruth) {
+      throw new Error(
+        `${datasetName} profile ground truth must use the checksum-bound native CFD v2 release; legacy or analytical indexes are unavailable`
+      );
+    }
+    if (nativeProfileTruth && !drivaermlDataset) {
+      throw new Error(`${datasetName} cannot use the DrivAerML native profile ground-truth schema`);
+    }
+    let nativeChunkBaseUrl = null;
+    let nativeMasterChunks = null;
+    if (nativeProfileTruth) {
+      if (
+        cached.data.schema_version !== "2.0" ||
+        cached.data.dataset_id !== "drivaerml" ||
+        cached.data.dataset_revision !== nativeDrivaermlDatasetRevision ||
+        !exactNativeTruthSource(cached.data.truth_source)
+      ) {
+        throw new Error(`${datasetName} native profile ground-truth index has an unsupported schema or dataset binding`);
+      }
+      const indexedIds = caseIds(cached.data);
+      if (
+        !Array.isArray(cached.data.case_ids) ||
+        cached.data.case_count !== indexedIds.length ||
+        cached.data.case_ids.length !== indexedIds.length ||
+        new Set(indexedIds).size !== indexedIds.length ||
+        cached.data.case_ids.some((caseId, index) => caseId !== indexedIds[index])
+      ) {
+        throw new Error(`${datasetName} native profile ground-truth thin index has incomplete, duplicate, or reordered case coverage`);
+      }
+      const declaration = dataset?.native_profile_truth;
+      if (
+        declaration?.source_kind !== "native_cfd" ||
+        declaration?.analytical_dummy !== false ||
+        declaration?.dataset_revision !== nativeDrivaermlDatasetRevision ||
+        declaration?.native_source_pin_sha256 !== nativeDrivaermlSourcePinSha256 ||
+        declaration?.case_count !== 484 ||
+        !declaration?.master_index_file ||
+        !validSha256(declaration?.master_index_sha256) ||
+        Object.keys(declaration).length !== 7
+      ) {
+        throw new Error(`${datasetName} native profile ground truth lacks its non-analytical master-index declaration`);
+      }
+      const masterIndexUrl = fileUrl(declaration.master_index_file, state.groundTruthManifestProvenance?.base_url || groundTruthBaseUrl);
+      if (!state.groundTruthIndexes.has(masterIndexUrl)) {
+        state.groundTruthIndexes.set(
+          masterIndexUrl,
+          await fetchJsonWithProvenance(masterIndexUrl, `${datasetName} native profile ground-truth master index`)
+        );
+      }
+      const masterLoaded = state.groundTruthIndexes.get(masterIndexUrl);
+      if (!validSha256(masterLoaded.sha256) || masterLoaded.sha256 !== declaration.master_index_sha256) {
+        throw new Error(`${datasetName} native profile ground-truth master index checksum does not match its declaration`);
+      }
+      const master = masterLoaded.data;
+      if (
+        master?.schema !== nativeProfileTruthIndexSchema ||
+        master?.schema_version !== "2.0" ||
+        master?.dataset_id !== "drivaerml" ||
+        master?.dataset_revision !== nativeDrivaermlDatasetRevision ||
+        cached.data.dataset_revision !== nativeDrivaermlDatasetRevision ||
+        master?.case_count !== 484 ||
+        !Array.isArray(master?.case_ids) ||
+        master.case_ids.length !== 484 ||
+        new Set(master.case_ids).size !== 484 ||
+        master?.series_per_case !== 40 ||
+        !exactNativeTruthSource(master?.truth_source)
+      ) {
+        throw new Error(`${datasetName} native profile ground-truth master index is incomplete or has a stale contract binding`);
+      }
+      const boundSplitId = nativeProfileIndexSplitId(caseSet.id, split?.id);
+      const masterSplit = (master.splits || []).find((candidate) => candidate.split_id === boundSplitId);
+      if (
+        !masterSplit ||
+        masterSplit.sha256 !== cached.sha256 ||
+        new URL(masterSplit.path, new URL(".", masterIndexUrl)).href !== indexUrl ||
+        masterSplit.case_count !== cached.data.case_count
+      ) {
+        throw new Error(`${datasetName} native thin index is not bound by the checksum-verified all-484 master index`);
+      }
+      const masterChunks = master.chunks || [];
+      const masterChunkCaseIds = masterChunks.flatMap((entry) => entry.case_ids || []);
+      if (
+        !masterChunks.length ||
+        masterChunkCaseIds.length !== master.case_ids.length ||
+        masterChunkCaseIds.some((caseId, index) => caseId !== master.case_ids[index]) ||
+        new Set(masterChunks.map((entry) => entry.chunk_id)).size !== masterChunks.length ||
+        masterChunks.some(
+          (entry) =>
+            !validSha256(entry.sha256) ||
+            !entry.path ||
+            entry.case_count !== (entry.case_ids || []).length ||
+            entry.series_count !== (entry.case_ids || []).length * 40
+        )
+      ) {
+        throw new Error(`${datasetName} native profile master chunks are incomplete, duplicated, gapped, reordered, or unverified`);
+      }
+      nativeMasterChunks = new Map(masterChunks.map((entry) => [entry.chunk_id, entry]));
+      for (const reference of cached.data.chunk_refs || []) {
+        const masterChunk = nativeMasterChunks.get(reference.chunk_id);
+        const referencedSet = new Set(reference.case_ids || []);
+        const masterOrder = (masterChunk?.case_ids || []).filter((caseId) => referencedSet.has(caseId));
+        if (
+          !masterChunk ||
+          reference.path !== masterChunk.path ||
+          reference.sha256 !== masterChunk.sha256 ||
+          !Array.isArray(reference.case_ids) ||
+          reference.case_ids.length !== masterOrder.length ||
+          reference.case_ids.some((caseId, index) => caseId !== masterOrder[index])
+        ) {
+          throw new Error(`${datasetName} native thin index contains an unbound or reordered shared chunk reference`);
+        }
+      }
+      nativeChunkBaseUrl = new URL(".", masterIndexUrl).href;
+    }
+    return {
+      index: cached.data,
+      indexUrl,
+      indexSha256: cached.sha256,
+      caseSetId: caseSet.id,
+      nativeProfileTruth,
+      datasetRevision: cached.data?.dataset_revision || null,
+      nativeChunkBaseUrl,
+      nativeMasterChunks,
+    };
   }
 
   async function submissionProfileIndex(row) {
@@ -1517,22 +1814,80 @@
   }
 
   function caseIds(index) {
-    return (index?.chunks || []).flatMap((chunk) => chunk.case_ids || []);
+    const references = index?.schema === nativeProfileTruthSplitIndexSchema ? index?.chunk_refs : index?.chunks;
+    return (references || []).flatMap((chunk) => chunk.case_ids || []);
+  }
+
+  function nativeProfileIndexSplitId(caseSetId, selectedSplitId) {
+    const canonicalSplitByCaseSet = {
+      standard: "full",
+      geometry: "geometry",
+      high_drag: "high_drag",
+      low_drag: "low_drag",
+      rear_separation: "rear_separation",
+    };
+    return canonicalSplitByCaseSet[caseSetId] || selectedSplitId;
   }
 
   async function indexedProfileCase(context, caseId, cache, label) {
-    const entry = (context.index?.chunks || []).find((chunk) => (chunk.case_ids || []).includes(caseId));
+    const references = context.index?.schema === nativeProfileTruthSplitIndexSchema ? context.index?.chunk_refs : context.index?.chunks;
+    const entry = (references || []).find((chunk) => (chunk.case_ids || []).includes(caseId));
     if (!entry) return null;
-    const chunkUrl = new URL(entry.file, context.indexUrl).href;
+    const chunkPath = entry.path || entry.file;
+    if (!chunkPath) throw new Error(`${label} profile chunk reference has no repository path`);
+    const chunkUrl = new URL(chunkPath, context.nativeChunkBaseUrl || context.indexUrl).href;
+    if (context.nativeProfileTruth) {
+      const masterChunk = context.nativeMasterChunks?.get(entry.chunk_id);
+      if (!masterChunk || masterChunk.path !== chunkPath || masterChunk.sha256 !== entry.sha256) {
+        throw new Error(`${label} native profile chunk is not bound by the verified all-484 master index`);
+      }
+    }
     if (!cache.has(chunkUrl)) cache.set(chunkUrl, await fetchJsonWithProvenance(chunkUrl, `${label} profile chunk`));
     const cached = cache.get(chunkUrl);
-    if (entry.sha256 && cached.sha256 && entry.sha256 !== cached.sha256) {
+    if (context.nativeProfileTruth && (!validSha256(entry.sha256) || !validSha256(cached.sha256))) {
+      throw new Error(`${label} native profile chunk is unavailable because its SHA-256 bytes could not be verified`);
+    }
+    if (!entry.sha256 || !cached.sha256 || entry.sha256 !== cached.sha256) {
       throw new Error(`${label} profile chunk checksum does not match its index`);
     }
-    const profileCase = (cached.data?.cases || []).find((candidate) => candidate.case_id === caseId);
+    if (context.nativeProfileTruth) {
+      if (
+        cached.data?.schema !== nativeProfileTruthChunkSchema ||
+        cached.data?.schema_version !== "2.0" ||
+        cached.data?.dataset_id !== "drivaerml" ||
+        cached.data?.dataset_revision !== context.datasetRevision ||
+        !exactNativeTruthSource(cached.data?.truth_source)
+      ) {
+        throw new Error(`${label} native profile chunk has an unsupported or stale contract binding`);
+      }
+      const declaredCaseIds = cached.data.case_ids || [];
+      const loadedCaseIds = (cached.data.cases || []).map((candidate) => candidate.case_id);
+      const referencedSet = new Set(entry.case_ids || []);
+      const referencedMasterOrder = loadedCaseIds.filter((loadedCaseId) => referencedSet.has(loadedCaseId));
+      if (
+        declaredCaseIds.length !== loadedCaseIds.length ||
+        declaredCaseIds.some((declaredId, index) => declaredId !== loadedCaseIds[index]) ||
+        new Set(loadedCaseIds).size !== loadedCaseIds.length ||
+        (entry.case_ids || []).length !== referencedMasterOrder.length ||
+        (entry.case_ids || []).some((declaredId, index) => declaredId !== referencedMasterOrder[index])
+      ) {
+        throw new Error(`${label} native profile chunk case order differs from its checksum-verified thin index`);
+      }
+    }
+    const matches = (cached.data?.cases || []).filter((candidate) => candidate.case_id === caseId);
+    if (matches.length > 1) throw new Error(`${label} profile chunk contains duplicate case ${caseId}`);
+    const profileCase = matches[0];
     if (!profileCase) return null;
+    if (context.nativeProfileTruth && !exactNativeTruthSource(profileCase.truth_source)) {
+      throw new Error(`${label} native profile case lacks its exact pinned non-analytical CFD truth declaration`);
+    }
+    const relativeProfileV3 = cached.data?.schema_version === drivaermlRelativeProfileSchemaVersion;
+    if (context.nativeProfileTruth || relativeProfileV3) await bindProfileCoordinateIdentities(profileCase);
     return {
       ...profileCase,
+      _fluidsbenchNativeProfileTruth: Boolean(context.nativeProfileTruth),
+      _fluidsbenchRelativeProfileV3: relativeProfileV3,
+      _fluidsbenchProfileSchema: cached.data?.schema || cached.data?.schema_version || null,
       _fluidsbenchProvenance: {
         index_url: context.indexUrl,
         index_sha256: context.indexSha256 || null,
@@ -4122,9 +4477,11 @@
   function panelSelection(panel) {
     const key = `${state.dataset}:${panel.id}`;
     if (!state.panelSelections.has(key)) {
+      const family = profileFamilies(panel)[0];
       state.panelSelections.set(key, {
+        family: family?.id || "",
         quantity: panel.quantities?.[0]?.id || "",
-        station: panel.stations?.[0]?.id || "",
+        station: profileStations(panel, family)?.[0]?.id || "",
       });
     }
     return state.panelSelections.get(key);
@@ -4160,11 +4517,47 @@
     }
     if (section) section.hidden = false;
     element(`profile-${index}-title`).textContent = panel.title;
+    const selection = panelSelection(panel);
+    const families = profileFamilies(panel);
+    const family = families.find((candidate) => candidate.id === selection.family) || families[0];
+    selection.family = family?.id || "";
     const hasPlaceholderStations = (panel.stations || []).some((station) => station.id.startsWith("prototype_"));
-    element(`profile-${index}-description`).textContent = hasPlaceholderStations
+    let panelDescription = hasPlaceholderStations
       ? `${panel.description} These stations are illustrative placeholders, not official dataset locations.`
       : panel.description;
-    const selection = panelSelection(panel);
+    if (activeDatasetSlug() === "drivaerml" && panel.id === "velocity_profiles") {
+      panelDescription =
+        family?.placementMode === "relative"
+          ? "Sixteen geometry-relative native-profile locations on retained normalized-arc-length support; diagnostic and not scored."
+          : "Sixteen fixed AutoCFD5 native-profile locations on pinned physical-distance support; the current primary/candidate placement view.";
+    } else if (activeDatasetSlug() === "drivaerml" && panel.id === "pressure_profiles") {
+      panelDescription =
+        family?.placementMode === "relative"
+          ? "Two centreline aliases plus two materialized geometry-relative Cp cuts on retained native support; diagnostic and not scored."
+          : "Four continuous native-surface Cp cuts on pinned producer support; the 209 discrete AutoCFD taps are excluded.";
+    }
+    element(`profile-${index}-description`).textContent = panelDescription;
+    const familyTabs = element(`profile-${index}-families`);
+    if (familyTabs) {
+      familyTabs.hidden = families.length <= 1;
+      familyTabs.replaceChildren();
+      families.forEach((candidate) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "profile-family-tab";
+        button.dataset.profileFamily = candidate.id;
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", String(candidate.id === selection.family));
+        button.textContent = candidate.label;
+        button.title = candidate.description;
+        familyTabs.appendChild(button);
+      });
+    }
+    const familyNotice = element(`profile-${index}-family-notice`);
+    if (familyNotice) {
+      familyNotice.hidden = !family?.description;
+      familyNotice.textContent = family?.description || "";
+    }
     selection.quantity = populateSelect(
       element(`profile-${index}-quantity`),
       (panel.quantities || []).map((quantity) => ({ value: quantity.id, label: quantity.label })),
@@ -4172,7 +4565,7 @@
     );
     selection.station = populateSelect(
       element(`profile-${index}-station`),
-      (panel.stations || []).map((station) => {
+      profileStations(panel, family).map((station) => {
         const isPlaceholder = station.id.startsWith("prototype_");
         return {
           value: station.id,
@@ -4212,6 +4605,8 @@
           </div>
         </div>
       </div>
+      <div id="profile-${index}-families" class="profile-family-tabs" role="tablist" aria-label="Profile support family"></div>
+      <p id="profile-${index}-family-notice" class="profile-family-notice"></p>
       <div class="leaderboard-figure-toolbar" role="group" aria-label="${escapeHtml(panel.title)} figure and data actions">
         <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="svg" disabled>SVG</button>
         <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="png" disabled>High-res PNG</button>
@@ -4256,6 +4651,18 @@
         renderProfileChart(index);
         updateUrl();
       });
+      element(`profile-${index}-families`)?.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-profile-family]");
+        if (!button) return;
+        const family = profileFamilies(panel).find((candidate) => candidate.id === button.dataset.profileFamily);
+        if (!family) return;
+        const selection = panelSelection(panel);
+        selection.family = family.id;
+        selection.station = family.stations?.[0]?.id || "";
+        renderPanelControls(index);
+        renderProfileChart(index);
+        updateUrl();
+      });
     });
     syncDatasetSelects();
     syncSplitSelects();
@@ -4263,21 +4670,530 @@
     syncProfileActionAvailability();
   }
 
-  function profileSeries(source, panel, stationId, quantity) {
-    const match = (source?.series || []).find((candidate) => {
-      return candidate.panel_id === panel.id && candidate.station_id === stationId && candidate.quantity_id === quantity.id;
+  function arraysExactlyEqual(left, right) {
+    return Array.isArray(left) && Array.isArray(right) && left.length === right.length && left.every((value, index) => value === right[index]);
+  }
+
+  function requiredSeriesIdentity(series, field, label) {
+    const value = series?.[field];
+    if (!validSha256(value)) throw new Error(`${label} has an invalid ${field}`);
+    return value;
+  }
+
+  function sharedSupportReference(series, label) {
+    const reference = series?.shared_support_ref;
+    const expectedFields = ["canonical_family_id", "canonical_station_id", "canonical_support_identity_sha256", "shared_support_id"];
+    if (
+      !reference ||
+      typeof reference !== "object" ||
+      Array.isArray(reference) ||
+      JSON.stringify(Object.keys(reference).sort()) !== JSON.stringify(expectedFields)
+    ) {
+      throw new Error(`${label} shared alias has no canonical support reference`);
+    }
+    const expectedSharedSupportIds = {
+      upperbody_centerline: "drivaerml-cp-upperbody-centerline-y0-v1",
+      underbody_centerline: "drivaerml-cp-underbody-centerline-y0-v1",
+    };
+    const familyId = reference.canonical_family_id;
+    const stationId = reference.canonical_station_id;
+    if (
+      familyId !== "drivaerml_cp_constant_v1" ||
+      stationId !== series.station_id ||
+      reference.shared_support_id !== expectedSharedSupportIds[stationId] ||
+      !validSha256(reference.canonical_support_identity_sha256)
+    ) {
+      throw new Error(`${label} shared alias has an incomplete or incorrect canonical support reference`);
+    }
+    return { familyId, stationId, supportIdentity: reference.canonical_support_identity_sha256 };
+  }
+
+  function nativeSegmentIds(segments, sampleIndex, coordinates, label) {
+    if (!Array.isArray(segments) || !segments.length) throw new Error(`${label} has no explicit segment record`);
+    const expectedFields = [
+      "coordinate_start",
+      "coordinate_stop",
+      "emitted_index_start",
+      "emitted_index_stop",
+      "sample_index_start",
+      "sample_index_stop",
+      "segment_id",
+    ];
+    const segmentOrdinals = new Array(sampleIndex.length);
+    let emittedStop = 0;
+    segments.forEach((segment, segmentOrdinal) => {
+      if (
+        !segment ||
+        typeof segment !== "object" ||
+        Array.isArray(segment) ||
+        JSON.stringify(Object.keys(segment).sort()) !== JSON.stringify(expectedFields)
+      ) {
+        throw new Error(`${label} segment ${segmentOrdinal} does not use the exact native segment schema`);
+      }
+      const start = segment.emitted_index_start;
+      const stop = segment.emitted_index_stop;
+      if (
+        typeof segment.segment_id !== "string" ||
+        !segment.segment_id ||
+        !Number.isSafeInteger(start) ||
+        !Number.isSafeInteger(stop) ||
+        start !== emittedStop ||
+        stop <= start ||
+        stop > sampleIndex.length
+      ) {
+        throw new Error(`${label} segment ${segmentOrdinal} has an invalid provenance label or non-contiguous emitted range`);
+      }
+      if (segment.sample_index_start !== sampleIndex[start] || segment.sample_index_stop !== sampleIndex[stop - 1] + 1) {
+        throw new Error(`${label} segment ${segmentOrdinal} does not bind its half-open sample-index range`);
+      }
+      for (let index = start + 1; index < stop; index += 1) {
+        if (sampleIndex[index] !== sampleIndex[index - 1] + 1) {
+          throw new Error(`${label} contains an unsupported sample gap inside segment ${segmentOrdinal}`);
+        }
+        if (coordinates[index] <= coordinates[index - 1]) {
+          throw new Error(`${label} coordinates are not strictly ordered within segment ${segmentOrdinal}`);
+        }
+      }
+      if (segment.coordinate_start !== coordinates[start] || segment.coordinate_stop !== coordinates[stop - 1]) {
+        throw new Error(`${label} segment ${segmentOrdinal} does not bind its coordinate endpoints`);
+      }
+      for (let index = start; index < stop; index += 1) segmentOrdinals[index] = segmentOrdinal;
+      emittedStop = stop;
     });
-    if (!match) return null;
-    const coordinates = match.coordinate || [];
-    const values = match.prediction || match.value || [];
+    if (emittedStop !== sampleIndex.length || segmentOrdinals.some((segmentOrdinal) => !Number.isSafeInteger(segmentOrdinal))) {
+      throw new Error(`${label} segments do not cover every emitted point exactly once`);
+    }
+    return segmentOrdinals;
+  }
+
+  function validateUnsupportedSamples(unsupportedSamples, emittedSampleIndex, label) {
+    if (!Array.isArray(unsupportedSamples)) throw new Error(`${label} has no explicit unsupported-sample record`);
+    const emitted = new Set(emittedSampleIndex);
+    let previous = -1;
+    unsupportedSamples.forEach((sample, index) => {
+      if (
+        !sample ||
+        typeof sample !== "object" ||
+        Array.isArray(sample) ||
+        JSON.stringify(Object.keys(sample).sort()) !== JSON.stringify(["coordinate", "reason", "sample_index"])
+      ) {
+        throw new Error(`${label} unsupported sample ${index} does not use the exact native unsupported-sample schema`);
+      }
+      if (
+        !Number.isSafeInteger(sample.sample_index) ||
+        sample.sample_index < 0 ||
+        sample.sample_index <= previous ||
+        emitted.has(sample.sample_index) ||
+        typeof sample.coordinate !== "number" ||
+        !Number.isFinite(sample.coordinate) ||
+        typeof sample.reason !== "string" ||
+        !sample.reason
+      ) {
+        throw new Error(`${label} unsupported sample ${index} is invalid, duplicated, unordered, or still emitted`);
+      }
+      previous = sample.sample_index;
+    });
+  }
+
+  function nativeProfileSeriesFields(representation, valueField = "") {
+    const common = [
+      "family_id",
+      "panel_id",
+      "placement_mode",
+      "placement_receipt_identity_sha256",
+      "quantity",
+      "quantity_id",
+      "representation",
+      "scoring_role",
+      "series_identity_sha256",
+      "station_id",
+      "units",
+    ];
+    if (representation === "shared_alias") return [...common, "shared_support_ref"].sort();
+    return [
+      ...common,
+      "coordinate",
+      "coordinate_id",
+      "coordinate_identity_sha256",
+      "coordinate_unit",
+      "raw_native_cell_id",
+      "sample_index",
+      "segments",
+      "support_identity_sha256",
+      "unsupported_samples",
+      valueField,
+      "value_identity_sha256",
+    ].sort();
+  }
+
+  function requireExactNativeSeriesFields(series, representation, valueField, label) {
+    const expected = nativeProfileSeriesFields(representation, valueField);
+    if (JSON.stringify(Object.keys(series || {}).sort()) !== JSON.stringify(expected)) {
+      throw new Error(`${label} does not use the exact native ${representation} series schema`);
+    }
+    ["quantity", "units", "scoring_role"].forEach((field) => {
+      if (typeof series[field] !== "string" || !series[field]) throw new Error(`${label} has no ${field}`);
+    });
+  }
+
+  function submittedProfileSeriesFields(representation) {
+    const common = [
+      "family_id",
+      "panel_id",
+      "placement_mode",
+      "placement_receipt_identity_sha256",
+      "quantity_id",
+      "representation",
+      "scoring_role",
+      "station_id",
+    ];
+    if (representation === "shared_alias") return [...common, "shared_support_ref"].sort();
+    return [...common, "coordinate", "coordinate_id", "coordinate_unit", "prediction", "support_identity_sha256"].sort();
+  }
+
+  function requireExactSubmittedSeriesFields(series, representation, label) {
+    if (JSON.stringify(Object.keys(series || {}).sort()) !== JSON.stringify(submittedProfileSeriesFields(representation))) {
+      throw new Error(`${label} does not use the exact current-v3 ${representation} prediction schema`);
+    }
+  }
+
+  function requireProfileDescriptors(series, label, nativeTruth) {
+    const relative = ["drivaerml-velocity-relative-v3", "drivaerml_cp_relative_v1"].includes(series.family_id);
+    const expectedPlacement = relative ? "relative" : "constant";
+    const expectedRole = relative ? "report_only" : "inherits_parent_candidate";
+    const velocity = ["drivaerml-autocfd5-constant-v1", "drivaerml-velocity-relative-v3"].includes(series.family_id);
+    if (
+      series.placement_mode !== expectedPlacement ||
+      series.scoring_role !== expectedRole ||
+      series.panel_id !== (velocity ? "velocity_profiles" : "pressure_profiles") ||
+      series.quantity_id !== (velocity ? "velocity_ratio" : "cp")
+    ) {
+      throw new Error(`${label} family, placement, panel, quantity, or scoring role differs from the closed profile contract`);
+    }
+    if (nativeTruth) {
+      const expectedQuantity = velocity ? "velocity_magnitude_ratio" : "pressure_coefficient";
+      if (series.quantity !== expectedQuantity || series.units !== "1") {
+        throw new Error(`${label} native quantity descriptor or unit differs from the closed profile contract`);
+      }
+    }
+    if (series.representation !== "materialized") return;
+    const expectedCoordinate =
+      series.family_id === "drivaerml-autocfd5-constant-v1"
+        ? ["distance_m", "m"]
+        : series.family_id === "drivaerml-velocity-relative-v3"
+          ? ["normalized_arc_length", "1"]
+          : series.family_id === "drivaerml_cp_constant_v1"
+            ? ["arc_length_m", "m"]
+            : ["arc_length_m", "m"];
+    if (series.coordinate_id !== expectedCoordinate[0] || series.coordinate_unit !== expectedCoordinate[1]) {
+      throw new Error(`${label} coordinate ID or unit differs from the closed profile contract`);
+    }
+  }
+
+  function nativeMaterializedProfileSeries(series, label) {
+    requireExactNativeSeriesFields(series, "materialized", "value", label);
+    requireProfileDescriptors(series, label, true);
+    const coordinates = series.coordinate;
+    const values = series.value;
+    const sampleIndex = series.sample_index;
+    const rawNativeCellId = series.raw_native_cell_id;
+    if (!Array.isArray(coordinates) || !Array.isArray(values) || !Array.isArray(sampleIndex) || !Array.isArray(rawNativeCellId)) {
+      throw new Error(`${label} is unavailable because its coordinate, value, sample-index, or native-cell lineage is missing`);
+    }
+    if (
+      !coordinates.length ||
+      coordinates.length !== values.length ||
+      coordinates.length !== sampleIndex.length ||
+      coordinates.length !== rawNativeCellId.length
+    ) {
+      throw new Error(`${label} has unaligned coordinate, value, sample-index, or native-cell arrays`);
+    }
+    coordinates.forEach((coordinate, index) => {
+      if (typeof coordinate !== "number" || !Number.isFinite(coordinate)) throw new Error(`${label} coordinate ${index} is not finite`);
+    });
+    values.forEach((value, index) => {
+      if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${label} value ${index} is not finite`);
+    });
+    sampleIndex.forEach((sample, index) => {
+      if (!Number.isSafeInteger(sample) || sample < 0 || (index && sample <= sampleIndex[index - 1])) {
+        throw new Error(`${label} sample_index is not strictly increasing non-negative integer lineage`);
+      }
+    });
+    rawNativeCellId.forEach((cellId, index) => {
+      if (!Number.isSafeInteger(cellId) || cellId < 0) throw new Error(`${label} raw_native_cell_id ${index} is invalid`);
+    });
+    const segmentOrdinals = nativeSegmentIds(series.segments, sampleIndex, coordinates, label);
+    validateUnsupportedSamples(series.unsupported_samples, sampleIndex, label);
+    const computedCoordinateIdentity = series._fluidsbenchCoordinateIdentitySha256;
+    const identity = {
+      supportIdentity: requiredSeriesIdentity(series, "support_identity_sha256", label),
+      placementReceiptIdentity: requiredSeriesIdentity(series, "placement_receipt_identity_sha256", label),
+      coordinateIdentity: requiredSeriesIdentity(series, "coordinate_identity_sha256", label),
+      valueIdentity: requiredSeriesIdentity(series, "value_identity_sha256", label),
+      seriesIdentity: requiredSeriesIdentity(series, "series_identity_sha256", label),
+    };
+    if (!validSha256(computedCoordinateIdentity) || computedCoordinateIdentity !== identity.coordinateIdentity) {
+      throw new Error(`${label} coordinate identity does not bind the submitted ordered coordinate bytes`);
+    }
+    const points = [];
+    const chartPoints = [];
+    coordinates.forEach((coordinate, index) => {
+      const segmentOrdinal = segmentOrdinals[index];
+      const segmentId = series.segments[segmentOrdinal].segment_id;
+      const gapBefore = index > 0 && segmentOrdinal !== segmentOrdinals[index - 1];
+      if (gapBefore) {
+        chartPoints.push({ x: null, y: null, gapSeparator: true });
+      }
+      const point = {
+        x: Number(coordinate),
+        y: Number(values[index]),
+        sourcePointIndex: index,
+        sampleIndex: sampleIndex[index],
+        rawNativeCellId: rawNativeCellId[index],
+        segmentId,
+        segmentOrdinal,
+        gapBefore,
+      };
+      points.push(point);
+      chartPoints.push(point);
+    });
+    return {
+      points,
+      chartPoints,
+      sourcePointCount: coordinates.length,
+      droppedPointCount: 0,
+      segmentCount: series.segments.length,
+      unsupportedSampleCount: series.unsupported_samples.length,
+      coordinates,
+      sampleIndex,
+      rawNativeCellId,
+      segments: series.segments,
+      unsupportedSamples: series.unsupported_samples,
+      coordinateId: series.coordinate_id,
+      coordinateUnit: series.coordinate_unit,
+      ...identity,
+    };
+  }
+
+  function submittedMaterializedProfileSeries(series, label) {
+    requireExactSubmittedSeriesFields(series, "materialized", label);
+    requireProfileDescriptors(series, label, false);
+    const coordinates = series.coordinate;
+    const predictions = series.prediction;
+    if (!Array.isArray(coordinates) || !Array.isArray(predictions) || coordinates.length < 2 || coordinates.length !== predictions.length) {
+      throw new Error(`${label} current-v3 coordinate and prediction arrays must have equal length of at least two`);
+    }
+    coordinates.forEach((coordinate, index) => {
+      if (typeof coordinate !== "number" || !Number.isFinite(coordinate)) throw new Error(`${label} coordinate ${index} is not finite`);
+      if (series.family_id !== "drivaerml_cp_relative_v1" && index && coordinate <= coordinates[index - 1]) {
+        throw new Error(`${label} coordinates are not strictly ordered`);
+      }
+    });
+    predictions.forEach((value, index) => {
+      if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${label} prediction ${index} is not finite`);
+    });
+    const coordinateIdentity = series._fluidsbenchCoordinateIdentitySha256;
+    if (!validSha256(coordinateIdentity)) throw new Error(`${label} coordinate identity could not be recomputed from current-v3 bytes`);
+    const points = coordinates.map((coordinate, index) => ({
+      x: coordinate,
+      y: predictions[index],
+      sourcePointIndex: index,
+      sampleIndex: null,
+      rawNativeCellId: null,
+      segmentId: "unbound",
+      segmentOrdinal: 0,
+      gapBefore: false,
+    }));
+    return {
+      points,
+      chartPoints: points,
+      sourcePointCount: coordinates.length,
+      droppedPointCount: 0,
+      segmentCount: 1,
+      unsupportedSampleCount: 0,
+      coordinates,
+      sampleIndex: [],
+      rawNativeCellId: [],
+      segments: [],
+      unsupportedSamples: [],
+      supportIdentity: requiredSeriesIdentity(series, "support_identity_sha256", label),
+      placementReceiptIdentity: requiredSeriesIdentity(series, "placement_receipt_identity_sha256", label),
+      coordinateIdentity,
+      coordinateId: series.coordinate_id,
+      coordinateUnit: series.coordinate_unit,
+    };
+  }
+
+  function legacyProfileSeries(series) {
+    const coordinates = series.coordinate || [];
+    const values = series.prediction || series.value || [];
     const sourcePointCount = Math.max(coordinates.length, values.length);
     const points = [];
     for (let index = 0; index < sourcePointCount; index += 1) {
       const x = finiteNumber(coordinates[index]);
       const y = finiteNumber(values[index]);
-      if (x !== null && y !== null) points.push({ x, y, sourcePointIndex: index });
+      if (x !== null && y !== null) {
+        points.push({
+          x,
+          y,
+          sourcePointIndex: index,
+          sampleIndex: index,
+          rawNativeCellId: null,
+          segmentId: "legacy",
+          segmentOrdinal: 0,
+          gapBefore: false,
+        });
+      }
     }
-    return points.length ? { points, sourcePointCount, droppedPointCount: sourcePointCount - points.length } : null;
+    return points.length
+      ? {
+          points,
+          chartPoints: points,
+          sourcePointCount,
+          droppedPointCount: sourcePointCount - points.length,
+          segmentCount: 1,
+          unsupportedSampleCount: 0,
+          coordinates: points.map((point) => point.x),
+          sampleIndex: points.map((point) => point.sourcePointIndex),
+          rawNativeCellId: [],
+          segments: [],
+          unsupportedSamples: [],
+          legacy: true,
+        }
+      : null;
+  }
+
+  function profileSeries(source, panel, stationId, quantity, family = null) {
+    const expectedFamily = family?.id || "";
+    const expectedPlacement = family?.placementMode || "";
+    const allSeries = source?.series || [];
+    let matches = allSeries.filter((candidate) => {
+      return (
+        candidate.panel_id === panel.id &&
+        candidate.station_id === stationId &&
+        candidate.quantity_id === quantity.id &&
+        (!expectedFamily || candidate.family_id === expectedFamily) &&
+        (!expectedPlacement || candidate.placement_mode === expectedPlacement)
+      );
+    });
+    if (!matches.length && !source?._fluidsbenchNativeProfileTruth && expectedFamily) {
+      matches = allSeries.filter((candidate) => {
+        return (
+          !candidate.family_id &&
+          !candidate.placement_mode &&
+          candidate.panel_id === panel.id &&
+          candidate.station_id === stationId &&
+          candidate.quantity_id === quantity.id
+        );
+      });
+    }
+    if (!matches.length) return null;
+    const label = `${source?.case_id || "profile case"}/${panel.id}/${expectedFamily || "legacy"}/${stationId}/${quantity.id}`;
+    if (matches.length !== 1) throw new Error(`${label} is ambiguous because ${matches.length} matching series were supplied`);
+    const selected = matches[0];
+    if (!selected.family_id) {
+      const legacy = legacyProfileSeries(selected);
+      return legacy ? { ...legacy, selectedSeries: selected, materializedSeries: selected } : null;
+    }
+    const nativeTruth = source?._fluidsbenchNativeProfileTruth === true;
+    const currentPrediction = source?._fluidsbenchRelativeProfileV3 === true;
+    if (!nativeTruth && !currentPrediction) throw new Error(`${label} namespaced series has no verified native-v2 or current-v3 format binding`);
+    let materialized = selected;
+    if (selected.representation === "shared_alias") {
+      if (nativeTruth) requireExactNativeSeriesFields(selected, "shared_alias", "", label);
+      else requireExactSubmittedSeriesFields(selected, "shared_alias", label);
+      requireProfileDescriptors(selected, label, nativeTruth);
+      if (
+        ["coordinate", "value", "prediction", "sample_index", "raw_native_cell_id", "segments", "unsupported_samples"].some(
+          (field) => field in selected
+        )
+      ) {
+        throw new Error(`${label} shared alias illegally materializes profile arrays`);
+      }
+      const reference = sharedSupportReference(selected, label);
+      requiredSeriesIdentity(selected, "placement_receipt_identity_sha256", label);
+      if (nativeTruth) requiredSeriesIdentity(selected, "series_identity_sha256", label);
+      const canonicalMatches = allSeries.filter(
+        (candidate) =>
+          candidate.panel_id === panel.id &&
+          candidate.family_id === reference.familyId &&
+          candidate.station_id === reference.stationId &&
+          candidate.quantity_id === quantity.id &&
+          candidate.representation === "materialized"
+      );
+      if (canonicalMatches.length !== 1) throw new Error(`${label} shared alias does not resolve to exactly one canonical materialized support`);
+      materialized = canonicalMatches[0];
+      if (reference.supportIdentity !== materialized.support_identity_sha256) {
+        throw new Error(`${label} shared alias support identity differs from its canonical materialized support`);
+      }
+    } else if (selected.representation !== "materialized") {
+      throw new Error(`${label} has unsupported representation ${selected.representation || "missing"}`);
+    }
+    const parsed = nativeTruth ? nativeMaterializedProfileSeries(materialized, label) : submittedMaterializedProfileSeries(materialized, label);
+    return {
+      ...parsed,
+      legacy: false,
+      familyId: selected.family_id,
+      placementMode: selected.placement_mode,
+      stationId: selected.station_id,
+      quantityId: selected.quantity_id,
+      representation: selected.representation,
+      scoringRole: selected.scoring_role || null,
+      supportIdentity: parsed.supportIdentity,
+      placementReceiptIdentity: selected.placement_receipt_identity_sha256,
+      selectedSeries: selected,
+      materializedSeries: materialized,
+      nativeTruth,
+      nativeTruthSource: nativeTruth ? source.truth_source : null,
+      nativeDatasetRevision: nativeTruth ? source.dataset_revision : null,
+    };
+  }
+
+  function profileSeriesCompatibility(reference, candidate) {
+    if (!reference || !candidate) throw new Error("profile series is unavailable");
+    if (reference.legacy || candidate.legacy) {
+      if (!reference.legacy || !candidate.legacy) throw new Error("legacy profile series cannot be overlaid on identity-bound native ground truth");
+      return true;
+    }
+    const exactFields = [
+      ["familyId", "family"],
+      ["placementMode", "placement"],
+      ["stationId", "station"],
+      ["quantityId", "quantity"],
+      ["representation", "representation"],
+      ["supportIdentity", "support identity"],
+      ["placementReceiptIdentity", "placement-receipt identity"],
+      ["coordinateIdentity", "coordinate identity"],
+      ["coordinateId", "coordinate ID"],
+      ["coordinateUnit", "coordinate unit"],
+    ];
+    exactFields.forEach(([field, description]) => {
+      if (reference[field] !== candidate[field]) throw new Error(`${description} differs from checksum-verified native ground truth`);
+    });
+    if (!arraysExactlyEqual(reference.coordinates, candidate.coordinates)) {
+      throw new Error("ordered coordinates differ from checksum-verified native ground truth");
+    }
+    candidate.points = candidate.points.map((point, index) => ({
+      ...point,
+      sampleIndex: reference.points[index].sampleIndex,
+      rawNativeCellId: reference.points[index].rawNativeCellId,
+      segmentId: reference.points[index].segmentId,
+      segmentOrdinal: reference.points[index].segmentOrdinal,
+      gapBefore: reference.points[index].gapBefore,
+    }));
+    candidate.chartPoints = [];
+    candidate.points.forEach((point) => {
+      if (point.gapBefore) candidate.chartPoints.push({ x: null, y: null, gapSeparator: true });
+      candidate.chartPoints.push(point);
+    });
+    candidate.sampleIndex = reference.sampleIndex;
+    candidate.rawNativeCellId = reference.rawNativeCellId;
+    candidate.segments = reference.segments;
+    candidate.unsupportedSamples = reference.unsupportedSamples;
+    candidate.segmentCount = reference.segmentCount;
+    candidate.unsupportedSampleCount = reference.unsupportedSampleCount;
+    candidate.lineageInheritedFromNativeTruth = true;
+    return true;
   }
 
   async function refreshProfileContext() {
@@ -4370,23 +5286,54 @@
     const canvas = element(`profile-${index}-chart`);
     if (state.profileReadyVersion !== state.profileLoadVersion || !panel || !canvas || typeof Chart === "undefined") return;
     const selection = panelSelection(panel);
+    const family = selectedProfileFamily(panel);
     const quantity = (panel.quantities || []).find((candidate) => candidate.id === selection.quantity);
-    const station = (panel.stations || []).find((candidate) => candidate.id === selection.station);
+    const station = profileStations(panel, family).find((candidate) => candidate.id === selection.station);
     if (!quantity || !station) return;
 
     const datasets = [];
     const omittedProfiles = [];
-    const groundTruthSeries = profileSeries(state.groundTruthCase, panel, station.id, quantity);
+    let groundTruthSeries = null;
+    try {
+      groundTruthSeries = profileSeries(state.groundTruthCase, panel, station.id, quantity, family);
+    } catch (error) {
+      const status = element(`profile-${index}-status`);
+      if (status) {
+        status.hidden = false;
+        status.textContent = `Profile comparison is unavailable: ${error.message}`;
+      }
+      canvas.hidden = true;
+      setChartSummary(`profile-${index}-chart-summary`, `Profile comparison unavailable: ${error.message}`);
+      syncProfileActionAvailability();
+      return;
+    }
+    if (state.groundTruthCase?._fluidsbenchNativeProfileTruth && !groundTruthSeries) {
+      const message = "the exact selected family, placement, station, and quantity are absent from checksum-verified native ground truth";
+      const status = element(`profile-${index}-status`);
+      if (status) {
+        status.hidden = false;
+        status.textContent = `Profile comparison is unavailable: ${message}`;
+      }
+      canvas.hidden = true;
+      setChartSummary(`profile-${index}-chart-summary`, `Profile comparison unavailable: ${message}`);
+      syncProfileActionAvailability();
+      return;
+    }
     if (groundTruthSeries) {
+      const groundTruthLabel = state.groundTruthCase?._fluidsbenchNativeProfileTruth ? "Native CFD ground truth" : "Ground truth";
       datasets.push({
-        label: "Ground truth",
+        label: groundTruthLabel,
         seriesRole: "public_ground_truth",
         submissionId: null,
         sourceProvenance: state.groundTruthCase?._fluidsbenchProvenance || {},
         lineStyle: "solid",
-        data: groundTruthSeries.points,
+        data: groundTruthSeries.chartPoints,
+        finitePoints: groundTruthSeries.points,
         sourcePointCount: groundTruthSeries.sourcePointCount,
         droppedPointCount: groundTruthSeries.droppedPointCount,
+        segmentCount: groundTruthSeries.segmentCount,
+        unsupportedSampleCount: groundTruthSeries.unsupportedSampleCount,
+        profileIdentity: groundTruthSeries,
         borderColor: chartTextColor(),
         backgroundColor: chartTextColor(),
         borderWidth: 3,
@@ -4395,7 +5342,14 @@
       });
     }
     figureRows().forEach((row, rowIndex) => {
-      const series = profileSeries(state.profileCases.get(row.id), panel, station.id, quantity);
+      let series = null;
+      try {
+        series = profileSeries(state.profileCases.get(row.id), panel, station.id, quantity, family);
+        if (series && groundTruthSeries) profileSeriesCompatibility(groundTruthSeries, series);
+      } catch (error) {
+        omittedProfiles.push({ row, reason: error.message });
+        return;
+      }
       if (!series) {
         omittedProfiles.push({
           row,
@@ -4411,9 +5365,13 @@
         validationMetadata: validationMetadata(row),
         sourceProvenance: state.profileCases.get(row.id)?._fluidsbenchProvenance || {},
         lineStyle: rowIndex % 2 ? "dashed" : "solid",
-        data: series.points,
+        data: series.chartPoints,
+        finitePoints: series.points,
         sourcePointCount: series.sourcePointCount,
         droppedPointCount: series.droppedPointCount,
+        segmentCount: series.segmentCount,
+        unsupportedSampleCount: series.unsupportedSampleCount,
+        profileIdentity: series,
         borderColor: palette[rowIndex % palette.length],
         backgroundColor: palette[rowIndex % palette.length],
         borderWidth: 2,
@@ -4435,11 +5393,18 @@
       status.textContent = datasets.length ? "" : `No curves are available for ${state.profileCase || "the selected geometry"} at this station.`;
     }
     canvas.hidden = datasets.length === 0;
-    canvas.setAttribute("aria-label", `${panel.title}: ${quantity.label} at ${station.label} for ${state.profileCase}`);
+    const familyLabel = family?.label ? `, ${family.label}` : "";
+    canvas.setAttribute("aria-label", `${panel.title}${familyLabel}: ${quantity.label} at ${station.label} for ${state.profileCase}`);
     setChartSummary(
       `profile-${index}-chart-summary`,
-      `${panel.title} for ${state.dataset}, ${state.split}, geometry ${state.profileCase}. Showing ${quantity.label} at ${station.label}. ${
-        groundTruthSeries ? "Ground truth is included." : "Ground truth is unavailable."
+      `${panel.title} for ${state.dataset}, ${state.split}, geometry ${state.profileCase}${familyLabel}. Showing ${quantity.label} at ${
+        station.label
+      }. ${
+        groundTruthSeries
+          ? state.groundTruthCase?._fluidsbenchNativeProfileTruth
+            ? "Pinned Native CFD ground truth is included."
+            : "Ground truth is included."
+          : "Ground truth is unavailable."
       } ${submissionCurveCount} submission curves are displayed.${profileOmissionText}`
     );
 
@@ -4448,7 +5413,7 @@
       return;
     }
     const plottedValues = datasets.flatMap((dataset, seriesIndex) =>
-      dataset.data.map((point, pointIndex) => ({
+      dataset.finitePoints.map((point, pointIndex) => ({
         series: dataset.label,
         series_role: dataset.seriesRole,
         submission_id: dataset.submissionId,
@@ -4457,8 +5422,28 @@
         line_style: dataset.lineStyle,
         point_index: pointIndex,
         source_point_index: point.sourcePointIndex,
+        support_sample_index: point.sampleIndex,
+        raw_native_cell_id: point.rawNativeCellId,
+        segment_id: point.segmentId,
+        segment_ordinal: point.segmentOrdinal,
+        gap_before: point.gapBefore,
+        segment_count: dataset.segmentCount,
+        unsupported_sample_count: dataset.unsupportedSampleCount,
         source_point_count: dataset.sourcePointCount,
         dropped_point_count: dataset.droppedPointCount,
+        family_id: dataset.profileIdentity?.familyId || null,
+        placement_mode: dataset.profileIdentity?.placementMode || null,
+        representation: dataset.profileIdentity?.representation || null,
+        scoring_role: dataset.profileIdentity?.scoringRole || null,
+        support_identity_sha256: dataset.profileIdentity?.supportIdentity || null,
+        placement_receipt_identity_sha256: dataset.profileIdentity?.placementReceiptIdentity || null,
+        coordinate_id: dataset.profileIdentity?.coordinateId || null,
+        coordinate_unit: dataset.profileIdentity?.coordinateUnit || null,
+        coordinate_identity_sha256: dataset.profileIdentity?.coordinateIdentity || null,
+        value_identity_sha256: dataset.profileIdentity?.valueIdentity || null,
+        series_identity_sha256: dataset.profileIdentity?.seriesIdentity || null,
+        native_truth_source: dataset.profileIdentity?.nativeTruthSource || null,
+        native_dataset_revision: dataset.profileIdentity?.nativeDatasetRevision || null,
         x: point.x,
         y: point.y,
         source_index_url: dataset.sourceProvenance?.index_url || null,
@@ -4470,13 +5455,22 @@
       }))
     );
     const droppedPointCount = datasets.reduce((total, dataset) => total + dataset.droppedPointCount, 0);
-    const caption = `${state.dataset}, ${state.split}, public evaluation geometry ${state.profileCase}: ${quantity.label} at ${
-      station.label
+    const gapCount = datasets.reduce((total, dataset) => total + Math.max(0, dataset.segmentCount - 1), 0);
+    const nativeProfileContext = Boolean(state.groundTruthCase?._fluidsbenchNativeProfileTruth);
+    const lineProcessing = nativeProfileContext
+      ? `Lines preserve checksum-bound native source order without smoothing, interpolation, resampling, or sorting. Unsupported samples create explicit segment breaks and are never bridged; ${
+          gapCount || "no"
+        } retained gap${gapCount === 1 ? " is" : "s are"} visible across the plotted series.`
+      : "Lines preserve source coordinate/value order and join finite pairs without smoothing, interpolation, resampling, or sorting.";
+    const caption = `${state.dataset}, ${state.split}, public evaluation geometry ${state.profileCase}: ${quantity.label} at ${station.label}${
+      family?.label ? ` using ${family.label}` : ""
     }, showing ${
-      groundTruthSeries ? "public ground truth and " : ""
-    }${submissionCurveCount} explicitly selected ${resultDataOriginLabel()} model curve${
-      submissionCurveCount === 1 ? "" : "s"
-    }. Lines preserve native source order and join finite source coordinate/value pairs without smoothing, interpolation, resampling, or sorting; ${
+      groundTruthSeries
+        ? state.groundTruthCase?._fluidsbenchNativeProfileTruth
+          ? `pinned Native CFD ground truth (${nativeDrivaermlDatasetRevision}) and `
+          : "public ground truth and "
+        : ""
+    }${submissionCurveCount} explicitly selected ${resultDataOriginLabel()} model curve${submissionCurveCount === 1 ? "" : "s"}. ${lineProcessing} ${
       droppedPointCount || "no"
     } invalid or unpaired source point${droppedPointCount === 1 ? " was" : "s were"} omitted.${profileOmissionText} ${releaseStamp()}.`;
     setFigureCaption(figureKey, caption, `${state.dataset} · ${state.split} · ${panel.title} · ${station.label} · ${datasets.length} plotted series`);
@@ -4511,7 +5505,7 @@
           },
           legend: null,
         },
-        detail: [{ field: "series" }],
+        detail: [{ field: "series" }, { field: "segment_ordinal" }],
         order: { field: "source_point_index", type: "quantitative" },
         strokeWidth: {
           condition: { test: "datum.series_role === 'public_ground_truth'", value: 3 },
@@ -4527,7 +5521,9 @@
     });
     renderNumericTable(
       `${figureKey}-data-table`,
-      `Finite source coordinate/value pairs used in the displayed figure, in native source order; omitted-point counts are explicit and no smoothing, interpolation, resampling, or sorting is applied.`,
+      nativeProfileContext
+        ? "Checksum-bound native coordinate/value pairs used in the displayed figure. Segment IDs and gap boundaries are explicit; unsupported samples are not connected, interpolated, resampled, or sorted."
+        : "Finite source coordinate/value pairs used in the displayed figure, in source order; omitted-point counts are explicit and no smoothing, interpolation, resampling, or sorting is applied.",
       [
         { label: "Series", value: "series" },
         { label: "Role", value: "series_role" },
@@ -4535,6 +5531,11 @@
         { label: "Submission ID", value: "submission_id" },
         { label: "Plotted point", value: "point_index" },
         { label: "Source point", value: "source_point_index" },
+        { label: "Support sample", value: "support_sample_index" },
+        { label: "Native cell", value: "raw_native_cell_id" },
+        { label: "Segment provenance", value: "segment_id" },
+        { label: "Segment ordinal", value: "segment_ordinal" },
+        { label: "Gap before", value: "gap_before" },
         { label: "Source points", value: "source_point_count" },
         { label: "Dropped points", value: "dropped_point_count" },
         { label: station.x_label, value: "x" },
@@ -4551,6 +5552,8 @@
         maintainAspectRatio: false,
         parsing: false,
         interaction: { mode: "nearest", intersect: false },
+        spanGaps: false,
+        elements: { line: { spanGaps: false } },
         scales: {
           x: {
             type: "linear",
@@ -4579,8 +5582,9 @@
     if (!profileFigureReady(figureKey)) throw new Error("No current plotted profile data are available");
     const panel = activeDataset()?.diagnostic_panels?.[index];
     const selection = panel ? panelSelection(panel) : null;
+    const family = panel ? selectedProfileFamily(panel) : null;
     const quantity = (panel?.quantities || []).find((candidate) => candidate.id === selection?.quantity);
-    const station = (panel?.stations || []).find((candidate) => candidate.id === selection?.station);
+    const station = panel ? profileStations(panel, family).find((candidate) => candidate.id === selection?.station) : null;
     const spec = state.figureSpecs.get(figureKey);
     const points = Array.isArray(spec?.data?.values) ? spec.data.values : [];
     if (!panel || !quantity || !station || !points.length) throw new Error("No plotted profile data are available");
@@ -4621,6 +5625,9 @@
         public_evaluation_case_id: state.profileCase,
         panel_id: panel.id,
         panel_title: panel.title,
+        family_id: family?.id || null,
+        family_label: family?.label || null,
+        placement_mode: family?.placementMode || null,
         station_id: station.id,
         station_label: station.label,
         quantity_id: quantity.id,
@@ -4629,8 +5636,9 @@
         y_label: quantity.y_label,
         requested_model_ids: figureRows().map((row) => row.id),
         plotted_model_ids: Array.from(new Set(points.map((point) => point.submission_id).filter(Boolean))),
-        processing:
-          "Finite submitted/reference coordinate-value pairs in native source order; no smoothing, interpolation, resampling, or sorting; dropped and source point counts are recorded per row",
+        processing: state.groundTruthCase?._fluidsbenchNativeProfileTruth
+          ? "Checksum- and identity-bound submitted/reference coordinate-value pairs in native source order; explicit support segments preserve unsupported-sample gaps; no smoothing, interpolation, resampling, sorting, or cross-family fallback"
+          : "Finite submitted/reference coordinate-value pairs in source order; no smoothing, interpolation, resampling, or sorting; dropped and source point counts are recorded per row",
         caption: state.figureCaptions.get(`profile-${index}`),
       },
       points,
@@ -4641,7 +5649,9 @@
     const panel = activeDataset()?.diagnostic_panels?.[index];
     const selection = panel ? panelSelection(panel) : {};
     return figureFilename(
-      `profile-data-${panel?.id || index}-${state.profileCase}-${selection.station || "station"}-${selection.quantity || "quantity"}`,
+      `profile-data-${panel?.id || index}-${selection.family || "legacy"}-${state.profileCase}-${selection.station || "station"}-${
+        selection.quantity || "quantity"
+      }`,
       extension
     );
   }
@@ -4678,6 +5688,8 @@
         "split_id",
         "public_evaluation_case_id",
         "panel_id",
+        "family_id",
+        "placement_mode",
         "station_id",
         "quantity_id",
         "processing",
@@ -4689,8 +5701,26 @@
         "series_order",
         "point_index",
         "source_point_index",
+        "support_sample_index",
+        "raw_native_cell_id",
+        "segment_id",
+        "segment_ordinal",
+        "gap_before",
+        "segment_count",
+        "unsupported_sample_count",
         "source_point_count",
         "dropped_point_count",
+        "representation",
+        "scoring_role",
+        "support_identity_sha256",
+        "placement_receipt_identity_sha256",
+        "coordinate_id",
+        "coordinate_unit",
+        "coordinate_identity_sha256",
+        "value_identity_sha256",
+        "series_identity_sha256",
+        "native_truth_source",
+        "native_dataset_revision",
         "source_index_url",
         "source_index_sha256",
         "source_chunk_url",
@@ -4733,6 +5763,8 @@
           figure.split_id,
           figure.public_evaluation_case_id,
           figure.panel_id,
+          figure.family_id,
+          figure.placement_mode,
           figure.station_id,
           figure.quantity_id,
           figure.processing,
@@ -4744,8 +5776,26 @@
           point.series_order,
           point.point_index,
           point.source_point_index,
+          point.support_sample_index,
+          point.raw_native_cell_id,
+          point.segment_id,
+          point.segment_ordinal,
+          point.gap_before,
+          point.segment_count,
+          point.unsupported_sample_count,
           point.source_point_count,
           point.dropped_point_count,
+          point.representation,
+          point.scoring_role,
+          point.support_identity_sha256,
+          point.placement_receipt_identity_sha256,
+          point.coordinate_id,
+          point.coordinate_unit,
+          point.coordinate_identity_sha256,
+          point.value_identity_sha256,
+          point.series_identity_sha256,
+          point.native_truth_source,
+          point.native_dataset_revision,
           point.source_index_url,
           point.source_index_sha256,
           point.source_chunk_url,
@@ -6061,11 +7111,14 @@
     state.resultId = restored.resultId && !state.releaseMismatch && resultExists ? restored.resultId : "";
 
     (activeDataset()?.diagnostic_panels || []).forEach((panel) => {
+      const familyId = restored.params.get(`family_${panel.id}`);
       const quantity = restored.params.get(`quantity_${panel.id}`);
       const station = restored.params.get(`station_${panel.id}`);
       const selection = panelSelection(panel);
+      const families = profileFamilies(panel);
+      if (families.some((candidate) => candidate.id === familyId)) selection.family = familyId;
       if ((panel.quantities || []).some((candidate) => candidate.id === quantity)) selection.quantity = quantity;
-      if ((panel.stations || []).some((candidate) => candidate.id === station)) selection.station = station;
+      if (profileStations(panel, selectedProfileFamily(panel)).some((candidate) => candidate.id === station)) selection.station = station;
     });
   }
 

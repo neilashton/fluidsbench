@@ -4,7 +4,7 @@
   "provenance": {
     "coverage": "representative_subset",
     "source_extraction_sha256": "d0564b2949a323a81c2e5c075fb5a230d68d660a2e711790aff1156da73c956e",
-    "profile_definition_sha256": "539e5b34cc9da7c2915453dc45d17b0652c16e42a6bf3363695be82bbd763d54",
+    "profile_definition_sha256": "2d662d89a133dd9329ee6540325883825907f5a1ff771af3904e1dc477a2753c",
     "mode": "ground_truth_reference",
     "profile_definition_id": "airfrans-boundary-layer-v1",
     "extractor_sha256": "1b3e3bbe8189d584ce3e8de2b72736d97559f582943e140b77ca17260796752d",
