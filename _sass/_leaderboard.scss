@@ -1598,6 +1598,46 @@ html[data-theme="dark"] .leaderboard-data-warning.is-official {
   min-width: 0;
 }
 
+.profile-family-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.55rem;
+}
+
+.profile-family-tabs[hidden],
+.profile-family-notice[hidden] {
+  display: none;
+}
+
+.profile-family-tab {
+  background: var(--leaderboard-chip-bg);
+  border: 1px solid var(--leaderboard-border);
+  border-radius: 999px;
+  color: var(--global-text-color);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.38rem 0.72rem;
+}
+
+.profile-family-tab[aria-selected="true"] {
+  background: var(--leaderboard-primary);
+  border-color: var(--leaderboard-primary);
+  color: #fff;
+}
+
+.profile-family-tab:focus-visible {
+  outline: 3px solid var(--leaderboard-primary);
+  outline-offset: 2px;
+}
+
+.leaderboard-panel .profile-family-notice {
+  color: var(--leaderboard-muted);
+  font-size: 0.82rem;
+  margin: 0 0 0.75rem;
+}
+
 .profile-chart-status {
   align-items: center;
   color: var(--leaderboard-muted);

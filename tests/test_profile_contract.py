@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
 
@@ -74,6 +75,353 @@ class ProfileCaseCoverageTests(unittest.TestCase):
             "official",
         )
         self.assertTrue(any("prototype" in error for error in errors))
+
+
+class DrivAerMLNativeProfileSeriesTests(unittest.TestCase):
+    @staticmethod
+    def native_case() -> dict:
+        series_records = []
+        digest = "1" * 64
+        for key, representation in (
+            check_profile_contract.drivaerml_native_expected_series().items()
+        ):
+            panel_id, family_id, placement_mode, station_id, quantity_id = key
+            series = {
+                "panel_id": panel_id,
+                "family_id": family_id,
+                "placement_mode": placement_mode,
+                "station_id": station_id,
+                "quantity_id": quantity_id,
+                "quantity": (
+                    "pressure_coefficient"
+                    if quantity_id == "cp"
+                    else "velocity_magnitude_ratio"
+                ),
+                "units": "1",
+                "scoring_role": (
+                    "report_only" if placement_mode == "relative" else "inherits_parent_candidate"
+                ),
+                "representation": representation,
+                "placement_receipt_identity_sha256": "2" * 64,
+            }
+            if representation == "shared_alias":
+                canonical = check_profile_contract.DRIVAERML_RELATIVE_CP_ALIASES[
+                    station_id
+                ]
+                series["shared_support_ref"] = {
+                    "canonical_family_id": canonical[0],
+                    "canonical_station_id": canonical[1],
+                    "canonical_support_identity_sha256": digest,
+                    "shared_support_id": check_profile_contract.DRIVAERML_SHARED_CP_SUPPORT_IDS[
+                        station_id
+                    ],
+                }
+            else:
+                coordinate = [0.0, 0.5, 1.0]
+                series.update(
+                    {
+                        "support_identity_sha256": digest,
+                        "coordinate_id": (
+                            "arc_length_m"
+                            if panel_id == "pressure_profiles"
+                            else "normalized_arc_length"
+                            if placement_mode == "relative"
+                            else "distance_m"
+                        ),
+                        "coordinate_unit": (
+                            "1"
+                            if family_id == "drivaerml-velocity-relative-v3"
+                            else "m"
+                        ),
+                        "coordinate": coordinate,
+                        "value": [0.1, 0.2, 0.3],
+                        "sample_index": [0, 1, 3],
+                        "raw_native_cell_id": [10, 11, 13],
+                        "segments": [
+                            {
+                                "segment_id": "supported",
+                                "emitted_index_start": 0,
+                                "emitted_index_stop": 2,
+                                "sample_index_start": 0,
+                                "sample_index_stop": 2,
+                                "coordinate_start": 0.0,
+                                "coordinate_stop": 0.5,
+                            },
+                            {
+                                "segment_id": "supported",
+                                "emitted_index_start": 2,
+                                "emitted_index_stop": 3,
+                                "sample_index_start": 3,
+                                "sample_index_stop": 4,
+                                "coordinate_start": 1.0,
+                                "coordinate_stop": 1.0,
+                            },
+                        ],
+                        "unsupported_samples": [
+                            {
+                                "sample_index": 2,
+                                "coordinate": 0.75,
+                                "reason": "unsupported_test_sample",
+                            }
+                        ],
+                        "coordinate_identity_sha256": check_profile_contract.coordinate_identity_sha256(
+                            coordinate
+                        ),
+                        "value_identity_sha256": check_profile_contract.value_identity_sha256(
+                            [0.1, 0.2, 0.3]
+                        ),
+                    }
+                )
+            series["series_identity_sha256"] = (
+                check_profile_contract.canonical_json_identity_sha256(
+                    check_profile_contract.native_series_identity_projection(series)
+                )
+            )
+            series_records.append(series)
+        case = {
+            "schema": check_profile_contract.NATIVE_DRIVAERML_CASE_SCHEMA,
+            "schema_version": "2.0",
+            "dataset_id": "drivaerml",
+            "dataset_revision": check_profile_contract.NATIVE_DRIVAERML_DATASET_REVISION,
+            "case_id": "run_419",
+            "series_count": 40,
+            "truth_source": deepcopy(check_profile_contract.NATIVE_TRUTH_SOURCE),
+            "relative_scoring_activated": False,
+            "native_volume": {},
+            "native_boundary": {},
+            "input_bindings": {
+                "constant_velocity": {},
+                "relative_velocity": {},
+                "cp": {},
+            },
+            "generator": {
+                "evaluator_git_revision": "3" * 40,
+                "exporter_source": {
+                    "path": "scripts/export_drivaerml_native_profile_truth.py",
+                    "sha256": "4" * 64,
+                    "size_bytes": 1,
+                },
+            },
+            "series": series_records,
+        }
+        case["case_identity"] = {
+            "algorithm": "sha256",
+            "scope": "canonical_json_body_without_case_identity",
+            "sha256": check_profile_contract.canonical_json_identity_sha256(case),
+        }
+        return case
+
+    def test_exact_40_series_native_case_passes(self) -> None:
+        self.assertEqual(
+            check_profile_contract.drivaerml_native_case_series_errors(
+                self.native_case(), "drivaerml/run_419"
+            ),
+            [],
+        )
+
+    def test_changed_coordinate_with_retained_identity_is_rejected(self) -> None:
+        case = self.native_case()
+        materialized = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "materialized"
+        )
+        materialized["coordinate"][1] = 0.75
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419"
+        )
+        self.assertTrue(any("does not bind" in error for error in errors))
+
+    def test_relative_cp_coordinate_reset_is_valid_only_at_segment_boundary(self) -> None:
+        case = self.native_case()
+        moving_cp = next(
+            series
+            for series in case["series"]
+            if series["family_id"] == "drivaerml_cp_relative_v1"
+            and series["representation"] == "materialized"
+        )
+        moving_cp["coordinate"][2] = 0.0
+        moving_cp["segments"][1]["coordinate_start"] = 0.0
+        moving_cp["segments"][1]["coordinate_stop"] = 0.0
+        moving_cp["coordinate_identity_sha256"] = (
+            check_profile_contract.coordinate_identity_sha256(
+                moving_cp["coordinate"]
+            )
+        )
+        moving_cp["series_identity_sha256"] = (
+            check_profile_contract.canonical_json_identity_sha256(
+                check_profile_contract.native_series_identity_projection(moving_cp)
+            )
+        )
+        body = dict(case)
+        body.pop("case_identity")
+        case["case_identity"]["sha256"] = (
+            check_profile_contract.canonical_json_identity_sha256(body)
+        )
+        self.assertEqual(
+            check_profile_contract.drivaerml_native_case_series_errors(
+                case, "drivaerml/run_419"
+            ),
+            [],
+        )
+
+    def test_alias_must_resolve_exact_canonical_support(self) -> None:
+        case = self.native_case()
+        alias = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "shared_alias"
+        )
+        alias["shared_support_ref"]["canonical_station_id"] = "sidewall_z_0_15"
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419"
+        )
+        self.assertTrue(any("exact canonical" in error for error in errors))
+
+    def test_analytical_legacy_series_cannot_claim_native_schema(self) -> None:
+        case = self.native_case()
+        legacy = deepcopy(case["series"][0])
+        for field in (
+            "family_id",
+            "placement_mode",
+            "support_identity_sha256",
+            "placement_receipt_identity_sha256",
+            "coordinate_identity_sha256",
+            "value_identity_sha256",
+            "series_identity_sha256",
+            "sample_index",
+            "raw_native_cell_id",
+            "segments",
+            "unsupported_samples",
+        ):
+            legacy.pop(field, None)
+        case["series"][0] = legacy
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419"
+        )
+        self.assertTrue(any("unexpected native profile series" in error for error in errors))
+        self.assertTrue(any("missing native profile series" in error for error in errors))
+
+    def test_zero_identity_and_unaligned_lineage_are_rejected(self) -> None:
+        case = self.native_case()
+        materialized = next(
+            series
+            for series in case["series"]
+            if series["representation"] == "materialized"
+        )
+        materialized["support_identity_sha256"] = "0" * 64
+        materialized["sample_index"] = [0, 1]
+        errors = check_profile_contract.drivaerml_native_case_series_errors(
+            case, "drivaerml/run_419"
+        )
+        self.assertTrue(any("invalid support_identity" in error for error in errors))
+        self.assertTrue(any("must be nonempty and aligned" in error for error in errors))
+
+    def test_native_declaration_rejects_analytical_dummy_or_missing_master(self) -> None:
+        declaration = {
+            "source_kind": "native_cfd",
+            "analytical_dummy": True,
+            "dataset_revision": check_profile_contract.NATIVE_DRIVAERML_DATASET_REVISION,
+            "native_source_pin_sha256": "1" * 64,
+            "case_count": 484,
+        }
+        errors = check_profile_contract.drivaerml_native_declaration_errors(
+            declaration, "1" * 64
+        )
+        self.assertTrue(any("analytical dummy" in error for error in errors))
+        self.assertTrue(any("master_index_file" in error for error in errors))
+        self.assertTrue(any("master_index_sha256" in error for error in errors))
+
+    def test_exact_native_declaration_passes(self) -> None:
+        declaration = {
+            "source_kind": "native_cfd",
+            "analytical_dummy": False,
+            "dataset_revision": check_profile_contract.NATIVE_DRIVAERML_DATASET_REVISION,
+            "native_source_pin_sha256": "1" * 64,
+            "case_count": 484,
+            "master_index_file": "datasets/drivaerml/native-v2/index.json",
+            "master_index_sha256": "2" * 64,
+        }
+        self.assertEqual(
+            check_profile_contract.drivaerml_native_declaration_errors(
+                declaration, "1" * 64
+            ),
+            [],
+        )
+
+    def test_master_requires_exact_all484_gap_free_unique_order(self) -> None:
+        official = [f"run_{index}" for index in range(1, 485)]
+        chunks = [
+            {"case_ids": official[:242]},
+            {"case_ids": official[242:]},
+        ]
+        self.assertEqual(
+            check_profile_contract.drivaerml_master_coverage_errors(
+                official, official, chunks
+            ),
+            [],
+        )
+        missing = deepcopy(chunks)
+        missing[-1]["case_ids"] = missing[-1]["case_ids"][:-1]
+        errors = check_profile_contract.drivaerml_master_coverage_errors(
+            official, official[:-1], missing
+        )
+        self.assertTrue(any("all-484" in error for error in errors))
+        self.assertTrue(any("incomplete" in error for error in errors))
+        duplicate = deepcopy(chunks)
+        duplicate[-1]["case_ids"][0] = official[0]
+        errors = check_profile_contract.drivaerml_master_coverage_errors(
+            official, official, duplicate
+        )
+        self.assertTrue(any("duplicated" in error for error in errors))
+
+    def test_thin_indexes_must_bind_shared_chunk_hash_and_exact_split(self) -> None:
+        master = {
+            "chunk-000": {
+                "case_ids": ["run_1", "run_2", "run_3"],
+                "path": "chunks/chunk-000.json",
+                "sha256": "1" * 64,
+            },
+            "chunk-001": {
+                "case_ids": ["run_4", "run_5"],
+                "path": "chunks/chunk-001.json",
+                "sha256": "2" * 64,
+            },
+        }
+        references = [
+            {
+                "chunk_id": "chunk-000",
+                "path": "chunks/chunk-000.json",
+                "sha256": "1" * 64,
+                "case_ids": ["run_2", "run_3"],
+            },
+            {
+                "chunk_id": "chunk-001",
+                "path": "chunks/chunk-001.json",
+                "sha256": "2" * 64,
+                "case_ids": ["run_5"],
+            },
+        ]
+        official = ["run_2", "run_3", "run_5"]
+        self.assertEqual(
+            check_profile_contract.drivaerml_thin_reference_errors(
+                references, master, official, "split/full"
+            ),
+            [],
+        )
+        wrong_hash = deepcopy(references)
+        wrong_hash[0]["sha256"] = "3" * 64
+        errors = check_profile_contract.drivaerml_thin_reference_errors(
+            wrong_hash, master, official, "split/full"
+        )
+        self.assertTrue(any("SHA differs" in error for error in errors))
+        reordered = deepcopy(references)
+        reordered[0]["case_ids"].reverse()
+        errors = check_profile_contract.drivaerml_thin_reference_errors(
+            reordered, master, official, "split/full"
+        )
+        self.assertTrue(any("exact shared chunk order" in error for error in errors))
+        self.assertTrue(any("reordered" in error for error in errors))
 
 
 if __name__ == "__main__":

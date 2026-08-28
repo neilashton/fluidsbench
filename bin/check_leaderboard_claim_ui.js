@@ -6,13 +6,38 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const { webcrypto } = require("node:crypto");
+const { createHash, webcrypto } = require("node:crypto");
 
 const root = path.resolve(__dirname, "..");
 const submissionRoot = path.resolve(process.env.FLUIDSBENCH_SUBMISSION_ROOT || path.resolve(root, "../fluidsbench-submission"));
 const scriptPath = path.join(root, "assets/js/leaderboard.js");
 const displayConfig = JSON.parse(fs.readFileSync(path.join(root, "_data/leaderboard_display.json"), "utf8"));
 const source = fs.readFileSync(scriptPath, "utf8");
+
+function sha256File(filePath) {
+  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
+// Keep the contract check independent of Node's optional undici/WebAssembly
+// implementation.  The CI nodes used for this repository can have a strict
+// virtual-memory limit even when ample physical memory is available.
+class TestResponse {
+  constructor(body = "", options = {}) {
+    this.body = body;
+    this.status = options.status || 200;
+    this.ok = this.status >= 200 && this.status < 300;
+  }
+
+  async arrayBuffer() {
+    const bytes = Buffer.isBuffer(this.body) ? this.body : Buffer.from(String(this.body));
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  }
+
+  async blob() {
+    return new Blob([this.body]);
+  }
+}
+
 const marker = "})();";
 const markerIndex = source.lastIndexOf(marker);
 assert.notEqual(markerIndex, -1, "leaderboard script must end with its IIFE");
@@ -21,24 +46,35 @@ window.__FluidsBenchClaimTest = {
   activeColumns,
   activeMetricDefinitions,
   bibtexEscape,
+  bindProfileCoordinateIdentities,
+  caseIds,
   canonicalResultPermalink,
   citationValues,
   claimEligibility,
   decimalHalfUp,
   ensureClaimRecord,
   ensureClaimsIndex,
+  exactNativeTruthSource,
   exportMetadataColumns,
   exportProvenance,
   fallbackRankings,
   generatedRankingMatches,
+  groundTruthIndex,
   headlineMetricDefinitions,
+  indexedProfileCase,
   leaderboardManifestProvenance,
   claimRecordCheck,
+  nativeProfileIndexSplitId,
   normalizeRow,
+  nativeSegmentIds,
   openDetails,
   predictionArtifactStatus,
   predictionAvailability,
   predictionMetricRecomputation,
+  profileFamilies,
+  profileSeries,
+  profileSeriesCompatibility,
+  profileStations,
   radarMetricAxes,
   radarNormalizedValue,
   representationSummary,
@@ -69,7 +105,7 @@ const context = {
   TextEncoder,
   URL,
   URLSearchParams,
-  Response,
+  Response: TestResponse,
   console,
   document: {
     readyState: "loading",
@@ -94,11 +130,11 @@ const context = {
     const assetRoots = ["leaderboard/", "submissions/", "evaluation/", "validation/"];
     const decodedPath = decodeURIComponent(url.pathname);
     const offsets = assetRoots.map((assetRoot) => decodedPath.lastIndexOf(`/${assetRoot}`)).filter((offset) => offset >= 0);
-    if (!offsets.length) return new Response("not found", { status: 404 });
+    if (!offsets.length) return new TestResponse("not found", { status: 404 });
     const relative = decodedPath.slice(Math.min(...offsets) + 1);
     const target = path.resolve(submissionRoot, relative);
-    if (!target.startsWith(`${submissionRoot}${path.sep}`) || !fs.existsSync(target)) return new Response("not found", { status: 404 });
-    return new Response(fs.readFileSync(target), { status: 200 });
+    if (!target.startsWith(`${submissionRoot}${path.sep}`) || !fs.existsSync(target)) return new TestResponse("not found", { status: 404 });
+    return new TestResponse(fs.readFileSync(target), { status: 200 });
   },
   navigator: {},
   window: {
@@ -207,6 +243,474 @@ api.state.manifest = manifest;
 api.state.metrics = new Map(manifest.metric_definitions.map((definition) => [definition.id, definition]));
 api.state.rows = new Map(manifest.datasets.map((dataset) => [dataset.name, []]));
 api.state.feedVerified = true;
+
+function nativeProfileSeries(overrides = {}) {
+  const series = {
+    panel_id: "velocity_profiles",
+    family_id: "drivaerml-velocity-relative-v3",
+    placement_mode: "relative",
+    station_id: "V1",
+    quantity_id: "velocity_ratio",
+    quantity: "velocity_magnitude_ratio",
+    units: "1",
+    scoring_role: "report_only",
+    representation: "materialized",
+    support_identity_sha256: "1".repeat(64),
+    placement_receipt_identity_sha256: "2".repeat(64),
+    coordinate_id: "normalized_arc_length",
+    coordinate_unit: "1",
+    coordinate_identity_sha256: "5".repeat(64),
+    value_identity_sha256: "6".repeat(64),
+    series_identity_sha256: "7".repeat(64),
+    sample_index: [0, 1, 2, 4],
+    raw_native_cell_id: [10, 11, 12, 14],
+    coordinate: [0, 0.3, 0.6, 1],
+    value: [0.1, 0.2, 0.3, 0.4],
+    segments: [
+      {
+        segment_id: "supported",
+        emitted_index_start: 0,
+        emitted_index_stop: 3,
+        sample_index_start: 0,
+        sample_index_stop: 3,
+        coordinate_start: 0,
+        coordinate_stop: 0.6,
+      },
+      {
+        segment_id: "supported",
+        emitted_index_start: 3,
+        emitted_index_stop: 4,
+        sample_index_start: 4,
+        sample_index_stop: 5,
+        coordinate_start: 1,
+        coordinate_stop: 1,
+      },
+    ],
+    unsupported_samples: [{ sample_index: 3, coordinate: 0.8, reason: "unsupported" }],
+    ...overrides,
+  };
+  Object.defineProperty(series, "_fluidsbenchCoordinateIdentitySha256", {
+    enumerable: false,
+    value: series.coordinate_identity_sha256,
+  });
+  return series;
+}
+
+function currentProfileSeries(overrides = {}) {
+  const series = {
+    panel_id: "velocity_profiles",
+    family_id: "drivaerml-velocity-relative-v3",
+    placement_mode: "relative",
+    station_id: "V1",
+    quantity_id: "velocity_ratio",
+    scoring_role: "report_only",
+    representation: "materialized",
+    support_identity_sha256: "1".repeat(64),
+    placement_receipt_identity_sha256: "2".repeat(64),
+    coordinate_id: "normalized_arc_length",
+    coordinate_unit: "1",
+    coordinate: [0, 0.3, 0.6, 1],
+    prediction: [0.11, 0.21, 0.31, 0.41],
+    ...overrides,
+  };
+  Object.defineProperty(series, "_fluidsbenchCoordinateIdentitySha256", {
+    enumerable: false,
+    value: overrides.computedCoordinateIdentity || "5".repeat(64),
+  });
+  delete series.computedCoordinateIdentity;
+  return series;
+}
+
+{
+  api.state.dataset = "DrivAerML";
+  const drivaerml = manifest.datasets.find((dataset) => dataset.slug === "drivaerml");
+  const velocityPanel = drivaerml.diagnostic_panels.find((panel) => panel.id === "velocity_profiles");
+  const families = api.profileFamilies(velocityPanel);
+  assert.deepEqual(
+    Array.from(families, (family) => [family.id, family.label]),
+    [
+      ["drivaerml-autocfd5-constant-v1", "Fixed locations"],
+      ["drivaerml-velocity-relative-v3", "Geometry-relative locations — diagnostic, not scored"],
+    ],
+    "DrivAerML velocity placement choices must remain separate and relative placement must be labelled report-only"
+  );
+  assert.equal(api.nativeProfileIndexSplitId("standard", "medium"), "full", "shared standard test cases must use the one canonical full thin index");
+  assert.equal(api.nativeProfileIndexSplitId("geometry", "geometry"), "geometry");
+  assert.equal(api.profileStations(velocityPanel, families[0])[0].id, "autocfd5_v1");
+  assert.equal(api.profileStations(velocityPanel, families[1])[0].id, "V1");
+  assert.deepEqual(
+    Array.from(
+      api.caseIds({
+        schema: "fluidsbench-drivaerml-native-profile-truth-split-index-v2",
+        chunk_refs: [{ case_ids: ["run_1"] }, { case_ids: ["run_3"] }],
+      })
+    ),
+    ["run_1", "run_3"]
+  );
+  assert.equal(
+    api.exactNativeTruthSource({
+      source_kind: "native_cfd",
+      analytical_dummy: false,
+      native_quantity_source: "pinned_drivaerml_cell_data",
+    }),
+    true
+  );
+  assert.equal(
+    api.exactNativeTruthSource({
+      source_kind: "native_cfd",
+      analytical_dummy: true,
+      native_quantity_source: "pinned_drivaerml_cell_data",
+    }),
+    false
+  );
+
+  const quantity = velocityPanel.quantities[0];
+  const truthSource = {
+    case_id: "run_419",
+    _fluidsbenchNativeProfileTruth: true,
+    series: [nativeProfileSeries()],
+  };
+  const predictionSource = {
+    case_id: "run_419",
+    _fluidsbenchRelativeProfileV3: true,
+    series: [currentProfileSeries()],
+  };
+  const truth = api.profileSeries(truthSource, velocityPanel, "V1", quantity, families[1]);
+  const prediction = api.profileSeries(predictionSource, velocityPanel, "V1", quantity, families[1]);
+  assert.equal(api.profileSeriesCompatibility(truth, prediction), true);
+  assert.equal(truth.points.length, 4);
+  assert.equal(truth.chartPoints.length, 5, "a null point must preserve the unsupported interior gap");
+  assert.equal(truth.chartPoints[3].x, null);
+  assert.deepEqual(
+    Array.from(truth.points, (point) => point.segmentId),
+    ["supported", "supported", "supported", "supported"]
+  );
+  assert.deepEqual(
+    Array.from(truth.points, (point) => point.segmentOrdinal),
+    [0, 0, 0, 1]
+  );
+  assert.deepEqual(
+    Array.from(truth.points, (point) => point.gapBefore),
+    [false, false, false, true]
+  );
+
+  const wrongSupport = api.profileSeries(
+    {
+      case_id: "run_419",
+      _fluidsbenchRelativeProfileV3: true,
+      series: [currentProfileSeries({ support_identity_sha256: "8".repeat(64) })],
+    },
+    velocityPanel,
+    "V1",
+    quantity,
+    families[1]
+  );
+  assert.throws(() => api.profileSeriesCompatibility(truth, wrongSupport), /support identity differs/);
+  const wrongReceipt = api.profileSeries(
+    {
+      case_id: "run_419",
+      _fluidsbenchRelativeProfileV3: true,
+      series: [currentProfileSeries({ placement_receipt_identity_sha256: "8".repeat(64) })],
+    },
+    velocityPanel,
+    "V1",
+    quantity,
+    families[1]
+  );
+  assert.throws(() => api.profileSeriesCompatibility(truth, wrongReceipt), /placement-receipt identity differs/);
+  const wrongCoordinates = api.profileSeries(
+    {
+      case_id: "run_419",
+      _fluidsbenchRelativeProfileV3: true,
+      series: [currentProfileSeries({ coordinate: [0, 0.4, 0.6, 1] })],
+    },
+    velocityPanel,
+    "V1",
+    quantity,
+    families[1]
+  );
+  assert.throws(() => api.profileSeriesCompatibility(truth, wrongCoordinates), /ordered coordinates differ/);
+  assert.equal(
+    api.profileSeries(truthSource, velocityPanel, "autocfd5_v1", quantity, families[0]),
+    null,
+    "the fixed tab must never fall back to a geometry-relative series"
+  );
+
+  const cpPanel = drivaerml.diagnostic_panels.find((panel) => panel.id === "pressure_profiles");
+  const cpQuantity = cpPanel.quantities[0];
+  const canonical = nativeProfileSeries({
+    panel_id: "pressure_profiles",
+    family_id: "drivaerml_cp_constant_v1",
+    placement_mode: "constant",
+    station_id: "upperbody_centerline",
+    quantity_id: "cp",
+    quantity: "pressure_coefficient",
+    coordinate_id: "arc_length_m",
+    coordinate_unit: "m",
+    scoring_role: "inherits_parent_candidate",
+  });
+  const alias = {
+    panel_id: "pressure_profiles",
+    family_id: "drivaerml_cp_relative_v1",
+    placement_mode: "relative",
+    station_id: "upperbody_centerline",
+    quantity_id: "cp",
+    quantity: "pressure_coefficient",
+    units: "1",
+    scoring_role: "report_only",
+    representation: "shared_alias",
+    placement_receipt_identity_sha256: "9".repeat(64),
+    series_identity_sha256: "a".repeat(64),
+    shared_support_ref: {
+      canonical_family_id: "drivaerml_cp_constant_v1",
+      canonical_station_id: "upperbody_centerline",
+      canonical_support_identity_sha256: canonical.support_identity_sha256,
+      shared_support_id: "drivaerml-cp-upperbody-centerline-y0-v1",
+    },
+  };
+  const resolvedAlias = api.profileSeries(
+    { case_id: "run_419", _fluidsbenchNativeProfileTruth: true, series: [canonical, alias] },
+    cpPanel,
+    "upperbody_centerline",
+    cpQuantity,
+    { id: "drivaerml_cp_relative_v1", placementMode: "relative" }
+  );
+  assert.equal(resolvedAlias.representation, "shared_alias");
+  assert.deepEqual(Array.from(resolvedAlias.coordinates), canonical.coordinate);
+}
+assert.match(source, /native profile chunk is unavailable because its SHA-256 bytes could not be verified/);
+assert.match(source, /spanGaps: false/);
+assert.match(source, /detail: \[\{ field: "series" \}, \{ field: "segment_ordinal" \}\]/);
+assert.match(source, /legacy profile series cannot be overlaid on identity-bound native ground truth/);
+assert.match(source, /Native CFD ground truth/);
+
+async function verifyCurrentRun419ProfileFixture() {
+  api.state.dataset = "DrivAerML";
+  const fixturePath = path.join(
+    submissionRoot,
+    "benchmark-specs/drivaerml/evidence/transolver-run419-current-relative-profile-v3/profiles/chunk-000.json"
+  );
+  const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+  assert.equal(fixture.schema_version, "3.0-drivaerml-relative-candidate");
+  assert.equal(fixture.cases.length, 1);
+  const profileCase = {
+    ...fixture.cases[0],
+    _fluidsbenchRelativeProfileV3: true,
+  };
+  await api.bindProfileCoordinateIdentities(profileCase);
+  assert.equal(profileCase.case_id, "run_419");
+  assert.equal(profileCase.series.length, 40);
+
+  const drivaerml = manifest.datasets.find((dataset) => dataset.slug === "drivaerml");
+  const parsedKeys = [];
+  profileCase.series.forEach((series) => {
+    const panel = drivaerml.diagnostic_panels.find((candidate) => candidate.id === series.panel_id);
+    const family = api.profileFamilies(panel).find((candidate) => candidate.id === series.family_id);
+    const quantity = panel.quantities.find((candidate) => candidate.id === series.quantity_id);
+    assert.ok(family, `fixture family ${series.family_id} must be exposed by the profile controls`);
+    assert.ok(
+      api.profileStations(panel, family).some((station) => station.id === series.station_id),
+      `fixture station ${series.family_id}/${series.station_id} must be exposed by the profile controls`
+    );
+    const parsed = api.profileSeries(profileCase, panel, series.station_id, quantity, family);
+    assert.ok(parsed, `fixture series ${series.family_id}/${series.station_id} must parse`);
+    assert.equal(parsed.points.length, parsed.coordinates.length);
+    assert.ok(/^[0-9a-f]{64}$/.test(parsed.coordinateIdentity));
+    parsedKeys.push(`${series.family_id}/${series.station_id}/${series.representation}`);
+  });
+  assert.equal(new Set(parsedKeys).size, 40, "the real run_419 fixture must retain 40 unique family/station/representation keys");
+
+  const cpPanel = drivaerml.diagnostic_panels.find((panel) => panel.id === "pressure_profiles");
+  assert.deepEqual(
+    Array.from(api.profileFamilies(cpPanel), (family) => [family.id, family.label]),
+    [
+      ["drivaerml_cp_constant_v1", "Fixed locations"],
+      ["drivaerml_cp_relative_v1", "Geometry-relative locations — diagnostic, not scored"],
+    ]
+  );
+}
+
+async function verifyDrivaerLegacyTruthFailsClosed() {
+  const previousManifest = api.state.groundTruthManifest;
+  const previousProvenance = api.state.groundTruthManifestProvenance;
+  const previousIndexes = api.state.groundTruthIndexes;
+  const indexSha256 = "b".repeat(64);
+  const baseUrl = "https://example.test/profile-ground-truth/";
+  api.state.groundTruthManifest = {
+    datasets: [
+      {
+        id: "stale-or-missing-drivaerml-id",
+        name: "DrivAerML",
+        splits: [{ id: "full", label: "Full", case_set_id: "standard" }],
+        case_sets: [
+          {
+            id: "standard",
+            index_file: "datasets/drivaerml/standard/index.json",
+            index_sha256: indexSha256,
+          },
+        ],
+      },
+    ],
+  };
+  api.state.groundTruthManifestProvenance = { base_url: baseUrl };
+  api.state.groundTruthIndexes = new Map([
+    [
+      new URL("datasets/drivaerml/standard/index.json", baseUrl).href,
+      {
+        sha256: indexSha256,
+        data: {
+          schema: "fluidsbench-profile-ground-truth-index-v1",
+          chunks: [{ case_ids: ["run_419"] }],
+        },
+      },
+    ],
+  ]);
+  try {
+    await assert.rejects(
+      api.groundTruthIndex("DrivAerML", "Full"),
+      /must use the checksum-bound native CFD v2 release; legacy or analytical indexes are unavailable/,
+      "DrivAerML must never fall back to the former analytical v1 ground truth"
+    );
+  } finally {
+    api.state.groundTruthManifest = previousManifest;
+    api.state.groundTruthManifestProvenance = previousProvenance;
+    api.state.groundTruthIndexes = previousIndexes;
+  }
+}
+
+async function verifyNativeRun419AgainstCurrentFixture(nativeRecord) {
+  const nativeCase = {
+    ...nativeRecord,
+    _fluidsbenchNativeProfileTruth: true,
+  };
+  await api.bindProfileCoordinateIdentities(nativeCase);
+  assert.equal(nativeCase.case_id, "run_419");
+  assert.equal(nativeCase.series.length, 40);
+
+  const currentPath = path.join(
+    submissionRoot,
+    "benchmark-specs/drivaerml/evidence/transolver-run419-current-relative-profile-v3/profiles/chunk-000.json"
+  );
+  const currentChunk = JSON.parse(fs.readFileSync(currentPath, "utf8"));
+  const currentCase = {
+    ...currentChunk.cases[0],
+    _fluidsbenchRelativeProfileV3: true,
+  };
+  await api.bindProfileCoordinateIdentities(currentCase);
+
+  const drivaerml = manifest.datasets.find((dataset) => dataset.slug === "drivaerml");
+  const compared = [];
+  nativeCase.series.forEach((series) => {
+    const panel = drivaerml.diagnostic_panels.find((candidate) => candidate.id === series.panel_id);
+    const family = api.profileFamilies(panel).find((candidate) => candidate.id === series.family_id);
+    const quantity = panel.quantities.find((candidate) => candidate.id === series.quantity_id);
+    const truth = api.profileSeries(nativeCase, panel, series.station_id, quantity, family);
+    const prediction = api.profileSeries(currentCase, panel, series.station_id, quantity, family);
+    assert.ok(truth, `native run_419 series ${series.family_id}/${series.station_id} must parse`);
+    assert.ok(prediction, `current run_419 series ${series.family_id}/${series.station_id} must parse`);
+    assert.equal(api.profileSeriesCompatibility(truth, prediction), true);
+    assert.equal(prediction.lineageInheritedFromNativeTruth, true);
+    assert.equal(prediction.points.length, truth.points.length);
+    compared.push(`${series.family_id}/${series.station_id}/${series.representation}`);
+  });
+  assert.equal(new Set(compared).size, 40, "native and current run_419 fixtures must match all 40 exact series");
+}
+
+async function verifyRetainedNativeRun419Bundle() {
+  const groundTruthRoot = path.join(root, "assets/data/profile-ground-truth");
+  const groundTruthManifest = JSON.parse(fs.readFileSync(path.join(groundTruthRoot, "manifest.json"), "utf8"));
+  const drivaerml = groundTruthManifest.datasets.find((dataset) => dataset.id === "drivaerml");
+  const declaration = drivaerml.native_profile_truth;
+  assert.deepEqual(declaration, {
+    source_kind: "native_cfd",
+    analytical_dummy: false,
+    dataset_revision: "7a5c0948ce27be709b1116a3a190f806e7a8f79f",
+    native_source_pin_sha256: "4fc9077f8f23f4994c98f4d0e7a17aef7b998de4c996638e3a8a616b6d923fdd",
+    case_count: 484,
+    master_index_file: "datasets/drivaerml/native-v2/index.json",
+    master_index_sha256: "d12365d52554c10e59f07cb289e62ed77d49a5ad813fd94d1a07b61f796d4bec",
+  });
+
+  const masterPath = path.join(groundTruthRoot, declaration.master_index_file);
+  assert.equal(sha256File(masterPath), declaration.master_index_sha256);
+  const master = JSON.parse(fs.readFileSync(masterPath, "utf8"));
+  assert.equal(master.case_count, 484);
+  assert.equal(new Set(master.case_ids).size, 484);
+  const location = master.case_locations.find((candidate) => candidate.case_id === "run_419");
+  assert.ok(location, "native master index must locate run_419");
+  const chunkBinding = master.chunks.find((candidate) => candidate.chunk_id === location.chunk_id);
+  assert.ok(chunkBinding, "native run_419 chunk must be bound by the master index");
+  assert.equal(location.chunk_path, chunkBinding.path);
+  assert.equal(location.chunk_sha256, chunkBinding.sha256);
+  const chunkPath = path.join(path.dirname(masterPath), chunkBinding.path);
+  assert.equal(sha256File(chunkPath), chunkBinding.sha256);
+  const chunk = JSON.parse(fs.readFileSync(chunkPath, "utf8"));
+  assert.equal(chunk.case_ids[location.case_offset], "run_419");
+  assert.equal(chunk.cases[location.case_offset].case_id, "run_419");
+  await verifyNativeRun419AgainstCurrentFixture(chunk.cases[location.case_offset]);
+
+  const extremeExpectations = {
+    run_95: {
+      "drivaerml-autocfd5-constant-v1": [16, 0, 3644, 112, 17],
+      "drivaerml-velocity-relative-v3": [16, 0, 3676, 80, 17],
+      drivaerml_cp_constant_v1: [4, 0, 6884, 0, 4],
+      drivaerml_cp_relative_v1: [2, 2, 2045, 0, 4],
+    },
+    run_356: {
+      "drivaerml-autocfd5-constant-v1": [16, 0, 3664, 92, 17],
+      "drivaerml-velocity-relative-v3": [16, 0, 3680, 76, 17],
+      drivaerml_cp_constant_v1: [4, 0, 5339, 0, 4],
+      drivaerml_cp_relative_v1: [2, 2, 1290, 0, 4],
+    },
+    run_393: {
+      "drivaerml-autocfd5-constant-v1": [16, 0, 3505, 251, 22],
+      "drivaerml-velocity-relative-v3": [16, 0, 3673, 83, 17],
+      drivaerml_cp_constant_v1: [4, 0, 5929, 0, 4],
+      drivaerml_cp_relative_v1: [2, 2, 1805, 0, 4],
+    },
+  };
+  const profileDefinition = manifest.datasets.find((dataset) => dataset.slug === "drivaerml");
+  api.state.dataset = "DrivAerML";
+  for (const [caseId, expected] of Object.entries(extremeExpectations)) {
+    const extremeLocation = master.case_locations.find((candidate) => candidate.case_id === caseId);
+    assert.ok(extremeLocation, `native master index must locate ${caseId}`);
+    const extremeChunkPath = path.join(path.dirname(masterPath), extremeLocation.chunk_path);
+    assert.equal(sha256File(extremeChunkPath), extremeLocation.chunk_sha256);
+    const extremeChunk = JSON.parse(fs.readFileSync(extremeChunkPath, "utf8"));
+    const extremeCase = {
+      ...extremeChunk.cases[extremeLocation.case_offset],
+      _fluidsbenchNativeProfileTruth: true,
+    };
+    assert.equal(extremeCase.case_id, caseId);
+    assert.equal(extremeCase.series.length, 40);
+    await api.bindProfileCoordinateIdentities(extremeCase);
+    const actual = {};
+    for (const series of extremeCase.series) {
+      const panel = profileDefinition.diagnostic_panels.find((candidate) => candidate.id === series.panel_id);
+      const family = api.profileFamilies(panel).find((candidate) => candidate.id === series.family_id);
+      const quantity = panel.quantities.find((candidate) => candidate.id === series.quantity_id);
+      const parsed = api.profileSeries(extremeCase, panel, series.station_id, quantity, family);
+      assert.ok(parsed, `${caseId}/${series.family_id}/${series.station_id} must be browser-renderable`);
+      assert.equal(parsed.points.length, parsed.coordinates.length);
+      assert.equal(
+        parsed.chartPoints.length,
+        parsed.points.length + parsed.segmentCount - 1,
+        `${caseId}/${series.family_id}/${series.station_id} must insert a null chart point at every producer segment boundary`
+      );
+      const familyStats = actual[series.family_id] || [0, 0, 0, 0, 0];
+      if (series.representation === "shared_alias") {
+        familyStats[1] += 1;
+      } else {
+        familyStats[0] += 1;
+        familyStats[2] += series.coordinate.length;
+        familyStats[3] += series.unsupported_samples.length;
+        familyStats[4] += series.segments.length;
+      }
+      actual[series.family_id] = familyStats;
+    }
+    assert.deepEqual(actual, expected, `${caseId} extreme-case resolution and gap topology must remain exact`);
+  }
+}
 
 assert.deepEqual(
   Object.keys(displayConfig).sort(),
@@ -1127,7 +1631,10 @@ function verifyDatasetSubmissionAvailability() {
   );
 }
 
-verifyGeneratedClaimRecords()
+verifyDrivaerLegacyTruthFailsClosed()
+  .then(() => verifyCurrentRun419ProfileFixture())
+  .then(() => verifyRetainedNativeRun419Bundle())
+  .then(() => verifyGeneratedClaimRecords())
   .then(() => {
     verifyPredictionEvidenceLabels();
     verifyDatasetSubmissionAvailability();
