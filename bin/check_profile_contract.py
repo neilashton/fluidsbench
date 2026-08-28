@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import math
+import struct
 import sys
 from pathlib import Path
 from typing import Any
@@ -47,6 +48,99 @@ RELEASE_SCHEMA_NAMES = (
 )
 COMPLETE_COVERAGE = "complete_split"
 REPRESENTATIVE_COVERAGE = "representative_subset"
+NATIVE_DRIVAERML_INDEX_SCHEMA = "fluidsbench-drivaerml-native-profile-truth-index-v2"
+NATIVE_DRIVAERML_SPLIT_SCHEMA = (
+    "fluidsbench-drivaerml-native-profile-truth-split-index-v2"
+)
+NATIVE_DRIVAERML_CHUNK_SCHEMA = (
+    "fluidsbench-drivaerml-native-profile-truth-chunk-v2"
+)
+NATIVE_DRIVAERML_CASE_SCHEMA = (
+    "fluidsbench-drivaerml-native-profile-truth-case-v2"
+)
+NATIVE_DRIVAERML_PROVENANCE_SCHEMA = (
+    "fluidsbench-drivaerml-native-profile-truth-provenance-v2"
+)
+NATIVE_DRIVAERML_RELEASE_SCHEMA = (
+    "fluidsbench-drivaerml-native-profile-truth-release-v2"
+)
+NATIVE_DRIVAERML_DATASET_REVISION = "7a5c0948ce27be709b1116a3a190f806e7a8f79f"
+COORDINATE_IDENTITY_DOMAIN = b"fluidsbench-drivaerml-coordinate-array-v1\x00"
+VALUE_IDENTITY_DOMAIN = b"fluidsbench-drivaerml-native-value-array-v1\x00"
+ID_ARRAY_IDENTITY_DOMAIN = b"fluidsbench-drivaerml-native-id-array-v1\x00"
+NATIVE_SERIES_IDENTITY_SCHEMA = "fluidsbench-drivaerml-native-series-identity-v1"
+NATIVE_TRUTH_SOURCE = {
+    "source_kind": "native_cfd",
+    "analytical_dummy": False,
+    "native_quantity_source": "pinned_drivaerml_cell_data",
+}
+DRIVAERML_CONSTANT_VELOCITY_STATIONS = tuple(
+    f"autocfd5_{prefix}{index}"
+    for prefix, count in (("v", 6), ("u", 6), ("l", 1), ("r", 3))
+    for index in range(1, count + 1)
+)
+DRIVAERML_RELATIVE_VELOCITY_STATIONS = tuple(
+    f"{prefix.upper()}{index}"
+    for prefix, count in (("v", 6), ("u", 6), ("l", 1), ("r", 3))
+    for index in range(1, count + 1)
+)
+DRIVAERML_CONSTANT_CP_STATIONS = (
+    "upperbody_centerline",
+    "underbody_centerline",
+    "sidewall_z_0_15",
+    "front_left_wheelhouse_y_neg_0_6",
+)
+DRIVAERML_RELATIVE_CP_STATIONS = (
+    "upperbody_centerline",
+    "underbody_centerline",
+    "sidewall_front_wheelhouse_relative",
+    "front_left_wheelhouse_relative",
+)
+DRIVAERML_RELATIVE_CP_ALIASES = {
+    "upperbody_centerline": ("drivaerml_cp_constant_v1", "upperbody_centerline"),
+    "underbody_centerline": ("drivaerml_cp_constant_v1", "underbody_centerline"),
+}
+DRIVAERML_SHARED_CP_SUPPORT_IDS = {
+    "upperbody_centerline": "drivaerml-cp-upperbody-centerline-y0-v1",
+    "underbody_centerline": "drivaerml-cp-underbody-centerline-y0-v1",
+}
+DRIVAERML_EXPECTED_ALL484_COVERAGE = {
+    "drivaerml-autocfd5-constant-v1": {
+        "materialized_series_count": 484 * 16,
+        "shared_alias_series_count": 0,
+        "sample_count": 1_766_227,
+        "unsupported_sample_count": 51_677,
+    },
+    "drivaerml-velocity-relative-v3": {
+        "materialized_series_count": 484 * 16,
+        "shared_alias_series_count": 0,
+        "sample_count": 1_779_592,
+        "unsupported_sample_count": 38_312,
+    },
+    "drivaerml_cp_constant_v1": {
+        "materialized_series_count": 484 * 4,
+        "shared_alias_series_count": 0,
+        "sample_count": 2_768_745,
+        "unsupported_sample_count": 0,
+    },
+    "drivaerml_cp_relative_v1": {
+        "materialized_series_count": 484 * 2,
+        "shared_alias_series_count": 484 * 2,
+        "sample_count": 739_775,
+        "unsupported_sample_count": 0,
+    },
+}
+DRIVAERML_NATIVE_TRUTH_DEFINITIONS = {
+    "velocity_ratio": "numpy.linalg.norm(Float32 UMeanTrim cast exactly to binary64, axis=-1) / 38.889",
+    "cp": "2.0 * binary64(directly selected native boundary Float32 pMeanTrim) / (38.889 * 38.889)",
+    "sampling": "zeroth-order native CellData/raw polygon CellData; every boundary file is fully SHA-256 verified against the immutable pin; producer pMeanTrim is exact-cross-checked but is not the published value source; no interpolation, snapping, remeshing, or gap filling",
+}
+DRIVAERML_NATIVE_IDENTITY_ENCODINGS = {
+    "coordinate": "ASCII domain fluidsbench-drivaerml-coordinate-array-v1 plus NUL, uint64_be count, finite IEEE-754 binary64_be values, signed zero normalized",
+    "value": "ASCII domain fluidsbench-drivaerml-native-value-array-v1 plus NUL, uint64_be count, finite IEEE-754 binary64_be values, signed zero normalized",
+    "native_id": "ASCII domain fluidsbench-drivaerml-native-id-array-v1 plus NUL, uint64_be count, non-negative uint64_be IDs",
+    "series": "SHA-256 of UTF-8 sorted-key compact JSON plus LF over schema fluidsbench-drivaerml-native-series-identity-v1 descriptors, component identities/counts, segments, and unsupported_samples",
+}
 
 
 def load_json(path: Path) -> Any:
@@ -65,6 +159,1852 @@ def finite_numbers(values: Any) -> bool:
         and math.isfinite(value)
         for value in values
     )
+
+
+def valid_sha256(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and value != "0" * 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def valid_git_commit(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 40
+        and value != "0" * 40
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def coordinate_identity_sha256(values: Any) -> str:
+    if not finite_numbers(values):
+        raise ValueError("coordinate array must contain only finite numbers")
+    encoded = bytearray(COORDINATE_IDENTITY_DOMAIN)
+    encoded.extend(struct.pack(">Q", len(values)))
+    for raw_value in values:
+        value = float(raw_value)
+        if value == 0.0:
+            value = 0.0
+        encoded.extend(struct.pack(">d", value))
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def value_identity_sha256(values: Any) -> str:
+    if not finite_numbers(values):
+        raise ValueError("value array must contain only finite numbers")
+    encoded = bytearray(VALUE_IDENTITY_DOMAIN)
+    encoded.extend(struct.pack(">Q", len(values)))
+    for raw_value in values:
+        value = float(raw_value)
+        if value == 0.0:
+            value = 0.0
+        encoded.extend(struct.pack(">d", value))
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def id_array_identity_sha256(values: Any) -> str:
+    if not _nonnegative_integers(values):
+        raise ValueError("ID array must contain only non-negative integers")
+    encoded = bytearray(ID_ARRAY_IDENTITY_DOMAIN)
+    encoded.extend(struct.pack(">Q", len(values)))
+    for value in values:
+        if value > (1 << 64) - 1:
+            raise ValueError("ID cannot be represented as uint64")
+        encoded.extend(struct.pack(">Q", value))
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def canonical_json_bytes(value: Any) -> bytes:
+    return (
+        json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+
+
+def canonical_json_identity_sha256(value: Any) -> str:
+    return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
+
+
+def identity_bound_document_errors(
+    document: Any, identity_field: str, label: str
+) -> list[str]:
+    if not isinstance(document, dict):
+        return [f"{label}: identity-bound document is not an object"]
+    identity = document.get(identity_field)
+    expected_scope = f"canonical_json_body_without_{identity_field}"
+    if not isinstance(identity, dict) or identity != {
+        "algorithm": "sha256",
+        "scope": expected_scope,
+        "sha256": identity.get("sha256") if isinstance(identity, dict) else None,
+    }:
+        return [f"{label}: {identity_field} declaration is not exact"]
+    if not valid_sha256(identity.get("sha256")):
+        return [f"{label}: {identity_field} has an invalid SHA-256"]
+    body = dict(document)
+    body.pop(identity_field, None)
+    if canonical_json_identity_sha256(body) != identity["sha256"]:
+        return [f"{label}: {identity_field} does not bind the canonical document body"]
+    return []
+
+
+def native_series_identity_projection(series: dict[str, Any]) -> dict[str, Any]:
+    projection = {
+        "schema": NATIVE_SERIES_IDENTITY_SCHEMA,
+        "panel_id": series.get("panel_id"),
+        "family_id": series.get("family_id"),
+        "placement_mode": series.get("placement_mode"),
+        "station_id": series.get("station_id"),
+        "quantity_id": series.get("quantity_id"),
+        "quantity": series.get("quantity"),
+        "units": series.get("units"),
+        "scoring_role": series.get("scoring_role"),
+        "representation": series.get("representation"),
+        "placement_receipt_identity_sha256": series.get(
+            "placement_receipt_identity_sha256"
+        ),
+    }
+    if series.get("representation") == "shared_alias":
+        projection["shared_support_ref"] = series.get("shared_support_ref")
+        return projection
+    projection.update(
+        {
+            "support_identity_sha256": series.get("support_identity_sha256"),
+            "coordinate_id": series.get("coordinate_id"),
+            "coordinate_unit": series.get("coordinate_unit"),
+            "sample_count": len(series.get("coordinate", [])),
+            "sample_index_identity_sha256": id_array_identity_sha256(
+                series.get("sample_index", [])
+            ),
+            "raw_native_cell_id_identity_sha256": id_array_identity_sha256(
+                series.get("raw_native_cell_id", [])
+            ),
+            "coordinate_identity_sha256": series.get(
+                "coordinate_identity_sha256"
+            ),
+            "value_identity_sha256": series.get("value_identity_sha256"),
+            "segments": series.get("segments"),
+            "unsupported_samples": series.get("unsupported_samples"),
+        }
+    )
+    return projection
+
+
+def drivaerml_native_expected_series() -> dict[
+    tuple[str, str, str, str, str], str
+]:
+    expected: dict[tuple[str, str, str, str, str], str] = {}
+    for station_id in DRIVAERML_CONSTANT_VELOCITY_STATIONS:
+        expected[
+            (
+                "velocity_profiles",
+                "drivaerml-autocfd5-constant-v1",
+                "constant",
+                station_id,
+                "velocity_ratio",
+            )
+        ] = "materialized"
+    for station_id in DRIVAERML_RELATIVE_VELOCITY_STATIONS:
+        expected[
+            (
+                "velocity_profiles",
+                "drivaerml-velocity-relative-v3",
+                "relative",
+                station_id,
+                "velocity_ratio",
+            )
+        ] = "materialized"
+    for station_id in DRIVAERML_CONSTANT_CP_STATIONS:
+        expected[
+            (
+                "pressure_profiles",
+                "drivaerml_cp_constant_v1",
+                "constant",
+                station_id,
+                "cp",
+            )
+        ] = "materialized"
+    for station_id in DRIVAERML_RELATIVE_CP_STATIONS:
+        expected[
+            (
+                "pressure_profiles",
+                "drivaerml_cp_relative_v1",
+                "relative",
+                station_id,
+                "cp",
+            )
+        ] = "shared_alias" if station_id in DRIVAERML_RELATIVE_CP_ALIASES else "materialized"
+    return expected
+
+
+def _native_coverage_accumulator() -> dict[str, dict[str, int]]:
+    return {
+        family_id: {
+            "materialized_series_count": 0,
+            "shared_alias_series_count": 0,
+            "sample_count": 0,
+            "unsupported_sample_count": 0,
+            "segment_count": 0,
+        }
+        for family_id in DRIVAERML_EXPECTED_ALL484_COVERAGE
+    }
+
+
+def _accumulate_native_coverage(
+    accumulator: dict[str, dict[str, int]], case: dict[str, Any]
+) -> None:
+    for series in case.get("series", []):
+        if not isinstance(series, dict) or series.get("family_id") not in accumulator:
+            continue
+        family = accumulator[series["family_id"]]
+        if series.get("representation") == "shared_alias":
+            family["shared_alias_series_count"] += 1
+        elif series.get("representation") == "materialized":
+            family["materialized_series_count"] += 1
+            family["sample_count"] += len(series.get("sample_index", []))
+            family["unsupported_sample_count"] += len(
+                series.get("unsupported_samples", [])
+            )
+            family["segment_count"] += len(series.get("segments", []))
+
+
+def _finalize_native_coverage(
+    accumulator: dict[str, dict[str, int]],
+) -> dict[str, Any]:
+    for family in accumulator.values():
+        family["requested_sample_count"] = (
+            family["sample_count"] + family["unsupported_sample_count"]
+        )
+    total_fields = (
+        "materialized_series_count",
+        "shared_alias_series_count",
+        "sample_count",
+        "unsupported_sample_count",
+        "requested_sample_count",
+        "segment_count",
+    )
+    return {
+        "derivation": "recomputed_from_all_484_case_series_arrays",
+        "producer_expected_counts_verified": True,
+        "families": accumulator,
+        "totals": {
+            field: sum(family[field] for family in accumulator.values())
+            for field in total_fields
+        },
+    }
+
+
+def _strictly_increasing_integers(values: Any) -> bool:
+    return (
+        isinstance(values, list)
+        and all(
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and 0 <= value <= (1 << 64) - 1
+            for value in values
+        )
+        and all(right > left for left, right in zip(values, values[1:]))
+    )
+
+
+def _nonnegative_integers(values: Any) -> bool:
+    return isinstance(values, list) and all(
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and 0 <= value <= (1 << 64) - 1
+        for value in values
+    )
+
+
+def _native_segment_errors(
+    segments: Any,
+    sample_index: list[int],
+    coordinate: list[float],
+    label: str,
+) -> list[str]:
+    if not isinstance(segments, list) or not segments:
+        return [f"{label}: segments must be a nonempty array"]
+    errors: list[str] = []
+    exact_fields = {
+        "segment_id",
+        "emitted_index_start",
+        "emitted_index_stop",
+        "sample_index_start",
+        "sample_index_stop",
+        "coordinate_start",
+        "coordinate_stop",
+    }
+    expected_emitted_start = 0
+    previous_sample_stop: int | None = None
+    for segment_ordinal, segment in enumerate(segments):
+        segment_label = f"{label}/segments[{segment_ordinal}]"
+        if not isinstance(segment, dict) or set(segment) != exact_fields:
+            errors.append(
+                f"{segment_label}: segment must contain exactly {sorted(exact_fields)}"
+            )
+            continue
+        start = segment.get("emitted_index_start")
+        stop = segment.get("emitted_index_stop")
+        if (
+            not isinstance(segment.get("segment_id"), str)
+            or not segment.get("segment_id")
+            or not isinstance(start, int)
+            or isinstance(start, bool)
+            or not isinstance(stop, int)
+            or isinstance(stop, bool)
+            or start != expected_emitted_start
+            or stop <= start
+            or stop > len(sample_index)
+        ):
+            errors.append(
+                f"{segment_label}: segment IDs and half-open emitted-index ranges must be contiguous and in bounds"
+            )
+            continue
+        expected_sample_start = sample_index[start]
+        expected_sample_stop = sample_index[stop - 1] + 1
+        if segment.get("sample_index_start") != expected_sample_start or segment.get(
+            "sample_index_stop"
+        ) != expected_sample_stop:
+            errors.append(
+                f"{segment_label}: half-open sample-index range differs from emitted lineage"
+            )
+        if any(
+            right != left + 1
+            for left, right in zip(sample_index[start:stop], sample_index[start + 1 : stop])
+        ):
+            errors.append(
+                f"{segment_label}: an unsupported sample gap occurs inside a declared segment"
+            )
+        if any(
+            right <= left
+            for left, right in zip(coordinate[start:stop], coordinate[start + 1 : stop])
+        ):
+            errors.append(
+                f"{segment_label}: coordinates are not strictly increasing within the declared segment"
+            )
+        if previous_sample_stop is not None and expected_sample_start < previous_sample_stop:
+            errors.append(f"{segment_label}: sample-index ranges overlap")
+        coordinate_endpoints = [
+            segment.get("coordinate_start"),
+            segment.get("coordinate_stop"),
+        ]
+        if not finite_numbers(coordinate_endpoints) or coordinate_endpoints != [
+            coordinate[start],
+            coordinate[stop - 1],
+        ]:
+            errors.append(
+                f"{segment_label}: coordinate endpoints differ from emitted arrays"
+            )
+        expected_emitted_start = stop
+        previous_sample_stop = expected_sample_stop
+    if expected_emitted_start != len(sample_index):
+        errors.append(f"{label}: segments do not cover every emitted sample exactly once")
+    return errors
+
+
+def _unsupported_sample_errors(
+    unsupported: Any,
+    sample_index: list[int],
+    label: str,
+) -> list[str]:
+    if not isinstance(unsupported, list):
+        return [f"{label}: unsupported_samples must be an array"]
+    errors: list[str] = []
+    previous = -1
+    emitted = set(sample_index)
+    for index, item in enumerate(unsupported):
+        item_label = f"{label}/unsupported_samples[{index}]"
+        if not isinstance(item, dict) or set(item) != {
+            "sample_index",
+            "coordinate",
+            "reason",
+        }:
+            errors.append(
+                f"{item_label}: unsupported sample must contain sample_index, coordinate, and reason"
+            )
+            continue
+        sample = item.get("sample_index")
+        if (
+            not isinstance(sample, int)
+            or isinstance(sample, bool)
+            or sample < 0
+            or sample <= previous
+            or sample in emitted
+        ):
+            errors.append(
+                f"{item_label}: unsupported sample index must be ordered, unique, non-negative, and absent from emitted lineage"
+            )
+        if not finite_numbers([item.get("coordinate")]):
+            errors.append(f"{item_label}: coordinate must be finite")
+        if not isinstance(item.get("reason"), str) or not item["reason"]:
+            errors.append(f"{item_label}: reason must be a nonempty string")
+        if isinstance(sample, int) and not isinstance(sample, bool):
+            previous = sample
+    return errors
+
+
+def drivaerml_native_case_series_errors(case: Any, label: str) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(case, dict):
+        return [f"{label}: case record is not an object"]
+    expected_case_fields = {
+        "schema",
+        "schema_version",
+        "dataset_id",
+        "dataset_revision",
+        "case_id",
+        "series_count",
+        "truth_source",
+        "relative_scoring_activated",
+        "native_volume",
+        "native_boundary",
+        "input_bindings",
+        "generator",
+        "series",
+        "case_identity",
+    }
+    if set(case) != expected_case_fields:
+        errors.append(
+            f"{label}: native case fields differ from schema 2.0; expected exactly {sorted(expected_case_fields)}"
+        )
+    if (
+        case.get("schema") != NATIVE_DRIVAERML_CASE_SCHEMA
+        or case.get("schema_version") != "2.0"
+        or case.get("dataset_id") != "drivaerml"
+        or case.get("dataset_revision") != NATIVE_DRIVAERML_DATASET_REVISION
+        or case.get("series_count") != 40
+        or case.get("truth_source") != NATIVE_TRUTH_SOURCE
+        or case.get("relative_scoring_activated") is not False
+    ):
+        errors.append(f"{label}: native case contract binding is stale or incomplete")
+    errors.extend(identity_bound_document_errors(case, "case_identity", label))
+    if not isinstance(case.get("input_bindings"), dict) or set(
+        case.get("input_bindings", {})
+    ) != {"constant_velocity", "relative_velocity", "cp"}:
+        errors.append(f"{label}: case input_bindings differ from the three verified producer families")
+    generator = case.get("generator")
+    exporter_source = generator.get("exporter_source", {}) if isinstance(
+        generator, dict
+    ) else {}
+    if (
+        not isinstance(generator, dict)
+        or set(generator) != {"evaluator_git_revision", "exporter_source"}
+        or not valid_git_commit(generator.get("evaluator_git_revision"))
+        or not isinstance(exporter_source, dict)
+        or set(exporter_source) != {"path", "sha256", "size_bytes"}
+        or exporter_source.get("path")
+        != "scripts/export_drivaerml_native_profile_truth.py"
+        or not valid_sha256(exporter_source.get("sha256"))
+        or not isinstance(exporter_source.get("size_bytes"), int)
+        or exporter_source.get("size_bytes", 0) <= 0
+    ):
+        errors.append(f"{label}: generator does not bind an evaluator revision and exporter source")
+    series_records = case.get("series")
+    if not isinstance(series_records, list):
+        return [f"{label}: series must be an array"]
+    expected = drivaerml_native_expected_series()
+    provided: dict[tuple[str, str, str, str, str], dict[str, Any]] = {}
+    forbidden_alias_arrays = {
+        "sample_index",
+        "raw_native_cell_id",
+        "coordinate",
+        "value",
+        "prediction",
+        "segments",
+        "unsupported_samples",
+        "coordinate_identity_sha256",
+        "value_identity_sha256",
+    }
+    for index, series in enumerate(series_records):
+        series_label = f"{label}/series[{index}]"
+        if not isinstance(series, dict):
+            errors.append(f"{series_label}: series is not an object")
+            continue
+        key = (
+            series.get("panel_id"),
+            series.get("family_id"),
+            series.get("placement_mode"),
+            series.get("station_id"),
+            series.get("quantity_id"),
+        )
+        if key in provided:
+            errors.append(f"{series_label}: duplicate native profile series {key}")
+            continue
+        provided[key] = series
+        expected_representation = expected.get(key)
+        if expected_representation is None:
+            errors.append(f"{series_label}: unexpected native profile series {key}")
+            continue
+        if series.get("representation") != expected_representation:
+            errors.append(
+                f"{series_label}: expected representation {expected_representation!r}"
+            )
+        common_fields = {
+            "panel_id",
+            "family_id",
+            "placement_mode",
+            "station_id",
+            "quantity_id",
+            "quantity",
+            "units",
+            "scoring_role",
+            "representation",
+            "placement_receipt_identity_sha256",
+            "series_identity_sha256",
+        }
+        expected_fields = (
+            common_fields | {"shared_support_ref"}
+            if expected_representation == "shared_alias"
+            else common_fields
+            | {
+                "coordinate_id",
+                "coordinate_unit",
+                "support_identity_sha256",
+                "coordinate_identity_sha256",
+                "value_identity_sha256",
+                "sample_index",
+                "raw_native_cell_id",
+                "coordinate",
+                "value",
+                "segments",
+                "unsupported_samples",
+            }
+        )
+        if set(series) != expected_fields:
+            errors.append(
+                f"{series_label}: {expected_representation} series fields differ; expected exactly {sorted(expected_fields)}"
+            )
+        for descriptor in ("quantity", "units", "scoring_role"):
+            if not isinstance(series.get(descriptor), str) or not series[descriptor]:
+                errors.append(f"{series_label}: missing {descriptor}")
+        relative_family = series.get("family_id") in {
+            "drivaerml-velocity-relative-v3",
+            "drivaerml_cp_relative_v1",
+        }
+        velocity_family = series.get("panel_id") == "velocity_profiles"
+        expected_descriptors = {
+            "quantity": (
+                "velocity_magnitude_ratio"
+                if velocity_family
+                else "pressure_coefficient"
+            ),
+            "units": "1",
+            "scoring_role": (
+                "report_only" if relative_family else "inherits_parent_candidate"
+            ),
+        }
+        for descriptor, expected_value in expected_descriptors.items():
+            if series.get(descriptor) != expected_value:
+                errors.append(
+                    f"{series_label}: {descriptor} differs from the closed family contract"
+                )
+        for identity_field in ("placement_receipt_identity_sha256",):
+            if not valid_sha256(series.get(identity_field)):
+                errors.append(f"{series_label}: invalid {identity_field}")
+        if expected_representation == "shared_alias":
+            present_arrays = sorted(forbidden_alias_arrays.intersection(series))
+            if present_arrays:
+                errors.append(
+                    f"{series_label}: shared alias must not materialize {present_arrays}"
+                )
+            reference = series.get("shared_support_ref")
+            expected_reference = DRIVAERML_RELATIVE_CP_ALIASES.get(
+                str(series.get("station_id"))
+            )
+            if not isinstance(reference, dict):
+                errors.append(f"{series_label}: missing shared_support_ref")
+            elif set(reference) != {
+                "canonical_family_id",
+                "canonical_station_id",
+                "canonical_support_identity_sha256",
+                "shared_support_id",
+            } or (
+                reference.get("canonical_family_id"),
+                reference.get("canonical_station_id"),
+            ) != expected_reference:
+                errors.append(
+                    f"{series_label}: shared_support_ref differs from the exact canonical constant support"
+                )
+            elif not valid_sha256(
+                reference.get("canonical_support_identity_sha256")
+            ) or reference.get("shared_support_id") != DRIVAERML_SHARED_CP_SUPPORT_IDS.get(
+                series.get("station_id")
+            ):
+                errors.append(
+                    f"{series_label}: shared_support_ref identities are invalid"
+                )
+            if not valid_sha256(series.get("series_identity_sha256")):
+                errors.append(f"{series_label}: invalid series_identity_sha256")
+            elif series.get(
+                "series_identity_sha256"
+            ) != canonical_json_identity_sha256(
+                native_series_identity_projection(series)
+            ):
+                errors.append(
+                    f"{series_label}: series_identity_sha256 does not bind the exact alias projection"
+                )
+            continue
+
+        for descriptor in ("coordinate_id", "coordinate_unit"):
+            if not isinstance(series.get(descriptor), str) or not series[descriptor]:
+                errors.append(f"{series_label}: missing {descriptor}")
+        expected_coordinate = (
+            ("distance_m", "m")
+            if series.get("family_id") == "drivaerml-autocfd5-constant-v1"
+            else ("normalized_arc_length", "1")
+            if series.get("family_id") == "drivaerml-velocity-relative-v3"
+            else ("arc_length_m", "m")
+        )
+        if (
+            series.get("coordinate_id"),
+            series.get("coordinate_unit"),
+        ) != expected_coordinate:
+            errors.append(
+                f"{series_label}: coordinate ID/unit differ from the closed family contract"
+            )
+        coordinate = series.get("coordinate")
+        values = series.get("value")
+        sample_index = series.get("sample_index")
+        native_cell_ids = series.get("raw_native_cell_id")
+        if not finite_numbers(coordinate) or not finite_numbers(values):
+            errors.append(f"{series_label}: coordinate/value arrays are not finite")
+            continue
+        lengths = {
+            len(coordinate),
+            len(values),
+            len(sample_index) if isinstance(sample_index, list) else -1,
+            len(native_cell_ids) if isinstance(native_cell_ids, list) else -2,
+        }
+        if len(lengths) != 1 or not coordinate:
+            errors.append(
+                f"{series_label}: coordinate, value, sample_index, and raw_native_cell_id must be nonempty and aligned"
+            )
+        if not _strictly_increasing_integers(sample_index):
+            errors.append(
+                f"{series_label}: sample_index is not strictly increasing non-negative integer lineage"
+            )
+        if not _nonnegative_integers(native_cell_ids):
+            errors.append(f"{series_label}: raw_native_cell_id is invalid")
+        segments = series.get("segments")
+        unsupported = series.get("unsupported_samples")
+        if isinstance(sample_index, list) and isinstance(coordinate, list):
+            errors.extend(
+                _native_segment_errors(
+                    segments, sample_index, coordinate, series_label
+                )
+            )
+            errors.extend(
+                _unsupported_sample_errors(unsupported, sample_index, series_label)
+            )
+        for identity_field in (
+            "support_identity_sha256",
+            "coordinate_identity_sha256",
+            "value_identity_sha256",
+            "series_identity_sha256",
+        ):
+            if not valid_sha256(series.get(identity_field)):
+                errors.append(f"{series_label}: invalid {identity_field}")
+        if finite_numbers(coordinate) and series.get(
+            "coordinate_identity_sha256"
+        ) != coordinate_identity_sha256(coordinate):
+            errors.append(
+                f"{series_label}: coordinate_identity_sha256 does not bind the ordered coordinate array"
+            )
+        if finite_numbers(values) and series.get(
+            "value_identity_sha256"
+        ) != value_identity_sha256(values):
+            errors.append(
+                f"{series_label}: value_identity_sha256 does not bind the ordered value array"
+            )
+        if (
+            valid_sha256(series.get("series_identity_sha256"))
+            and _strictly_increasing_integers(sample_index)
+            and _nonnegative_integers(native_cell_ids)
+            and series.get("series_identity_sha256")
+            != canonical_json_identity_sha256(native_series_identity_projection(series))
+        ):
+            errors.append(
+                f"{series_label}: series_identity_sha256 does not bind the exact materialized projection"
+            )
+
+    missing = set(expected) - set(provided)
+    if missing:
+        errors.append(f"{label}: missing native profile series {sorted(missing)}")
+    if len(series_records) != 40:
+        errors.append(f"{label}: expected exactly 40 native profile series")
+    if list(provided) != list(expected):
+        errors.append(f"{label}: native profile series order differs from the closed 40-series contract")
+
+    for station_id, (canonical_family, canonical_station) in (
+        DRIVAERML_RELATIVE_CP_ALIASES.items()
+    ):
+        alias_key = (
+            "pressure_profiles",
+            "drivaerml_cp_relative_v1",
+            "relative",
+            station_id,
+            "cp",
+        )
+        canonical_key = (
+            "pressure_profiles",
+            canonical_family,
+            "constant",
+            canonical_station,
+            "cp",
+        )
+        alias = provided.get(alias_key)
+        canonical = provided.get(canonical_key)
+        if alias and canonical and alias.get("shared_support_ref", {}).get(
+            "canonical_support_identity_sha256"
+        ) != canonical.get("support_identity_sha256"):
+            errors.append(
+                f"{label}/{station_id}: shared alias reference does not bind canonical support identity"
+            )
+    return errors
+
+
+def _safe_profile_path(root: Path, base: Path, declared_path: Any) -> Path | None:
+    if not isinstance(declared_path, str) or not declared_path or Path(
+        declared_path
+    ).is_absolute():
+        return None
+    candidate = (base / declared_path).resolve()
+    try:
+        candidate.relative_to(root.resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
+def _file_binding_errors(
+    path: Path | None,
+    declared_sha256: Any,
+    declared_size: Any,
+    label: str,
+) -> list[str]:
+    errors: list[str] = []
+    if path is None or not path.is_file():
+        return [f"{label}: bound file is missing or outside profile-ground-truth"]
+    if not valid_sha256(declared_sha256) or sha256_file(path) != declared_sha256:
+        errors.append(f"{label}: SHA-256 binding mismatch")
+    if declared_size is not None and declared_size != path.stat().st_size:
+        errors.append(f"{label}: size_bytes binding mismatch")
+    return errors
+
+
+def drivaerml_native_volume_audit_errors(
+    case: dict[str, Any],
+    native_pin_case: dict[str, Any],
+    label: str,
+) -> list[str]:
+    errors: list[str] = []
+    audit = case.get("native_volume")
+    if not isinstance(audit, dict):
+        return [f"{label}: missing native_volume"]
+    required_fields = {
+        "logical_path",
+        "logical_size_bytes",
+        "pre_post_source_stat_unchanged",
+        "source_parts",
+        "field_name",
+        "association",
+        "vtk_type",
+        "number_of_components",
+        "tuple_count",
+        "declared_payload_bytes",
+        "retained_full_payload_sha256",
+        "full_payload_verification",
+        "selected_unique_raw_cell_id_count",
+        "selected_values_sha256",
+    }
+    if set(audit) != required_fields:
+        errors.append(
+            f"{label}: native_volume must contain exactly {sorted(required_fields)}"
+        )
+    pinned_volume = native_pin_case.get("volume", {})
+    pinned_parts = pinned_volume.get("parts", [])
+    expected_logical_path = pinned_volume.get("logical_path_after_assembly")
+    expected_logical_size = pinned_volume.get("total_size_bytes")
+    if audit.get("logical_path") != expected_logical_path or audit.get(
+        "logical_size_bytes"
+    ) != expected_logical_size:
+        errors.append(f"{label}: logical native volume differs from the source pin")
+    if audit.get("pre_post_source_stat_unchanged") is not True:
+        errors.append(f"{label}: native source stability was not retained")
+    source_parts = audit.get("source_parts")
+    if not isinstance(source_parts, list) or len(source_parts) != len(pinned_parts):
+        errors.append(f"{label}: native source-part list differs from the source pin")
+    else:
+        for index, (part, pinned) in enumerate(zip(source_parts, pinned_parts)):
+            expected = {
+                "part_index": pinned.get("part_index"),
+                "path": pinned.get("path"),
+                "size_bytes": pinned.get("size_bytes"),
+                "sha256": pinned.get("lfs_sha256"),
+            }
+            if part != expected:
+                errors.append(
+                    f"{label}: native source part {index} differs from the exact source pin"
+                )
+    if (
+        audit.get("field_name") != "UMeanTrim"
+        or audit.get("association") != "CellData"
+        or audit.get("vtk_type") != "Float32"
+        or audit.get("number_of_components") != 3
+    ):
+        errors.append(f"{label}: native volume audit is not bound to Float32 UMeanTrim[3]")
+    for field in (
+        "logical_size_bytes",
+        "tuple_count",
+        "declared_payload_bytes",
+        "selected_unique_raw_cell_id_count",
+    ):
+        value = audit.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            errors.append(f"{label}: {field} must be a positive integer")
+    for field in ("retained_full_payload_sha256", "selected_values_sha256"):
+        if not valid_sha256(audit.get(field)):
+            errors.append(f"{label}: invalid {field}")
+    if isinstance(audit.get("tuple_count"), int) and audit.get(
+        "declared_payload_bytes"
+    ) != audit["tuple_count"] * 3 * 4:
+        errors.append(
+            f"{label}: declared_payload_bytes differs from Float32 UMeanTrim[3] tuple count"
+        )
+    if (
+        audit.get("full_payload_verification")
+        != "retained_all484_native_volume_audit_exact_source_binding"
+    ):
+        errors.append(f"{label}: full UMeanTrim payload verification is incomplete")
+
+    tuple_count = audit.get("tuple_count")
+    raw_ids = {
+        raw_id
+        for series in case.get("series", [])
+        if series.get("representation") == "materialized"
+        and series.get("panel_id") == "velocity_profiles"
+        for raw_id in series.get("raw_native_cell_id", [])
+    }
+    if isinstance(tuple_count, int) and any(
+        not isinstance(raw_id, int) or raw_id < 0 or raw_id >= tuple_count
+        for raw_id in raw_ids
+    ):
+        errors.append(f"{label}: selected velocity native-cell ID is out of bounds")
+    if audit.get("selected_unique_raw_cell_id_count") != len(raw_ids):
+        errors.append(
+            f"{label}: selected_unique_raw_cell_id_count differs from materialized velocity lineage"
+        )
+    return errors
+
+
+def drivaerml_native_boundary_audit_errors(
+    case: dict[str, Any],
+    native_pin_case: dict[str, Any],
+    label: str,
+) -> list[str]:
+    errors: list[str] = []
+    audit = case.get("native_boundary")
+    if not isinstance(audit, dict):
+        return [f"{label}: missing native_boundary"]
+    required_fields = {
+        "logical_path",
+        "logical_size_bytes",
+        "source_sha256",
+        "pin_git_blob_sha1",
+        "full_file_verification",
+        "pre_post_source_stat_unchanged",
+        "field_name",
+        "association",
+        "vtk_type",
+        "number_of_components",
+        "tuple_count",
+        "declared_payload_bytes",
+        "referenced_producer_row_count",
+        "selected_unique_raw_polygon_id_count",
+        "selected_values_sha256",
+        "producer_value_crosscheck",
+    }
+    if set(audit) != required_fields:
+        errors.append(
+            f"{label}: native_boundary must contain exactly {sorted(required_fields)}"
+        )
+    pinned = native_pin_case.get("boundary", {})
+    if (
+        audit.get("logical_path") != pinned.get("path")
+        or audit.get("logical_size_bytes") != pinned.get("size_bytes")
+        or audit.get("source_sha256") != pinned.get("lfs_sha256")
+        or audit.get("pin_git_blob_sha1") != pinned.get("git_blob_sha1")
+    ):
+        errors.append(f"{label}: native boundary differs from the exact source pin")
+    if (
+        audit.get("full_file_verification")
+        != "sha256_recomputed_against_native_source_pin"
+        or audit.get("pre_post_source_stat_unchanged") is not True
+        or audit.get("producer_value_crosscheck")
+        != "exact_float_equality_all_referenced_rows"
+    ):
+        errors.append(f"{label}: native boundary source verification is incomplete")
+    if (
+        audit.get("field_name") != "pMeanTrim"
+        or audit.get("association") != "CellData"
+        or audit.get("vtk_type") != "Float32"
+        or audit.get("number_of_components") != 1
+    ):
+        errors.append(f"{label}: native boundary audit is not bound to Float32 pMeanTrim CellData")
+    for field in (
+        "logical_size_bytes",
+        "tuple_count",
+        "declared_payload_bytes",
+        "referenced_producer_row_count",
+        "selected_unique_raw_polygon_id_count",
+    ):
+        value = audit.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            errors.append(f"{label}: native boundary {field} must be a positive integer")
+    if isinstance(audit.get("tuple_count"), int) and audit.get(
+        "declared_payload_bytes"
+    ) != audit["tuple_count"] * 4:
+        errors.append(
+            f"{label}: native boundary payload differs from Float32 pMeanTrim tuple count"
+        )
+    if not valid_sha256(audit.get("source_sha256")) or not valid_sha256(
+        audit.get("selected_values_sha256")
+    ):
+        errors.append(f"{label}: native boundary SHA-256 evidence is invalid")
+    cp_series = [
+        series
+        for series in case.get("series", [])
+        if isinstance(series, dict)
+        and series.get("panel_id") == "pressure_profiles"
+        and series.get("representation") == "materialized"
+    ]
+    raw_ids = [
+        raw_id
+        for series in cp_series
+        for raw_id in series.get("raw_native_cell_id", [])
+    ]
+    tuple_count = audit.get("tuple_count")
+    if isinstance(tuple_count, int) and any(
+        not isinstance(raw_id, int) or raw_id < 0 or raw_id >= tuple_count
+        for raw_id in raw_ids
+    ):
+        errors.append(f"{label}: selected Cp native-polygon ID is out of bounds")
+    if audit.get("referenced_producer_row_count") != len(raw_ids):
+        errors.append(
+            f"{label}: referenced_producer_row_count differs from materialized Cp lineage"
+        )
+    if audit.get("selected_unique_raw_polygon_id_count") != len(set(raw_ids)):
+        errors.append(
+            f"{label}: selected_unique_raw_polygon_id_count differs from materialized Cp lineage"
+        )
+    return errors
+
+
+def drivaerml_native_declaration_errors(
+    declaration: Any, expected_pin_sha256: str, label: str = "drivaerml/native-profile-truth-v2"
+) -> list[str]:
+    expected = {
+        "source_kind": "native_cfd",
+        "analytical_dummy": False,
+        "dataset_revision": NATIVE_DRIVAERML_DATASET_REVISION,
+        "native_source_pin_sha256": expected_pin_sha256,
+        "case_count": 484,
+    }
+    if not isinstance(declaration, dict):
+        return [f"{label}: missing native_profile_truth declaration"]
+    expected_fields = set(expected) | {"master_index_file", "master_index_sha256"}
+    errors = (
+        []
+        if set(declaration) == expected_fields
+        else [
+            f"{label}: native_profile_truth declaration fields differ; expected exactly {sorted(expected_fields)}"
+        ]
+    )
+    errors.extend(
+        f"{label}: declaration {field} must be {expected_value!r}"
+        for field, expected_value in expected.items()
+        if declaration.get(field) != expected_value
+    )
+    if declaration.get("analytical_dummy") is not False:
+        errors.append(f"{label}: analytical dummy data cannot be declared native CFD")
+    if not isinstance(declaration.get("master_index_file"), str):
+        errors.append(f"{label}: declaration must bind a master_index_file")
+    if not valid_sha256(declaration.get("master_index_sha256")):
+        errors.append(f"{label}: declaration must bind a nonzero master_index_sha256")
+    return errors
+
+
+def drivaerml_master_coverage_errors(
+    official_case_ids: list[str],
+    master_case_ids: Any,
+    chunk_records: Any,
+    label: str = "drivaerml/native-profile-truth-v2",
+) -> list[str]:
+    errors: list[str] = []
+    if (
+        not isinstance(master_case_ids, list)
+        or master_case_ids != official_case_ids
+        or len(master_case_ids) != 484
+        or len(set(master_case_ids)) != 484
+    ):
+        errors.append(
+            f"{label}: master index does not cover the exact ordered all-484 source-pin cases"
+        )
+    chunk_case_ids = (
+        [
+            case_id
+            for chunk in chunk_records
+            if isinstance(chunk, dict)
+            for case_id in chunk.get("case_ids", [])
+        ]
+        if isinstance(chunk_records, list)
+        else []
+    )
+    if chunk_case_ids != official_case_ids or len(set(chunk_case_ids)) != len(
+        chunk_case_ids
+    ):
+        errors.append(
+            f"{label}: master chunks are incomplete, duplicated, gapped, or reordered"
+        )
+    return errors
+
+
+def drivaerml_thin_reference_errors(
+    references: Any,
+    master_records: dict[str, dict[str, Any]],
+    official_split: list[str],
+    label: str,
+) -> list[str]:
+    if not isinstance(references, list):
+        return [f"{label}: chunk_refs must be an array"]
+    errors: list[str] = []
+    referenced_case_ids: list[str] = []
+    for index, reference in enumerate(references):
+        ref_label = f"{label}/chunk_refs[{index}]"
+        if not isinstance(reference, dict):
+            errors.append(f"{ref_label}: reference is not an object")
+            continue
+        if set(reference) != {"chunk_id", "path", "sha256", "case_ids"}:
+            errors.append(f"{ref_label}: shared chunk reference fields differ from schema 2.0")
+        master = master_records.get(reference.get("chunk_id"))
+        if master is None:
+            errors.append(f"{ref_label}: unknown shared chunk_id")
+            continue
+        if reference.get("sha256") != master.get("sha256"):
+            errors.append(f"{ref_label}: shared chunk SHA differs from master")
+        if reference.get("path") != master.get("path"):
+            errors.append(f"{ref_label}: shared chunk path differs from master")
+        cases = reference.get("case_ids")
+        if not isinstance(cases, list):
+            errors.append(f"{ref_label}: case_ids must be an array")
+            continue
+        master_cases = master.get("case_ids", [])
+        expected_order = [case_id for case_id in master_cases if case_id in set(cases)]
+        if cases != expected_order or any(
+            case_id not in master_cases for case_id in cases
+        ):
+            errors.append(
+                f"{ref_label}: referenced cases differ from exact shared chunk order"
+            )
+        referenced_case_ids.extend(cases)
+    if referenced_case_ids != official_split or len(
+        set(referenced_case_ids)
+    ) != len(referenced_case_ids):
+        errors.append(
+            f"{label}: shared chunk refs are incomplete, duplicated, gapped, or reordered"
+        )
+    return errors
+
+
+def drivaerml_native_bundle_errors(
+    ground_truth_root: Path,
+    dataset_manifest: dict[str, Any],
+    submission_root: Path,
+) -> list[str]:
+    errors: list[str] = []
+    label = "drivaerml/native-profile-truth-v2"
+    declaration = dataset_manifest.get("native_profile_truth")
+    native_pin_path = (
+        submission_root
+        / "benchmark-specs"
+        / "drivaerml"
+        / "proposal"
+        / "native-source-pin.json"
+    )
+    expected_pin_sha256 = sha256_file(native_pin_path)
+    errors.extend(
+        drivaerml_native_declaration_errors(
+            declaration, expected_pin_sha256, label
+        )
+    )
+    if not isinstance(declaration, dict):
+        return errors
+    master_path = _safe_profile_path(
+        ground_truth_root,
+        ground_truth_root,
+        declaration.get("master_index_file"),
+    )
+    errors.extend(
+        _file_binding_errors(
+            master_path,
+            declaration.get("master_index_sha256"),
+            None,
+            f"{label}/master-index",
+        )
+    )
+    if master_path is None or not master_path.is_file():
+        return errors
+    master = load_json(master_path)
+    expected_master_fields = {
+        "schema",
+        "schema_version",
+        "dataset_id",
+        "dataset_repository",
+        "dataset_revision",
+        "truth_source",
+        "relative_scoring_activated",
+        "coverage_summary",
+        "case_count",
+        "case_ids",
+        "cases_per_chunk",
+        "series_per_case",
+        "series_count",
+        "profile_set",
+        "chunks",
+        "case_locations",
+        "splits",
+        "provenance",
+        "release_receipt_path",
+        "index_identity",
+    }
+    if set(master) != expected_master_fields:
+        errors.append(
+            f"{label}: master index fields differ from schema 2.0; expected exactly {sorted(expected_master_fields)}"
+        )
+    if master.get("schema") != NATIVE_DRIVAERML_INDEX_SCHEMA or master.get(
+        "schema_version"
+    ) != "2.0":
+        errors.append(f"{label}: master index schema must be native v2")
+    if (
+        master.get("dataset_id") != "drivaerml"
+        or master.get("dataset_repository") != "neashton/drivaerml"
+        or master.get("dataset_revision") != NATIVE_DRIVAERML_DATASET_REVISION
+    ):
+        errors.append(f"{label}: master index dataset binding is stale")
+    errors.extend(identity_bound_document_errors(master, "index_identity", label))
+    source_pin = load_json(native_pin_path)
+    official_case_ids = [record.get("case_id") for record in source_pin.get("cases", [])]
+    if len(official_case_ids) != 484 or len(set(official_case_ids)) != 484:
+        errors.append(f"{label}: native source pin itself does not contain 484 unique cases")
+    if master.get("case_count") != 484:
+        errors.append(f"{label}: master index case_count must be 484")
+    if master.get("series_per_case") != 40:
+        errors.append(f"{label}: master index must declare exactly 40 series per case")
+    if (
+        master.get("series_count") != 484 * 40
+        or master.get("relative_scoring_activated") is not False
+        or master.get("profile_set")
+        != {
+            "drivaerml-autocfd5-constant-v1": 16,
+            "drivaerml-velocity-relative-v3": 16,
+            "drivaerml_cp_constant_v1": 4,
+            "drivaerml_cp_relative_v1": 4,
+        }
+        or master.get("release_receipt_path") != "release-receipt.json"
+    ):
+        errors.append(f"{label}: master profile-set, total, inactive state, or release receipt differs")
+    if not isinstance(master.get("cases_per_chunk"), int) or isinstance(
+        master.get("cases_per_chunk"), bool
+    ) or master.get("cases_per_chunk", 0) <= 0:
+        errors.append(f"{label}: cases_per_chunk must be a positive integer")
+    if master.get("truth_source") != NATIVE_TRUTH_SOURCE:
+        errors.append(
+            f"{label}: master index lacks the exact pinned non-analytical native CFD truth_source declaration"
+        )
+
+    native_pin_cases = {
+        record.get("case_id"): record for record in source_pin.get("cases", [])
+    }
+    coverage_accumulator = _native_coverage_accumulator()
+    evaluator_revisions: set[str] = set()
+    case_exporter_bindings: set[str] = set()
+    staging_case_bindings: list[dict[str, Any]] = []
+    case_input_inventory: list[dict[str, Any]] = []
+    native_volume_inventory: list[dict[str, Any]] = []
+    native_boundary_inventory: list[dict[str, Any]] = []
+    master_chunk_records: dict[str, dict[str, Any]] = {}
+    master_base = master_path.parent
+    chunks = master.get("chunks")
+    if not isinstance(chunks, list) or not chunks:
+        errors.append(f"{label}: master chunks must be a nonempty array")
+        chunks = []
+    for entry_index, entry in enumerate(chunks):
+        entry_label = f"{label}/chunks[{entry_index}]"
+        if not isinstance(entry, dict):
+            errors.append(f"{entry_label}: chunk binding is not an object")
+            continue
+        if set(entry) != {
+            "chunk_id",
+            "path",
+            "sha256",
+            "size_bytes",
+            "case_count",
+            "case_ids",
+            "series_count",
+        }:
+            errors.append(f"{entry_label}: master chunk binding fields differ from schema 2.0")
+        chunk_id = entry.get("chunk_id")
+        if not isinstance(chunk_id, str) or not chunk_id or chunk_id in master_chunk_records:
+            errors.append(f"{entry_label}: chunk_id is missing or duplicated")
+            continue
+        chunk_path = _safe_profile_path(
+            ground_truth_root, master_base, entry.get("path")
+        )
+        errors.extend(
+            _file_binding_errors(
+                chunk_path,
+                entry.get("sha256"),
+                entry.get("size_bytes"),
+                entry_label,
+            )
+        )
+        case_ids = entry.get("case_ids")
+        if (
+            not isinstance(case_ids, list)
+            or len(case_ids) != len(set(case_ids))
+            or entry.get("case_count") != len(case_ids)
+            or entry.get("series_count") != len(case_ids) * 40
+        ):
+            errors.append(f"{entry_label}: case/series counts or uniqueness are invalid")
+            continue
+        master_chunk_records[chunk_id] = {
+            **entry,
+            "resolved_path": chunk_path,
+        }
+        if chunk_path is None or not chunk_path.is_file():
+            continue
+        chunk = load_json(chunk_path)
+        if set(chunk) != {
+            "schema",
+            "schema_version",
+            "dataset_id",
+            "dataset_revision",
+            "truth_source",
+            "chunk_id",
+            "case_count",
+            "case_ids",
+            "series_per_case",
+            "series_count",
+            "cases",
+            "chunk_identity",
+        }:
+            errors.append(f"{entry_label}: chunk fields differ from schema 2.0")
+        if (
+            chunk.get("schema") != NATIVE_DRIVAERML_CHUNK_SCHEMA
+            or chunk.get("schema_version") != "2.0"
+            or chunk.get("dataset_id") != "drivaerml"
+            or chunk.get("dataset_revision") != NATIVE_DRIVAERML_DATASET_REVISION
+            or chunk.get("chunk_id") != chunk_id
+            or chunk.get("case_count") != len(case_ids)
+            or chunk.get("case_ids") != case_ids
+            or chunk.get("series_per_case") != 40
+            or chunk.get("series_count") != len(case_ids) * 40
+            or chunk.get("truth_source") != NATIVE_TRUTH_SOURCE
+        ):
+            errors.append(f"{entry_label}: chunk schema or immutable binding is stale")
+        errors.extend(
+            identity_bound_document_errors(chunk, "chunk_identity", entry_label)
+        )
+        cases = chunk.get("cases")
+        loaded_case_ids = (
+            [case.get("case_id") for case in cases if isinstance(case, dict)]
+            if isinstance(cases, list)
+            else []
+        )
+        if loaded_case_ids != case_ids:
+            errors.append(f"{entry_label}: chunk case order differs from its master binding")
+        for case in cases if isinstance(cases, list) else []:
+            case_id = case.get("case_id") if isinstance(case, dict) else None
+            case_label = f"{entry_label}/{case_id}"
+            if not isinstance(case, dict) or case.get("truth_source") != NATIVE_TRUTH_SOURCE:
+                errors.append(
+                    f"{case_label}: case lacks the exact pinned non-analytical native CFD truth_source declaration"
+                )
+            errors.extend(drivaerml_native_case_series_errors(case, case_label))
+            if isinstance(case, dict):
+                _accumulate_native_coverage(coverage_accumulator, case)
+                if isinstance(case_id, str):
+                    canonical_case = canonical_json_bytes(case)
+                    staging_case_bindings.append(
+                        {
+                            "path": f"cases/{case_id}.json",
+                            "sha256": hashlib.sha256(canonical_case).hexdigest(),
+                            "size_bytes": len(canonical_case),
+                        }
+                    )
+                    case_input_inventory.append(
+                        {
+                            "case_id": case_id,
+                            "input_bindings": case.get("input_bindings"),
+                        }
+                    )
+                    volume = case.get("native_volume", {})
+                    native_volume_inventory.append(
+                        {
+                            "case_id": case_id,
+                            "logical_path": volume.get("logical_path"),
+                            "logical_size_bytes": volume.get("logical_size_bytes"),
+                            "retained_full_payload_sha256": volume.get(
+                                "retained_full_payload_sha256"
+                            ),
+                            "selected_unique_raw_cell_id_count": volume.get(
+                                "selected_unique_raw_cell_id_count"
+                            ),
+                            "selected_values_sha256": volume.get(
+                                "selected_values_sha256"
+                            ),
+                        }
+                    )
+                    boundary = case.get("native_boundary", {})
+                    native_boundary_inventory.append(
+                        {
+                            "case_id": case_id,
+                            "logical_path": boundary.get("logical_path"),
+                            "logical_size_bytes": boundary.get("logical_size_bytes"),
+                            "source_sha256": boundary.get("source_sha256"),
+                            "tuple_count": boundary.get("tuple_count"),
+                            "referenced_producer_row_count": boundary.get(
+                                "referenced_producer_row_count"
+                            ),
+                            "selected_unique_raw_polygon_id_count": boundary.get(
+                                "selected_unique_raw_polygon_id_count"
+                            ),
+                            "selected_values_sha256": boundary.get(
+                                "selected_values_sha256"
+                            ),
+                        }
+                    )
+                revision = case.get("generator", {}).get("evaluator_git_revision")
+                if isinstance(revision, str):
+                    evaluator_revisions.add(revision)
+                exporter_binding = case.get("generator", {}).get("exporter_source")
+                if isinstance(exporter_binding, dict):
+                    case_exporter_bindings.add(
+                        json.dumps(exporter_binding, sort_keys=True, separators=(",", ":"))
+                    )
+            pinned_case = native_pin_cases.get(case_id)
+            if pinned_case is None:
+                errors.append(f"{case_label}: case is absent from native source pin")
+            else:
+                errors.extend(
+                    drivaerml_native_volume_audit_errors(
+                        case, pinned_case, case_label
+                    )
+                )
+                errors.extend(
+                    drivaerml_native_boundary_audit_errors(
+                        case, pinned_case, case_label
+                    )
+                )
+    errors.extend(
+        drivaerml_master_coverage_errors(
+            official_case_ids, master.get("case_ids"), chunks, label
+        )
+    )
+    expected_locations = [
+        {
+            "case_id": case_id,
+            "chunk_id": chunk.get("chunk_id"),
+            "chunk_path": chunk.get("path"),
+            "chunk_sha256": chunk.get("sha256"),
+            "case_offset": case_offset,
+        }
+        for chunk in chunks
+        if isinstance(chunk, dict)
+        for case_offset, case_id in enumerate(chunk.get("case_ids", []))
+    ]
+    if master.get("case_locations") != expected_locations:
+        errors.append(
+            f"{label}: case_locations do not bind every ordered case to its exact chunk offset"
+        )
+    actual_coverage = _finalize_native_coverage(coverage_accumulator)
+    if master.get("coverage_summary") != actual_coverage:
+        errors.append(
+            f"{label}: coverage_summary does not replay from all 484 materialized/alias series"
+        )
+    for family_id, expected_counts in DRIVAERML_EXPECTED_ALL484_COVERAGE.items():
+        observed = actual_coverage["families"][family_id]
+        for field, expected_count in expected_counts.items():
+            if observed[field] != expected_count:
+                errors.append(
+                    f"{label}: {family_id} {field} expected {expected_count}, observed {observed[field]}"
+                )
+
+    submission_spec = load_json(
+        submission_root / "benchmark-specs" / "drivaerml" / "submission-spec.json"
+    )
+    spec_splits = {split["id"]: split for split in submission_spec["splits"]}
+    split_bindings = master.get("splits")
+    if not isinstance(split_bindings, list):
+        errors.append(f"{label}: master split bindings must be an array")
+        split_bindings = []
+    by_split_id = {
+        binding.get("split_id"): binding
+        for binding in split_bindings
+        if isinstance(binding, dict)
+    }
+    if set(by_split_id) != set(spec_splits):
+        errors.append(f"{label}: master index must bind all eight exact official splits")
+    loaded_splits: dict[str, tuple[Path, str, list[str]]] = {}
+    for split_id, split_spec in spec_splits.items():
+        binding = by_split_id.get(split_id)
+        if not isinstance(binding, dict):
+            continue
+        split_label = f"{label}/split/{split_id}"
+        if set(binding) != {
+            "split_id",
+            "path",
+            "sha256",
+            "size_bytes",
+            "case_count",
+        }:
+            errors.append(f"{split_label}: master split binding fields differ from schema 2.0")
+        split_path = _safe_profile_path(
+            ground_truth_root, master_base, binding.get("path")
+        )
+        errors.extend(
+            _file_binding_errors(
+                split_path,
+                binding.get("sha256"),
+                binding.get("size_bytes"),
+                split_label,
+            )
+        )
+        official_split = load_json(
+            submission_root
+            / "benchmark-specs"
+            / "drivaerml"
+            / split_spec["index_file"]
+        )["case_ids"]
+        if binding.get("case_count") != len(official_split):
+            errors.append(f"{split_label}: case_count differs from official split")
+        if split_path is None or not split_path.is_file():
+            continue
+        thin = load_json(split_path)
+        if set(thin) != {
+            "schema",
+            "schema_version",
+            "dataset_id",
+            "dataset_revision",
+            "split_id",
+            "case_set_id",
+            "case_id_status",
+            "case_ids",
+            "case_count",
+            "series_per_case",
+            "series_count",
+            "truth_source",
+            "source_split_index",
+            "chunk_refs",
+            "split_identity",
+        }:
+            errors.append(f"{split_label}: thin index fields differ from schema 2.0")
+        if (
+            thin.get("schema") != NATIVE_DRIVAERML_SPLIT_SCHEMA
+            or thin.get("schema_version") != "2.0"
+            or thin.get("dataset_id") != "drivaerml"
+            or thin.get("dataset_revision") != NATIVE_DRIVAERML_DATASET_REVISION
+            or thin.get("split_id") != split_id
+            or thin.get("case_set_id") != split_spec.get("case_set_id")
+            or thin.get("case_id_status") != "official"
+            or thin.get("case_ids") != official_split
+            or thin.get("case_count") != len(official_split)
+            or thin.get("series_per_case") != 40
+            or thin.get("series_count") != len(official_split) * 40
+            or thin.get("truth_source") != NATIVE_TRUTH_SOURCE
+        ):
+            errors.append(f"{split_label}: thin index contract or ordered official cases differ")
+        errors.extend(
+            identity_bound_document_errors(thin, "split_identity", split_label)
+        )
+        source_split_path = (
+            submission_root
+            / "benchmark-specs"
+            / "drivaerml"
+            / split_spec["index_file"]
+        )
+        if thin.get("source_split_index") != {
+            "path": source_split_path.name,
+            "sha256": sha256_file(source_split_path),
+            "size_bytes": source_split_path.stat().st_size,
+        }:
+            errors.append(
+                f"{split_label}: source_split_index does not bind the exact official split bytes"
+            )
+        errors.extend(
+            drivaerml_thin_reference_errors(
+                thin.get("chunk_refs"),
+                master_chunk_records,
+                official_split,
+                split_label,
+            )
+        )
+        for ref_index, reference in enumerate(thin.get("chunk_refs", [])):
+            ref_label = f"{split_label}/chunk_refs[{ref_index}]"
+            master_record = master_chunk_records.get(reference.get("chunk_id"))
+            ref_path = _safe_profile_path(
+                ground_truth_root, master_base, reference.get("path")
+            )
+            if master_record is None:
+                continue
+            if (
+                ref_path != master_record.get("resolved_path")
+            ):
+                errors.append(f"{ref_label}: shared chunk path differs from master")
+        loaded_splits[split_id] = (
+            split_path,
+            binding.get("sha256"),
+            official_split,
+        )
+
+    case_sets = {
+        case_set.get("id"): case_set
+        for case_set in dataset_manifest.get("case_sets", [])
+        if isinstance(case_set, dict)
+    }
+    expected_case_set_split = {
+        "standard": "full",
+        "geometry": "geometry",
+        "high_drag": "high_drag",
+        "low_drag": "low_drag",
+        "rear_separation": "rear_separation",
+    }
+    for case_set_id, split_id in expected_case_set_split.items():
+        case_set = case_sets.get(case_set_id)
+        split_record = loaded_splits.get(split_id)
+        if case_set is None or split_record is None:
+            errors.append(f"{label}: missing website case set {case_set_id}")
+            continue
+        expected_path, expected_sha, expected_ids = split_record
+        declared_path = _safe_profile_path(
+            ground_truth_root, ground_truth_root, case_set.get("index_file")
+        )
+        if (
+            declared_path != expected_path
+            or case_set.get("index_sha256") != expected_sha
+            or case_set.get("case_count") != len(expected_ids)
+            or case_set.get("coverage", COMPLETE_COVERAGE) != COMPLETE_COVERAGE
+        ):
+            errors.append(
+                f"{label}: website case set {case_set_id} does not bind exact {split_id} thin index"
+            )
+
+    provenance = master.get("provenance")
+    if not isinstance(provenance, dict):
+        errors.append(f"{label}: master index lacks hash-bound provenance")
+    else:
+        if set(provenance) != {"path", "sha256", "size_bytes"}:
+            errors.append(f"{label}: master provenance binding fields differ")
+        provenance_path = _safe_profile_path(
+            ground_truth_root, master_base, provenance.get("path")
+        )
+        errors.extend(
+            _file_binding_errors(
+                provenance_path,
+                provenance.get("sha256"),
+                provenance.get("size_bytes"),
+                f"{label}/provenance",
+            )
+        )
+        if provenance_path is not None and provenance_path.is_file():
+            provenance_record = load_json(provenance_path)
+            expected_provenance_fields = {
+                "schema",
+                "schema_version",
+                "dataset_id",
+                "dataset_repository",
+                "dataset_revision",
+                "evaluator_git_revision",
+                "truth_source",
+                "relative_scoring_activated",
+                "input_bindings",
+                "split_source_bindings",
+                "case_artifact_count",
+                "case_artifact_inventory_sha256",
+                "case_input_binding_inventory_sha256",
+                "native_volume_selected_values_inventory_sha256",
+                "native_boundary_selected_values_inventory_sha256",
+                "coverage_summary",
+                "run_419_selected_values_sha256",
+                "truth_definitions",
+                "identity_encodings",
+                "provenance_identity",
+            }
+            if set(provenance_record) != expected_provenance_fields:
+                errors.append(
+                    f"{label}/provenance: fields differ from schema 2.0"
+                )
+            if (
+                provenance_record.get("schema")
+                != NATIVE_DRIVAERML_PROVENANCE_SCHEMA
+                or provenance_record.get("schema_version") != "2.0"
+                or provenance_record.get("dataset_id") != "drivaerml"
+                or provenance_record.get("dataset_repository")
+                != "neashton/drivaerml"
+                or provenance_record.get("dataset_revision")
+                != NATIVE_DRIVAERML_DATASET_REVISION
+                or provenance_record.get("truth_source") != NATIVE_TRUTH_SOURCE
+                or provenance_record.get("relative_scoring_activated") is not False
+                or provenance_record.get("case_artifact_count") != 484
+                or provenance_record.get("coverage_summary") != actual_coverage
+                or provenance_record.get("run_419_selected_values_sha256")
+                != "a1cd9c5bad71b720e6434fbb821aa480fc2f7555516375329bfd02ced43752d0"
+                or provenance_record.get("truth_definitions")
+                != DRIVAERML_NATIVE_TRUTH_DEFINITIONS
+                or provenance_record.get("identity_encodings")
+                != DRIVAERML_NATIVE_IDENTITY_ENCODINGS
+            ):
+                errors.append(
+                    f"{label}/provenance: dataset, truth, coverage, or inactive binding differs"
+                )
+            errors.extend(
+                identity_bound_document_errors(
+                    provenance_record,
+                    "provenance_identity",
+                    f"{label}/provenance",
+                )
+            )
+            provenance_revision = provenance_record.get("evaluator_git_revision")
+            if not valid_git_commit(provenance_revision) or evaluator_revisions != {
+                provenance_revision
+            }:
+                errors.append(
+                    f"{label}/provenance: evaluator revision is invalid or differs across cases"
+                )
+            expected_inventory_hashes = {
+                "case_artifact_inventory_sha256": canonical_json_identity_sha256(
+                    staging_case_bindings
+                ),
+                "case_input_binding_inventory_sha256": canonical_json_identity_sha256(
+                    case_input_inventory
+                ),
+                "native_volume_selected_values_inventory_sha256": canonical_json_identity_sha256(
+                    native_volume_inventory
+                ),
+                "native_boundary_selected_values_inventory_sha256": canonical_json_identity_sha256(
+                    native_boundary_inventory
+                ),
+            }
+            for field, expected_sha256 in expected_inventory_hashes.items():
+                if provenance_record.get(field) != expected_sha256:
+                    errors.append(
+                        f"{label}/provenance: {field} does not replay from retained all-484 records"
+                    )
+            input_bindings = provenance_record.get("input_bindings")
+            expected_binding_names = {
+                "native_source_pin",
+                "native_volume_audit",
+                "relative_velocity_placement_manifest",
+                "relative_velocity_mapping_manifest",
+                "relative_cp_manifest",
+                "constant_cp_aggregate",
+                "exporter_source",
+            }
+            if not isinstance(input_bindings, dict) or set(
+                input_bindings
+            ) != expected_binding_names:
+                errors.append(
+                    f"{label}/provenance: input_bindings differ from the seven frozen producer inputs"
+                )
+                input_bindings = {}
+            for binding_name, binding in input_bindings.items():
+                if (
+                    not isinstance(binding, dict)
+                    or set(binding) != {"path", "sha256", "size_bytes"}
+                    or not isinstance(binding.get("path"), str)
+                    or not valid_sha256(binding.get("sha256"))
+                    or not isinstance(binding.get("size_bytes"), int)
+                    or binding.get("size_bytes", 0) <= 0
+                ):
+                    errors.append(
+                        f"{label}/provenance: invalid {binding_name} file binding"
+                    )
+            if input_bindings.get("native_source_pin") != {
+                "path": native_pin_path.name,
+                "sha256": expected_pin_sha256,
+                "size_bytes": native_pin_path.stat().st_size,
+            }:
+                errors.append(
+                    f"{label}/provenance: native_source_pin does not bind the exact paired repository bytes"
+                )
+            exporter_path = submission_root / "scripts" / "export_drivaerml_native_profile_truth.py"
+            if input_bindings.get("exporter_source") != {
+                "path": "scripts/export_drivaerml_native_profile_truth.py",
+                "sha256": sha256_file(exporter_path),
+                "size_bytes": exporter_path.stat().st_size,
+            }:
+                errors.append(
+                    f"{label}/provenance: exporter_source does not bind the exact paired repository bytes"
+                )
+            if case_exporter_bindings != {
+                json.dumps(
+                    input_bindings.get("exporter_source"),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            }:
+                errors.append(
+                    f"{label}/provenance: case generator exporter bindings differ from provenance"
+                )
+            expected_split_sources = {
+                split_id: {
+                    "path": (
+                        submission_root
+                        / "benchmark-specs"
+                        / "drivaerml"
+                        / split_spec["index_file"]
+                    ).name,
+                    "sha256": sha256_file(
+                        submission_root
+                        / "benchmark-specs"
+                        / "drivaerml"
+                        / split_spec["index_file"]
+                    ),
+                    "size_bytes": (
+                        submission_root
+                        / "benchmark-specs"
+                        / "drivaerml"
+                        / split_spec["index_file"]
+                    ).stat().st_size,
+                }
+                for split_id, split_spec in spec_splits.items()
+            }
+            if provenance_record.get("split_source_bindings") != expected_split_sources:
+                errors.append(
+                    f"{label}/provenance: split_source_bindings differ from all eight official split bytes"
+                )
+    release_path = _safe_profile_path(
+        ground_truth_root, master_base, master.get("release_receipt_path")
+    )
+    if release_path is None or not release_path.is_file():
+        errors.append(f"{label}/release: immutable release receipt is missing")
+    else:
+        release = load_json(release_path)
+        expected_release_fields = {
+            "schema",
+            "schema_version",
+            "dataset_id",
+            "dataset_revision",
+            "evaluator_git_revision",
+            "status",
+            "truth_source",
+            "relative_scoring_activated",
+            "submissions_opened",
+            "owner_approval_complete",
+            "coverage_summary",
+            "artifact_size_summary",
+            "artifact_bindings",
+            "release_identity",
+        }
+        if set(release) != expected_release_fields:
+            errors.append(f"{label}/release: fields differ from release schema 2.0")
+        if (
+            release.get("schema") != NATIVE_DRIVAERML_RELEASE_SCHEMA
+            or release.get("schema_version") != "2.0"
+            or release.get("dataset_id") != "drivaerml"
+            or release.get("dataset_revision")
+            != NATIVE_DRIVAERML_DATASET_REVISION
+            or release.get("evaluator_git_revision") not in evaluator_revisions
+            or release.get("status")
+            != "complete_native_truth_export_not_scoring_activation"
+            or release.get("truth_source") != NATIVE_TRUTH_SOURCE
+            or release.get("relative_scoring_activated") is not False
+            or release.get("submissions_opened") is not False
+            or release.get("owner_approval_complete") is not False
+            or release.get("coverage_summary") != actual_coverage
+        ):
+            errors.append(
+                f"{label}/release: source, coverage, or explicit inactive gates differ"
+            )
+        errors.extend(
+            identity_bound_document_errors(
+                release, "release_identity", f"{label}/release"
+            )
+        )
+        expected_artifact_bindings = {
+            "index": {
+                "path": "index.json",
+                "sha256": declaration.get("master_index_sha256"),
+                "size_bytes": master_path.stat().st_size,
+            },
+            "provenance": master.get("provenance"),
+            "chunks": chunks,
+            "splits": split_bindings,
+        }
+        if release.get("artifact_bindings") != expected_artifact_bindings:
+            errors.append(
+                f"{label}/release: artifact_bindings differ from the exact master/chunk/split/provenance bytes"
+            )
+        case_bytes = sum(
+            binding.get("size_bytes", 0)
+            for binding in staging_case_bindings
+            if isinstance(binding, dict)
+        )
+        chunk_bytes = sum(
+            binding.get("size_bytes", 0)
+            for binding in chunks
+            if isinstance(binding, dict)
+        )
+        split_bytes = sum(
+            binding.get("size_bytes", 0)
+            for binding in split_bindings
+            if isinstance(binding, dict)
+        )
+        expected_size_summary = {
+            "scope": "browser_publication_artifacts_bound_by_this_receipt_excluding_the_receipt_itself",
+            "public_artifact_count": len(chunks) + len(split_bindings) + 2,
+            "public_total_size_bytes": (
+                chunk_bytes
+                + split_bytes
+                + master.get("provenance", {}).get("size_bytes", 0)
+                + master_path.stat().st_size
+            ),
+            "staging_case_artifacts": {
+                "published": False,
+                "count": len(staging_case_bindings),
+                "total_size_bytes": case_bytes,
+                "inventory_bound_in_provenance": True,
+            },
+            "public_chunk_artifact_count": len(chunks),
+            "public_chunk_artifact_total_size_bytes": chunk_bytes,
+            "chunk_sizes": [
+                {
+                    "chunk_id": binding.get("chunk_id"),
+                    "size_bytes": binding.get("size_bytes"),
+                }
+                for binding in chunks
+                if isinstance(binding, dict)
+            ],
+            "public_split_artifact_count": len(split_bindings),
+            "public_split_artifact_total_size_bytes": split_bytes,
+            "public_provenance_size_bytes": master.get("provenance", {}).get(
+                "size_bytes"
+            ),
+            "public_index_size_bytes": master_path.stat().st_size,
+        }
+        if release.get("artifact_size_summary") != expected_size_summary:
+            errors.append(
+                f"{label}/release: artifact_size_summary does not replay from retained files"
+            )
+    return errors
 
 
 def case_coverage_errors(
@@ -226,6 +2166,54 @@ def check(submission_root: Path) -> list[str]:
             expected_extractor_sha256 = reference_fixture["provenance"][
                 "extractor_sha256"
             ]
+        native_drivaerml_candidate = dataset_id == "drivaerml" and (
+            "native_profile_truth" in ground_truth_dataset
+            or any(
+                (
+                    lambda path: path.is_file()
+                    and load_json(path).get("schema")
+                    == NATIVE_DRIVAERML_SPLIT_SCHEMA
+                )(
+                    GROUND_TRUTH_ROOT / case_set.get("index_file", "")
+                )
+                for case_set in ground_truth_dataset.get("case_sets", [])
+                if isinstance(case_set, dict)
+            )
+        )
+        if native_drivaerml_candidate:
+            errors.extend(
+                drivaerml_native_bundle_errors(
+                    GROUND_TRUTH_ROOT, ground_truth_dataset, submission_root
+                )
+            )
+            spec_splits = {split["id"]: split for split in spec["splits"]}
+            ground_truth_splits = {
+                split["id"]: split
+                for split in ground_truth_dataset.get("splits", [])
+                if isinstance(split, dict) and isinstance(split.get("id"), str)
+            }
+            if set(spec_splits) != set(ground_truth_splits):
+                errors.append(
+                    "drivaerml: native ground-truth split IDs differ from the submission specification"
+                )
+            for split_id, split in spec_splits.items():
+                split_index = load_json(
+                    submission_root
+                    / "benchmark-specs"
+                    / dataset_id
+                    / split["index_file"]
+                )
+                ground_truth_split = ground_truth_splits.get(split_id, {})
+                if (
+                    ground_truth_split.get("case_set_id")
+                    != split.get("case_set_id")
+                    or ground_truth_split.get("case_count")
+                    != len(split_index.get("case_ids", []))
+                ):
+                    errors.append(
+                        f"drivaerml/{split_id}: native ground-truth split mapping or case_count is stale"
+                    )
+            continue
         spec_splits = {split["id"]: split for split in spec["splits"]}
         ground_truth_splits = {
             split["id"]: split for split in ground_truth_dataset.get("splits", [])

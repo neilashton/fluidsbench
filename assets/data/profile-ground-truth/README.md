@@ -22,6 +22,27 @@ the selected evaluation geometry. The scalar leaderboard release pins the profil
 manifest in turn pins every case-set index, and each index pins its chunks. The browser verifies this complete chain before plotting
 or exporting profile data. Official ground-truth releases must also name an immutable source commit.
 
+DrivAerML native CFD truth uses the separate schema-2.0 master/thin-index
+contract. One all-484 master index binds the pinned public dataset revision,
+the non-analytical `native_cfd` declaration, every shared chunk, and all eight
+official split indexes. The split indexes contain only ordered case references
+to those shared chunks, so the website does not duplicate native truth bytes.
+Every materialized curve binds its support, placement receipt, ordered sample
+and native-cell lineage, coordinates, values, unsupported samples, and segment
+boundaries with canonical SHA-256 identities. Shared Cp aliases contain no
+arrays and resolve only to their exact canonical constant support.
+
+The DrivAerML velocity and Cp panels keep fixed locations and
+geometry-relative locations in separate selectors. Geometry-relative profiles
+are labelled **diagnostic, not scored**, while verified reference curves are
+labelled **Native CFD ground truth** rather than generic ground truth. Publishing or displaying those native
+profiles does not activate relative scoring, change metric weights, or open
+submissions. A missing digest, identity mismatch, reordered coordinate, or
+unresolved alias makes the affected comparison explicitly unavailable; the
+browser never falls back to a similarly named station or another placement
+family. Retained segment boundaries are also rendered and exported without
+bridging unsupported samples.
+
 The AirfRANS review fixtures are generated with `bin/generate_airfrans_ground_truth.py` from the hash-bound reference extraction and
 an additional official angle-of-attack case produced by the pinned extractor in `fluidsbench-submission`. The publisher verifies the
 profile-definition and extractor hashes, exact dependency versions, split membership, VTK-valid sample counts, perfect-copy result,
@@ -45,14 +66,15 @@ python3 bin/generate_airfrans_ground_truth.py \
   --generated-at YYYY-MM-DDTHH:MM:SSZ
 ```
 
-The DrivAerML prototype bundle uses the official case IDs, all four continuous
-Cp-cut series, and all sixteen AutoCFD5 velocity lines on the exact candidate
-10 mm grids. Its CFD-like reference values are analytical teaching data, not
-native DrivAerML truth; this is explicit because immutable native Cp-cut
-support remains an activation gate. Regenerate the website bundle from the
-matching submission-contract checkout with:
+The former DrivAerML analytical curves are teaching fixtures, not native CFD
+truth. They are no longer a production input and cannot overwrite the
+browser-consumable native bundle. If those historical fixtures are needed for
+development, regenerate them only into the isolated analytical-prototype area:
 
 ```bash
 python3 bin/generate_drivaerml_ground_truth.py \
   --submission-root ../fluidsbench-submission
 ```
+
+Never copy that output into `profile-ground-truth/datasets/drivaerml` or label
+it as native truth.
