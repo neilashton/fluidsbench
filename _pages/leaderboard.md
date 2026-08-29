@@ -369,11 +369,14 @@ chart:
   const localLeaderboard = ["127.0.0.1", "localhost"].includes(window.location.hostname);
   const configuredLeaderboardBaseUrl =
     {{ site.leaderboard_base_url | default: "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/main/" | jsonify }};
-  window.FluidsBenchLeaderboardBaseUrl = localLeaderboard
-    ? "http://127.0.0.1:4100/"
-    : configuredLeaderboardBaseUrl.endsWith("/")
-      ? configuredLeaderboardBaseUrl
-      : configuredLeaderboardBaseUrl + "/";
+  const configuredLocalLeaderboardBaseUrl =
+    {{ site.leaderboard_local_base_url | default: "http://127.0.0.1:4100/" | jsonify }};
+  const selectedLeaderboardBaseUrl = localLeaderboard
+    ? configuredLocalLeaderboardBaseUrl
+    : configuredLeaderboardBaseUrl;
+  window.FluidsBenchLeaderboardBaseUrl = selectedLeaderboardBaseUrl.endsWith("/")
+    ? selectedLeaderboardBaseUrl
+    : selectedLeaderboardBaseUrl + "/";
   window.FluidsBenchLeaderboardManifestUrl =
     window.FluidsBenchLeaderboardBaseUrl + "leaderboard/manifest.json";
   window.FluidsBenchLeaderboardManifestSha256 =

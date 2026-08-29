@@ -1120,6 +1120,9 @@ assert.match(leaderboardPageSource, /id="leaderboard-advanced-analysis"/);
 assert.match(leaderboardPageSource, /data-analysis-tab="comparison"/);
 assert.match(leaderboardPageSource, /data-analysis-panel="profiles"/);
 assert.match(leaderboardPageSource, /id="leaderboard-methodology"/);
+assert.match(leaderboardPageSource, /site\.leaderboard_local_base_url/);
+assert.match(leaderboardPageSource, /configuredLocalLeaderboardBaseUrl/);
+assert.match(leaderboardPageSource, /default: "http:\/\/127\.0\.0\.1:4100\/"/);
 assert.match(source, /Technical provenance and validation/);
 assert.match(source, /leaderboard-result-summary/);
 
