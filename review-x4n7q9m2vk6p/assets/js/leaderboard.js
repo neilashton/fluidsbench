@@ -52,21 +52,25 @@
   const regionalPalette = ["#0072b2", "#d55e00", "#009e73", "#cc79a7"];
   const regionalFields = {
     surface_pressure: {
+      id: "surface_pressure",
       label: "Surface pressure",
       supportId: "drivaerml-surface-four-geometric-regions-v1",
       globalMetricId: "surface_pressure_rel_l2",
     },
     surface_wall_shear: {
+      id: "surface_wall_shear",
       label: "Surface wall shear",
       supportId: "drivaerml-surface-four-geometric-regions-v1",
       globalMetricId: "surface_wall_shear_rel_l2",
     },
     volume_pressure: {
+      id: "volume_pressure",
       label: "Volume pressure",
       supportId: "drivaerml-volume-four-geometric-regions-v1",
       globalMetricId: "volume_pressure_rel_l2",
     },
     volume_velocity: {
+      id: "volume_velocity",
       label: "Volume velocity",
       supportId: "drivaerml-volume-four-geometric-regions-v1",
       globalMetricId: "volume_velocity_rel_l2",
