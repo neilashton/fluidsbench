@@ -82,6 +82,7 @@ window.__FluidsBenchClaimTest = {
   profileSeriesCompatibility,
   profileStations,
   regionalBinding,
+  regionalFields,
   regionalFieldReport,
   regionalReportUrl,
   regionalRules,
@@ -208,6 +209,7 @@ const regionalReport = {
 assert.deepEqual(api.regionalFieldReport(regionalReport, { supportId: "drivaerml-surface-four-geometric-regions-v1", id: "surface_pressure" }), {
   regions: [],
 });
+assert.deepEqual(api.regionalFieldReport(regionalReport, api.regionalFields.surface_pressure), { regions: [] });
 assert.deepEqual(Array.from(api.regionalRules(regionalReport, { supportId: "drivaerml-surface-four-geometric-regions-v1" })), [
   { region_id: "low_z_horizontal_normal", predicate: "z < 0.75" },
 ]);
