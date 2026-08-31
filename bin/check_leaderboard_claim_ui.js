@@ -81,6 +81,11 @@ window.__FluidsBenchClaimTest = {
   profileSeries,
   profileSeriesCompatibility,
   profileStations,
+  regionalBinding,
+  regionalFieldReport,
+  regionalReportUrl,
+  regionalRules,
+  regionalScope,
   resolvedProfileCoordinateView,
   radarMetricAxes,
   radarNormalizedValue,
@@ -169,6 +174,43 @@ assert.equal(api.decimalHalfUp(1.25, 1), 1.3);
 assert.equal(api.decimalHalfUp(-1.25, 1), -1.3);
 assert.equal(api.decimalHalfUp(9926.64999999999, 1), 9926.6);
 assert.equal(api.decimalHalfUp(-91.4564999999999, 3), -91.456);
+
+const regionalBinding = {
+  format: "drivaerml-regional-aggregate-v2",
+  file: "regional-diagnostics.json",
+  sha256: "a".repeat(64),
+  contract_sha256: "2bfd372817989112642056e4c76cfb418dbdcee445c57ee20ca37ee9ca158583",
+  case_count: 50,
+  role: "report_only",
+  weight: 0,
+  official_score_changed: false,
+};
+const regionalRow = {
+  id: "regional-demo-v1",
+  dataset_id: "drivaerml",
+  prediction_scope: "surface_only",
+  regional_diagnostics: regionalBinding,
+};
+assert.deepEqual(api.regionalBinding(regionalRow), regionalBinding);
+assert.equal(api.regionalScope(regionalRow), "surface_only");
+assert.match(api.regionalReportUrl(regionalRow), /submissions\/drivaerml\/regional-demo-v1\/regional-diagnostics\.json$/);
+assert.equal(api.regionalBinding({ ...regionalRow, regional_diagnostics: { ...regionalBinding, weight: 1 } }), null);
+const regionalReport = {
+  supports: {
+    "drivaerml-surface-four-geometric-regions-v1": {
+      definition: {
+        regions_in_code_order: [{ region_id: "low_z_horizontal_normal", predicate: "z < 0.75" }],
+      },
+      fields: { surface_pressure: { regions: [] } },
+    },
+  },
+};
+assert.deepEqual(api.regionalFieldReport(regionalReport, { supportId: "drivaerml-surface-four-geometric-regions-v1", id: "surface_pressure" }), {
+  regions: [],
+});
+assert.deepEqual(Array.from(api.regionalRules(regionalReport, { supportId: "drivaerml-surface-four-geometric-regions-v1" })), [
+  { region_id: "low_z_horizontal_normal", predicate: "z < 0.75" },
+]);
 
 api.state.metrics = new Map([["score", { id: "score", unit: "" }]]);
 const policy = {

@@ -47,6 +47,31 @@
     native_quantity_source: "pinned_drivaerml_cell_data",
   };
   const sha256Pattern = /^[a-f0-9]{64}$/;
+  const regionalReportSchema = "drivaerml-regional-aggregate-v2";
+  const regionalDiagnosticsContractSha256 = "2bfd372817989112642056e4c76cfb418dbdcee445c57ee20ca37ee9ca158583";
+  const regionalPalette = ["#0072b2", "#d55e00", "#009e73", "#cc79a7"];
+  const regionalFields = {
+    surface_pressure: {
+      label: "Surface pressure",
+      supportId: "drivaerml-surface-four-geometric-regions-v1",
+      globalMetricId: "surface_pressure_rel_l2",
+    },
+    surface_wall_shear: {
+      label: "Surface wall shear",
+      supportId: "drivaerml-surface-four-geometric-regions-v1",
+      globalMetricId: "surface_wall_shear_rel_l2",
+    },
+    volume_pressure: {
+      label: "Volume pressure",
+      supportId: "drivaerml-volume-four-geometric-regions-v1",
+      globalMetricId: "volume_pressure_rel_l2",
+    },
+    volume_velocity: {
+      label: "Volume velocity",
+      supportId: "drivaerml-volume-four-geometric-regions-v1",
+      globalMetricId: "volume_velocity_rel_l2",
+    },
+  };
   const drivaermlRelativeVelocityStationIds = ["V1", "V2", "V3", "V4", "V5", "V6", "U1", "U2", "U3", "U4", "U5", "U6", "L1", "R1", "R2", "R3"];
   const drivaermlRelativeCpStationIds = [
     "upperbody_centerline",
@@ -118,6 +143,9 @@
     groundTruthCase: null,
     profileCases: new Map(),
     profileCaseErrors: new Map(),
+    regionalReports: new Map(),
+    regionalReportPromises: new Map(),
+    regionalLoadVersion: 0,
     charts: {},
     figureSpecs: new Map(),
     figureCaptions: new Map(),
@@ -660,6 +688,71 @@
     const bytes = await response.arrayBuffer();
     const text = new TextDecoder("utf-8").decode(bytes);
     return { data: JSON.parse(text), text, sha256: await sha256Hex(bytes) };
+  }
+
+  function regionalBinding(row) {
+    const binding = record(row?.regional_diagnostics);
+    if (
+      binding.format !== regionalReportSchema ||
+      binding.contract_sha256 !== regionalDiagnosticsContractSha256 ||
+      binding.role !== "report_only" ||
+      binding.weight !== 0 ||
+      binding.official_score_changed !== false ||
+      !validSha256(binding.sha256) ||
+      typeof binding.file !== "string" ||
+      !binding.file
+    ) {
+      return null;
+    }
+    return binding;
+  }
+
+  function regionalReportUrl(row) {
+    const binding = regionalBinding(row);
+    return binding ? fileUrl(submissionAssetPath(row, binding.file)) : "";
+  }
+
+  function regionalScope(row) {
+    return row?.prediction_scope === "surface_only" ? "surface_only" : "surface_and_volume";
+  }
+
+  async function ensureRegionalReport(row) {
+    const binding = regionalBinding(row);
+    const url = regionalReportUrl(row);
+    if (!binding || !url) throw new Error("this result does not declare a compatible regional diagnostics file");
+    const cacheKey = `${row.id}:${binding.sha256}`;
+    if (state.regionalReports.has(cacheKey)) return state.regionalReports.get(cacheKey);
+    if (state.regionalReportPromises.has(cacheKey)) return state.regionalReportPromises.get(cacheKey);
+    const promise = (async () => {
+      const loaded = await fetchJsonWithProvenance(url, `${rowLabel(row)} regional diagnostics`);
+      const report = record(loaded.data);
+      if (loaded.sha256 !== binding.sha256) {
+        throw new Error("regional diagnostics checksum does not match the hash-verified leaderboard feed");
+      }
+      if (
+        report.schema !== regionalReportSchema ||
+        report.schema_version !== 2 ||
+        report.status !== "complete_report_only" ||
+        report.dataset_id !== "drivaerml" ||
+        report.contract_sha256 !== binding.contract_sha256 ||
+        report.prediction_scope !== regionalScope(row) ||
+        record(report.scoring).role !== "report_only" ||
+        record(report.scoring).weight !== 0 ||
+        record(report.scoring).official_metric_inputs_changed !== false ||
+        record(report.scoring).official_score_changed !== false ||
+        record(report.validation).regional_values_consumed_by_official_score !== false
+      ) {
+        throw new Error("regional diagnostics do not match the result's zero-weight DrivAerML contract");
+      }
+      state.regionalReports.set(cacheKey, report);
+      return report;
+    })();
+    state.regionalReportPromises.set(cacheKey, promise);
+    try {
+      return await promise;
+    } finally {
+      state.regionalReportPromises.delete(cacheKey);
+    }
   }
 
   function verifyManifestSha256(loadedSha256, expectedSha256 = expectedManifestSha256) {
@@ -3730,6 +3823,7 @@
     renderComparisonModelPicker();
     renderComparisonChart();
     renderScatterChart();
+    void prepareRegionalExplorer();
     void refreshProfileContext();
     updateUrl();
   }
@@ -4585,6 +4679,287 @@
         },
       },
     });
+  }
+
+  function regionalFieldDefinition() {
+    return regionalFields[element("regional-field")?.value] || regionalFields.surface_pressure;
+  }
+
+  function regionalWeighting(fieldReport) {
+    const requested = element("regional-weighting")?.value || "primary";
+    const primary = fieldReport?.primary_weighting === "physical" ? "physical" : "equal_entity";
+    return requested === "primary" ? primary : requested;
+  }
+
+  function regionalFieldReport(report, field) {
+    return record(record(record(report).supports)[field.supportId]?.fields)[field.id] || null;
+  }
+
+  function regionalRules(report, field) {
+    const rules = record(record(report).supports)[field.supportId]?.definition?.regions_in_code_order;
+    return Array.isArray(rules) ? rules.filter((rule) => record(rule).region_id) : [];
+  }
+
+  function regionalLabel(regionId) {
+    const labels = {
+      low_z_horizontal_normal: "Low z · horizontal normal",
+      low_z_other_normal: "Low z · other normal",
+      high_z_horizontal_normal: "High z · horizontal normal",
+      high_z_other_normal: "High z · other normal",
+      underbody_and_wheels: "Underbody & wheels",
+      near_body_upper: "Near-body upper",
+      near_wake: "Near wake",
+      upstream_and_outer: "Upstream & outer",
+    };
+    return labels[regionId] || humanize(regionId);
+  }
+
+  function regionalNumber(value) {
+    const numeric = finiteNumber(value);
+    return numeric === null ? "—" : `${formatNumber(numeric, 3)}%`;
+  }
+
+  function regionalPooled(region, weighting) {
+    return record(record(region)[weighting]).pooled;
+  }
+
+  function regionalErrorShare(region, weighting) {
+    const fraction = finiteNumber(regionalPooled(region, weighting)?.fraction_of_support_squared_error);
+    return fraction === null ? null : 100 * fraction;
+  }
+
+  function regionalGuideCard(rule, index) {
+    const region = record(rule);
+    return `<div class="leaderboard-regional-zone" style="--regional-zone-color:${regionalPalette[index % regionalPalette.length]}">
+      <strong>${escapeHtml(regionalLabel(region.region_id))}</strong>
+      <span>${escapeHtml(region.predicate || "Released geometric predicate")}</span>
+    </div>`;
+  }
+
+  function regionalSurfaceGuide(rules) {
+    const byId = new Map(rules.map((rule, index) => [rule.region_id, { rule, index }]));
+    const card = (regionId) => {
+      const item = byId.get(regionId);
+      return item ? regionalGuideCard(item.rule, item.index) : "";
+    };
+    return `<div class="leaderboard-surface-region-grid" aria-label="Surface geometric-region partition">
+      <div class="leaderboard-region-grid-corner">Face-centre z</div>
+      <div class="leaderboard-region-grid-axis">|normal z| ≥ 0.5</div>
+      <div class="leaderboard-region-grid-axis">|normal z| &lt; 0.5</div>
+      <div class="leaderboard-region-grid-axis">z ≥ 0.75 m</div>
+      ${card("high_z_horizontal_normal")}
+      ${card("high_z_other_normal")}
+      <div class="leaderboard-region-grid-axis">z &lt; 0.75 m</div>
+      ${card("low_z_horizontal_normal")}
+      ${card("low_z_other_normal")}
+    </div>`;
+  }
+
+  function regionalVolumeGuide(rules) {
+    const byId = new Map(rules.map((rule, index) => [rule.region_id, { rule, index }]));
+    const color = (regionId) => regionalPalette[(byId.get(regionId)?.index || 0) % regionalPalette.length];
+    return `<div class="leaderboard-volume-region-guide">
+      <svg viewBox="0 0 760 235" role="img" aria-label="Volume regional partition in a streamwise x-z projection">
+        <rect x="60" y="26" width="660" height="168" rx="8" fill="${color("upstream_and_outer")}1f" stroke="${color("upstream_and_outer")}" stroke-width="1.5"/>
+        <rect x="155" y="145" width="375" height="49" fill="${color("underbody_and_wheels")}3d" stroke="${color("underbody_and_wheels")}" stroke-width="1.5"/>
+        <rect x="155" y="65" width="375" height="80" fill="${color("near_body_upper")}3d" stroke="${color("near_body_upper")}" stroke-width="1.5"/>
+        <rect x="530" y="26" width="190" height="168" fill="${color("near_wake")}3d" stroke="${color("near_wake")}" stroke-width="1.5"/>
+        <g class="leaderboard-volume-region-labels">
+          <text x="72" y="51">upstream / outer</text><text x="343" y="174" text-anchor="middle">underbody &amp; wheels</text>
+          <text x="343" y="109" text-anchor="middle">near-body upper</text><text x="625" y="109" text-anchor="middle">near wake</text>
+        </g>
+        <g class="leaderboard-volume-region-axis"><line x1="60" y1="205" x2="720" y2="205"/>
+          <text x="390" y="230" text-anchor="middle">streamwise x (m)</text><text x="60" y="220" text-anchor="middle">−2</text>
+          <text x="155" y="220" text-anchor="middle">−0.85</text><text x="530" y="220" text-anchor="middle">3.65</text><text x="720" y="220" text-anchor="middle">6.0</text>
+          <text x="52" y="148" text-anchor="end">z 0.75</text><text x="52" y="68" text-anchor="end">2.0</text><text x="52" y="29" text-anchor="end">2.5</text></g>
+      </svg>
+      <div class="leaderboard-regional-zone-list">${rules.map(regionalGuideCard).join("")}</div>
+    </div>`;
+  }
+
+  function renderRegionalGuide(report, field) {
+    const rules = regionalRules(report, field);
+    const definition = record(record(report).supports)[field.supportId]?.definition || {};
+    element("regional-zone-guide").innerHTML =
+      field.supportId.includes("surface") ? regionalSurfaceGuide(rules) : regionalVolumeGuide(rules);
+    element("regional-zone-note").textContent = definition.semantic_limit || "Released geometric regions are mutually exclusive and exhaustive.";
+  }
+
+  function setRegionalActionAvailability(enabled) {
+    document.querySelectorAll('[data-figure-key="regional"], [data-copy-caption="regional"]').forEach((button) => {
+      button.disabled = !enabled;
+    });
+  }
+
+  function clearRegionalExplorer(message) {
+    destroyChart("regional");
+    state.figureSpecs.delete("regional");
+    state.figureCaptions.delete("regional");
+    const canvas = element("regional-chart");
+    if (canvas) canvas.hidden = true;
+    element("regional-status").textContent = message;
+    element("regional-zone-guide").innerHTML = `<div class="leaderboard-regional-empty">${escapeHtml(message)}</div>`;
+    element("regional-zone-note").textContent = "";
+    element("regional-figure-caption").textContent = "";
+    element("regional-data-table").replaceChildren();
+    setChartSummary("regional-chart-summary", message);
+    setRegionalActionAvailability(false);
+  }
+
+  function renderRegionalChart(documents, field, weighting) {
+    const canvas = element("regional-chart");
+    if (!canvas || typeof Chart === "undefined") return;
+    const rules = regionalRules(documents[0].report, field);
+    const labels = rules.map((rule) => regionalLabel(rule.region_id));
+    const values = documents.flatMap(({ row, report }) => {
+      const fieldReport = regionalFieldReport(report, field);
+      return (fieldReport?.regions || []).map((region) => ({
+        model: rowLabel(row),
+        submission_id: row.id,
+        scope: regionalScope(row),
+        region_id: region.region_id,
+        region: regionalLabel(region.region_id),
+        relative_l2_percent: finiteNumber(regionalPooled(region, weighting)?.relative_l2_percent),
+        error_share_percent: regionalErrorShare(region, weighting),
+        macro_case_relative_l2_percent: finiteNumber(record(record(region)[weighting]).macro_case_mean?.relative_l2_percent),
+        median_case_relative_l2_percent: finiteNumber(record(record(region)[weighting]).case_distribution?.relative_l2_percent?.median),
+        p90_case_relative_l2_percent: finiteNumber(record(record(region)[weighting]).case_distribution?.relative_l2_percent?.p90),
+      }));
+    });
+    const datasets = documents.map(({ row, report }, index) => {
+      const byRegion = new Map((regionalFieldReport(report, field)?.regions || []).map((region) => [region.region_id, region]));
+      return {
+        label: rowLabel(row),
+        data: rules.map((rule) => finiteNumber(regionalPooled(byRegion.get(rule.region_id), weighting)?.relative_l2_percent)),
+        backgroundColor: `${palette[index % palette.length]}cc`,
+        borderColor: palette[index % palette.length],
+        borderWidth: 1,
+        borderRadius: 3,
+      };
+    });
+    destroyChart("regional");
+    canvas.hidden = false;
+    canvas.setAttribute("aria-label", `${field.label} relative L2 error in released native geometric regions`);
+    state.charts.regional = new Chart(canvas, {
+      type: "bar",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          x: { ticks: { color: chartTextColor(), maxRotation: 25, minRotation: 0 }, grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: "Regional relative L² error (%)", color: chartTextColor() },
+            ticks: { color: chartTextColor() },
+            grid: { color: chartGridColor() },
+          },
+        },
+        plugins: {
+          legend: { labels: { color: chartTextColor() } },
+          tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${regionalNumber(context.raw)}` } },
+        },
+      },
+    });
+    const weightingLabel = weighting === "physical" ? "physical weighting" : "equal native entities";
+    const caption = `${state.dataset}, ${state.split}: ${field.label} regional relative L² error for ${documents.length} explicitly selected compatible result${documents.length === 1 ? "" : "s"}, using ${weightingLabel}. The four released geometric regions are mutually exclusive and exhaustive. Regional diagnostics have zero official scoring weight. ${releaseStamp()}.`;
+    setChartSummary(
+      "regional-chart-summary",
+      `${field.label} regional relative L2 error bar chart for ${state.dataset}, ${state.split}; ${documents.length} selected compatible submissions across ${rules.length} exhaustive regions. ${weightingLabel}; lower is better. Regional diagnostics have zero official scoring weight.`
+    );
+    setFigureCaption("regional", caption, caption);
+    state.figureSpecs.set("regional", {
+      ...figureSpecBase(`${state.dataset}: ${field.label} regional error`, values),
+      mark: { type: "bar", tooltip: true },
+      encoding: {
+        x: { field: "region", type: "nominal", sort: labels, title: "Released geometric region" },
+        y: { field: "relative_l2_percent", type: "quantitative", title: "Regional relative L2 error (%)", scale: { zero: true } },
+        color: { field: "model", type: "nominal", legend: { title: "Model", labelLimit: 260 } },
+        tooltip: [
+          { field: "model", type: "nominal", title: "Model" },
+          { field: "submission_id", type: "nominal", title: "Submission ID" },
+          { field: "scope", type: "nominal", title: "Prediction scope" },
+          { field: "region", type: "nominal", title: "Region" },
+          { field: "relative_l2_percent", type: "quantitative", title: "Regional relative L2 (%)" },
+          { field: "error_share_percent", type: "quantitative", title: "Share of field squared error (%)" },
+        ],
+      },
+    });
+    renderNumericTable(
+      "regional-data-table",
+      `${field.label} regional diagnostics. All values are report-only and have zero official scoring weight.`,
+      [
+        { label: "Model", value: "model" },
+        { label: "Submission ID", value: "submission_id" },
+        { label: "Prediction scope", value: "scope" },
+        { label: "Region", value: "region" },
+        { label: "Regional rel. L2 (%)", value: (value) => regionalNumber(value.relative_l2_percent) },
+        { label: "Field error share (%)", value: (value) => regionalNumber(value.error_share_percent) },
+        { label: "Median case rel. L2 (%)", value: (value) => regionalNumber(value.median_case_relative_l2_percent) },
+        { label: "P90 case rel. L2 (%)", value: (value) => regionalNumber(value.p90_case_relative_l2_percent) },
+      ],
+      values
+    );
+    setRegionalActionAvailability(true);
+  }
+
+  async function prepareRegionalExplorer() {
+    const version = ++state.regionalLoadVersion;
+    if (activeDatasetSlug() !== "drivaerml") {
+      clearRegionalExplorer("Regional native-field diagnostics are currently available for DrivAerML only.");
+      return;
+    }
+    const field = regionalFieldDefinition();
+    const selected = figureRows();
+    const declared = selected.filter((row) => regionalBinding(row));
+    if (!declared.length) {
+      clearRegionalExplorer(
+        selected.length
+          ? "The selected results predate the checksum-bound regional report. Scores and profile figures remain available."
+          : "Choose one or more models above to inspect their regional field diagnostics."
+      );
+      return;
+    }
+    element("regional-status").textContent = "Loading checksum-bound regional diagnostics…";
+    const loaded = await Promise.all(
+      declared.map(async (row) => {
+        try {
+          return { row, report: await ensureRegionalReport(row), error: null };
+        } catch (error) {
+          return { row, report: null, error };
+        }
+      })
+    );
+    if (version !== state.regionalLoadVersion) return;
+    const compatible = loaded.filter(({ report }) => regionalFieldReport(report, field));
+    if (!compatible.length) {
+      const volume = field.supportId.includes("volume");
+      clearRegionalExplorer(
+        volume
+          ? "None of the selected checksum-verified reports contains this volume field. Surface-only results deliberately have no volume diagnostics."
+          : `No selected regional report contains ${field.label.toLowerCase()}.`
+      );
+      return;
+    }
+    const weighting = regionalWeighting(regionalFieldReport(compatible[0].report, field));
+    const primary = regionalFieldReport(compatible[0].report, field)?.primary_weighting || "equal_entity";
+    const weightingSelect = element("regional-weighting");
+    if (weightingSelect) {
+      weightingSelect.options[0].textContent = `Official field weighting (${primary === "physical" ? "physical" : "equal native entities"})`;
+    }
+    renderRegionalGuide(compatible[0].report, field);
+    renderRegionalChart(compatible, field, weighting);
+    const unsupported = declared.length - compatible.length;
+    const failed = loaded.filter(({ error }) => error).length;
+    element("regional-status").textContent = [
+      `${compatible.length} checksum-verified result${compatible.length === 1 ? "" : "s"} shown using ${weighting === "physical" ? "physical weighting" : "equal native entities"}.`,
+      unsupported ? `${unsupported} selected result${unsupported === 1 ? "" : "s"} omitted because this field was not submitted.` : "",
+      failed ? `${failed} report${failed === 1 ? "" : "s"} failed checksum or contract verification.` : "",
+      "Regional values have zero official scoring weight.",
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
 
   function panelSelection(panel) {
@@ -6926,6 +7301,7 @@
       .join(" &middot; ");
     const reproducibilityArtifacts = reproducibilityArtifactAvailability(row);
     const support = scoringSupportSummary(row);
+    const regional = regionalBinding(row);
     const datasetSupport = record(activeDataset()?.scoring_support);
     const supportOwnerApproval = support.release_id && datasetSupport.release_id === support.release_id ? record(datasetSupport.owner_approval) : {};
     const supportLinks = [
@@ -7120,6 +7496,7 @@
         ${detailsRow("Change summary", revision.change_summary || (revision.version === 1 ? "Initial published result." : null))}
         ${detailsRow("Dataset version", row.dataset_version)}
         ${detailsRow("Split ID", row.split_id)}
+        ${detailsRow("Prediction scope", regionalScope(row) === "surface_only" ? "Surface only (volume components fixed to zero)" : "Surface and volume")}
         ${detailsRow("Submitted by", row.submitter)}
         ${detailsRow("Institution", row.institution)}
         ${detailsRow("Model types", row.modelTypes.join(", "))}
@@ -7178,6 +7555,8 @@
         ${detailsRow("Declared final coverage (package-checked)", scoringCoverage)}
         ${detailsRow("Per-case metric file", bindingFile(caseMetricsBinding(row)))}
         ${detailsRow("Per-case metric SHA-256", bindingSha256(caseMetricsBinding(row)))}
+        ${detailsRow("Regional diagnostics file", bindingFile(regional))}
+        ${detailsRow("Regional diagnostics SHA-256", bindingSha256(regional))}
       </dl><p class="details-note">Only predictions are mapped. The reference evaluator loads the fixed ground truth and weights at the official support before calculating errors.</p></section>
       <section><h4>Optional public predictions</h4><dl>
         ${detailsRow("Prediction data", predictionAvailability(row).label)}
@@ -7411,6 +7790,7 @@
     renderRadarChart();
     renderComparisonChart();
     renderScatterChart();
+    void prepareRegionalExplorer();
     void refreshProfileContext();
   }
 
@@ -7419,7 +7799,7 @@
   }
 
   function activateAnalysisTab(name) {
-    const activeName = ["comparison", "scatter", "profiles"].includes(name) ? name : "comparison";
+    const activeName = ["comparison", "scatter", "profiles", "regional"].includes(name) ? name : "comparison";
     document.querySelectorAll("[data-analysis-tab]").forEach((tab) => {
       const selected = tab.dataset.analysisTab === activeName;
       tab.setAttribute("aria-selected", String(selected));
@@ -7429,6 +7809,7 @@
       panel.hidden = panel.dataset.analysisPanel !== activeName;
     });
     window.requestAnimationFrame(resizeVisibleCharts);
+    if (activeName === "regional") void prepareRegionalExplorer();
   }
 
   function showError(error, message = "Could not load leaderboard data") {
@@ -7630,6 +8011,8 @@
       renderScatterChart();
       updateUrl();
     });
+    element("regional-field")?.addEventListener("change", () => void prepareRegionalExplorer());
+    element("regional-weighting")?.addEventListener("change", () => void prepareRegionalExplorer());
     element("export-leaderboard-csv")?.addEventListener("click", exportCsv);
     element("export-leaderboard-json")?.addEventListener("click", exportJson);
     element("leaderboard-export-scope")?.addEventListener("change", (event) => {

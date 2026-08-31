@@ -210,6 +210,7 @@ chart:
     <button id="analysis-tab-comparison" type="button" role="tab" aria-selected="true" aria-controls="analysis-panel-comparison" data-analysis-tab="comparison">Metric comparison</button>
     <button id="analysis-tab-scatter" type="button" role="tab" aria-selected="false" aria-controls="analysis-panel-scatter" data-analysis-tab="scatter">Metric scatter</button>
     <button id="analysis-tab-profiles" type="button" role="tab" aria-selected="false" aria-controls="analysis-panel-profiles" data-analysis-tab="profiles">Profiles</button>
+    <button id="analysis-tab-regional" type="button" role="tab" aria-selected="false" aria-controls="analysis-panel-regional" data-analysis-tab="regional">Field regions</button>
   </div>
 
   <section class="leaderboard-panel leaderboard-comparison-panel" id="analysis-panel-comparison" role="tabpanel" aria-labelledby="analysis-tab-comparison" data-analysis-panel="comparison">
@@ -279,6 +280,52 @@ chart:
   <div id="analysis-panel-profiles" role="tabpanel" aria-labelledby="analysis-tab-profiles" data-analysis-panel="profiles" hidden>
     <div id="leaderboard-profile-panels" class="leaderboard-profile-panels"></div>
   </div>
+
+  <section class="leaderboard-panel leaderboard-regional-panel" id="analysis-panel-regional" role="tabpanel" aria-labelledby="analysis-tab-regional" data-analysis-panel="regional" hidden>
+    <div class="leaderboard-panel-heading">
+      <div>
+        <h3>Native field regions</h3>
+        <p>Explore where the selected DrivAerML field error occurs. These diagnostics are checksum-bound, report-only, and have zero official scoring weight.</p>
+      </div>
+      <div class="chart-control-row">
+        <div class="chart-control">
+          <label class="chart-control-title" for="regional-field">Field</label>
+          <select id="regional-field">
+            <option value="surface_pressure">Surface pressure</option>
+            <option value="surface_wall_shear">Surface wall shear</option>
+            <option value="volume_pressure">Volume pressure</option>
+            <option value="volume_velocity">Volume velocity</option>
+          </select>
+        </div>
+        <div class="chart-control">
+          <label class="chart-control-title" for="regional-weighting">Regional aggregation</label>
+          <select id="regional-weighting">
+            <option value="primary">Official field weighting</option>
+            <option value="equal_entity">Equal native entities</option>
+            <option value="physical">Physical weighting</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <p id="regional-status" class="leaderboard-regional-status" role="status">Select one or more compatible results to inspect their regional reports.</p>
+    <div id="regional-zone-guide" class="leaderboard-regional-zone-guide"></div>
+    <p id="regional-zone-note" class="leaderboard-regional-note"></p>
+    <div class="leaderboard-figure-toolbar" role="group" aria-label="Regional figure actions">
+      <button class="leaderboard-action-button" type="button" data-figure-key="regional" data-figure-format="svg">SVG</button>
+      <button class="leaderboard-action-button" type="button" data-figure-key="regional" data-figure-format="png">High-res PNG</button>
+      <button class="leaderboard-action-button" type="button" data-figure-key="regional" data-figure-format="print">Print / save PDF</button>
+      <button class="leaderboard-action-button" type="button" data-copy-caption="regional">Copy caption</button>
+    </div>
+    <div class="chart-frame leaderboard-regional-chart-frame">
+      <canvas id="regional-chart" role="img" aria-label="Regional field error chart" aria-describedby="regional-chart-summary"></canvas>
+      <p id="regional-chart-summary" class="leaderboard-sr-only"></p>
+    </div>
+    <p id="regional-figure-caption" class="leaderboard-figure-caption"></p>
+    <details class="leaderboard-numeric-data">
+      <summary>View numeric regional data</summary>
+      <div id="regional-data-table" class="leaderboard-data-table-wrap"></div>
+    </details>
+  </section>
     </div>
   </details>
 
