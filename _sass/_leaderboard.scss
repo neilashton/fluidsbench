@@ -1598,6 +1598,47 @@ html[data-theme="dark"] .leaderboard-data-warning.is-official {
   min-width: 0;
 }
 
+.profile-family-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.55rem;
+}
+
+.profile-family-tabs[hidden],
+.profile-family-notice[hidden],
+.profile-coordinate-control[hidden] {
+  display: none;
+}
+
+.profile-family-tab {
+  background: var(--leaderboard-chip-bg);
+  border: 1px solid var(--leaderboard-border);
+  border-radius: 999px;
+  color: var(--global-text-color);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.38rem 0.72rem;
+}
+
+.profile-family-tab[aria-selected="true"] {
+  background: var(--leaderboard-primary);
+  border-color: var(--leaderboard-primary);
+  color: #fff;
+}
+
+.profile-family-tab:focus-visible {
+  outline: 3px solid var(--leaderboard-primary);
+  outline-offset: 2px;
+}
+
+.leaderboard-panel .profile-family-notice {
+  color: var(--leaderboard-muted);
+  font-size: 0.82rem;
+  margin: 0 0 0.75rem;
+}
+
 .profile-chart-status {
   align-items: center;
   color: var(--leaderboard-muted);
@@ -1642,7 +1683,7 @@ html[data-theme="dark"] .leaderboard-data-warning.is-official {
 }
 
 .leaderboard-panel-heading .chart-control-row {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
 }
 
 .comparison-header {
@@ -1688,6 +1729,109 @@ html[data-theme="dark"] .leaderboard-data-warning.is-official {
 
 .scatter-chart-frame {
   height: 420px;
+}
+
+.leaderboard-regional-chart-frame {
+  height: 430px;
+}
+
+.leaderboard-regional-status,
+.leaderboard-regional-note {
+  font-size: 0.84rem;
+  margin: 0 0 0.8rem;
+}
+
+.leaderboard-regional-status {
+  color: var(--leaderboard-primary);
+  font-weight: 650;
+}
+
+.leaderboard-regional-zone-guide {
+  background: var(--leaderboard-details-bg);
+  border: 1px solid var(--leaderboard-details-border);
+  border-radius: 8px;
+  margin: 0 0 0.5rem;
+  padding: 0.7rem;
+}
+
+.leaderboard-regional-note {
+  color: var(--leaderboard-muted);
+}
+
+.leaderboard-regional-empty {
+  color: var(--leaderboard-muted);
+  font-size: 0.88rem;
+  padding: 0.45rem;
+}
+
+.leaderboard-surface-region-grid {
+  align-items: stretch;
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: minmax(100px, 0.7fr) minmax(190px, 1fr) minmax(190px, 1fr);
+}
+
+.leaderboard-region-grid-corner,
+.leaderboard-region-grid-axis {
+  align-items: center;
+  color: var(--leaderboard-muted);
+  display: flex;
+  font-size: 0.76rem;
+  font-weight: 700;
+  justify-content: center;
+  padding: 0.45rem;
+  text-align: center;
+}
+
+.leaderboard-region-grid-corner {
+  justify-content: flex-start;
+}
+
+.leaderboard-regional-zone {
+  border-left: 4px solid var(--regional-zone-color);
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px var(--leaderboard-border);
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.48rem 0.6rem;
+}
+
+.leaderboard-regional-zone strong {
+  color: var(--global-text-color);
+  font-size: 0.81rem;
+}
+
+.leaderboard-regional-zone span {
+  color: var(--leaderboard-muted);
+  font-family: var(--global-font-family, inherit);
+  font-size: 0.71rem;
+  overflow-wrap: anywhere;
+}
+
+.leaderboard-volume-region-guide svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  width: 100%;
+}
+
+.leaderboard-volume-region-labels text,
+.leaderboard-volume-region-axis text {
+  fill: var(--global-text-color);
+  font-size: 13px;
+}
+
+.leaderboard-volume-region-axis line {
+  stroke: var(--global-text-color);
+  stroke-width: 1;
+}
+
+.leaderboard-regional-zone-list {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.45rem;
 }
 
 .metric-definitions dl {
@@ -2727,6 +2871,30 @@ html[data-theme="dark"] .leaderboard-data-warning.is-official {
 
   .comparison-chart-frame {
     height: 350px;
+  }
+
+  .leaderboard-regional-chart-frame {
+    height: 350px;
+  }
+
+  .leaderboard-surface-region-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .leaderboard-region-grid-corner,
+  .leaderboard-region-grid-axis {
+    justify-content: flex-start;
+    padding-bottom: 0.1rem;
+  }
+
+  .leaderboard-region-grid-axis {
+    border-top: 1px solid var(--leaderboard-border);
+    margin-top: 0.25rem;
+    padding-top: 0.55rem;
+  }
+
+  .leaderboard-regional-zone-list {
+    grid-template-columns: 1fr;
   }
 
   .scatter-chart-frame {

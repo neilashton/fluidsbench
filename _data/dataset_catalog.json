@@ -128,10 +128,10 @@
       "status_label": "Candidate benchmark definition",
       "submissions_open": false,
       "source_pin": "7a5c0948ce27be709b1116a3a190f806e7a8f79f",
-      "summary": "The candidate contract binds all 484 public cases, eight official split lists, pMeanTrim and wallShearStressMeanTrim on every native surface polygon, UMeanTrim and pMeanTrim on every native volume cell, constant-reference force truth, AutoCFD5 velocity profiles, and continuous Cp cuts. Surface area sidecars and equal-cell volume accumulation are fixed; evaluator freezing, all-case diagnostic replay, and genuine-model sensitivity analysis remain before public submissions can open.",
+      "summary": "The candidate contract binds all 484 public cases, eight official split lists, pMeanTrim and wallShearStressMeanTrim on every native surface polygon, UMeanTrim and pMeanTrim on every native volume cell, constant-reference force truth, AutoCFD5 velocity profiles, and continuous Cp cuts. Surface area sidecars, equal-cell volume accumulation, and all-case native profile truth are published; evaluator freezing, remaining diagnostic review, and genuine-model sensitivity analysis remain before public submissions can open.",
       "split_ids": ["full", "medium", "scarce", "super_scarce", "geometry", "high_drag", "low_drag", "rear_separation"],
       "case_id_status": "official",
-      "contract_digest": "e79ce4d496bb12e6e4de3fab813530d9daa92e46461c694dab14a802991b4412"
+      "contract_digest": "33219e1554ee05806181c28e00ef3f4f0cbcedc0143e8ce3441cd67244a7ec20"
     },
     "visual": {
       "inputs": "DrivAer geometry + flow conditions",
@@ -442,7 +442,7 @@
       "summary": "FluidsBench binds the four official AirfRANS evaluation lists. The current scored flow fields are U and p—not nut—and the boundary task scores pressure plus wall shear derived by the fixed evaluator. Required diagnostics are Ux/U∞ and Uy/U∞ on 1,001-point extrados-normal lines at x/c = 0.25, 0.50, 0.75, and 0.95. Pressure-profile Cp is not a current leaderboard metric.",
       "split_ids": ["full", "scarce", "reynolds_extrapolation", "aoa_extrapolation"],
       "case_id_status": "official",
-      "contract_digest": "54374aee674d54f5d8e74b94c37035cedf9d844747ec7642858911df7d0a4a81"
+      "contract_digest": "2f6bd2db08ea8cbba8908502b7e77a1eb96e0a8c1dcf609ca01337a8b2694312"
     },
     "visual": {
       "inputs": "Airfoil geometry + Reynolds number + angle of attack",

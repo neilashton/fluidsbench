@@ -138,7 +138,7 @@
         {
           "id": "standard",
           "index_file": "datasets/airfrans/standard/index.json",
-          "index_sha256": "3f30fb9ae23511da2d743561c1311b7a98f684ca296947f26919728b51dc6934",
+          "index_sha256": "0a8aceadba8c84493d8005546dfb67c7fe03a8cfa89fe34e9b70789275283ec4",
           "case_count": 1,
           "case_id_status": "official_split_member_fixture",
           "coverage": "representative_subset"
@@ -146,7 +146,7 @@
         {
           "id": "reynolds_extrapolation",
           "index_file": "datasets/airfrans/reynolds_extrapolation/index.json",
-          "index_sha256": "8cc3fe911df7f6ddc9d952c6c2ff9966573d0b95dc2c2802bac99c50e4d7f7ca",
+          "index_sha256": "0648faad2ff9b5fec9f17127c25844ffb2cf83215e0b1cd53499717b8fc0f451",
           "case_count": 1,
           "case_id_status": "official_split_member_fixture",
           "coverage": "representative_subset"
@@ -154,7 +154,7 @@
         {
           "id": "aoa_extrapolation",
           "index_file": "datasets/airfrans/aoa_extrapolation/index.json",
-          "index_sha256": "b25f43c5e9b97c57f8e0ceba3c049fd4d41b175dd4850a7447d5f38dd988244a",
+          "index_sha256": "24d1339d7d847ce67fe6deb3eff2f1f8843ec9a21c64f8ef2b07f0eda3baf67f",
           "case_count": 1,
           "case_id_status": "official_split_member_fixture",
           "coverage": "representative_subset"
@@ -165,6 +165,15 @@
     {
       "id": "drivaerml",
       "name": "DrivAerML",
+      "native_profile_truth": {
+        "source_kind": "native_cfd",
+        "analytical_dummy": false,
+        "dataset_revision": "7a5c0948ce27be709b1116a3a190f806e7a8f79f",
+        "native_source_pin_sha256": "4fc9077f8f23f4994c98f4d0e7a17aef7b998de4c996638e3a8a616b6d923fdd",
+        "case_count": 484,
+        "master_index_file": "datasets/drivaerml/native-v3/index.json",
+        "master_index_sha256": "e7cf14f161fc7dbf22794e6f66db4e157329be960d2a4368140e08cf0608a5ae"
+      },
       "splits": [
         {
           "id": "full",
@@ -218,40 +227,41 @@
       "case_sets": [
         {
           "id": "standard",
-          "index_file": "datasets/drivaerml/standard/index.json",
-          "index_sha256": "bfd42b2cdff775a88d5ed2b5bcd196d3338a4f301b64cfe2887a072de0c34d96",
+          "index_file": "datasets/drivaerml/native-v3/splits/full.json",
+          "index_sha256": "7c5ecc3627ba53443ba94fac58d104e1d2df8d89cccfec76eafb4c59ef12eb05",
           "case_count": 50,
           "case_id_status": "official"
         },
         {
           "id": "geometry",
-          "index_file": "datasets/drivaerml/geometry/index.json",
-          "index_sha256": "4a9d9f221676d3d83340bd596c0a7e0ffd5a2b59b381f0879c3c7cdb6a2dd3f9",
+          "index_file": "datasets/drivaerml/native-v3/splits/geometry.json",
+          "index_sha256": "ccd59a28290c89597b2d3e209a6742d818e5b4e15645f2a319988abf953057a3",
           "case_count": 97,
           "case_id_status": "official"
         },
         {
           "id": "high_drag",
-          "index_file": "datasets/drivaerml/high_drag/index.json",
-          "index_sha256": "61fe79cd054664566bef33faaf279267b245e3c42b5f5fa562020769fa974987",
+          "index_file": "datasets/drivaerml/native-v3/splits/high_drag.json",
+          "index_sha256": "2d75228039f0208d34ccb28ca5e83debc028bb401d86ba6027754267e8bd9eff",
           "case_count": 97,
           "case_id_status": "official"
         },
         {
           "id": "low_drag",
-          "index_file": "datasets/drivaerml/low_drag/index.json",
-          "index_sha256": "5d15344b44789aaed29d2d89a146623c5ce256384ae1d592a365543dc21b7c60",
+          "index_file": "datasets/drivaerml/native-v3/splits/low_drag.json",
+          "index_sha256": "849bb07534fb0c993f2f0058a6aed885089559ff3b4654d91268a6a9f7d5adc5",
           "case_count": 97,
           "case_id_status": "official"
         },
         {
           "id": "rear_separation",
-          "index_file": "datasets/drivaerml/rear_separation/index.json",
-          "index_sha256": "9d0540abcd4f23398e13a6a0c32292c78a9de764b62903ea6e787e6655034fa7",
+          "index_file": "datasets/drivaerml/native-v3/splits/rear_separation.json",
+          "index_sha256": "37877106a111963e796d93622466b74f67fedb7a1c25cded013fe8a96eec4559",
           "case_count": 97,
           "case_id_status": "official"
         }
-      ]
+      ],
+      "note": "All DrivAerML profile curves are exact source-bound native CFD truth from the pinned 484-case public dataset revision. Geometry-relative families remain report-only and do not activate relative scoring."
     },
     {
       "id": "drivaernetplusplus",

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Publish contract-aligned analytical DrivAerML prototype ground truth."""
+"""Publish the archived analytical DrivAerML teaching prototype.
+
+This generator is deliberately isolated from the production profile-ground-
+truth directory.  Native CFD publication uses the source-bound schema-v2
+exporter in fluidsbench-submission; analytical curves must never overwrite or
+be presented as that native reference.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +16,9 @@ from types import ModuleType
 
 
 ROOT = Path(__file__).resolve().parents[1]
-GROUND_TRUTH_ROOT = ROOT / "assets" / "data" / "profile-ground-truth"
+GROUND_TRUTH_ROOT = (
+    ROOT / "assets" / "data" / "profile-ground-truth-analytical-prototype"
+)
 
 
 def load_generator(submission_root: Path) -> ModuleType:
@@ -42,7 +50,10 @@ def main() -> None:
     generator = load_generator(args.submission_root.expanduser().resolve())
     benchmark = generator.load_json(generator.DATASET_ROOT / "submission-spec.json")
     digest = generator.write_ground_truth_bundle(GROUND_TRUTH_ROOT, benchmark)
-    print(f"Regenerated DrivAerML prototype ground truth: {digest}")
+    print(
+        "Regenerated isolated DrivAerML analytical teaching prototype "
+        f"(not native CFD truth): {digest}"
+    )
 
 
 if __name__ == "__main__":

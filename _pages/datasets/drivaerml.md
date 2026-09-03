@@ -145,7 +145,13 @@ compact_masthead: true
     <p>
       These four FluidsBench cuts follow the validation regions used by DrivAerML but are defined as continuous intersections of each participant's
       complete native surface prediction. They are distinct from the 209 discrete AutoCFD5 pressure taps, which are explicitly excluded from the
-      DrivAerML submission and score. Immutable all-case extraction support is still an activation gate.
+      DrivAerML submission and score. Publishing the all-case native reference curves does not activate profile scoring; scoring remains behind a
+      separate reviewed activation change.
+    </p>
+    <p>
+      Leaderboard Cp plots default to the producer-bound segment-midpoint streamwise x coordinate in metres so native CFD and submitted predictions can be compared
+      directly with AutoCFD and published figures. Cumulative surface arc length remains the unchanged scoring and reproducibility coordinate and is
+      available from the horizontal-axis selector. The display never sorts, interpolates, resamples, or joins across a retained cut-segment break.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">
@@ -164,9 +170,12 @@ compact_masthead: true
     <h3>Candidate AutoCFD5 velocity profiles</h3>
     <p>
       The velocity diagnostic uses all 16 AutoCFD5 lines: <code>V1</code>–<code>V6</code>, <code>U1</code>–<code>U6</code>, <code>L1</code>, and
-      <code>R1</code>–<code>R3</code>. The submitted quantity is <code>|UMeanTrim| / 38.889</code> on the fixed 10 mm candidate grid, giving 3,756
-      samples per case. The ranked reduction is an equal-case, equal-line global R² with normalized trapezoidal arclength support per line; normalized
-      RMSE and the experimental subset are report-only diagnostics. All-case mapping and resolution-convergence validation are not yet complete.
+      <code>R1</code>–<code>R3</code>. The fixed-locations view uses physical distance in metres on the current primary/candidate 10 mm support; the
+      geometry-relative view uses normalized arc length on its distinct retained support and is labelled diagnostic, not scored. Both display native
+      <code>|UMeanTrim| / 38.889</code> values. Unsupported rows remain explicit gaps, and the dashboard never substitutes or overlays one placement
+      family's support for the other. The candidate fixed-family reduction is an equal-case, equal-line global R² with normalized trapezoidal
+      arclength support per line; normalized RMSE and the experimental subset are report-only diagnostics. Displaying either all-case native view does
+      not activate relative scoring or open submissions.
     </p>
   </section>
 
