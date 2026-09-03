@@ -141,6 +141,7 @@ hf download nvidia/HiLiftAeroML \
   --include "splits/**" \
   --include "data_quality/**" \
   --include "force_mom_all.csv" \
+  --include "force_mom_surface_overrides_v1.json" \
   --include "geo_values_all.csv" \
   --local-dir ./hiliftaeroml</code></pre>
   </div>
@@ -157,7 +158,7 @@ hf download nvidia/HiLiftAeroML \
   </div>
 </div>
 <p class="dataset-download-note">
-  The full repository is about 66.9 TB as stored and expands further after extraction. The example boundary archive alone is approximately 12 GB and
+  The full repository is about 66.8 TB as stored and expands further after extraction. The example boundary archive alone is approximately 12 GB and
   its area sidecar approximately 546 MB. Remove <code>--dry-run</code> only after checking local capacity. Each sidecar is little-endian float32 in
   square inches and matches the exact native boundary-point order; a constant area-unit conversion cancels from normalized weighted metrics.
 </p>

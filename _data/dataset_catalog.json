@@ -306,21 +306,21 @@
       "provider": "huggingface",
       "repository_id": "nvidia/HiLiftAeroML",
       "url": "https://huggingface.co/datasets/nvidia/HiLiftAeroML",
-      "revision": "dd186e13724f39fc94186308519748cca32399eb",
-      "revision_short": "dd186e1",
-      "revision_url": "https://huggingface.co/datasets/nvidia/HiLiftAeroML/tree/dd186e13724f39fc94186308519748cca32399eb",
-      "checked_on": "2026-08-22",
-      "release": "Hugging Face revision dd186e1",
+      "revision": "bbec30bcfc6103309c1375c5228b3ad0a586bfaf",
+      "revision_short": "bbec30b",
+      "revision_url": "https://huggingface.co/datasets/nvidia/HiLiftAeroML/tree/bbec30bcfc6103309c1375c5228b3ad0a586bfaf",
+      "checked_on": "2026-09-03",
+      "release": "Hugging Face revision bbec30b",
       "license": "CC BY 4.0",
       "license_url": "https://creativecommons.org/licenses/by/4.0/",
-      "availability": "1,800 cases; approximately 66.9 TB compressed on the Hub",
-      "contents": "Compressed native boundary and volume VTUs, STL and STEP geometry, force/reference tables, surface renders and convergence plots, fourteen deterministic split families, data-quality masks, and a native-point boundary dual-area sidecar for every case.",
+      "availability": "1,800 cases; approximately 66.8 TB compressed on the Hub",
+      "contents": "Compressed native boundary and volume VTUs, STL and STEP geometry, force/reference tables, surface renders and convergence plots, fourteen deterministic split families, data-quality masks, a native-point boundary dual-area sidecar for every case, and a provenance manifest for six corrected mean force/moment records.",
       "image": {
         "path": "/assets/img/datasets/hiliftaeroml-wss.png",
         "alt": "Wall-shear-stress rendering on the high-lift wing, slat, flap, and landing gear of a HiLiftAeroML case.",
         "caption": "Surface wall-shear rendering for geometry LHC001 at 4° angle of attack.",
         "credit": "HiLiftAeroML source dataset",
-        "source_url": "https://huggingface.co/datasets/nvidia/HiLiftAeroML/blob/dd186e13724f39fc94186308519748cca32399eb/geo_LHC001_AoA_4/img_wss_LHC001_AoA_4.png"
+        "source_url": "https://huggingface.co/datasets/nvidia/HiLiftAeroML/blob/bbec30bcfc6103309c1375c5228b3ad0a586bfaf/geo_LHC001_AoA_4/img_wss_LHC001_AoA_4.png"
       }
     },
     "design_space": {
@@ -354,7 +354,7 @@
       "status_label": "Prototype benchmark definition",
       "submissions_open": false,
       "source_pin": "Not yet frozen",
-      "summary": "The source now publishes all fourteen deterministic splits, native-point surface area sidecars, and invalid-volume-row records. FluidsBench has candidate surface, volume, force, Cp-cut, and velocity-profile metrics, but its case lists and exact scored array bindings remain provisional and are not active for submissions.",
+      "summary": "The source now publishes all fourteen deterministic splits, native-point surface area sidecars, invalid-volume-row records, and six documented field-integrated mean force/moment corrections. FluidsBench has candidate surface, volume, force, Cp-cut, and velocity-profile metrics, but its case lists and exact scored array bindings remain provisional and are not active for submissions.",
       "split_ids": [
         "full",
         "medium",

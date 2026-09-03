@@ -54,6 +54,28 @@ compact_masthead: true
   {% include dataset_design_space.html slug="hiliftaeroml" %}
 
   <section class="dataset-panel">
+    <h3>Source correction: mean force and moment coefficients</h3>
+    <p>
+      The 2 September 2026 source release corrects the mean <code>cd</code>, <code>cl</code>, <code>cm</code>, <code>clp</code>,
+      <code>clv</code>, <code>cdp</code>, and <code>cdv</code> values for six cases. The replacements are canonically integrated from the
+      released time-averaged surface pressure and wall-shear fields; the meshes, fields, geometry, split manifests, and the other 1,794 cases are
+      unchanged.
+    </p>
+    <p>
+      The affected cases are <code>geo_LHC012_AoA_16</code>, <code>geo_LHC018_AoA_16</code>, <code>geo_LHC028_AoA_18</code>,
+      <code>geo_LHC028_AoA_22</code>, <code>geo_LHC129_AoA_4</code>, and <code>geo_LHC172_AoA_22</code>. Their retained
+      <code>*_stdev</code>, <code>*_stderr</code>, and <code>*_ci95</code> columns are original solver-monitor diagnostics, not uncertainty
+      estimates for the replaced means. See the
+      <a href="https://huggingface.co/datasets/nvidia/HiLiftAeroML/blob/bbec30bcfc6103309c1375c5228b3ad0a586bfaf/force_mom_surface_overrides_v1.json">source correction manifest</a>
+      for the exact old and new values, method, and hashes.
+    </p>
+    <p>
+      This records a source-data correction only. The HiLiftAeroML FluidsBench scoring contract remains provisional and is not yet pinned for
+      submissions.
+    </p>
+  </section>
+
+  <section class="dataset-panel">
     <h3>Published source splits</h3>
     <p>
       The Hugging Face source publishes these fourteen deterministic split families over all 1,800 cases. The table gives the exact manifest IDs and
