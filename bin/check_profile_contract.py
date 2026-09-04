@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import math
 import struct
 import sys
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -48,6 +50,31 @@ RELEASE_SCHEMA_NAMES = (
 )
 COMPLETE_COVERAGE = "complete_split"
 REPRESENTATIVE_COVERAGE = "representative_subset"
+HILIFT_COMPACT_TRUTH_INDEX_SCHEMA = (
+    "fluidsbench-hiliftaeroml-compact-profile-truth-index-v1"
+)
+HILIFT_COMPACT_TRUTH_CHUNK_SCHEMA = (
+    "fluidsbench-hiliftaeroml-compact-profile-truth-chunk-v1"
+)
+HILIFT_COMPACT_TRUTH_FORMAT = (
+    "fluidsbench-hiliftaeroml-compact-profile-truth-v1"
+)
+HILIFT_COMPACT_TRUTH_RELEASE_ID = (
+    "hiliftaeroml-compact-profile-truth-full360-v1"
+)
+HILIFT_COMPACT_PROFILE_CONTRACT_ID = (
+    "hiliftaeroml-compact-profile-predictions-v2-candidate"
+)
+HILIFT_COMPACT_PROFILE_CONTRACT_SHA256 = (
+    "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c"
+)
+HILIFT_COMPACT_CASE_SET_ID = "caseset-ac791749e527"
+HILIFT_COMPACT_PREDICTION_FORMAT = (
+    "fluidsbench-hiliftaeroml-compact-profile-chunks-v2-candidate"
+)
+HILIFT_COMPACT_PREVIEW_SUBMISSION_ID = (
+    "hiliftaeroml-transolver-full360-candidate-v1"
+)
 NATIVE_DRIVAERML_INDEX_SCHEMA = "fluidsbench-drivaerml-native-profile-truth-index-v2"
 NATIVE_DRIVAERML_SPLIT_SCHEMA = (
     "fluidsbench-drivaerml-native-profile-truth-split-index-v2"
@@ -2376,6 +2403,578 @@ def case_coverage_errors(
     return errors
 
 
+def _npy_1d_payload(payload: bytes, label: str) -> tuple[str, int, bytes]:
+    if len(payload) < 10 or payload[:6] != b"\x93NUMPY":
+        raise ValueError(f"{label}: member is not a NumPy NPY array")
+    major = payload[6]
+    if major == 1:
+        header_length = struct.unpack_from("<H", payload, 8)[0]
+        header_start = 10
+    elif major in {2, 3}:
+        if len(payload) < 12:
+            raise ValueError(f"{label}: truncated NPY header")
+        header_length = struct.unpack_from("<I", payload, 8)[0]
+        header_start = 12
+    else:
+        raise ValueError(f"{label}: unsupported NPY version {major}.{payload[7]}")
+    data_start = header_start + header_length
+    if data_start > len(payload):
+        raise ValueError(f"{label}: truncated NPY header body")
+    encoding = "utf-8" if major == 3 else "latin1"
+    try:
+        header = ast.literal_eval(payload[header_start:data_start].decode(encoding).strip())
+    except (SyntaxError, UnicodeDecodeError, ValueError) as error:
+        raise ValueError(f"{label}: invalid NPY header") from error
+    if not isinstance(header, dict) or header.get("fortran_order") is not False:
+        raise ValueError(f"{label}: NPY array must use C order")
+    dtype = header.get("descr")
+    shape = header.get("shape")
+    widths = {"<i2": 2, "<i4": 4, "|u1": 1, "|b1": 1, "<f4": 4}
+    if dtype not in widths or not isinstance(shape, tuple) or len(shape) != 1:
+        raise ValueError(f"{label}: unsupported NPY dtype or rank")
+    count = shape[0]
+    if not isinstance(count, int) or isinstance(count, bool) or count < 0:
+        raise ValueError(f"{label}: invalid NPY shape")
+    data = payload[data_start:]
+    if len(data) != count * widths[dtype]:
+        raise ValueError(f"{label}: NPY payload size differs from shape/dtype")
+    return dtype, count, data
+
+
+def _compact_npz_arrays(
+    path: Path, expected_names: list[str], label: str
+) -> dict[str, tuple[str, int, bytes]]:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            infos = archive.infolist()
+            expected_members = [f"{name}.npy" for name in expected_names]
+            if [info.filename for info in infos] != expected_members:
+                raise ValueError(f"{label}: NPZ member inventory or order differs")
+            if any(
+                info.compress_type != zipfile.ZIP_DEFLATED
+                or info.flag_bits & (0x1 | 0x8)
+                or info.is_dir()
+                for info in infos
+            ):
+                raise ValueError(f"{label}: NPZ members must be unencrypted deterministic DEFLATE files")
+            return {
+                name: _npy_1d_payload(
+                    archive.read(f"{name}.npy"), f"{label}/{name}.npy"
+                )
+                for name in expected_names
+            }
+    except (OSError, KeyError, zipfile.BadZipFile) as error:
+        raise ValueError(f"{label}: unreadable NPZ artifact") from error
+
+
+def _unpack_i4(data: bytes) -> list[int]:
+    return [value[0] for value in struct.iter_unpack("<i", data)]
+
+
+def _all_finite_f4(data: bytes, *, nonnegative: bool = False) -> bool:
+    for (value,) in struct.iter_unpack("<f", data):
+        if not math.isfinite(value) or (nonnegative and value < 0.0):
+            return False
+    return True
+
+
+def hiliftaeroml_compact_truth_errors(
+    ground_truth_root: Path,
+    dataset_manifest: dict[str, Any],
+    submission_root: Path,
+) -> list[str]:
+    label = "hiliftaeroml/compact-full360-v1"
+    errors: list[str] = []
+    declaration = dataset_manifest.get("compact_profile_truth")
+    expected_declaration = {
+        "source_kind": "native_cfd",
+        "analytical_dummy": False,
+        "plot_only": True,
+        "release_id": HILIFT_COMPACT_TRUTH_RELEASE_ID,
+        "format": HILIFT_COMPACT_TRUTH_FORMAT,
+        "profile_contract_id": HILIFT_COMPACT_PROFILE_CONTRACT_ID,
+        "profile_contract_sha256": HILIFT_COMPACT_PROFILE_CONTRACT_SHA256,
+        "case_set_id": HILIFT_COMPACT_CASE_SET_ID,
+        "case_count": 360,
+        "master_index_file": "datasets/hiliftaeroml/compact-full360-v1/index.json",
+    }
+    if not isinstance(declaration, dict) or any(
+        declaration.get(key) != value for key, value in expected_declaration.items()
+    ) or not valid_sha256(declaration.get("master_index_sha256")):
+        return [f"{label}: public compact Native CFD declaration differs"]
+
+    spec = load_json(
+        submission_root / "benchmark-specs" / "hiliftaeroml" / "submission-spec.json"
+    )
+    compact_definition = spec.get("compact_profile_definition", {})
+    public_binding = compact_definition.get("public_plot_ground_truth", {})
+    binding_path = (
+        submission_root
+        / "benchmark-specs"
+        / "hiliftaeroml"
+        / str(public_binding.get("binding_file", ""))
+    )
+    ground_truth_manifest = load_json(ground_truth_root / "manifest.json")
+    expected_public_binding = {
+        "schema": "hiliftaeroml-public-compact-profile-truth-binding-v1",
+        "schema_version": "1.0",
+        "status": "public_plot_only_candidate",
+        "usage": "browser_visualization_only_not_metric_recomputation",
+        "activation_effect": "none",
+        "dataset_id": "hiliftaeroml",
+        "split_id": "full",
+        "case_set_id": HILIFT_COMPACT_CASE_SET_ID,
+        "case_count": 360,
+        "profile_contract_id": HILIFT_COMPACT_PROFILE_CONTRACT_ID,
+        "profile_contract_sha256": HILIFT_COMPACT_PROFILE_CONTRACT_SHA256,
+        "truth_release": {
+            "release_id": HILIFT_COMPACT_TRUTH_RELEASE_ID,
+            "format": HILIFT_COMPACT_TRUTH_FORMAT,
+            "source_kind": "native_cfd",
+            "analytical_dummy": False,
+            "plot_only": True,
+            "contains_scoring_weights": False,
+            "repository": "https://github.com/neilashton/fluidsbench",
+            "source_ref": "dev",
+            "site_manifest_release_id": ground_truth_manifest["data_release"]["id"],
+            "site_manifest_url": "https://fluidsbench.org/assets/data/profile-ground-truth/manifest.json",
+            "site_manifest_sha256": sha256_file(ground_truth_root / "manifest.json"),
+            "index_url": "https://fluidsbench.org/assets/data/profile-ground-truth/datasets/hiliftaeroml/compact-full360-v1/index.json",
+            "index_sha256": declaration["master_index_sha256"],
+        },
+        "scoring_truth": {
+            "release_id": "hiliftaeroml-native-profile-truth-v1-candidate",
+            "manifest_sha256": "3e20b857e12055e16f1d248d125b8df62a3669c604411dc67322fe98d9ab4477",
+            "published": False,
+            "relationship": "the public plot release is a float32 visualization projection and does not replace this evaluator-owned scoring truth",
+        },
+    }
+    if (
+        compact_definition.get("contract_id") != HILIFT_COMPACT_PROFILE_CONTRACT_ID
+        or compact_definition.get("sha256")
+        != HILIFT_COMPACT_PROFILE_CONTRACT_SHA256
+        or public_binding.get("status") != "public_plot_only_candidate"
+        or public_binding.get("usage")
+        != "browser_visualization_only_not_metric_recomputation"
+        or public_binding.get("activation_effect") != "none"
+        or public_binding.get("binding_file")
+        != "public-compact-profile-truth-binding-v1.json"
+        or not binding_path.is_file()
+        or public_binding.get("binding_sha256") != sha256_file(binding_path)
+        or load_json(binding_path) != expected_public_binding
+    ):
+        errors.append(f"{label}: submission repository public plot binding differs")
+    spec_splits = {split["id"]: split for split in spec["splits"]}
+    website_splits = {
+        split.get("id"): split
+        for split in dataset_manifest.get("splits", [])
+        if isinstance(split, dict)
+    }
+    if set(spec_splits) != set(website_splits):
+        errors.append(f"{label}: website split inventory differs from submission contract")
+    for split_id, split in spec_splits.items():
+        if website_splits.get(split_id, {}).get("case_set_id") != split.get(
+            "case_set_id"
+        ):
+            errors.append(f"{label}/{split_id}: website case-set binding is stale")
+
+    case_sets = {
+        case_set.get("id"): case_set
+        for case_set in dataset_manifest.get("case_sets", [])
+        if isinstance(case_set, dict)
+    }
+    case_set = case_sets.get(HILIFT_COMPACT_CASE_SET_ID)
+    if not isinstance(case_set, dict):
+        return [*errors, f"{label}: website lacks the compact Full360 case set"]
+    index_path = _safe_profile_path(
+        ground_truth_root, ground_truth_root, case_set.get("index_file")
+    )
+    if index_path is None or not index_path.is_file():
+        return [*errors, f"{label}: compact truth index is missing or unsafe"]
+    index_sha = sha256_file(index_path)
+    if (
+        case_set.get("index_sha256") != index_sha
+        or declaration.get("master_index_sha256") != index_sha
+        or case_set.get("case_count") != 360
+        or case_set.get("coverage") != COMPLETE_COVERAGE
+        or case_set.get("case_id_status") != "official"
+    ):
+        errors.append(f"{label}: website/index checksum, count, coverage, or case status differs")
+    index = load_json(index_path)
+    if (
+        index.get("schema") != HILIFT_COMPACT_TRUTH_INDEX_SCHEMA
+        or index.get("schema_version") != "1.0"
+        or index.get("format") != HILIFT_COMPACT_TRUTH_FORMAT
+        or index.get("release_id") != HILIFT_COMPACT_TRUTH_RELEASE_ID
+        or index.get("status") != "public_plot_only_candidate"
+        or index.get("usage") != "browser_visualization_only_not_metric_recomputation"
+        or index.get("dataset_id") != "hiliftaeroml"
+        or index.get("case_set_id") != HILIFT_COMPACT_CASE_SET_ID
+        or index.get("profile_contract_id") != HILIFT_COMPACT_PROFILE_CONTRACT_ID
+        or index.get("profile_contract_sha256")
+        != HILIFT_COMPACT_PROFILE_CONTRACT_SHA256
+        or index.get("case_count") != 360
+    ):
+        errors.append(f"{label}: index schema, release, role, or contract binding differs")
+
+    full_split = load_json(
+        submission_root
+        / "benchmark-specs"
+        / "hiliftaeroml"
+        / spec_splits["full"]["index_file"]
+    )["case_ids"]
+    indexed_case_ids = [
+        case_id
+        for chunk in index.get("chunks", [])
+        if isinstance(chunk, dict)
+        for case_id in chunk.get("case_ids", [])
+    ]
+    if index.get("case_ids") != full_split or indexed_case_ids != full_split:
+        errors.append(f"{label}: ordered cases differ from the exact official Full split")
+
+    common = index.get("common_support", {})
+    common_path = _safe_profile_path(
+        ground_truth_root, index_path.parent, common.get("file")
+    )
+    common_arrays: dict[str, tuple[str, int, bytes]] = {}
+    if common_path is None or not common_path.is_file():
+        errors.append(f"{label}: shared velocity plot support is missing or unsafe")
+    else:
+        errors.extend(
+            _file_binding_errors(
+                common_path,
+                common.get("sha256"),
+                common.get("byte_size"),
+                f"{label}/common-support",
+            )
+        )
+        try:
+            common_arrays = _compact_npz_arrays(
+                common_path,
+                [
+                    "velocity_coordinate_in",
+                    "velocity_valid_mask",
+                    "velocity_station_row_offsets",
+                ],
+                f"{label}/common-support",
+            )
+            if (
+                common_arrays["velocity_coordinate_in"][:2] != ("<f4", 4005)
+                or common_arrays["velocity_valid_mask"][:2] != ("|b1", 4005)
+                or common_arrays["velocity_station_row_offsets"][:2]
+                != ("<i4", 6)
+                or _unpack_i4(common_arrays["velocity_station_row_offsets"][2])
+                != [0, 801, 1602, 2403, 3204, 4005]
+                or any(value not in {0, 1} for value in common_arrays["velocity_valid_mask"][2])
+                or not _all_finite_f4(common_arrays["velocity_coordinate_in"][2])
+            ):
+                errors.append(f"{label}: shared velocity plot arrays differ from the 5 x 801 contract")
+        except ValueError as error:
+            errors.append(str(error))
+    valid_velocity_count = (
+        sum(common_arrays["velocity_valid_mask"][2])
+        if "velocity_valid_mask" in common_arrays
+        else None
+    )
+
+    loaded_case_ids: list[str] = []
+    truth_metadata: dict[str, dict[str, Any]] = {}
+    chunks = index.get("chunks", [])
+    if not isinstance(chunks, list) or len(chunks) != 36:
+        errors.append(f"{label}: index must contain 36 ten-case chunks")
+        chunks = []
+    for chunk_index, chunk_ref in enumerate(chunks):
+        chunk_label = f"{label}/chunk-{chunk_index:03d}"
+        chunk_path = _safe_profile_path(
+            ground_truth_root, index_path.parent, chunk_ref.get("file")
+        )
+        if chunk_path is None or not chunk_path.is_file():
+            errors.append(f"{chunk_label}: chunk is missing or unsafe")
+            continue
+        errors.extend(
+            _file_binding_errors(
+                chunk_path,
+                chunk_ref.get("sha256"),
+                chunk_ref.get("byte_size"),
+                chunk_label,
+            )
+        )
+        chunk = load_json(chunk_path)
+        chunk_case_ids = [
+            case.get("case_id")
+            for case in chunk.get("cases", [])
+            if isinstance(case, dict)
+        ]
+        if (
+            chunk.get("schema") != HILIFT_COMPACT_TRUTH_CHUNK_SCHEMA
+            or chunk.get("schema_version") != "1.0"
+            or chunk.get("format") != HILIFT_COMPACT_TRUTH_FORMAT
+            or chunk.get("release_id") != HILIFT_COMPACT_TRUTH_RELEASE_ID
+            or chunk.get("dataset_id") != "hiliftaeroml"
+            or chunk.get("case_set_id") != HILIFT_COMPACT_CASE_SET_ID
+            or chunk.get("case_ids") != chunk_ref.get("case_ids")
+            or chunk_case_ids != chunk_ref.get("case_ids")
+            or chunk.get("case_count") != len(chunk_case_ids)
+            or len(chunk_case_ids) != 10
+        ):
+            errors.append(f"{chunk_label}: chunk schema, count, or ordered cases differ")
+        loaded_case_ids.extend(chunk_case_ids)
+        for case in chunk.get("cases", []):
+            if not isinstance(case, dict):
+                continue
+            case_id = case.get("case_id")
+            case_label = f"{label}/{case_id}"
+            artifact = case.get("artifact", {})
+            artifact_path = _safe_profile_path(
+                ground_truth_root, index_path.parent, artifact.get("file")
+            )
+            if (
+                case.get("truth_source")
+                != {
+                    "source_kind": "native_cfd",
+                    "analytical_dummy": False,
+                    "role": "plot_only_not_scoring_source",
+                }
+                or not valid_sha256(case.get("surface_cp", {}).get("support_identity_sha256"))
+                or not valid_sha256(case.get("surface_cp", {}).get("prediction_order_sha256"))
+                or not valid_sha256(case.get("volume_velocity", {}).get("support_identity_sha256"))
+                or not valid_sha256(case.get("volume_velocity", {}).get("prediction_order_sha256"))
+            ):
+                errors.append(f"{case_label}: native truth or compact support identities differ")
+            if artifact_path is None or not artifact_path.is_file():
+                errors.append(f"{case_label}: plot truth artifact is missing or unsafe")
+                continue
+            errors.extend(
+                _file_binding_errors(
+                    artifact_path,
+                    artifact.get("sha256"),
+                    artifact.get("byte_size"),
+                    case_label,
+                )
+            )
+            try:
+                arrays = _compact_npz_arrays(
+                    artifact_path,
+                    [
+                        "cp_x_in",
+                        "cp_truth",
+                        "cp_branch_point_offsets",
+                        "cp_branch_row_code",
+                        "velocity_truth_speed_over_u_inf",
+                    ],
+                    case_label,
+                )
+                cp_points = case.get("surface_cp", {}).get("retained_point_count")
+                cp_branches = case.get("surface_cp", {}).get("retained_branch_count")
+                velocity_values = case.get("volume_velocity", {}).get("valid_row_count")
+                offsets = _unpack_i4(arrays["cp_branch_point_offsets"][2])
+                rows = list(arrays["cp_branch_row_code"][2])
+                if (
+                    arrays["cp_x_in"][:2] != ("<f4", cp_points)
+                    or arrays["cp_truth"][:2] != ("<f4", cp_points)
+                    or arrays["cp_branch_point_offsets"][:2]
+                    != ("<i4", cp_branches + 1)
+                    or arrays["cp_branch_row_code"][:2] != ("|u1", cp_branches)
+                    or arrays["velocity_truth_speed_over_u_inf"][:2]
+                    != ("<f4", velocity_values)
+                    or velocity_values != valid_velocity_count
+                    or not offsets
+                    or offsets[0] != 0
+                    or offsets[-1] != cp_points
+                    or any(right <= left for left, right in zip(offsets, offsets[1:]))
+                    or set(rows) != set(range(10))
+                    or not _all_finite_f4(arrays["cp_x_in"][2])
+                    or not _all_finite_f4(arrays["cp_truth"][2])
+                    or not _all_finite_f4(
+                        arrays["velocity_truth_speed_over_u_inf"][2],
+                        nonnegative=True,
+                    )
+                ):
+                    errors.append(f"{case_label}: plot arrays differ from bound support counts or values")
+            except (TypeError, ValueError) as error:
+                errors.append(str(error))
+            truth_metadata[case_id] = {
+                "surface_cp": case.get("surface_cp"),
+                "volume_velocity": case.get("volume_velocity"),
+            }
+    if loaded_case_ids != indexed_case_ids:
+        errors.append(f"{label}: loaded chunk cases differ from the index")
+    if len(truth_metadata) != 360:
+        errors.append(f"{label}: truth metadata does not cover all 360 cases")
+
+    preview_root = (
+        submission_root
+        / "submissions"
+        / "hiliftaeroml"
+        / HILIFT_COMPACT_PREVIEW_SUBMISSION_ID
+    )
+    submission_path = preview_root / "submission.json"
+    if not submission_path.is_file():
+        return [*errors, f"{label}: registered compact Full360 preview is missing"]
+    submission = load_json(submission_path)
+    profile_data = submission.get("profile_data", {})
+    prediction_index_path = _safe_profile_path(
+        preview_root, preview_root, profile_data.get("index_file")
+    )
+    if (
+        submission.get("submission_id") != HILIFT_COMPACT_PREVIEW_SUBMISSION_ID
+        or submission.get("dataset_id") != "hiliftaeroml"
+        or submission.get("split_id") != "full"
+        or submission.get("case_set_id") != HILIFT_COMPACT_CASE_SET_ID
+        or profile_data.get("format") != HILIFT_COMPACT_PREDICTION_FORMAT
+        or profile_data.get("case_count") != 360
+        or profile_data.get("case_set_id") != HILIFT_COMPACT_CASE_SET_ID
+        or prediction_index_path is None
+        or not prediction_index_path.is_file()
+    ):
+        return [*errors, f"{label}: registered compact Full360 preview binding differs"]
+    prediction_index = load_json(prediction_index_path)
+    prediction_chunks = prediction_index.get("chunks", [])
+    prediction_case_ids = [
+        case_id
+        for chunk in prediction_chunks
+        if isinstance(chunk, dict)
+        for case_id in chunk.get("case_ids", [])
+    ]
+    if (
+        prediction_index.get("schema_version") != "1.0"
+        or prediction_index.get("format") != HILIFT_COMPACT_PREDICTION_FORMAT
+        or prediction_index.get("contract_id") != HILIFT_COMPACT_PROFILE_CONTRACT_ID
+        or prediction_index.get("contract_sha256")
+        != HILIFT_COMPACT_PROFILE_CONTRACT_SHA256
+        or prediction_index.get("submission_id")
+        != HILIFT_COMPACT_PREVIEW_SUBMISSION_ID
+        or prediction_index.get("dataset_id") != "hiliftaeroml"
+        or prediction_index.get("split_id") != "full"
+        or prediction_index.get("case_set_id") != HILIFT_COMPACT_CASE_SET_ID
+        or prediction_index.get("case_count") != 360
+        or len(prediction_chunks) != 36
+        or prediction_case_ids != indexed_case_ids
+    ):
+        errors.append(f"{label}: compact prediction index cannot join the public truth")
+
+    loaded_prediction_case_ids: list[str] = []
+    for chunk_index, chunk_ref in enumerate(prediction_chunks):
+        chunk_label = f"{label}/prediction-chunk-{chunk_index:03d}"
+        chunk_path = _safe_profile_path(
+            preview_root, prediction_index_path.parent, chunk_ref.get("file")
+        )
+        if chunk_path is None or not chunk_path.is_file():
+            errors.append(f"{chunk_label}: prediction chunk is missing or unsafe")
+            continue
+        errors.extend(
+            _file_binding_errors(
+                chunk_path,
+                chunk_ref.get("sha256"),
+                None,
+                chunk_label,
+            )
+        )
+        chunk = load_json(chunk_path)
+        chunk_case_ids = [
+            case.get("case_id")
+            for case in chunk.get("cases", [])
+            if isinstance(case, dict)
+        ]
+        if (
+            chunk.get("schema")
+            != "hiliftaeroml-compact-profile-chunk-v2-candidate"
+            or chunk.get("schema_version") != "2.0"
+            or chunk.get("format") != HILIFT_COMPACT_PREDICTION_FORMAT
+            or chunk.get("contract_id") != HILIFT_COMPACT_PROFILE_CONTRACT_ID
+            or chunk.get("contract_sha256")
+            != HILIFT_COMPACT_PROFILE_CONTRACT_SHA256
+            or chunk.get("submission_id")
+            != HILIFT_COMPACT_PREVIEW_SUBMISSION_ID
+            or chunk.get("dataset_id") != "hiliftaeroml"
+            or chunk.get("split_id") != "full"
+            or chunk.get("case_set_id") != HILIFT_COMPACT_CASE_SET_ID
+            or chunk_case_ids != chunk_ref.get("case_ids")
+        ):
+            errors.append(f"{chunk_label}: prediction chunk binding or order differs")
+        loaded_prediction_case_ids.extend(chunk_case_ids)
+        for case in chunk.get("cases", []):
+            if not isinstance(case, dict):
+                continue
+            case_id = case.get("case_id")
+            case_label = f"{label}/{case_id}/prediction"
+            truth = truth_metadata.get(case_id, {})
+            truth_cp = truth.get("surface_cp", {})
+            truth_velocity = truth.get("volume_velocity", {})
+            prediction_cp = case.get("surface_cp", {})
+            prediction_velocity = case.get("volume_velocity", {})
+            cp_keys = (
+                "support_identity_sha256",
+                "prediction_order_sha256",
+                "physical_graph_count",
+                "retained_branch_count",
+                "retained_point_count",
+                "maximum_points_per_physical_graph",
+                "quantization_scale",
+                "quantization_dtype",
+                "delta_dtype",
+                "prediction_array",
+            )
+            velocity_keys = (
+                "support_identity_sha256",
+                "prediction_order_sha256",
+                "station_order",
+                "station_count",
+                "row_count",
+                "valid_row_count",
+                "invalid_row_count",
+                "prediction_dtype",
+                "prediction_array",
+            )
+            if any(prediction_cp.get(key) != truth_cp.get(key) for key in cp_keys):
+                errors.append(f"{case_label}: Cp support metadata cannot join public truth")
+            if any(
+                prediction_velocity.get(key) != truth_velocity.get(key)
+                for key in velocity_keys
+            ):
+                errors.append(
+                    f"{case_label}: velocity support metadata cannot join public truth"
+                )
+            artifact = case.get("artifact", {})
+            artifact_path = _safe_profile_path(
+                preview_root, prediction_index_path.parent, artifact.get("file")
+            )
+            if artifact_path is None or not artifact_path.is_file():
+                errors.append(f"{case_label}: prediction artifact is missing or unsafe")
+                continue
+            errors.extend(
+                _file_binding_errors(
+                    artifact_path,
+                    artifact.get("sha256"),
+                    artifact.get("byte_size"),
+                    case_label,
+                )
+            )
+            try:
+                arrays = _compact_npz_arrays(
+                    artifact_path,
+                    ["cp_q_delta", "velocity_speed_over_u_inf"],
+                    case_label,
+                )
+                if (
+                    arrays["cp_q_delta"][:2]
+                    != ("<i2", prediction_cp.get("retained_point_count"))
+                    or arrays["velocity_speed_over_u_inf"][:2]
+                    != ("<f4", prediction_velocity.get("valid_row_count"))
+                    or not _all_finite_f4(
+                        arrays["velocity_speed_over_u_inf"][2], nonnegative=True
+                    )
+                ):
+                    errors.append(
+                        f"{case_label}: prediction arrays differ from joined support counts"
+                    )
+            except (TypeError, ValueError) as error:
+                errors.append(str(error))
+    if loaded_prediction_case_ids != indexed_case_ids:
+        errors.append(f"{label}: loaded prediction cases differ from public truth order")
+    return errors
+
+
 def check(submission_root: Path) -> list[str]:
     errors: list[str] = []
     for schema_name in TOP_LEVEL_SCHEMA_NAMES:
@@ -2554,6 +3153,13 @@ def check(submission_root: Path) -> list[str]:
                     errors.append(
                         f"drivaerml/{split_id}: native ground-truth split mapping or case_count is stale"
                     )
+            continue
+        if dataset_id == "hiliftaeroml" and "compact_profile_truth" in ground_truth_dataset:
+            errors.extend(
+                hiliftaeroml_compact_truth_errors(
+                    GROUND_TRUTH_ROOT, ground_truth_dataset, submission_root
+                )
+            )
             continue
         spec_splits = {split["id"]: split for split in spec["splits"]}
         ground_truth_splits = {

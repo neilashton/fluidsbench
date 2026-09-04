@@ -29,7 +29,7 @@
     "radar_unavailable_reason": "The active benchmark defines one scored pressure component. A radar chart would imply independent scored dimensions that this contract does not yet contain."
   },
   "hiliftaeroml": {
-    "headline_metric_ids": ["overall_score", "surface_pressure_rel_l2", "volume_velocity_physical_rel_l2", "c_lift_mae", "c_pitch_mae"],
+    "headline_metric_ids": ["overall_score", "surface_pressure_rel_l2", "volume_velocity_rel_l2", "c_lift_mae", "c_pitch_mae"],
     "radar_metric_ids": ["surface_pressure_rel_l2", "volume_velocity_rel_l2", "cl_r2", "velocity_profile_r2"]
   },
   "windsorml": {

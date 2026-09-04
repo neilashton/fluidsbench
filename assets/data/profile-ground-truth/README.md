@@ -6,10 +6,11 @@ submissions. Evaluation cases remain a declared test partition and must not be u
 preprocessing statistics.
 
 The top-level review release and legacy analytical fixtures remain explicitly marked `prototype_dummy_data`; they are not native CFD
-truth and must not be presented as such. DrivAerML is the exception within this review release: its separately declared,
-checksum-bound `native_cfd` bundle contains dataset-owner-produced native values and is never sourced from the analytical fixture
-generator. Publishing that reference bundle does not make a leaderboard result official. An official result still requires a
-validated submission package and maintainer approval; none of the current rows is official or approved. Public code, model,
+truth and must not be presented as such. DrivAerML and the HiLiftAeroML Full360 case set are explicit exceptions within this review
+release: their separately declared, checksum-bound `native_cfd` bundles contain dataset-owner-produced native values and are never
+sourced from the analytical fixture generator. Publishing either reference bundle does not make a leaderboard result official. An
+official result still requires a validated submission package and maintainer approval; none of the current rows is official or
+approved. Public code, model,
 environment, and artifact-documentation links are optional and do not affect rank, academic-citation eligibility, or promotion
 eligibility. Submitted metrics and profile predictions are provided by the submitter. FluidsBench does not execute submitted code or
 models or recompute base metrics.
@@ -57,6 +58,34 @@ unresolved alias makes the affected comparison explicitly unavailable; the
 browser never falls back to a similarly named station or another placement
 family. Retained segment boundaries are also rendered and exported without
 bridging unsupported samples.
+
+HiLiftAeroML uses a separate plot-only compact contract under
+`datasets/hiliftaeroml/compact-full360-v1`. It contains all 360 ordered cases
+in the shared Full/Medium/Scarce/Super-scarce evaluation case set, all ten
+HLPW-5 pressure rows A–J, every retained Cp sample (at most 128 points per
+physical connected graph), and all five 801-row velocity stations B.2, B.3,
+C.1, C.2, and C.3 with their validity gaps. Coordinates and truth values are
+published as deterministic float32 NPZ arrays for browser plotting. The
+evaluator's float64 truth, quadrature weights, native mappings, non-plot
+topology codes, full fields, and lossless 1.755 GB profile archive are not
+copied into Git. Therefore this release must not be used to recompute scores.
+
+The browser SHA-verifies the public truth index, JSON chunk, common velocity
+support, and selected case artifact. It independently verifies and decodes the
+participant's prediction-only NPZ, checks the exact support and prediction-order
+identities, reconstructs delta-coded Cp, restores velocity gaps, and only then
+plots the two curves. Regenerate the derived release from an authorized local
+compact-support checkout with:
+
+```bash
+python3 bin/export_hiliftaeroml_compact_profile_truth.py \
+  --support-release /authorized/local/hiliftaeroml-compact-profile-support-v2-candidate \
+  --compact-module ../fluidsbench-submission/reference/hiliftaeroml/compact_profiles.py \
+  --output-root assets/data/profile-ground-truth/datasets/hiliftaeroml/compact-full360-v1 \
+  --source-repository https://github.com/neilashton/fluidsbench-submission \
+  --source-revision <full-commit-sha> \
+  --generated-at YYYY-MM-DDTHH:MM:SSZ
+```
 
 The AirfRANS review fixtures are generated with `bin/generate_airfrans_ground_truth.py` from the hash-bound reference extraction and
 an additional official angle-of-attack case produced by the pinned extractor in `fluidsbench-submission`. The publisher verifies the
