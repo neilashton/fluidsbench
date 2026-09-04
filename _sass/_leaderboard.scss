@@ -1809,7 +1809,8 @@ html[data-theme="dark"] .leaderboard-data-warning.is-official {
   overflow-wrap: anywhere;
 }
 
-.leaderboard-volume-region-guide svg {
+.leaderboard-volume-region-guide svg,
+.leaderboard-hilift-region-guide svg {
   display: block;
   height: auto;
   max-width: 100%;

@@ -54,6 +54,7 @@ window.__FluidsBenchClaimTest = {
   claimEligibility,
   decimalHalfUp,
   defaultProfileCoordinateView,
+  ensureRegionalReport,
   ensureClaimRecord,
   ensureClaimsIndex,
   exactNativeTruthSource,
@@ -86,8 +87,14 @@ window.__FluidsBenchClaimTest = {
   profileSeriesCompatibility,
   profileStations,
   regionalBinding,
+  regionalDatasetDefinition,
+  regionalDefinition,
+  regionalErrorShare,
   regionalFields,
+  regionalFieldsForDataset,
   regionalFieldReport,
+  regionalPooled,
+  regionalPrimaryWeighting,
   regionalReportUrl,
   regionalRules,
   regionalScope,
@@ -229,6 +236,60 @@ assert.deepEqual(api.regionalFieldReport(regionalReport, api.regionalFields.surf
 assert.deepEqual(Array.from(api.regionalRules(regionalReport, { supportId: "drivaerml-surface-four-geometric-regions-v1" })), [
   { region_id: "low_z_horizontal_normal", predicate: "z < 0.75" },
 ]);
+
+const hiLiftRegionalBinding = {
+  format: "hiliftaeroml-regional-diagnostics-aggregate-v1",
+  file: "regional-diagnostics.json",
+  sha256: "b".repeat(64),
+  contract_sha256: "1579b0262f3368fe3748eb53025aa5e46c0a32c8ff1616c9becdbb5dedd85650",
+  definition_id: "hiliftaeroml-native-geometric-regions-v1",
+  case_count: 360,
+  role: "report_only",
+  weight: 0,
+  official_score_changed: false,
+};
+const hiLiftRegionalRow = {
+  id: "hilift-regional-demo-v1",
+  dataset_id: "hiliftaeroml",
+  split_id: "full",
+  prediction_scope: "surface_and_volume",
+  regional_diagnostics: hiLiftRegionalBinding,
+};
+assert.deepEqual(api.regionalBinding(hiLiftRegionalRow), hiLiftRegionalBinding);
+assert.equal(api.regionalDatasetDefinition("HiLiftAeroML").schemaVersion, 1);
+assert.equal(api.regionalFieldsForDataset("hiliftaeroml").surface_pressure.reportFieldId, "pressure");
+assert.equal(api.regionalFieldsForDataset("hiliftaeroml").volume_velocity.primaryWeighting, "equal_entity");
+assert.equal(
+  api.regionalBinding({
+    ...hiLiftRegionalRow,
+    regional_diagnostics: { ...hiLiftRegionalBinding, definition_id: "wrong-definition" },
+  }),
+  null
+);
+const hiLiftRegionalReport = {
+  dataset_id: "hiliftaeroml",
+  surface: {
+    support_id: "surface_native_points",
+    fields: {
+      pressure: {
+        regions: [
+          {
+            region_id: "nacelle_installation_envelope_proxy",
+            relative_l2_percent: 6.2,
+            squared_error_fraction: 0.25,
+          },
+        ],
+      },
+    },
+  },
+};
+const hiLiftSurfacePressure = api.regionalFieldsForDataset("hiliftaeroml").surface_pressure;
+assert.equal(api.regionalFieldReport(hiLiftRegionalReport, hiLiftSurfacePressure).regions.length, 1);
+assert.equal(api.regionalPooled(hiLiftRegionalReport.surface.fields.pressure.regions[0], "physical").relative_l2_percent, 6.2);
+assert.equal(api.regionalErrorShare(hiLiftRegionalReport.surface.fields.pressure.regions[0], "physical"), 25);
+assert.equal(api.regionalPrimaryWeighting(hiLiftRegionalReport.surface.fields.pressure, hiLiftSurfacePressure), "physical");
+assert.equal(api.regionalRules(hiLiftRegionalReport, hiLiftSurfacePressure).length, 4);
+assert.equal(api.regionalDefinition(hiLiftRegionalReport, hiLiftSurfacePressure).guide, "hilift_surface");
 
 api.state.metrics = new Map([["score", { id: "score", unit: "" }]]);
 const policy = {
@@ -2026,6 +2087,40 @@ function verifyDatasetSubmissionAvailability() {
   );
 }
 
+async function verifyHiLiftRegionalReport() {
+  api.state.manifest = manifest;
+  api.state.regionalReports.clear();
+  api.state.regionalReportPromises.clear();
+  const feedIndex = feed.findIndex((entry) => entry.submission_id === "hiliftaeroml-transolver-full360-candidate-v1");
+  assert.notEqual(feedIndex, -1, "the retained HiLiftAeroML Full360 result must be present");
+  const row = api.normalizeRow(feed[feedIndex], feedIndex);
+  const binding = api.regionalBinding(row);
+  assert.ok(binding, "the retained HiLiftAeroML regional binding must be accepted");
+  const report = await api.ensureRegionalReport(row);
+  assert.equal(report.case_count, 360);
+  assert.equal(report.reconstruction.status, "pass");
+  assert.equal(report.reconstruction.checked_field_count, 12);
+
+  const surfacePressure = api.regionalFieldsForDataset("hiliftaeroml").surface_pressure;
+  const surfaceReport = api.regionalFieldReport(report, surfacePressure);
+  assert.equal(surfaceReport.regions.length, 4);
+  assert.equal(api.regionalRules(report, surfacePressure)[0].region_id, "nacelle_installation_envelope_proxy");
+  assert.ok(surfaceReport.regions.every((region) => Number.isFinite(api.regionalPooled(region, "physical").relative_l2_percent)));
+  assert.ok(Math.abs(surfaceReport.regions.reduce((sum, region) => sum + api.regionalErrorShare(region, "physical"), 0) - 100) < 1e-6);
+
+  const volumeVelocity = api.regionalFieldsForDataset("hiliftaeroml").volume_velocity;
+  const volumeReport = api.regionalFieldReport(report, volumeVelocity);
+  assert.equal(volumeReport.regions.length, 4);
+  assert.equal(api.regionalPrimaryWeighting(volumeReport, volumeVelocity), "equal_entity");
+
+  const wrongHashRow = {
+    ...row,
+    id: `${row.id}-wrong-hash`,
+    regional_diagnostics: { ...binding, sha256: "c".repeat(64) },
+  };
+  await assert.rejects(api.ensureRegionalReport(wrongHashRow), /checksum does not match/);
+}
+
 async function verifyHiLiftCompactProfileOverlay() {
   const groundTruthManifestPath = path.join(root, "assets/data/profile-ground-truth/manifest.json");
   const groundTruthManifest = JSON.parse(fs.readFileSync(groundTruthManifestPath, "utf8"));
@@ -2138,6 +2233,7 @@ verifyDrivaerLegacyTruthFailsClosed()
   .then(() => verifyNativeV3CpDisplayCoordinates())
   .then(() => verifyCurrentRun419ProfileFixture())
   .then(() => verifyRetainedNativeRun419Bundle())
+  .then(() => verifyHiLiftRegionalReport())
   .then(() => verifyHiLiftCompactProfileOverlay())
   .then(() => verifyGeneratedClaimRecords())
   .then(() => {
