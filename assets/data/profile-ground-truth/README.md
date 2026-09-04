@@ -60,28 +60,34 @@ family. Retained segment boundaries are also rendered and exported without
 bridging unsupported samples.
 
 HiLiftAeroML uses a separate plot-only compact contract under
-`datasets/hiliftaeroml/compact-full360-v1`. It contains all 360 ordered cases
-in the shared Full/Medium/Scarce/Super-scarce evaluation case set, all ten
-HLPW-5 pressure rows A–J, every retained Cp sample (at most 128 points per
-physical connected graph), and all five 801-row velocity stations B.2, B.3,
-C.1, C.2, and C.3 with their validity gaps. Coordinates and truth values are
-published as deterministic float32 NPZ arrays for browser plotting. The
-evaluator's float64 truth, quadrature weights, native mappings, non-plot
-topology codes, full fields, and lossless 1.755 GB profile archive are not
-copied into Git. Therefore this release must not be used to recompute scores.
+`datasets/hiliftaeroml/compact-all1355-v1`. It contains all 1,355 unique cases
+in the eight official evaluation case sets, with thin indexes preserving the
+exact order of all 14 named splits. Each case includes all ten HLPW-5 pressure
+rows A–J, every retained Cp sample (at most 128 points per physical connected
+graph), and all five 801-row velocity stations B.2, B.3, C.1, C.2, and C.3
+with their validity gaps. Coordinates and truth values are published as
+deterministic float32 NPZ arrays for browser plotting. Cases shared by several
+splits reuse one checksum-bound artifact. The evaluator's float64 truth,
+quadrature weights, native mappings, non-plot topology codes, full fields, and
+lossless 1.755 GB profile archive are not copied into Git. Therefore this
+release must not be used to recompute scores.
 
-The browser SHA-verifies the public truth index, JSON chunk, common velocity
-support, and selected case artifact. It independently verifies and decodes the
-participant's prediction-only NPZ, checks the exact support and prediction-order
-identities, reconstructs delta-coded Cp, restores velocity gaps, and only then
-plots the two curves. Regenerate the derived release from an authorized local
-compact-support checkout with:
+The browser SHA-verifies the all-case master index, selected case-set index,
+JSON chunk, common velocity support, and selected case artifact. It
+independently verifies and decodes the participant's prediction-only NPZ,
+checks the exact support and prediction-order identities, reconstructs
+delta-coded Cp, restores velocity gaps, and only then plots the two curves.
+Regenerate the derived release from the authorized lossless native-truth and
+frozen prerequisite-authority checkouts with:
 
 ```bash
 python3 bin/export_hiliftaeroml_compact_profile_truth.py \
-  --support-release /authorized/local/hiliftaeroml-compact-profile-support-v2-candidate \
-  --compact-module ../fluidsbench-submission/reference/hiliftaeroml/compact_profiles.py \
-  --output-root assets/data/profile-ground-truth/datasets/hiliftaeroml/compact-full360-v1 \
+  --submission-root ../fluidsbench-submission \
+  --native-truth-release /authorized/local/hiliftaeroml-native-profile-truth-v1-candidate \
+  --native-truth-manifest-sha256 3e20b857e12055e16f1d248d125b8df62a3669c604411dc67322fe98d9ab4477 \
+  --authority-index /authorized/local/hiliftaeroml-native-profile-truth-authority-v1.json \
+  --authority-index-sha256 991988cba62214ee85e7066f53a8bc82f639baa76b92f07b4e375e0364986ea4 \
+  --output-root assets/data/profile-ground-truth/datasets/hiliftaeroml/compact-all1355-v1 \
   --source-repository https://github.com/neilashton/fluidsbench-submission \
   --source-revision <full-commit-sha> \
   --generated-at YYYY-MM-DDTHH:MM:SSZ
