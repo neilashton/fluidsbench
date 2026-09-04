@@ -1,0 +1,173 @@
+{
+  "schema": "fluidsbench-hiliftaeroml-compact-profile-truth-index-v1",
+  "schema_version": "1.0",
+  "format": "fluidsbench-hiliftaeroml-compact-profile-truth-v1",
+  "release_id": "hiliftaeroml-compact-profile-truth-all1355-v1",
+  "status": "public_plot_only_candidate",
+  "usage": "browser_visualization_only_not_metric_recomputation",
+  "dataset_id": "hiliftaeroml",
+  "dataset_revision": "hiliftaeroml-native-profile-truth-v1-candidate",
+  "profile_contract_id": "hiliftaeroml-compact-profile-predictions-v2-candidate",
+  "profile_contract_sha256": "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c",
+  "source_profile_truth_release_id": "hiliftaeroml-native-profile-truth-v1-candidate",
+  "source_profile_truth_manifest_sha256": "3e20b857e12055e16f1d248d125b8df62a3669c604411dc67322fe98d9ab4477",
+  "source_prerequisite_authority_index_sha256": "991988cba62214ee85e7066f53a8bc82f639baa76b92f07b4e375e0364986ea4",
+  "cp_resolution": {
+    "rule": "all_compact_support_points_with_at_most_128_points_per_physical_connected_graph",
+    "maximum_points_per_physical_graph": 128,
+    "rows": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ],
+    "resampling_during_publication": false
+  },
+  "plot_precision": {
+    "coordinates": "float32",
+    "truth_values": "float32",
+    "scoring_values": "not_included"
+  },
+  "common_support": {
+    "format": "numpy-npz-v1",
+    "file": "artifacts/common/velocity-plot-support.npz",
+    "sha256": "f721a324ceab68120fcf83e108eb664eb7c5599572ae9e8d74ca0322d8a191e5",
+    "byte_size": 13766,
+    "array_order": [
+      "velocity_coordinate_in",
+      "velocity_valid_mask",
+      "velocity_station_row_offsets"
+    ],
+    "station_order": [
+      "B.2",
+      "B.3",
+      "C.1",
+      "C.2",
+      "C.3"
+    ],
+    "rows_per_station": 801,
+    "row_count": 4005
+  },
+  "case_set_id": "caseset-7a743a20b3bd",
+  "coverage": "complete_split",
+  "case_count": 36,
+  "case_ids": [
+    "geo_LHC006_AoA_4",
+    "geo_LHC018_AoA_4",
+    "geo_LHC035_AoA_4",
+    "geo_LHC051_AoA_4",
+    "geo_LHC077_AoA_4",
+    "geo_LHC098_AoA_4",
+    "geo_LHC117_AoA_4",
+    "geo_LHC139_AoA_4",
+    "geo_LHC163_AoA_4",
+    "geo_LHC009_AoA_4",
+    "geo_LHC027_AoA_4",
+    "geo_LHC039_AoA_4",
+    "geo_LHC057_AoA_4",
+    "geo_LHC086_AoA_4",
+    "geo_LHC107_AoA_4",
+    "geo_LHC118_AoA_4",
+    "geo_LHC144_AoA_4",
+    "geo_LHC170_AoA_4",
+    "geo_LHC010_AoA_4",
+    "geo_LHC030_AoA_4",
+    "geo_LHC041_AoA_4",
+    "geo_LHC058_AoA_4",
+    "geo_LHC088_AoA_4",
+    "geo_LHC113_AoA_4",
+    "geo_LHC124_AoA_4",
+    "geo_LHC158_AoA_4",
+    "geo_LHC171_AoA_4",
+    "geo_LHC011_AoA_4",
+    "geo_LHC031_AoA_4",
+    "geo_LHC045_AoA_4",
+    "geo_LHC074_AoA_4",
+    "geo_LHC097_AoA_4",
+    "geo_LHC115_AoA_4",
+    "geo_LHC130_AoA_4",
+    "geo_LHC162_AoA_4",
+    "geo_LHC174_AoA_4"
+  ],
+  "source_profile_truth_case_set_index_sha256": "2beae6cf413a621d111910eaab18ec7a4f31c069e4d046c5dfa1bea9f2dba448",
+  "chunks": [
+    {
+      "chunk_id": "chunk-000",
+      "file": "chunks/caseset-7a743a20b3bd/chunk-000.json",
+      "sha256": "7b23e8ac81a654c1b9c460f9b0ba2082c2270246fd1bea09474626460c86abc0",
+      "byte_size": 27398,
+      "case_count": 10,
+      "case_ids": [
+        "geo_LHC006_AoA_4",
+        "geo_LHC018_AoA_4",
+        "geo_LHC035_AoA_4",
+        "geo_LHC051_AoA_4",
+        "geo_LHC077_AoA_4",
+        "geo_LHC098_AoA_4",
+        "geo_LHC117_AoA_4",
+        "geo_LHC139_AoA_4",
+        "geo_LHC163_AoA_4",
+        "geo_LHC009_AoA_4"
+      ]
+    },
+    {
+      "chunk_id": "chunk-001",
+      "file": "chunks/caseset-7a743a20b3bd/chunk-001.json",
+      "sha256": "d83ae011e4af739323f4a575194b11627a1e4bd4f28b9dd9cbf32646da948b94",
+      "byte_size": 27399,
+      "case_count": 10,
+      "case_ids": [
+        "geo_LHC027_AoA_4",
+        "geo_LHC039_AoA_4",
+        "geo_LHC057_AoA_4",
+        "geo_LHC086_AoA_4",
+        "geo_LHC107_AoA_4",
+        "geo_LHC118_AoA_4",
+        "geo_LHC144_AoA_4",
+        "geo_LHC170_AoA_4",
+        "geo_LHC010_AoA_4",
+        "geo_LHC030_AoA_4"
+      ]
+    },
+    {
+      "chunk_id": "chunk-002",
+      "file": "chunks/caseset-7a743a20b3bd/chunk-002.json",
+      "sha256": "d24e2a656a0f6ecf14b2fd6d1f4f4f9aba1927d2ef1ed95c80e9707050f9a4ac",
+      "byte_size": 27399,
+      "case_count": 10,
+      "case_ids": [
+        "geo_LHC041_AoA_4",
+        "geo_LHC058_AoA_4",
+        "geo_LHC088_AoA_4",
+        "geo_LHC113_AoA_4",
+        "geo_LHC124_AoA_4",
+        "geo_LHC158_AoA_4",
+        "geo_LHC171_AoA_4",
+        "geo_LHC011_AoA_4",
+        "geo_LHC031_AoA_4",
+        "geo_LHC045_AoA_4"
+      ]
+    },
+    {
+      "chunk_id": "chunk-003",
+      "file": "chunks/caseset-7a743a20b3bd/chunk-003.json",
+      "sha256": "34f9b5cbb2f75477b2acb325a0fa22a1b60fd298226898b3b2b684c73cfe05fd",
+      "byte_size": 16567,
+      "case_count": 6,
+      "case_ids": [
+        "geo_LHC074_AoA_4",
+        "geo_LHC097_AoA_4",
+        "geo_LHC115_AoA_4",
+        "geo_LHC130_AoA_4",
+        "geo_LHC162_AoA_4",
+        "geo_LHC174_AoA_4"
+      ]
+    }
+  ]
+}
