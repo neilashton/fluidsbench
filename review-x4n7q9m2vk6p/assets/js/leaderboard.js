@@ -38,6 +38,25 @@
     },
   };
   const drivaermlRelativeProfileSchemaVersion = "3.0-drivaerml-relative-candidate";
+  const hiLiftCompactTruthSchemas = {
+    index: "fluidsbench-hiliftaeroml-compact-profile-truth-index-v1",
+    chunk: "fluidsbench-hiliftaeroml-compact-profile-truth-chunk-v1",
+    format: "fluidsbench-hiliftaeroml-compact-profile-truth-v1",
+    version: "1.0",
+  };
+  const hiLiftCompactPredictionFormat = "fluidsbench-hiliftaeroml-compact-profile-chunks-v2-candidate";
+  const hiLiftCompactProfileContractId = "hiliftaeroml-compact-profile-predictions-v2-candidate";
+  const hiLiftCompactProfileContractSha256 = "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c";
+  const hiLiftCompactTruthReleaseId = "hiliftaeroml-compact-profile-truth-full360-v1";
+  const hiLiftCompactCaseSetId = "caseset-ac791749e527";
+  const hiLiftCpStationIds = Array.from("abcdefghij", (letter) => `pressure_belt_${letter}`);
+  const hiLiftVelocityStations = [
+    ["B.2", "hlpw5_b_2"],
+    ["B.3", "hlpw5_b_3"],
+    ["C.1", "hlpw5_c_1"],
+    ["C.2", "hlpw5_c_2"],
+    ["C.3", "hlpw5_c_3"],
+  ];
   const nativeDrivaermlDatasetRevision = "7a5c0948ce27be709b1116a3a190f806e7a8f79f";
   const nativeDrivaermlSourcePinSha256 = "4fc9077f8f23f4994c98f4d0e7a17aef7b998de4c996638e3a8a616b6d923fdd";
   const coordinateIdentityDomain = "fluidsbench-drivaerml-coordinate-array-v1\u0000";
@@ -112,6 +131,7 @@
     groundTruthChunks: new Map(),
     profileIndexes: new Map(),
     profileChunks: new Map(),
+    profileArtifacts: new Map(),
     feedRowsLoaded: false,
     loadedFeedSha256: null,
     feedVerified: false,
@@ -692,6 +712,147 @@
     const bytes = await response.arrayBuffer();
     const text = new TextDecoder("utf-8").decode(bytes);
     return { data: JSON.parse(text), text, sha256: await sha256Hex(bytes) };
+  }
+
+  async function inflateRawProfileBytes(bytes, label) {
+    if (typeof DecompressionStream !== "function") {
+      throw new Error(`${label} requires browser support for raw DEFLATE streams`);
+    }
+    try {
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+      const reader = stream.getReader();
+      const chunks = [];
+      let size = 0;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+        chunks.push(chunk);
+        size += chunk.length;
+      }
+      const inflated = new Uint8Array(size);
+      let offset = 0;
+      chunks.forEach((chunk) => {
+        inflated.set(chunk, offset);
+        offset += chunk.length;
+      });
+      return inflated;
+    } catch (error) {
+      throw new Error(`${label} contains an unreadable DEFLATE member: ${error.message}`);
+    }
+  }
+
+  function parseNpyProfileArray(bytes, label) {
+    const magic = [0x93, 0x4e, 0x55, 0x4d, 0x50, 0x59];
+    if (bytes.length < 10 || magic.some((value, index) => bytes[index] !== value)) {
+      throw new Error(`${label} is not a NumPy NPY array`);
+    }
+    const major = bytes[6];
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    let headerLength;
+    let headerStart;
+    if (major === 1) {
+      headerLength = view.getUint16(8, true);
+      headerStart = 10;
+    } else if (major === 2 || major === 3) {
+      if (bytes.length < 12) throw new Error(`${label} has a truncated NPY header`);
+      headerLength = view.getUint32(8, true);
+      headerStart = 12;
+    } else {
+      throw new Error(`${label} uses unsupported NPY version ${major}.${bytes[7]}`);
+    }
+    const dataStart = headerStart + headerLength;
+    if (dataStart > bytes.length) throw new Error(`${label} has a truncated NPY header body`);
+    const header = new TextDecoder(major === 3 ? "utf-8" : "latin1").decode(bytes.subarray(headerStart, dataStart));
+    const dtype = header.match(/['"]descr['"]\s*:\s*['"]([^'"]+)['"]/)?.[1];
+    const fortran = header.match(/['"]fortran_order['"]\s*:\s*(True|False)/)?.[1];
+    const rawShape = header.match(/['"]shape['"]\s*:\s*\(([^)]*)\)/)?.[1];
+    if (!dtype || fortran !== "False" || rawShape === undefined) {
+      throw new Error(`${label} has an unsupported NPY header`);
+    }
+    const shape = rawShape
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map(Number);
+    if (shape.length !== 1 || !Number.isSafeInteger(shape[0]) || shape[0] < 0) {
+      throw new Error(`${label} must be a one-dimensional C-order array`);
+    }
+    const readers = {
+      "<i2": { size: 2, read: (offset) => view.getInt16(offset, true) },
+      "<i4": { size: 4, read: (offset) => view.getInt32(offset, true) },
+      "|u1": { size: 1, read: (offset) => view.getUint8(offset) },
+      "|b1": { size: 1, read: (offset) => Boolean(view.getUint8(offset)) },
+      "<f4": { size: 4, read: (offset) => view.getFloat32(offset, true) },
+    };
+    const reader = readers[dtype];
+    if (!reader) throw new Error(`${label} uses unsupported NumPy dtype ${dtype}`);
+    if (dataStart + shape[0] * reader.size !== bytes.length) {
+      throw new Error(`${label} NPY payload size differs from its declared shape and dtype`);
+    }
+    const values = new Array(shape[0]);
+    for (let index = 0; index < values.length; index += 1) {
+      values[index] = reader.read(dataStart + index * reader.size);
+    }
+    return { dtype, shape, values };
+  }
+
+  async function parseNpzProfileArtifact(buffer, label) {
+    const bytes = new Uint8Array(buffer);
+    const view = new DataView(buffer);
+    const arrays = new Map();
+    let offset = 0;
+    while (offset + 4 <= bytes.length) {
+      const signature = view.getUint32(offset, true);
+      if (signature === 0x02014b50 || signature === 0x06054b50) break;
+      if (signature !== 0x04034b50 || offset + 30 > bytes.length) {
+        throw new Error(`${label} has an unsupported or truncated ZIP member header`);
+      }
+      const flags = view.getUint16(offset + 6, true);
+      const compression = view.getUint16(offset + 8, true);
+      const compressedSize = view.getUint32(offset + 18, true);
+      const uncompressedSize = view.getUint32(offset + 22, true);
+      const nameLength = view.getUint16(offset + 26, true);
+      const extraLength = view.getUint16(offset + 28, true);
+      if (flags & 0x0001 || flags & 0x0008) throw new Error(`${label} uses encrypted or data-descriptor ZIP members`);
+      if (compression !== 0 && compression !== 8) throw new Error(`${label} uses unsupported ZIP compression method ${compression}`);
+      const nameStart = offset + 30;
+      const dataStart = nameStart + nameLength + extraLength;
+      const dataStop = dataStart + compressedSize;
+      if (dataStop > bytes.length) throw new Error(`${label} has a truncated ZIP member`);
+      const name = new TextDecoder("utf-8").decode(bytes.subarray(nameStart, nameStart + nameLength));
+      if (!/^[A-Za-z0-9_]+\.npy$/.test(name)) throw new Error(`${label} contains unsupported member ${name || "<empty>"}`);
+      const arrayName = name.slice(0, -4);
+      if (arrays.has(arrayName)) throw new Error(`${label} contains duplicate array ${arrayName}`);
+      const compressed = bytes.slice(dataStart, dataStop);
+      const payload = compression === 0 ? compressed : await inflateRawProfileBytes(compressed, `${label}/${name}`);
+      if (payload.length !== uncompressedSize) {
+        throw new Error(`${label}/${name} uncompressed size ${payload.length} differs from its ZIP header ${uncompressedSize}`);
+      }
+      arrays.set(arrayName, parseNpyProfileArray(payload, `${label}/${name}`));
+      offset = dataStop;
+    }
+    if (!arrays.size) throw new Error(`${label} contains no NumPy arrays`);
+    return arrays;
+  }
+
+  async function fetchVerifiedProfileNpz(url, expectedSha256, label) {
+    if (!validSha256(expectedSha256)) throw new Error(`${label} has no valid SHA-256 binding`);
+    const key = `${url}|${expectedSha256}`;
+    if (!state.profileArtifacts.has(key)) {
+      state.profileArtifacts.set(
+        key,
+        (async () => {
+          const response = await fetch(url, { cache: "no-store" });
+          if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
+          const buffer = await response.arrayBuffer();
+          const sha256 = await sha256Hex(buffer);
+          if (sha256 !== expectedSha256) throw new Error(`${label} checksum does not match its JSON binding`);
+          return { arrays: await parseNpzProfileArtifact(buffer, label), sha256, url, byteLength: buffer.byteLength };
+        })()
+      );
+    }
+    return state.profileArtifacts.get(key);
   }
 
   function regionalBinding(row) {
@@ -1881,6 +2042,10 @@
     const nativeTruthVersion = nativeProfileTruthVersion(cached.data, "split");
     const nativeProfileTruth = nativeTruthVersion !== null;
     const drivaermlDataset = datasetName === "DrivAerML" || dataset?.id === "drivaerml";
+    const hiLiftDataset = datasetName === "HiLiftAeroML" || dataset?.id === "hiliftaeroml";
+    const hiLiftCompactTruth =
+      cached.data?.schema === hiLiftCompactTruthSchemas.index &&
+      cached.data?.schema_version === hiLiftCompactTruthSchemas.version;
     if (drivaermlDataset && !nativeProfileTruth) {
       throw new Error(
         `${datasetName} profile ground truth must use a checksum-bound native CFD v2 or v3 release; legacy or analytical indexes are unavailable`
@@ -1888,6 +2053,12 @@
     }
     if (nativeProfileTruth && !drivaermlDataset) {
       throw new Error(`${datasetName} cannot use the DrivAerML native profile ground-truth schema`);
+    }
+    if (hiLiftCompactTruth && !hiLiftDataset) {
+      throw new Error(`${datasetName} cannot use the HiLiftAeroML compact profile-truth schema`);
+    }
+    if (hiLiftDataset && caseSet.id === hiLiftCompactCaseSetId && !hiLiftCompactTruth) {
+      throw new Error(`${datasetName} standard-split ground truth must use the checksum-bound compact Native CFD release`);
     }
     let nativeChunkBaseUrl = null;
     let nativeMasterChunks = null;
@@ -1995,6 +2166,57 @@
       }
       nativeChunkBaseUrl = new URL(".", masterIndexUrl).href;
     }
+    if (hiLiftCompactTruth) {
+      const declaration = dataset?.compact_profile_truth;
+      const indexedIds = caseIds(cached.data);
+      const indexedChunks = cached.data?.chunks || [];
+      const declaredIndexUrl = fileUrl(declaration?.master_index_file, state.groundTruthManifestProvenance?.base_url || groundTruthBaseUrl);
+      if (
+        declaration?.source_kind !== "native_cfd" ||
+        declaration?.analytical_dummy !== false ||
+        declaration?.plot_only !== true ||
+        declaration?.release_id !== hiLiftCompactTruthReleaseId ||
+        declaration?.format !== hiLiftCompactTruthSchemas.format ||
+        declaration?.profile_contract_id !== hiLiftCompactProfileContractId ||
+        declaration?.profile_contract_sha256 !== hiLiftCompactProfileContractSha256 ||
+        declaration?.case_set_id !== hiLiftCompactCaseSetId ||
+        declaration?.case_count !== 360 ||
+        declaration?.master_index_sha256 !== cached.sha256 ||
+        declaredIndexUrl !== indexUrl
+      ) {
+        throw new Error(`${datasetName} compact Native CFD truth lacks its exact public plot-release declaration`);
+      }
+      if (
+        cached.data?.format !== hiLiftCompactTruthSchemas.format ||
+        cached.data?.release_id !== hiLiftCompactTruthReleaseId ||
+        cached.data?.status !== "public_plot_only_candidate" ||
+        cached.data?.usage !== "browser_visualization_only_not_metric_recomputation" ||
+        cached.data?.dataset_id !== "hiliftaeroml" ||
+        cached.data?.case_set_id !== hiLiftCompactCaseSetId ||
+        cached.data?.profile_contract_id !== hiLiftCompactProfileContractId ||
+        cached.data?.profile_contract_sha256 !== hiLiftCompactProfileContractSha256 ||
+        cached.data?.case_count !== 360 ||
+        !Array.isArray(cached.data?.case_ids) ||
+        cached.data.case_ids.length !== 360 ||
+        new Set(cached.data.case_ids).size !== 360 ||
+        indexedIds.length !== 360 ||
+        indexedIds.some((caseId, index) => caseId !== cached.data.case_ids[index]) ||
+        !validSha256(cached.data?.common_support?.sha256) ||
+        cached.data?.common_support?.row_count !== 4005 ||
+        cached.data?.common_support?.rows_per_station !== 801 ||
+        !Array.isArray(indexedChunks) ||
+        indexedChunks.length !== 36 ||
+        indexedChunks.some(
+          (entry) =>
+            !entry?.file ||
+            !validSha256(entry.sha256) ||
+            entry.case_count !== (entry.case_ids || []).length ||
+            entry.case_count !== 10
+        )
+      ) {
+        throw new Error(`${datasetName} compact Native CFD truth index has incomplete coverage or a stale contract binding`);
+      }
+    }
     return {
       index: cached.data,
       indexUrl,
@@ -2005,6 +2227,7 @@
       datasetRevision: cached.data?.dataset_revision || null,
       nativeChunkBaseUrl,
       nativeMasterChunks,
+      hiLiftCompactTruth,
     };
   }
 
@@ -2019,7 +2242,20 @@
     if (!row.profile_data?.index_sha256 || !cached.sha256 || cached.sha256 !== row.profile_data.index_sha256) {
       throw new Error(`${rowLabel(row)} profile index checksum does not match the verified leaderboard feed`);
     }
-    return { index: cached.data, indexUrl, indexSha256: cached.sha256 };
+    const hiLiftCompactPrediction = cached.data?.format === hiLiftCompactPredictionFormat;
+    if (
+      hiLiftCompactPrediction &&
+      (cached.data?.contract_id !== hiLiftCompactProfileContractId ||
+        cached.data?.contract_sha256 !== hiLiftCompactProfileContractSha256 ||
+        cached.data?.dataset_id !== "hiliftaeroml" ||
+        cached.data?.case_set_id !== hiLiftCompactCaseSetId ||
+        cached.data?.case_count !== 360 ||
+        caseIds(cached.data).length !== 360 ||
+        new Set(caseIds(cached.data)).size !== 360)
+    ) {
+      throw new Error(`${rowLabel(row)} compact HiLift profile index has incomplete coverage or a stale contract binding`);
+    }
+    return { index: cached.data, indexUrl, indexSha256: cached.sha256, hiLiftCompactPrediction };
   }
 
   function caseIds(index) {
@@ -2059,6 +2295,44 @@
     if (!entry.sha256 || !cached.sha256 || entry.sha256 !== cached.sha256) {
       throw new Error(`${label} profile chunk checksum does not match its index`);
     }
+    if (context.hiLiftCompactTruth) {
+      if (
+        cached.data?.schema !== hiLiftCompactTruthSchemas.chunk ||
+        cached.data?.schema_version !== hiLiftCompactTruthSchemas.version ||
+        cached.data?.format !== hiLiftCompactTruthSchemas.format ||
+        cached.data?.release_id !== hiLiftCompactTruthReleaseId ||
+        cached.data?.dataset_id !== "hiliftaeroml" ||
+        cached.data?.case_set_id !== hiLiftCompactCaseSetId
+      ) {
+        throw new Error(`${label} compact Native CFD truth chunk has an unsupported or stale contract binding`);
+      }
+    }
+    if (context.hiLiftCompactPrediction) {
+      if (
+        cached.data?.schema !== "hiliftaeroml-compact-profile-chunk-v2-candidate" ||
+        cached.data?.schema_version !== "2.0" ||
+        cached.data?.format !== hiLiftCompactPredictionFormat ||
+        cached.data?.contract_id !== hiLiftCompactProfileContractId ||
+        cached.data?.contract_sha256 !== hiLiftCompactProfileContractSha256 ||
+        cached.data?.dataset_id !== "hiliftaeroml" ||
+        cached.data?.case_set_id !== hiLiftCompactCaseSetId
+      ) {
+        throw new Error(`${label} compact HiLift prediction chunk has an unsupported or stale contract binding`);
+      }
+    }
+    if (context.hiLiftCompactTruth || context.hiLiftCompactPrediction) {
+      const loadedCaseIds = (cached.data?.cases || []).map((candidate) => candidate.case_id);
+      if (
+        loadedCaseIds.length !== (entry.case_ids || []).length ||
+        loadedCaseIds.some((loadedCaseId, index) => loadedCaseId !== entry.case_ids[index]) ||
+        new Set(loadedCaseIds).size !== loadedCaseIds.length ||
+        (context.hiLiftCompactTruth &&
+          (cached.data?.case_count !== loadedCaseIds.length ||
+            (cached.data?.case_ids || []).some((loadedCaseId, index) => loadedCaseId !== loadedCaseIds[index])))
+      ) {
+        throw new Error(`${label} compact HiLift chunk case order differs from its checksum-verified index`);
+      }
+    }
     if (context.nativeProfileTruth) {
       if (
         cached.data?.schema !== nativeProfileTruthSchemas[context.nativeTruthVersion]?.chunk ||
@@ -2097,6 +2371,11 @@
       _fluidsbenchNativeProfileTruth: Boolean(context.nativeProfileTruth),
       _fluidsbenchNativeProfileTruthVersion: context.nativeTruthVersion || null,
       _fluidsbenchRelativeProfileV3: relativeProfileV3,
+      _fluidsbenchHiLiftCompactTruth: Boolean(context.hiLiftCompactTruth),
+      _fluidsbenchHiLiftCompactPrediction: Boolean(context.hiLiftCompactPrediction),
+      _fluidsbenchHiLiftIndex: context.hiLiftCompactTruth ? context.index : null,
+      _fluidsbenchArtifactBaseUrl:
+        context.hiLiftCompactTruth || context.hiLiftCompactPrediction ? new URL(".", context.indexUrl).href : baseUrl,
       _fluidsbenchProfileSchema: cached.data?.schema || cached.data?.schema_version || null,
       _fluidsbenchProvenance: {
         index_url: context.indexUrl,
@@ -5183,6 +5462,343 @@
     return Array.isArray(left) && Array.isArray(right) && left.length === right.length && left.every((value, index) => value === right[index]);
   }
 
+  function exactProfileArrayInventory(arrays, expected, label) {
+    const observed = Array.from(arrays.keys());
+    if (!arraysExactlyEqual(observed, expected)) {
+      throw new Error(`${label} NumPy array inventory or order differs from its contract`);
+    }
+  }
+
+  function requiredProfileArray(arrays, name, dtype, label) {
+    const array = arrays.get(name);
+    if (!array || array.dtype !== dtype || !Array.isArray(array.values)) {
+      throw new Error(`${label}/${name} must be a one-dimensional ${dtype} NumPy array`);
+    }
+    return array.values;
+  }
+
+  function verifiedProfileArtifactUrl(profileCase, artifact, label) {
+    if (
+      artifact?.format !== "numpy-npz-v1" ||
+      typeof artifact?.file !== "string" ||
+      !/^artifacts\/[A-Za-z0-9_.\/-]+\.npz$/.test(artifact.file) ||
+      artifact.file.includes("..") ||
+      !validSha256(artifact?.sha256) ||
+      !Number.isSafeInteger(artifact?.byte_size) ||
+      artifact.byte_size < 1
+    ) {
+      throw new Error(`${label} has an invalid checksum-bound NPZ declaration`);
+    }
+    const base = new URL(profileCase?._fluidsbenchArtifactBaseUrl);
+    const url = new URL(artifact.file, base);
+    if (url.origin !== base.origin || !url.href.startsWith(base.href)) {
+      throw new Error(`${label} artifact path escapes its declared repository root`);
+    }
+    return url.href;
+  }
+
+  function requireHiLiftMetadataMatch(truthCase, predictionCase, sectionName, fields, label) {
+    const truth = truthCase?.[sectionName] || {};
+    const prediction = predictionCase?.[sectionName] || {};
+    fields.forEach((field) => {
+      const left = truth[field];
+      const right = prediction[field];
+      const equal = Array.isArray(left) ? arraysExactlyEqual(left, right) : left === right;
+      if (!equal) throw new Error(`${label} ${sectionName}.${field} differs from public compact Native CFD support`);
+    });
+  }
+
+  function hiLiftSeriesBase({ panelId, stationId, familyId, placementMode, quantityId, coordinateId, supportIdentity, predictionOrder }) {
+    return {
+      panel_id: panelId,
+      station_id: stationId,
+      family_id: familyId,
+      placement_mode: placementMode,
+      quantity_id: quantityId,
+      representation: "materialized",
+      scoring_role: "diagnostic_profile",
+      coordinate_id: coordinateId,
+      coordinate_unit: "in",
+      support_identity_sha256: supportIdentity,
+      prediction_order_sha256: predictionOrder,
+    };
+  }
+
+  function buildHiLiftCompactSeries(support, cpValues, velocityValues, valueField) {
+    const series = [];
+    for (let rowCode = 0; rowCode < hiLiftCpStationIds.length; rowCode += 1) {
+      const coordinate = [];
+      const values = [];
+      const sampleIndex = [];
+      const segments = [];
+      for (let branch = 0; branch < support.cpRows.length; branch += 1) {
+        if (support.cpRows[branch] !== rowCode) continue;
+        const sourceStart = support.cpOffsets[branch];
+        const sourceStop = support.cpOffsets[branch + 1];
+        const emittedStart = coordinate.length;
+        for (let sourceIndex = sourceStart; sourceIndex < sourceStop; sourceIndex += 1) {
+          coordinate.push(support.cpX[sourceIndex]);
+          values.push(cpValues[sourceIndex]);
+          sampleIndex.push(sourceIndex);
+        }
+        segments.push({
+          emitted_index_start: emittedStart,
+          emitted_index_stop: coordinate.length,
+          segment_id: `row-${String.fromCharCode(65 + rowCode)}-branch-${branch}`,
+        });
+      }
+      series.push({
+        ...hiLiftSeriesBase({
+          panelId: "pressure_profiles",
+          stationId: hiLiftCpStationIds[rowCode],
+          familyId: "hiliftaeroml_cp_compact_v2",
+          placementMode: "fixed_hlpw5_rows",
+          quantityId: "cp",
+          coordinateId: "streamwise_x_in",
+          supportIdentity: support.cpSupportIdentity,
+          predictionOrder: support.cpPredictionOrder,
+        }),
+        coordinate,
+        [valueField]: values,
+        sample_index: sampleIndex,
+        segments,
+        unsupported_sample_count: 0,
+      });
+    }
+
+    const denseVelocity = new Array(support.velocityMask.length).fill(null);
+    let velocityCursor = 0;
+    support.velocityMask.forEach((valid, index) => {
+      if (valid) {
+        denseVelocity[index] = velocityValues[velocityCursor];
+        velocityCursor += 1;
+      }
+    });
+    if (velocityCursor !== velocityValues.length) throw new Error("compact HiLift velocity values do not exhaust the shared validity mask");
+    hiLiftVelocityStations.forEach(([, stationId], stationIndex) => {
+      const sourceStart = support.velocityOffsets[stationIndex];
+      const sourceStop = support.velocityOffsets[stationIndex + 1];
+      const coordinate = [];
+      const values = [];
+      const sampleIndex = [];
+      const segments = [];
+      let activeSegmentStart = null;
+      let run = 0;
+      for (let sourceIndex = sourceStart; sourceIndex < sourceStop; sourceIndex += 1) {
+        if (!support.velocityMask[sourceIndex]) {
+          if (activeSegmentStart !== null) {
+            segments.push({ emitted_index_start: activeSegmentStart, emitted_index_stop: coordinate.length, segment_id: `${stationId}-valid-run-${run}` });
+            activeSegmentStart = null;
+            run += 1;
+          }
+          continue;
+        }
+        if (activeSegmentStart === null) activeSegmentStart = coordinate.length;
+        coordinate.push(support.velocityCoordinate[sourceIndex]);
+        values.push(denseVelocity[sourceIndex]);
+        sampleIndex.push(sourceIndex);
+      }
+      if (activeSegmentStart !== null) {
+        segments.push({ emitted_index_start: activeSegmentStart, emitted_index_stop: coordinate.length, segment_id: `${stationId}-valid-run-${run}` });
+      }
+      series.push({
+        ...hiLiftSeriesBase({
+          panelId: "velocity_profiles",
+          stationId,
+          familyId: "hiliftaeroml_velocity_compact_v2",
+          placementMode: "fixed_hlpw5_stations",
+          quantityId: "velocity_ratio",
+          coordinateId: "z_minus_surface_z_in",
+          supportIdentity: support.velocitySupportIdentity,
+          predictionOrder: support.velocityPredictionOrder,
+        }),
+        coordinate,
+        [valueField]: values,
+        sample_index: sampleIndex,
+        segments,
+        unsupported_sample_count: sourceStop - sourceStart - coordinate.length,
+      });
+    });
+    return series;
+  }
+
+  function validateHiLiftPlotSupport(caseArrays, commonArrays, profileCase, label) {
+    exactProfileArrayInventory(
+      caseArrays,
+      ["cp_x_in", "cp_truth", "cp_branch_point_offsets", "cp_branch_row_code", "velocity_truth_speed_over_u_inf"],
+      label
+    );
+    exactProfileArrayInventory(commonArrays, ["velocity_coordinate_in", "velocity_valid_mask", "velocity_station_row_offsets"], label);
+    const cpX = requiredProfileArray(caseArrays, "cp_x_in", "<f4", label);
+    const cpTruth = requiredProfileArray(caseArrays, "cp_truth", "<f4", label);
+    const cpOffsets = requiredProfileArray(caseArrays, "cp_branch_point_offsets", "<i4", label);
+    const cpRows = requiredProfileArray(caseArrays, "cp_branch_row_code", "|u1", label);
+    const velocityTruth = requiredProfileArray(caseArrays, "velocity_truth_speed_over_u_inf", "<f4", label);
+    const velocityCoordinate = requiredProfileArray(commonArrays, "velocity_coordinate_in", "<f4", label);
+    const velocityMask = requiredProfileArray(commonArrays, "velocity_valid_mask", "|b1", label);
+    const velocityOffsets = requiredProfileArray(commonArrays, "velocity_station_row_offsets", "<i4", label);
+    if (
+      cpX.length !== cpTruth.length ||
+      cpX.length !== profileCase?.surface_cp?.retained_point_count ||
+      cpOffsets.length !== cpRows.length + 1 ||
+      cpRows.length !== profileCase?.surface_cp?.retained_branch_count ||
+      cpOffsets[0] !== 0 ||
+      cpOffsets.at(-1) !== cpX.length ||
+      cpOffsets.some((value, index) => index && value <= cpOffsets[index - 1]) ||
+      cpRows.some((value) => !Number.isInteger(value) || value < 0 || value > 9) ||
+      new Set(cpRows).size !== 10 ||
+      cpX.some((value) => !Number.isFinite(value)) ||
+      cpTruth.some((value) => !Number.isFinite(value))
+    ) {
+      throw new Error(`${label} Cp plotting arrays have invalid shape, coverage, order, or values`);
+    }
+    const expectedVelocityOffsets = [0, 801, 1602, 2403, 3204, 4005];
+    const validVelocityCount = velocityMask.filter(Boolean).length;
+    if (
+      velocityCoordinate.length !== 4005 ||
+      velocityMask.length !== 4005 ||
+      !arraysExactlyEqual(velocityOffsets, expectedVelocityOffsets) ||
+      velocityTruth.length !== validVelocityCount ||
+      validVelocityCount !== profileCase?.volume_velocity?.valid_row_count ||
+      velocityCoordinate.some((value) => !Number.isFinite(value)) ||
+      velocityTruth.some((value) => !Number.isFinite(value) || value < 0)
+    ) {
+      throw new Error(`${label} velocity plotting arrays have invalid shape, gaps, order, or values`);
+    }
+    return {
+      cpX,
+      cpTruth,
+      cpOffsets,
+      cpRows,
+      cpSupportIdentity: profileCase.surface_cp.support_identity_sha256,
+      cpPredictionOrder: profileCase.surface_cp.prediction_order_sha256,
+      velocityCoordinate,
+      velocityMask,
+      velocityOffsets,
+      velocityTruth,
+      velocitySupportIdentity: profileCase.volume_velocity.support_identity_sha256,
+      velocityPredictionOrder: profileCase.volume_velocity.prediction_order_sha256,
+    };
+  }
+
+  async function materializeHiLiftCompactTruth(profileCase, label) {
+    if (!profileCase?._fluidsbenchHiLiftCompactTruth) return profileCase;
+    if (
+      profileCase?.truth_source?.source_kind !== "native_cfd" ||
+      profileCase?.truth_source?.analytical_dummy !== false ||
+      profileCase?.truth_source?.role !== "plot_only_not_scoring_source" ||
+      !validSha256(profileCase?.surface_cp?.support_identity_sha256) ||
+      !validSha256(profileCase?.surface_cp?.prediction_order_sha256) ||
+      !validSha256(profileCase?.volume_velocity?.support_identity_sha256) ||
+      !validSha256(profileCase?.volume_velocity?.prediction_order_sha256)
+    ) {
+      throw new Error(`${label} lacks its exact compact Native CFD truth and support declaration`);
+    }
+    const artifactUrl = verifiedProfileArtifactUrl(profileCase, profileCase.artifact, label);
+    const common = profileCase?._fluidsbenchHiLiftIndex?.common_support;
+    const commonUrl = verifiedProfileArtifactUrl(profileCase, common, `${label} common velocity support`);
+    const [loadedCase, loadedCommon] = await Promise.all([
+      fetchVerifiedProfileNpz(artifactUrl, profileCase.artifact.sha256, label),
+      fetchVerifiedProfileNpz(commonUrl, common.sha256, `${label} common velocity support`),
+    ]);
+    if (loadedCase.byteLength !== profileCase.artifact.byte_size || loadedCommon.byteLength !== common.byte_size) {
+      throw new Error(`${label} NPZ byte size differs from its JSON binding`);
+    }
+    const support = validateHiLiftPlotSupport(loadedCase.arrays, loadedCommon.arrays, profileCase, label);
+    const materialized = {
+      ...profileCase,
+      series: buildHiLiftCompactSeries(support, support.cpTruth, support.velocityTruth, "value"),
+      _fluidsbenchHiLiftPlotSupport: support,
+      _fluidsbenchProvenance: {
+        ...profileCase._fluidsbenchProvenance,
+        artifact_url: artifactUrl,
+        artifact_sha256: loadedCase.sha256,
+        common_support_url: commonUrl,
+        common_support_sha256: loadedCommon.sha256,
+      },
+    };
+    await bindProfileCoordinateIdentities(materialized);
+    return materialized;
+  }
+
+  async function materializeHiLiftCompactPrediction(profileCase, truthCase, label) {
+    if (!profileCase?._fluidsbenchHiLiftCompactPrediction) return profileCase;
+    if (!truthCase?._fluidsbenchHiLiftCompactTruth || !truthCase?._fluidsbenchHiLiftPlotSupport) {
+      throw new Error(`${label} cannot decode compact predictions without the verified public HiLift plot support`);
+    }
+    if (profileCase.case_id !== truthCase.case_id) throw new Error(`${label} case ID differs from public compact Native CFD truth`);
+    requireHiLiftMetadataMatch(
+      truthCase,
+      profileCase,
+      "surface_cp",
+      [
+        "support_identity_sha256",
+        "prediction_order_sha256",
+        "physical_graph_count",
+        "retained_branch_count",
+        "retained_point_count",
+        "maximum_points_per_physical_graph",
+        "quantization_scale",
+        "quantization_dtype",
+        "delta_dtype",
+        "prediction_array",
+      ],
+      label
+    );
+    requireHiLiftMetadataMatch(
+      truthCase,
+      profileCase,
+      "volume_velocity",
+      [
+        "support_identity_sha256",
+        "prediction_order_sha256",
+        "station_order",
+        "station_count",
+        "row_count",
+        "valid_row_count",
+        "invalid_row_count",
+        "prediction_dtype",
+        "prediction_array",
+      ],
+      label
+    );
+    const artifactUrl = verifiedProfileArtifactUrl(profileCase, profileCase.artifact, label);
+    const loaded = await fetchVerifiedProfileNpz(artifactUrl, profileCase.artifact.sha256, label);
+    if (loaded.byteLength !== profileCase.artifact.byte_size) throw new Error(`${label} NPZ byte size differs from its JSON binding`);
+    exactProfileArrayInventory(loaded.arrays, ["cp_q_delta", "velocity_speed_over_u_inf"], label);
+    const deltas = requiredProfileArray(loaded.arrays, "cp_q_delta", "<i2", label);
+    const velocity = requiredProfileArray(loaded.arrays, "velocity_speed_over_u_inf", "<f4", label);
+    const support = truthCase._fluidsbenchHiLiftPlotSupport;
+    if (deltas.length !== support.cpX.length || velocity.length !== support.velocityTruth.length) {
+      throw new Error(`${label} compact prediction lengths differ from public plot support`);
+    }
+    const cp = new Array(deltas.length);
+    for (let branch = 0; branch < support.cpOffsets.length - 1; branch += 1) {
+      const start = support.cpOffsets[branch];
+      const stop = support.cpOffsets[branch + 1];
+      let quantized = 0;
+      for (let index = start; index < stop; index += 1) {
+        quantized += deltas[index];
+        if (quantized < -32768 || quantized > 32767) throw new Error(`${label} delta-coded Cp reconstruction overflows int16`);
+        cp[index] = quantized / 1024;
+      }
+    }
+    if (velocity.some((value) => !Number.isFinite(value) || value < 0)) {
+      throw new Error(`${label} compact velocity prediction contains non-finite or negative values`);
+    }
+    const materialized = {
+      ...profileCase,
+      series: buildHiLiftCompactSeries(support, cp, velocity, "prediction"),
+      _fluidsbenchProvenance: {
+        ...profileCase._fluidsbenchProvenance,
+        artifact_url: artifactUrl,
+        artifact_sha256: loaded.sha256,
+      },
+    };
+    await bindProfileCoordinateIdentities(materialized);
+    return materialized;
+  }
+
   function requiredSeriesIdentity(series, field, label) {
     const value = series?.[field];
     if (!validSha256(value)) throw new Error(`${label} has an invalid ${field}`);
@@ -5585,6 +6201,96 @@
     };
   }
 
+  function hiLiftCompactMaterializedProfileSeries(series, label, nativeTruth) {
+    const coordinates = series?.coordinate;
+    const values = nativeTruth ? series?.value : series?.prediction;
+    const sampleIndex = series?.sample_index;
+    const segments = series?.segments;
+    if (
+      !Array.isArray(coordinates) ||
+      !Array.isArray(values) ||
+      !Array.isArray(sampleIndex) ||
+      coordinates.length < 2 ||
+      coordinates.length !== values.length ||
+      coordinates.length !== sampleIndex.length ||
+      coordinates.some((value) => typeof value !== "number" || !Number.isFinite(value)) ||
+      values.some((value) => typeof value !== "number" || !Number.isFinite(value)) ||
+      sampleIndex.some((value) => !Number.isSafeInteger(value) || value < 0)
+    ) {
+      throw new Error(`${label} compact HiLift coordinate/value/sample arrays are invalid or unaligned`);
+    }
+    if (!Array.isArray(segments) || !segments.length) throw new Error(`${label} compact HiLift series has no explicit branch/gap segments`);
+    const segmentOrdinals = new Array(coordinates.length);
+    let emittedStop = 0;
+    segments.forEach((segment, ordinal) => {
+      if (
+        !segment ||
+        typeof segment.segment_id !== "string" ||
+        !segment.segment_id ||
+        !Number.isSafeInteger(segment.emitted_index_start) ||
+        !Number.isSafeInteger(segment.emitted_index_stop) ||
+        segment.emitted_index_start !== emittedStop ||
+        segment.emitted_index_stop <= segment.emitted_index_start ||
+        segment.emitted_index_stop > coordinates.length
+      ) {
+        throw new Error(`${label} compact HiLift segment ${ordinal} is invalid or non-contiguous`);
+      }
+      for (let index = segment.emitted_index_start; index < segment.emitted_index_stop; index += 1) segmentOrdinals[index] = ordinal;
+      emittedStop = segment.emitted_index_stop;
+    });
+    if (emittedStop !== coordinates.length) throw new Error(`${label} compact HiLift segments do not cover every emitted point`);
+    const coordinateIdentity = series._fluidsbenchCoordinateIdentitySha256;
+    if (!validSha256(coordinateIdentity)) throw new Error(`${label} compact HiLift coordinate identity could not be recomputed`);
+    const points = coordinates.map((coordinate, index) => {
+      const segmentOrdinal = segmentOrdinals[index];
+      const segment = segments[segmentOrdinal];
+      return {
+        x: coordinate,
+        y: values[index],
+        coordinate,
+        displayCoordinate: null,
+        sourcePointIndex: index,
+        sampleIndex: sampleIndex[index],
+        rawNativeCellId: null,
+        segmentId: segment.segment_id,
+        segmentOrdinal,
+        gapBefore: index === segment.emitted_index_start && index > 0,
+      };
+    });
+    const chartPoints = [];
+    points.forEach((point) => {
+      if (point.gapBefore) chartPoints.push({ x: null, y: null, gapSeparator: true });
+      chartPoints.push(point);
+    });
+    const unsupportedSampleCount = Number(series.unsupported_sample_count || 0);
+    if (!Number.isSafeInteger(unsupportedSampleCount) || unsupportedSampleCount < 0) {
+      throw new Error(`${label} compact HiLift unsupported-sample count is invalid`);
+    }
+    return {
+      points,
+      chartPoints,
+      sourcePointCount: coordinates.length,
+      droppedPointCount: 0,
+      segmentCount: segments.length,
+      unsupportedSampleCount,
+      coordinates,
+      displayCoordinates: null,
+      sampleIndex,
+      rawNativeCellId: [],
+      segments,
+      unsupportedSamples: [],
+      supportIdentity: requiredSeriesIdentity(series, "support_identity_sha256", label),
+      predictionOrder: requiredSeriesIdentity(series, "prediction_order_sha256", label),
+      placementReceiptIdentity: null,
+      coordinateIdentity,
+      coordinateId: series.coordinate_id,
+      coordinateUnit: series.coordinate_unit,
+      displayCoordinateIdentity: null,
+      displayCoordinateId: null,
+      displayCoordinateUnit: null,
+    };
+  }
+
   function legacyProfileSeries(series) {
     const coordinates = series.coordinate || [];
     const values = series.prediction || series.value || [];
@@ -5662,7 +6368,11 @@
     const nativeTruth = source?._fluidsbenchNativeProfileTruth === true;
     const nativeTruthVersion = nativeTruth ? Number(source?._fluidsbenchNativeProfileTruthVersion || 2) : null;
     const currentPrediction = source?._fluidsbenchRelativeProfileV3 === true;
-    if (!nativeTruth && !currentPrediction) throw new Error(`${label} namespaced series has no verified native-v2/native-v3 truth or current-v3 prediction binding`);
+    const hiLiftCompactTruth = source?._fluidsbenchHiLiftCompactTruth === true;
+    const hiLiftCompactPrediction = source?._fluidsbenchHiLiftCompactPrediction === true;
+    if (!nativeTruth && !currentPrediction && !hiLiftCompactTruth && !hiLiftCompactPrediction) {
+      throw new Error(`${label} namespaced series has no verified native truth or current prediction binding`);
+    }
     let materialized = selected;
     if (selected.representation === "shared_alias") {
       if (nativeTruth) requireExactNativeSeriesFields(selected, "shared_alias", "", label, nativeTruthVersion);
@@ -5703,9 +6413,12 @@
     } else if (selected.representation !== "materialized") {
       throw new Error(`${label} has unsupported representation ${selected.representation || "missing"}`);
     }
-    const parsed = nativeTruth
-      ? nativeMaterializedProfileSeries(materialized, label, nativeTruthVersion)
-      : submittedMaterializedProfileSeries(materialized, label);
+    const parsed =
+      hiLiftCompactTruth || hiLiftCompactPrediction
+        ? hiLiftCompactMaterializedProfileSeries(materialized, label, hiLiftCompactTruth)
+        : nativeTruth
+          ? nativeMaterializedProfileSeries(materialized, label, nativeTruthVersion)
+          : submittedMaterializedProfileSeries(materialized, label);
     return {
       ...parsed,
       legacy: false,
@@ -5720,10 +6433,12 @@
       seriesIdentity: nativeTruth ? selected.series_identity_sha256 : parsed.seriesIdentity,
       selectedSeries: selected,
       materializedSeries: materialized,
-      nativeTruth,
-      nativeTruthSource: nativeTruth ? source.truth_source : null,
-      nativeDatasetRevision: nativeTruth ? source.dataset_revision : null,
+      nativeTruth: nativeTruth || hiLiftCompactTruth,
+      nativeTruthSource: nativeTruth || hiLiftCompactTruth ? source.truth_source : null,
+      nativeDatasetRevision: nativeTruth ? source.dataset_revision : hiLiftCompactTruth ? source?._fluidsbenchHiLiftIndex?.dataset_revision : null,
       nativeTruthVersion,
+      hiLiftCompactTruth,
+      hiLiftCompactPrediction,
     };
   }
 
@@ -5740,6 +6455,7 @@
       ["quantityId", "quantity"],
       ["representation", "representation"],
       ["supportIdentity", "support identity"],
+      ["predictionOrder", "prediction order"],
       ["placementReceiptIdentity", "placement-receipt identity"],
       ["coordinateIdentity", "coordinate identity"],
       ["coordinateId", "coordinate ID"],
@@ -5805,6 +6521,7 @@
         representation: dataset.profileIdentity?.representation || null,
         scoring_role: dataset.profileIdentity?.scoringRole || null,
         support_identity_sha256: dataset.profileIdentity?.supportIdentity || null,
+        prediction_order_sha256: dataset.profileIdentity?.predictionOrder || null,
         placement_receipt_identity_sha256: dataset.profileIdentity?.placementReceiptIdentity || null,
         coordinate_id: dataset.profileIdentity?.coordinateId || null,
         coordinate_unit: dataset.profileIdentity?.coordinateUnit || null,
@@ -5826,6 +6543,8 @@
         source_chunk_url: dataset.sourceProvenance?.chunk_url || null,
         source_chunk_declared_sha256: dataset.sourceProvenance?.chunk_declared_sha256 || null,
         source_chunk_downloaded_sha256: dataset.sourceProvenance?.chunk_downloaded_sha256 || null,
+        source_artifact_url: dataset.sourceProvenance?.artifact_url || null,
+        source_artifact_sha256: dataset.sourceProvenance?.artifact_sha256 || null,
         ...(dataset.validationMetadata || validationMetadata(null)),
       }))
     );
@@ -5877,13 +6596,25 @@
         try {
           const context = await submissionProfileIndex(row);
           const value = await indexedProfileCase(context, state.profileCase, state.profileChunks, rowLabel(row));
-          return { id: row.id, value, error: value ? null : "selected case is absent from the checksum-verified submitted profile package" };
+          return { id: row.id, row, value, error: value ? null : "selected case is absent from the checksum-verified submitted profile package" };
         } catch (error) {
           console.error(error);
-          return { id: row.id, value: null, error: error.message };
+          return { id: row.id, row, value: null, error: error.message };
         }
       });
-      const [groundTruthCase, rowCases] = await Promise.all([groundTruthRequest, Promise.all(rowRequests)]);
+      const [groundTruthMetadata, rowMetadata] = await Promise.all([groundTruthRequest, Promise.all(rowRequests)]);
+      const groundTruthCase = await materializeHiLiftCompactTruth(groundTruthMetadata, `${state.dataset} ground truth`);
+      const rowCases = await Promise.all(
+        rowMetadata.map(async ({ id, row, value, error }) => {
+          if (!value || error) return { id, value, error };
+          try {
+            return { id, value: await materializeHiLiftCompactPrediction(value, groundTruthCase, rowLabel(row)), error: null };
+          } catch (materializeError) {
+            console.error(materializeError);
+            return { id, value: null, error: materializeError.message };
+          }
+        })
+      );
       if (version !== state.profileLoadVersion) return;
       state.groundTruthCase = groundTruthCase;
       state.profileCases = new Map(rowCases.map(({ id, value }) => [id, value]));
@@ -5914,6 +6645,15 @@
     }
   }
 
+  function verifiedNativeGroundTruthCase(profileCase) {
+    return Boolean(profileCase?._fluidsbenchNativeProfileTruth || profileCase?._fluidsbenchHiLiftCompactTruth);
+  }
+
+  function publicGroundTruthLabel(profileCase) {
+    if (profileCase?._fluidsbenchHiLiftCompactTruth) return "Native CFD ground truth (plot-only)";
+    return profileCase?._fluidsbenchNativeProfileTruth ? "Native CFD ground truth" : "Ground truth";
+  }
+
   function renderProfileChart(index) {
     const figureKey = `profile-${index}`;
     invalidateProfileFigure(figureKey);
@@ -5942,7 +6682,7 @@
       syncProfileActionAvailability();
       return;
     }
-    if (state.groundTruthCase?._fluidsbenchNativeProfileTruth && !groundTruthSeries) {
+    if (verifiedNativeGroundTruthCase(state.groundTruthCase) && !groundTruthSeries) {
       const message = "the exact selected family, placement, station, and quantity are absent from checksum-verified native ground truth";
       const status = element(`profile-${index}-status`);
       if (status) {
@@ -5961,7 +6701,7 @@
       if (coordinateSelect) coordinateSelect.value = coordinateView.id;
     }
     if (groundTruthSeries) {
-      const groundTruthLabel = state.groundTruthCase?._fluidsbenchNativeProfileTruth ? "Native CFD ground truth" : "Ground truth";
+      const groundTruthLabel = publicGroundTruthLabel(state.groundTruthCase);
       const projected = projectProfileSeries(groundTruthSeries, coordinateView);
       datasets.push({
         label: groundTruthLabel,
@@ -6047,8 +6787,10 @@
         station.label
       } against ${coordinateView.label}. ${
         groundTruthSeries
-          ? state.groundTruthCase?._fluidsbenchNativeProfileTruth
-            ? "Pinned Native CFD ground truth is included."
+          ? verifiedNativeGroundTruthCase(state.groundTruthCase)
+            ? state.groundTruthCase?._fluidsbenchHiLiftCompactTruth
+              ? "Checksum-bound plot-only Native CFD ground truth is included."
+              : "Pinned Native CFD ground truth is included."
             : "Ground truth is included."
           : "Ground truth is unavailable."
       } ${submissionCurveCount} submission curves are displayed.${profileOmissionText}`
@@ -6061,7 +6803,7 @@
     const plottedValues = profilePlotValues(datasets, coordinateView);
     const droppedPointCount = datasets.reduce((total, dataset) => total + dataset.droppedPointCount, 0);
     const gapCount = datasets.reduce((total, dataset) => total + Math.max(0, dataset.segmentCount - 1), 0);
-    const nativeProfileContext = Boolean(state.groundTruthCase?._fluidsbenchNativeProfileTruth);
+    const nativeProfileContext = verifiedNativeGroundTruthCase(state.groundTruthCase);
     const lineProcessing = nativeProfileContext
       ? `Lines preserve checksum-bound native source order without smoothing, interpolation, resampling, or sorting. Unsupported samples create explicit segment breaks and are never bridged; ${
           gapCount || "no"
@@ -6071,8 +6813,10 @@
       family?.label ? ` using ${family.label}` : ""
     }, plotted against ${coordinateView.label} and showing ${
       groundTruthSeries
-        ? state.groundTruthCase?._fluidsbenchNativeProfileTruth
-          ? `pinned Native CFD ground truth (${nativeDrivaermlDatasetRevision}) and `
+        ? verifiedNativeGroundTruthCase(state.groundTruthCase)
+          ? state.groundTruthCase?._fluidsbenchHiLiftCompactTruth
+            ? "checksum-bound plot-only Native CFD ground truth on the compact 128-point-per-graph support and "
+            : `pinned Native CFD ground truth (${nativeDrivaermlDatasetRevision}) and `
           : "public ground truth and "
         : ""
     }${submissionCurveCount} explicitly selected ${resultDataOriginLabel()} model curve${submissionCurveCount === 1 ? "" : "s"}. ${lineProcessing} ${
@@ -6264,7 +7008,7 @@
         y_label: quantity.y_label,
         requested_model_ids: figureRows().map((row) => row.id),
         plotted_model_ids: Array.from(new Set(points.map((point) => point.submission_id).filter(Boolean))),
-        processing: state.groundTruthCase?._fluidsbenchNativeProfileTruth
+        processing: verifiedNativeGroundTruthCase(state.groundTruthCase)
           ? "Checksum- and identity-bound submitted/reference support and display coordinates with values in native source order; explicit support segments preserve unsupported-sample gaps; no smoothing, interpolation, resampling, sorting, or cross-family fallback"
           : "Finite submitted/reference coordinate-value pairs in source order; no smoothing, interpolation, resampling, or sorting; dropped and source point counts are recorded per row",
         caption: state.figureCaptions.get(`profile-${index}`),
