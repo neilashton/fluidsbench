@@ -39,6 +39,7 @@
   };
   const drivaermlRelativeProfileSchemaVersion = "3.0-drivaerml-relative-candidate";
   const hiLiftCompactTruthSchemas = {
+    master: "fluidsbench-hiliftaeroml-compact-profile-truth-master-index-v1",
     index: "fluidsbench-hiliftaeroml-compact-profile-truth-index-v1",
     chunk: "fluidsbench-hiliftaeroml-compact-profile-truth-chunk-v1",
     format: "fluidsbench-hiliftaeroml-compact-profile-truth-v1",
@@ -47,8 +48,9 @@
   const hiLiftCompactPredictionFormat = "fluidsbench-hiliftaeroml-compact-profile-chunks-v2-candidate";
   const hiLiftCompactProfileContractId = "hiliftaeroml-compact-profile-predictions-v2-candidate";
   const hiLiftCompactProfileContractSha256 = "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c";
-  const hiLiftCompactTruthReleaseId = "hiliftaeroml-compact-profile-truth-full360-v1";
-  const hiLiftCompactCaseSetId = "caseset-ac791749e527";
+  const hiLiftCompactTruthReleaseId = "hiliftaeroml-compact-profile-truth-all1355-v1";
+  const hiLiftCompactTruthCaseCount = 1355;
+  const hiLiftCompactTruthCaseSetCount = 8;
   const hiLiftCpStationIds = Array.from("abcdefghij", (letter) => `pressure_belt_${letter}`);
   const hiLiftVelocityStations = [
     ["B.2", "hlpw5_b_2"],
@@ -2044,8 +2046,7 @@
     const drivaermlDataset = datasetName === "DrivAerML" || dataset?.id === "drivaerml";
     const hiLiftDataset = datasetName === "HiLiftAeroML" || dataset?.id === "hiliftaeroml";
     const hiLiftCompactTruth =
-      cached.data?.schema === hiLiftCompactTruthSchemas.index &&
-      cached.data?.schema_version === hiLiftCompactTruthSchemas.version;
+      cached.data?.schema === hiLiftCompactTruthSchemas.index && cached.data?.schema_version === hiLiftCompactTruthSchemas.version;
     if (drivaermlDataset && !nativeProfileTruth) {
       throw new Error(
         `${datasetName} profile ground truth must use a checksum-bound native CFD v2 or v3 release; legacy or analytical indexes are unavailable`
@@ -2057,8 +2058,8 @@
     if (hiLiftCompactTruth && !hiLiftDataset) {
       throw new Error(`${datasetName} cannot use the HiLiftAeroML compact profile-truth schema`);
     }
-    if (hiLiftDataset && caseSet.id === hiLiftCompactCaseSetId && !hiLiftCompactTruth) {
-      throw new Error(`${datasetName} standard-split ground truth must use the checksum-bound compact Native CFD release`);
+    if (hiLiftDataset && !hiLiftCompactTruth) {
+      throw new Error(`${datasetName} ground truth must use the checksum-bound compact Native CFD release for every official case set`);
     }
     let nativeChunkBaseUrl = null;
     let nativeMasterChunks = null;
@@ -2170,7 +2171,7 @@
       const declaration = dataset?.compact_profile_truth;
       const indexedIds = caseIds(cached.data);
       const indexedChunks = cached.data?.chunks || [];
-      const declaredIndexUrl = fileUrl(declaration?.master_index_file, state.groundTruthManifestProvenance?.base_url || groundTruthBaseUrl);
+      const masterIndexUrl = fileUrl(declaration?.master_index_file, state.groundTruthManifestProvenance?.base_url || groundTruthBaseUrl);
       if (
         declaration?.source_kind !== "native_cfd" ||
         declaration?.analytical_dummy !== false ||
@@ -2179,12 +2180,55 @@
         declaration?.format !== hiLiftCompactTruthSchemas.format ||
         declaration?.profile_contract_id !== hiLiftCompactProfileContractId ||
         declaration?.profile_contract_sha256 !== hiLiftCompactProfileContractSha256 ||
-        declaration?.case_set_id !== hiLiftCompactCaseSetId ||
-        declaration?.case_count !== 360 ||
-        declaration?.master_index_sha256 !== cached.sha256 ||
-        declaredIndexUrl !== indexUrl
+        declaration?.case_count !== hiLiftCompactTruthCaseCount ||
+        declaration?.case_set_count !== hiLiftCompactTruthCaseSetCount ||
+        !validSha256(declaration?.master_index_sha256)
       ) {
         throw new Error(`${datasetName} compact Native CFD truth lacks its exact public plot-release declaration`);
+      }
+      if (!state.groundTruthIndexes.has(masterIndexUrl)) {
+        state.groundTruthIndexes.set(
+          masterIndexUrl,
+          await fetchJsonWithProvenance(masterIndexUrl, `${datasetName} compact profile-truth master index`)
+        );
+      }
+      const masterLoaded = state.groundTruthIndexes.get(masterIndexUrl);
+      const master = masterLoaded.data;
+      const masterCaseSets = master?.case_sets || [];
+      if (
+        !masterLoaded.sha256 ||
+        masterLoaded.sha256 !== declaration.master_index_sha256 ||
+        master?.schema !== hiLiftCompactTruthSchemas.master ||
+        master?.schema_version !== hiLiftCompactTruthSchemas.version ||
+        master?.format !== hiLiftCompactTruthSchemas.format ||
+        master?.release_id !== hiLiftCompactTruthReleaseId ||
+        master?.status !== "public_plot_only_candidate" ||
+        master?.usage !== "browser_visualization_only_not_metric_recomputation" ||
+        master?.dataset_id !== "hiliftaeroml" ||
+        master?.profile_contract_id !== hiLiftCompactProfileContractId ||
+        master?.profile_contract_sha256 !== hiLiftCompactProfileContractSha256 ||
+        master?.case_count !== hiLiftCompactTruthCaseCount ||
+        !Array.isArray(master?.case_ids) ||
+        master.case_ids.length !== hiLiftCompactTruthCaseCount ||
+        new Set(master.case_ids).size !== hiLiftCompactTruthCaseCount ||
+        master?.case_set_count !== hiLiftCompactTruthCaseSetCount ||
+        !Array.isArray(masterCaseSets) ||
+        masterCaseSets.length !== hiLiftCompactTruthCaseSetCount ||
+        new Set(masterCaseSets.map((entry) => entry.case_set_id)).size !== hiLiftCompactTruthCaseSetCount ||
+        !validSha256(master?.common_support?.sha256) ||
+        master?.common_support?.row_count !== 4005 ||
+        master?.common_support?.rows_per_station !== 801
+      ) {
+        throw new Error(`${datasetName} compact Native CFD master index has incomplete coverage or a stale contract binding`);
+      }
+      const masterCaseSet = masterCaseSets.find((entry) => entry.case_set_id === caseSet.id);
+      if (
+        !masterCaseSet ||
+        masterCaseSet.sha256 !== cached.sha256 ||
+        masterCaseSet.case_count !== caseSet.case_count ||
+        new URL(masterCaseSet.file, new URL(".", masterIndexUrl)).href !== indexUrl
+      ) {
+        throw new Error(`${datasetName} compact truth case-set index is not bound by the checksum-verified all-1,355 master index`);
       }
       if (
         cached.data?.format !== hiLiftCompactTruthSchemas.format ||
@@ -2192,26 +2236,29 @@
         cached.data?.status !== "public_plot_only_candidate" ||
         cached.data?.usage !== "browser_visualization_only_not_metric_recomputation" ||
         cached.data?.dataset_id !== "hiliftaeroml" ||
-        cached.data?.case_set_id !== hiLiftCompactCaseSetId ||
+        cached.data?.case_set_id !== caseSet.id ||
         cached.data?.profile_contract_id !== hiLiftCompactProfileContractId ||
         cached.data?.profile_contract_sha256 !== hiLiftCompactProfileContractSha256 ||
-        cached.data?.case_count !== 360 ||
+        cached.data?.case_count !== caseSet.case_count ||
+        cached.data?.case_count !== split?.case_count ||
         !Array.isArray(cached.data?.case_ids) ||
-        cached.data.case_ids.length !== 360 ||
-        new Set(cached.data.case_ids).size !== 360 ||
-        indexedIds.length !== 360 ||
+        cached.data.case_ids.length !== caseSet.case_count ||
+        new Set(cached.data.case_ids).size !== caseSet.case_count ||
+        indexedIds.length !== caseSet.case_count ||
         indexedIds.some((caseId, index) => caseId !== cached.data.case_ids[index]) ||
         !validSha256(cached.data?.common_support?.sha256) ||
+        cached.data.common_support.sha256 !== master.common_support.sha256 ||
         cached.data?.common_support?.row_count !== 4005 ||
         cached.data?.common_support?.rows_per_station !== 801 ||
         !Array.isArray(indexedChunks) ||
-        indexedChunks.length !== 36 ||
+        indexedChunks.length !== Math.ceil(caseSet.case_count / 10) ||
         indexedChunks.some(
           (entry) =>
             !entry?.file ||
             !validSha256(entry.sha256) ||
             entry.case_count !== (entry.case_ids || []).length ||
-            entry.case_count !== 10
+            entry.case_count < 1 ||
+            entry.case_count > 10
         )
       ) {
         throw new Error(`${datasetName} compact Native CFD truth index has incomplete coverage or a stale contract binding`);
@@ -2243,19 +2290,30 @@
       throw new Error(`${rowLabel(row)} profile index checksum does not match the verified leaderboard feed`);
     }
     const hiLiftCompactPrediction = cached.data?.format === hiLiftCompactPredictionFormat;
+    const expectedCaseSetId = row.profile_data?.case_set_id || row.case_set_id;
+    const expectedCaseCount = row.profile_data?.case_count;
+    const predictionCaseIds = caseIds(cached.data);
     if (
       hiLiftCompactPrediction &&
       (cached.data?.contract_id !== hiLiftCompactProfileContractId ||
         cached.data?.contract_sha256 !== hiLiftCompactProfileContractSha256 ||
         cached.data?.dataset_id !== "hiliftaeroml" ||
-        cached.data?.case_set_id !== hiLiftCompactCaseSetId ||
-        cached.data?.case_count !== 360 ||
-        caseIds(cached.data).length !== 360 ||
-        new Set(caseIds(cached.data)).size !== 360)
+        !expectedCaseSetId ||
+        cached.data?.case_set_id !== expectedCaseSetId ||
+        !Number.isInteger(expectedCaseCount) ||
+        cached.data?.case_count !== expectedCaseCount ||
+        predictionCaseIds.length !== expectedCaseCount ||
+        new Set(predictionCaseIds).size !== expectedCaseCount)
     ) {
       throw new Error(`${rowLabel(row)} compact HiLift profile index has incomplete coverage or a stale contract binding`);
     }
-    return { index: cached.data, indexUrl, indexSha256: cached.sha256, hiLiftCompactPrediction };
+    return {
+      index: cached.data,
+      indexUrl,
+      indexSha256: cached.sha256,
+      caseSetId: expectedCaseSetId,
+      hiLiftCompactPrediction,
+    };
   }
 
   function caseIds(index) {
@@ -2302,7 +2360,7 @@
         cached.data?.format !== hiLiftCompactTruthSchemas.format ||
         cached.data?.release_id !== hiLiftCompactTruthReleaseId ||
         cached.data?.dataset_id !== "hiliftaeroml" ||
-        cached.data?.case_set_id !== hiLiftCompactCaseSetId
+        cached.data?.case_set_id !== context.caseSetId
       ) {
         throw new Error(`${label} compact Native CFD truth chunk has an unsupported or stale contract binding`);
       }
@@ -2315,7 +2373,7 @@
         cached.data?.contract_id !== hiLiftCompactProfileContractId ||
         cached.data?.contract_sha256 !== hiLiftCompactProfileContractSha256 ||
         cached.data?.dataset_id !== "hiliftaeroml" ||
-        cached.data?.case_set_id !== hiLiftCompactCaseSetId
+        cached.data?.case_set_id !== context.caseSetId
       ) {
         throw new Error(`${label} compact HiLift prediction chunk has an unsupported or stale contract binding`);
       }

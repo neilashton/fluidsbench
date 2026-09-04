@@ -2026,53 +2026,51 @@ function verifyDatasetSubmissionAvailability() {
 }
 
 async function verifyHiLiftCompactProfileOverlay() {
-  const truthIndexPath = path.join(
-    root,
-    "assets/data/profile-ground-truth/datasets/hiliftaeroml/compact-full360-v1/index.json"
-  );
-  const truthIndex = JSON.parse(fs.readFileSync(truthIndexPath, "utf8"));
-  const caseId = truthIndex.case_ids[0];
-  const truthContext = {
-    index: truthIndex,
-    indexUrl: "https://example.test/profile-ground-truth/datasets/hiliftaeroml/compact-full360-v1/index.json",
-    indexSha256: sha256File(truthIndexPath),
-    caseSetId: "caseset-ac791749e527",
-    nativeProfileTruth: false,
-    nativeTruthVersion: null,
-    hiLiftCompactTruth: true,
+  const groundTruthManifestPath = path.join(root, "assets/data/profile-ground-truth/manifest.json");
+  const groundTruthManifest = JSON.parse(fs.readFileSync(groundTruthManifestPath, "utf8"));
+  api.state.manifest = {
+    data_release: {
+      status: "prototype_dummy_data",
+      profile_ground_truth: {
+        release_id: groundTruthManifest.data_release.id,
+        manifest_url: "https://example.test/profile-ground-truth/manifest.json",
+        manifest_sha256: sha256File(groundTruthManifestPath),
+      },
+    },
   };
-  const truthMetadata = await api.indexedProfileCase(
-    truthContext,
-    caseId,
-    api.state.groundTruthChunks,
-    "HiLiftAeroML ground truth"
-  );
+  api.state.groundTruthManifest = null;
+  api.state.groundTruthManifestProvenance = null;
+  api.state.groundTruthIndexes.clear();
+
+  const truthContext = await api.groundTruthIndex("HiLiftAeroML", "Full");
+  const caseId = truthContext.index.case_ids[0];
+  const truthMetadata = await api.indexedProfileCase(truthContext, caseId, api.state.groundTruthChunks, "HiLiftAeroML ground truth");
   const truth = await api.materializeHiLiftCompactTruth(truthMetadata, "HiLiftAeroML ground truth");
   assert.equal(truth.series.length, 15);
   assert.equal(truth._fluidsbenchHiLiftCompactTruth, true);
   assert.match(truth._fluidsbenchProvenance.artifact_url, /plot-profile-truth\.npz$/);
 
-  const predictionIndexRelative =
-    "submissions/hiliftaeroml/hiliftaeroml-transolver-full360-candidate-v1/profiles/index.json";
+  const aoa4Context = await api.groundTruthIndex("HiLiftAeroML", "AoA 4");
+  assert.equal(aoa4Context.caseSetId, "caseset-7a743a20b3bd");
+  assert.equal(aoa4Context.index.case_count, 36);
+  const aoa4CaseId = aoa4Context.index.case_ids[0];
+  const aoa4Metadata = await api.indexedProfileCase(aoa4Context, aoa4CaseId, api.state.groundTruthChunks, "HiLiftAeroML AoA 4 ground truth");
+  const aoa4Truth = await api.materializeHiLiftCompactTruth(aoa4Metadata, "HiLiftAeroML AoA 4 ground truth");
+  assert.equal(aoa4Truth.series.length, 15);
+  assert.equal(aoa4Truth._fluidsbenchHiLiftCompactTruth, true);
+
+  const predictionIndexRelative = "submissions/hiliftaeroml/hiliftaeroml-transolver-full360-candidate-v1/profiles/index.json";
   const predictionIndexPath = path.join(submissionRoot, predictionIndexRelative);
   const predictionIndex = JSON.parse(fs.readFileSync(predictionIndexPath, "utf8"));
   const predictionContext = {
     index: predictionIndex,
     indexUrl: `https://example.test/assets/${predictionIndexRelative}`,
     indexSha256: sha256File(predictionIndexPath),
+    caseSetId: "caseset-ac791749e527",
     hiLiftCompactPrediction: true,
   };
-  const predictionMetadata = await api.indexedProfileCase(
-    predictionContext,
-    caseId,
-    api.state.profileChunks,
-    "HiLiftAeroML Transolver"
-  );
-  const prediction = await api.materializeHiLiftCompactPrediction(
-    predictionMetadata,
-    truth,
-    "HiLiftAeroML Transolver"
-  );
+  const predictionMetadata = await api.indexedProfileCase(predictionContext, caseId, api.state.profileChunks, "HiLiftAeroML Transolver");
+  const prediction = await api.materializeHiLiftCompactPrediction(predictionMetadata, truth, "HiLiftAeroML Transolver");
   assert.equal(prediction.series.length, 15);
   assert.match(prediction._fluidsbenchProvenance.artifact_url, /compact-profile-predictions\.npz$/);
 
@@ -2101,10 +2099,7 @@ async function verifyHiLiftCompactProfileOverlay() {
       support_identity_sha256: "0".repeat(64),
     },
   };
-  await assert.rejects(
-    api.materializeHiLiftCompactPrediction(mismatched, truth, "tampered HiLift prediction"),
-    /support_identity_sha256 differs/
-  );
+  await assert.rejects(api.materializeHiLiftCompactPrediction(mismatched, truth, "tampered HiLift prediction"), /support_identity_sha256 differs/);
 }
 
 verifyDrivaerLegacyTruthFailsClosed()

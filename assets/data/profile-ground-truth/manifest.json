@@ -291,14 +291,14 @@
         "source_kind": "native_cfd",
         "analytical_dummy": false,
         "plot_only": true,
-        "release_id": "hiliftaeroml-compact-profile-truth-full360-v1",
+        "release_id": "hiliftaeroml-compact-profile-truth-all1355-v1",
         "format": "fluidsbench-hiliftaeroml-compact-profile-truth-v1",
         "profile_contract_id": "hiliftaeroml-compact-profile-predictions-v2-candidate",
         "profile_contract_sha256": "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c",
-        "case_set_id": "caseset-ac791749e527",
-        "case_count": 360,
-        "master_index_file": "datasets/hiliftaeroml/compact-full360-v1/index.json",
-        "master_index_sha256": "255e6eff307c2ba983db8d4d63b5958ce073cc558546a3b4f385988d5ee42a2c"
+        "case_count": 1355,
+        "case_set_count": 8,
+        "master_index_file": "datasets/hiliftaeroml/compact-all1355-v1/index.json",
+        "master_index_sha256": "07ba8bec0ae1079659114cc054a9a3c61344727328ec6cd6741cf93ad789d5d4"
       },
       "splits": [
         {
@@ -389,8 +389,8 @@
       "case_sets": [
         {
           "id": "caseset-ac791749e527",
-          "index_file": "datasets/hiliftaeroml/compact-full360-v1/index.json",
-          "index_sha256": "255e6eff307c2ba983db8d4d63b5958ce073cc558546a3b4f385988d5ee42a2c",
+          "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-ac791749e527.json",
+          "index_sha256": "08bdff34bff366147a952e3fd713c819a0d1d845fd9999a8d37cfcfe6707b7ca",
           "case_count": 360,
           "case_id_status": "official",
           "coverage": "complete_split",
@@ -398,52 +398,66 @@
         },
         {
           "id": "caseset-53990ea68fa6",
-          "index_file": "datasets/hiliftaeroml/geometry/index.json",
-          "index_sha256": "91d868fd3b61f6b5f8917e18ec43c57fc3adb884ca4bab60a3cbd00a0e3716d4",
+          "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-53990ea68fa6.json",
+          "index_sha256": "1ed32606d1f2ff984a313f402651b523efc89b03001b595ac0bd2cf09e08f087",
           "case_count": 360,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official",
+          "coverage": "complete_split",
+          "truth_role": "native_cfd_plot_only_not_scoring_source"
         },
         {
           "id": "caseset-7a743a20b3bd",
-          "index_file": "datasets/hiliftaeroml/single_aoa_4/index.json",
-          "index_sha256": "f1047939ee102d9884b1190e4e5fe2ed88181765b1210d49bca979265c279c3b",
+          "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-7a743a20b3bd.json",
+          "index_sha256": "ffd141538a9e90c7dd81509e37d3d0748b7ee7a5c1d8141ada943df4010a387b",
           "case_count": 36,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official",
+          "coverage": "complete_split",
+          "truth_role": "native_cfd_plot_only_not_scoring_source"
         },
         {
           "id": "caseset-02fc12ff3494",
-          "index_file": "datasets/hiliftaeroml/single_aoa_12/index.json",
-          "index_sha256": "6b564a010ae7ab9e1fb23dba5373c7bb2619dff50b9b237197d113a7e09502a3",
+          "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-02fc12ff3494.json",
+          "index_sha256": "5cf6e82b517333b600de5435a5c0c6a98eadd69b4e73ff7f4cf0516d1822bd61",
           "case_count": 36,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official",
+          "coverage": "complete_split",
+          "truth_role": "native_cfd_plot_only_not_scoring_source"
         },
         {
           "id": "caseset-85ecccd9ccda",
-          "index_file": "datasets/hiliftaeroml/single_aoa_22/index.json",
-          "index_sha256": "f97763e562f8aaf0d65862fd420043b046e3013db64dde91510c8b072a0f4328",
+          "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-85ecccd9ccda.json",
+          "index_sha256": "000be6f184c5b35c482926f7cf169eaeacaab41cad00fd0d32ea8db5232ec691",
           "case_count": 36,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official",
+          "coverage": "complete_split",
+          "truth_role": "native_cfd_plot_only_not_scoring_source"
         },
         {
           "id": "caseset-29693354ed8a",
-          "index_file": "datasets/hiliftaeroml/aoa/index.json",
-          "index_sha256": "daf50e2055673bdd2115fa570fbdd92e1856df090895befcfc01ca89edfb4d0e",
+          "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-29693354ed8a.json",
+          "index_sha256": "bf63f9f694208b39457bb3b174884e9a08896331faf37cd006b9fd314054d44e",
           "case_count": 900,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official",
+          "coverage": "complete_split",
+          "truth_role": "native_cfd_plot_only_not_scoring_source"
         },
         {
           "id": "caseset-c0ecb14de138",
-          "index_file": "datasets/hiliftaeroml/deflection/index.json",
-          "index_sha256": "9673f98e73ca14e7c9cc718f430b58711987873fda46f2b1badac7a04447228b",
+          "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-c0ecb14de138.json",
+          "index_sha256": "5e54a58083422e4f9f65fe1207bd449bebce57952963edf291ccd183e2605f42",
           "case_count": 360,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official",
+          "coverage": "complete_split",
+          "truth_role": "native_cfd_plot_only_not_scoring_source"
         },
         {
           "id": "caseset-804491c8956e",
-          "index_file": "datasets/hiliftaeroml/stall/index.json",
-          "index_sha256": "e9d7162369b83794eeaa8458c3f41983f894e95875852af1051d9bb8cc5152a7",
+          "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-804491c8956e.json",
+          "index_sha256": "073dea969bac32f4b0937bbb8fd11e0f1346ebce3ad32aa68be5e2de5c8d0511",
           "case_count": 723,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official",
+          "coverage": "complete_split",
+          "truth_role": "native_cfd_plot_only_not_scoring_source"
         }
       ]
     },
