@@ -371,8 +371,8 @@
         "deflection",
         "stall"
       ],
-      "case_id_status": "prototype_generated",
-      "contract_digest": "807f639e3d0bd6ce053ac5399971a736195d96b40f654558434377f20fee7c99"
+      "case_id_status": "official",
+      "contract_digest": "8cdd2a8c735c7049bb4903e95838747279a156b976ff842537f76336295aefd3"
     },
     "visual": {
       "inputs": "CRM-HL geometry + angle of attack",
