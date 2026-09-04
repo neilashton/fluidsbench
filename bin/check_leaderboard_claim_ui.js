@@ -63,6 +63,7 @@ window.__FluidsBenchClaimTest = {
   generatedRankingMatches,
   groundTruthIndex,
   headlineMetricDefinitions,
+  hiLiftProfileAxisRanges,
   indexedProfileCase,
   materializeHiLiftCompactPrediction,
   materializeHiLiftCompactTruth,
@@ -2083,6 +2084,24 @@ async function verifyHiLiftCompactProfileOverlay() {
   assert.equal(predictionCp.points.length, truthCp.points.length);
   assert.ok(truthCp.segmentCount > 1);
   assert.equal(api.profileSeriesCompatibility(truthCp, predictionCp), true);
+  api.state.manifest.datasets = [{ name: "HiLiftAeroML", slug: "hiliftaeroml" }];
+  api.state.dataset = "HiLiftAeroML";
+  const cpAxes = api.hiLiftProfileAxisRanges(
+    [
+      { finitePoints: truthCp.points },
+      { finitePoints: predictionCp.points },
+    ],
+    cpPanel
+  );
+  assert.equal(cpAxes.x.min, 1050);
+  assert.equal(cpAxes.x.max, 1500);
+  assert.equal(cpAxes.x.step, 50);
+  assert.ok(cpAxes.x.min < cpAxes.x.dataMin);
+  assert.ok(cpAxes.x.max > cpAxes.x.dataMax);
+  assert.ok(cpAxes.y.min < cpAxes.y.dataMin);
+  assert.ok(cpAxes.y.max > cpAxes.y.dataMax);
+  assert.ok([...truthCp.points, ...predictionCp.points].every((point) => point.x >= cpAxes.x.min && point.x <= cpAxes.x.max));
+  assert.ok([...truthCp.points, ...predictionCp.points].every((point) => point.y >= cpAxes.y.min && point.y <= cpAxes.y.max));
 
   const velocityPanel = { id: "velocity_profiles" };
   const velocityQuantity = { id: "velocity_ratio" };
@@ -2091,6 +2110,19 @@ async function verifyHiLiftCompactProfileOverlay() {
   assert.ok(truthVelocity.points.length <= 801);
   assert.equal(predictionVelocity.points.length, truthVelocity.points.length);
   assert.equal(api.profileSeriesCompatibility(truthVelocity, predictionVelocity), true);
+  const velocityAxes = api.hiLiftProfileAxisRanges(
+    [
+      { finitePoints: truthVelocity.points },
+      { finitePoints: predictionVelocity.points },
+    ],
+    velocityPanel
+  );
+  assert.equal(velocityAxes.x.min, 0);
+  assert.equal(velocityAxes.x.max, 22.5);
+  assert.equal(velocityAxes.x.step, 2.5);
+  assert.equal(velocityAxes.y.min, 0);
+  assert.ok(velocityAxes.x.max > velocityAxes.x.dataMax);
+  assert.ok(velocityAxes.y.max > velocityAxes.y.dataMax);
 
   const mismatched = {
     ...predictionMetadata,
