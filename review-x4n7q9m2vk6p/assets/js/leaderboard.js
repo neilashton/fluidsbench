@@ -6608,6 +6608,66 @@
     );
   }
 
+  function niceProfileAxisStep(span, targetIntervals = 8) {
+    if (!Number.isFinite(span) || span <= 0) return 1;
+    const roughStep = span / targetIntervals;
+    const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+    const normalized = roughStep / magnitude;
+    const candidates = [1, 2, 2.5, 5, 10];
+    const factor = candidates.reduce((best, candidate) =>
+      Math.abs(Math.log(normalized / candidate)) < Math.abs(Math.log(normalized / best)) ? candidate : best
+    );
+    return factor * magnitude;
+  }
+
+  function niceProfileAxisRange(values, { floorAtZero = false } = {}) {
+    const finite = values.filter((value) => typeof value === "number" && Number.isFinite(value));
+    if (!finite.length) return null;
+    const dataMin = Math.min(...finite);
+    const dataMax = Math.max(...finite);
+    let rangeMin = floorAtZero ? Math.min(0, dataMin) : dataMin;
+    let rangeMax = dataMax;
+    if (rangeMin === rangeMax) {
+      const halfSpan = Math.max(Math.abs(rangeMin) * 0.05, 0.5);
+      rangeMin -= halfSpan;
+      rangeMax += halfSpan;
+      if (floorAtZero) rangeMin = Math.max(0, rangeMin);
+    }
+    const span = rangeMax - rangeMin;
+    const step = niceProfileAxisStep(span);
+    let min = floorAtZero && rangeMin >= 0 ? 0 : Math.floor(rangeMin / step) * step;
+    let max = Math.ceil(rangeMax / step) * step;
+    const edgeTolerance = Math.max(span * 0.005, Math.abs(step) * 1e-9);
+    if ((!floorAtZero || min > 0) && dataMin - min < edgeTolerance) min -= step;
+    if (max - dataMax < edgeTolerance) max += step;
+    const stable = (value) => {
+      const rounded = Number(value.toPrecision(12));
+      return Object.is(rounded, -0) ? 0 : rounded;
+    };
+    return {
+      dataMin: stable(dataMin),
+      dataMax: stable(dataMax),
+      min: stable(min),
+      max: stable(max),
+      step: stable(step),
+    };
+  }
+
+  function hiLiftProfileAxisRanges(datasets, panel) {
+    if (activeDatasetSlug() !== "hiliftaeroml" || !["pressure_profiles", "velocity_profiles"].includes(panel?.id)) return null;
+    const points = datasets.flatMap((dataset) => dataset.finitePoints || []);
+    const velocity = panel.id === "velocity_profiles";
+    const x = niceProfileAxisRange(
+      points.map((point) => point.x),
+      { floorAtZero: velocity }
+    );
+    const y = niceProfileAxisRange(
+      points.map((point) => point.y),
+      { floorAtZero: velocity }
+    );
+    return x && y ? { x, y } : null;
+  }
+
   async function refreshProfileContext() {
     const version = ++state.profileLoadVersion;
     invalidateProfileFigures();
@@ -6859,6 +6919,7 @@
       return;
     }
     const plottedValues = profilePlotValues(datasets, coordinateView);
+    const axisRanges = hiLiftProfileAxisRanges(datasets, panel);
     const droppedPointCount = datasets.reduce((total, dataset) => total + dataset.droppedPointCount, 0);
     const gapCount = datasets.reduce((total, dataset) => total + Math.max(0, dataset.segmentCount - 1), 0);
     const nativeProfileContext = verifiedNativeGroundTruthCase(state.groundTruthCase);
@@ -6893,12 +6954,21 @@
       ...figureSpecBase(`${state.dataset}: ${panel.title}`, plottedValues),
       mark: { type: "line", interpolate: "linear", point: false, tooltip: true },
       encoding: {
-        x: { field: "x", type: "quantitative", title: coordinateView.label },
+        x: {
+          field: "x",
+          type: "quantitative",
+          title: coordinateView.label,
+          ...(axisRanges ? { scale: { domain: [axisRanges.x.min, axisRanges.x.max], nice: false, zero: false } } : {}),
+        },
         y: {
           field: "y",
           type: "quantitative",
           title: quantity.y_label,
-          scale: { reverse: Boolean(panel.reverse_y), zero: false },
+          scale: {
+            reverse: Boolean(panel.reverse_y),
+            zero: false,
+            ...(axisRanges ? { domain: [axisRanges.y.min, axisRanges.y.max], nice: false } : {}),
+          },
         },
         color: {
           field: "series",
@@ -6975,14 +7045,34 @@
         scales: {
           x: {
             type: "linear",
+            ...(axisRanges
+              ? {
+                  min: axisRanges.x.min,
+                  max: axisRanges.x.max,
+                  bounds: "ticks",
+                }
+              : {}),
             title: { display: true, text: coordinateView.label, color: chartTextColor() },
-            ticks: { color: chartTextColor() },
+            ticks: {
+              color: chartTextColor(),
+              ...(axisRanges ? { includeBounds: true, stepSize: axisRanges.x.step, maxTicksLimit: 11 } : {}),
+            },
             grid: { color: chartGridColor() },
           },
           y: {
             reverse: Boolean(panel.reverse_y),
+            ...(axisRanges
+              ? {
+                  min: axisRanges.y.min,
+                  max: axisRanges.y.max,
+                  bounds: "ticks",
+                }
+              : {}),
             title: { display: true, text: quantity.y_label, color: chartTextColor() },
-            ticks: { color: chartTextColor() },
+            ticks: {
+              color: chartTextColor(),
+              ...(axisRanges ? { includeBounds: true, stepSize: axisRanges.y.step, maxTicksLimit: 11 } : {}),
+            },
             grid: { color: chartGridColor() },
           },
         },
