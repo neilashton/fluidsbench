@@ -68,35 +68,144 @@
     native_quantity_source: "pinned_drivaerml_cell_data",
   };
   const sha256Pattern = /^[a-f0-9]{64}$/;
-  const regionalReportSchema = "drivaerml-regional-aggregate-v2";
-  const regionalDiagnosticsContractSha256 = "2bfd372817989112642056e4c76cfb418dbdcee445c57ee20ca37ee9ca158583";
   const regionalPalette = ["#0072b2", "#d55e00", "#009e73", "#cc79a7"];
-  const regionalFields = {
-    surface_pressure: {
-      id: "surface_pressure",
-      label: "Surface pressure",
-      supportId: "drivaerml-surface-four-geometric-regions-v1",
-      globalMetricId: "surface_pressure_rel_l2",
+  const regionalDatasets = {
+    drivaerml: {
+      reportSchema: "drivaerml-regional-aggregate-v2",
+      schemaVersion: 2,
+      contractSha256: "2bfd372817989112642056e4c76cfb418dbdcee445c57ee20ca37ee9ca158583",
+      layout: "supports",
+      fields: {
+        surface_pressure: {
+          id: "surface_pressure",
+          reportFieldId: "surface_pressure",
+          label: "Surface pressure",
+          domain: "surface",
+          supportId: "drivaerml-surface-four-geometric-regions-v1",
+          globalMetricId: "surface_pressure_rel_l2",
+        },
+        surface_wall_shear: {
+          id: "surface_wall_shear",
+          reportFieldId: "surface_wall_shear",
+          label: "Surface wall shear",
+          domain: "surface",
+          supportId: "drivaerml-surface-four-geometric-regions-v1",
+          globalMetricId: "surface_wall_shear_rel_l2",
+        },
+        volume_pressure: {
+          id: "volume_pressure",
+          reportFieldId: "volume_pressure",
+          label: "Volume pressure",
+          domain: "volume",
+          supportId: "drivaerml-volume-four-geometric-regions-v1",
+          globalMetricId: "volume_pressure_rel_l2",
+        },
+        volume_velocity: {
+          id: "volume_velocity",
+          reportFieldId: "volume_velocity",
+          label: "Volume velocity",
+          domain: "volume",
+          supportId: "drivaerml-volume-four-geometric-regions-v1",
+          globalMetricId: "volume_velocity_rel_l2",
+        },
+      },
     },
-    surface_wall_shear: {
-      id: "surface_wall_shear",
-      label: "Surface wall shear",
-      supportId: "drivaerml-surface-four-geometric-regions-v1",
-      globalMetricId: "surface_wall_shear_rel_l2",
-    },
-    volume_pressure: {
-      id: "volume_pressure",
-      label: "Volume pressure",
-      supportId: "drivaerml-volume-four-geometric-regions-v1",
-      globalMetricId: "volume_pressure_rel_l2",
-    },
-    volume_velocity: {
-      id: "volume_velocity",
-      label: "Volume velocity",
-      supportId: "drivaerml-volume-four-geometric-regions-v1",
-      globalMetricId: "volume_velocity_rel_l2",
+    hiliftaeroml: {
+      reportSchema: "hiliftaeroml-regional-diagnostics-aggregate-v1",
+      schemaVersion: 1,
+      contractSha256: "1579b0262f3368fe3748eb53025aa5e46c0a32c8ff1616c9becdbb5dedd85650",
+      definitionId: "hiliftaeroml-native-geometric-regions-v1",
+      layout: "domains",
+      fields: {
+        surface_pressure: {
+          id: "surface_pressure",
+          reportFieldId: "pressure",
+          label: "Surface pressure",
+          domain: "surface",
+          supportId: "surface_native_points",
+          primaryWeighting: "physical",
+          primaryWeightingLabel: "dual-area weighting",
+        },
+        surface_wall_shear: {
+          id: "surface_wall_shear",
+          reportFieldId: "tau_wall",
+          label: "Surface wall shear",
+          domain: "surface",
+          supportId: "surface_native_points",
+          primaryWeighting: "physical",
+          primaryWeightingLabel: "dual-area weighting",
+        },
+        volume_pressure: {
+          id: "volume_pressure",
+          reportFieldId: "pressure",
+          label: "Volume pressure",
+          domain: "volume",
+          supportId: "volume_native_valid_points",
+          primaryWeighting: "equal_entity",
+          primaryWeightingLabel: "equal valid native points",
+        },
+        volume_velocity: {
+          id: "volume_velocity",
+          reportFieldId: "velocity",
+          label: "Volume velocity",
+          domain: "volume",
+          supportId: "volume_native_valid_points",
+          primaryWeighting: "equal_entity",
+          primaryWeightingLabel: "equal valid native points",
+        },
+      },
+      supports: {
+        surface_native_points: {
+          guide: "hilift_surface",
+          semanticLimit:
+            "These are frozen checkpoint-normalized Cartesian envelopes, not CAD-part, CFD-patch, slat, flap, wing, nacelle, or installation labels. The remainder contains every native surface point outside the first three proxy envelopes.",
+          regions: [
+            {
+              region_id: "nacelle_installation_envelope_proxy",
+              predicate: "−2.00 ≤ x < 0.25; −0.75 ≤ y < 0.05; −0.75 ≤ z < 0.10",
+            },
+            {
+              region_id: "inboard_high_lift_envelope_proxy",
+              predicate: "−1.75 ≤ x < 1.85; −1.35 ≤ y < −0.25; −0.35 ≤ z < 0.35; after higher-priority regions",
+            },
+            {
+              region_id: "outboard_high_lift_envelope_proxy",
+              predicate: "−1.75 ≤ x < 1.85; −0.25 ≤ y < 2.50; −0.35 ≤ z < 0.35; after higher-priority regions",
+            },
+            {
+              region_id: "fuselage_tail_and_remaining",
+              predicate: "All remaining native surface points",
+            },
+          ],
+        },
+        volume_native_valid_points: {
+          guide: "hilift_volume",
+          semanticLimit:
+            "The aft-airframe wake is a frozen body-frame Cartesian proxy, not a streamline-, vortex-, boundary-layer-, or topology-derived wake label. Signed distance is measured to the complete case-local STL rather than to an individual high-lift component.",
+          regions: [
+            {
+              region_id: "near_airframe_sdf_band",
+              predicate: "|signed distance| < 0.02",
+            },
+            {
+              region_id: "aft_airframe_wake_envelope_proxy",
+              predicate: "1.50 ≤ x < 5.00; |y| < 2.75; −1.50 ≤ z < 1.50; outside the SDF band",
+            },
+            {
+              region_id: "near_aircraft_flow_envelope",
+              predicate: "−5.00 ≤ x < 5.00; |y| < 5.00; −4.00 ≤ z < 4.00; after higher-priority regions",
+            },
+            {
+              region_id: "farfield_and_remaining",
+              predicate: "All remaining retained native volume points",
+            },
+          ],
+        },
+      },
     },
   };
+  // Retain the original exported alias for the contract test and older callers.
+  const regionalFields = regionalDatasets.drivaerml.fields;
   const drivaermlRelativeVelocityStationIds = ["V1", "V2", "V3", "V4", "V5", "V6", "U1", "U2", "U3", "U4", "U5", "U6", "L1", "R1", "R2", "R3"];
   const drivaermlRelativeCpStationIds = [
     "upperbody_centerline",
@@ -857,14 +966,27 @@
     return state.profileArtifacts.get(key);
   }
 
+  function regionalDatasetDefinition(value = activeDatasetSlug()) {
+    return regionalDatasets[slug(value || "")] || null;
+  }
+
+  function regionalFieldsForDataset(value = activeDatasetSlug()) {
+    return record(regionalDatasetDefinition(value)?.fields);
+  }
+
   function regionalBinding(row) {
     const binding = record(row?.regional_diagnostics);
+    const definition = regionalDatasetDefinition(row?.dataset_id);
     if (
-      binding.format !== regionalReportSchema ||
-      binding.contract_sha256 !== regionalDiagnosticsContractSha256 ||
+      !definition ||
+      binding.format !== definition.reportSchema ||
+      binding.contract_sha256 !== definition.contractSha256 ||
+      (definition.definitionId && binding.definition_id !== definition.definitionId) ||
       binding.role !== "report_only" ||
       binding.weight !== 0 ||
       binding.official_score_changed !== false ||
+      !Number.isSafeInteger(binding.case_count) ||
+      binding.case_count < 1 ||
       !validSha256(binding.sha256) ||
       typeof binding.file !== "string" ||
       !binding.file
@@ -883,11 +1005,93 @@
     return row?.prediction_scope === "surface_only" ? "surface_only" : "surface_and_volume";
   }
 
+  function fractionsReconstruct(regions, key) {
+    const values = regions.map((region) => finiteNumber(region?.[key]));
+    return values.every((value) => value !== null && value >= 0) && Math.abs(values.reduce((sum, value) => sum + value, 0) - 1) <= 1e-8;
+  }
+
+  function validHiLiftRegionalReport(report, row, binding, definition) {
+    const reconstruction = record(report.reconstruction);
+    if (
+      report.definition_id !== definition.definitionId ||
+      report.split_id !== row?.split_id ||
+      report.case_count !== binding.case_count ||
+      !Array.isArray(report.case_ids) ||
+      report.case_ids.length !== binding.case_count ||
+      new Set(report.case_ids).size !== binding.case_count ||
+      reconstruction.status !== "pass" ||
+      reconstruction.checked_case_count !== binding.case_count ||
+      !Number.isSafeInteger(reconstruction.checked_field_count) ||
+      reconstruction.checked_field_count < 4
+    ) {
+      return false;
+    }
+    for (const [supportId, supportDefinition] of Object.entries(definition.supports || {})) {
+      const domain = supportId === "surface_native_points" ? "surface" : "volume";
+      const support = record(report[domain]);
+      const expectedRegions = supportDefinition.regions.map((region) => region.region_id);
+      if (
+        support.support_id !== supportId ||
+        !Array.isArray(support.region_order) ||
+        support.region_order.length !== expectedRegions.length ||
+        support.region_order.some((regionId, index) => regionId !== expectedRegions[index])
+      ) {
+        return false;
+      }
+      const requiredFields = Object.values(definition.fields)
+        .filter((field) => field.supportId === supportId)
+        .map((field) => field.reportFieldId);
+      for (const fieldId of requiredFields) {
+        const field = record(record(support.fields)[fieldId]);
+        const regions = Array.isArray(field.regions) ? field.regions : [];
+        if (
+          regions.length !== expectedRegions.length ||
+          regions.some((region, index) => region?.region_id !== expectedRegions[index]) ||
+          regions.some((region) =>
+            ["relative_l2_percent", "mae", "rmse"].some((metric) => {
+              const value = finiteNumber(region?.[metric]);
+              return value === null || value < 0;
+            })
+          ) ||
+          !fractionsReconstruct(regions, "entity_fraction") ||
+          !fractionsReconstruct(regions, "weight_fraction") ||
+          !fractionsReconstruct(regions, "squared_error_fraction")
+        ) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function regionalReportMatches(report, row, binding, definition) {
+    const scoring = record(report.scoring);
+    if (
+      report.schema !== definition.reportSchema ||
+      report.schema_version !== definition.schemaVersion ||
+      report.status !== "complete_report_only" ||
+      report.dataset_id !== slug(row?.dataset_id || "") ||
+      report.contract_sha256 !== binding.contract_sha256 ||
+      report.prediction_scope !== regionalScope(row) ||
+      scoring.role !== "report_only" ||
+      scoring.weight !== 0 ||
+      scoring.official_metric_inputs_changed !== false ||
+      scoring.official_score_changed !== false
+    ) {
+      return false;
+    }
+    if (definition.layout === "supports") {
+      return record(report.validation).regional_values_consumed_by_official_score === false;
+    }
+    return validHiLiftRegionalReport(report, row, binding, definition);
+  }
+
   async function ensureRegionalReport(row) {
     const binding = regionalBinding(row);
     const url = regionalReportUrl(row);
     if (!binding || !url) throw new Error("this result does not declare a compatible regional diagnostics file");
-    const cacheKey = `${row.id}:${binding.sha256}`;
+    const definition = regionalDatasetDefinition(row?.dataset_id);
+    const cacheKey = `${row.dataset_id}:${row.id}:${binding.sha256}`;
     if (state.regionalReports.has(cacheKey)) return state.regionalReports.get(cacheKey);
     if (state.regionalReportPromises.has(cacheKey)) return state.regionalReportPromises.get(cacheKey);
     const promise = (async () => {
@@ -896,20 +1100,8 @@
       if (loaded.sha256 !== binding.sha256) {
         throw new Error("regional diagnostics checksum does not match the hash-verified leaderboard feed");
       }
-      if (
-        report.schema !== regionalReportSchema ||
-        report.schema_version !== 2 ||
-        report.status !== "complete_report_only" ||
-        report.dataset_id !== "drivaerml" ||
-        report.contract_sha256 !== binding.contract_sha256 ||
-        report.prediction_scope !== regionalScope(row) ||
-        record(report.scoring).role !== "report_only" ||
-        record(report.scoring).weight !== 0 ||
-        record(report.scoring).official_metric_inputs_changed !== false ||
-        record(report.scoring).official_score_changed !== false ||
-        record(report.validation).regional_values_consumed_by_official_score !== false
-      ) {
-        throw new Error("regional diagnostics do not match the result's zero-weight DrivAerML contract");
+      if (!regionalReportMatches(report, row, binding, definition)) {
+        throw new Error(`regional diagnostics do not match the result's zero-weight ${row.dataset_id} contract`);
       }
       state.regionalReports.set(cacheKey, report);
       return report;
@@ -5023,21 +5215,74 @@
   }
 
   function regionalFieldDefinition() {
-    return regionalFields[element("regional-field")?.value] || regionalFields.surface_pressure;
+    const fields = regionalFieldsForDataset();
+    const requested = element("regional-field")?.value;
+    return fields[requested] || fields.surface_pressure || Object.values(fields)[0] || null;
   }
 
-  function regionalWeighting(fieldReport) {
+  function regionalPrimaryWeighting(fieldReport, field) {
+    if (field?.primaryWeighting) return field.primaryWeighting;
+    return fieldReport?.primary_weighting === "physical" ? "physical" : "equal_entity";
+  }
+
+  function regionalAvailableWeightings(fieldReport, field) {
+    if (field?.primaryWeighting) return [field.primaryWeighting];
+    const regions = Array.isArray(fieldReport?.regions) ? fieldReport.regions : [];
+    return ["equal_entity", "physical"].filter((weighting) => regions.some((region) => record(record(region)[weighting]).pooled));
+  }
+
+  function regionalWeighting(fieldReport, field) {
     const requested = element("regional-weighting")?.value || "primary";
-    const primary = fieldReport?.primary_weighting === "physical" ? "physical" : "equal_entity";
-    return requested === "primary" ? primary : requested;
+    const primary = regionalPrimaryWeighting(fieldReport, field);
+    return requested === "primary" || !regionalAvailableWeightings(fieldReport, field).includes(requested) ? primary : requested;
+  }
+
+  function regionalWeightingLabel(weighting, field) {
+    if (weighting === field?.primaryWeighting && field?.primaryWeightingLabel) return field.primaryWeightingLabel;
+    return weighting === "physical" ? "physical weighting" : "equal native entities";
+  }
+
+  function configureRegionalWeighting(fieldReport, field) {
+    const select = element("regional-weighting");
+    if (!select) return;
+    const primary = regionalPrimaryWeighting(fieldReport, field);
+    const available = new Set(regionalAvailableWeightings(fieldReport, field));
+    const primaryLabel = regionalWeightingLabel(primary, field);
+    select.options[0].textContent = `Official field weighting (${primaryLabel})`;
+    Array.from(select.options).forEach((option) => {
+      if (option.value === "primary") {
+        option.disabled = false;
+      } else {
+        option.disabled = !available.has(option.value) || (field?.primaryWeighting && option.value === primary);
+      }
+    });
+    const selected = select.options[select.selectedIndex];
+    if (selected?.disabled) select.value = "primary";
+  }
+
+  function regionalSupport(report, field) {
+    const definition = regionalDatasetDefinition(report?.dataset_id);
+    if (definition?.layout === "domains") {
+      const support = record(report?.[field.domain]);
+      return support.support_id === field.supportId ? support : {};
+    }
+    return record(record(report).supports)[field.supportId] || {};
   }
 
   function regionalFieldReport(report, field) {
-    return record(record(record(report).supports)[field.supportId]?.fields)[field.id] || null;
+    if (!field) return null;
+    return record(regionalSupport(report, field).fields)[field.reportFieldId || field.id] || null;
+  }
+
+  function regionalDefinition(report, field) {
+    const datasetDefinition = regionalDatasetDefinition(report?.dataset_id);
+    if (datasetDefinition?.layout === "domains") return record(datasetDefinition.supports)[field.supportId] || {};
+    return regionalSupport(report, field).definition || {};
   }
 
   function regionalRules(report, field) {
-    const rules = record(record(report).supports)[field.supportId]?.definition?.regions_in_code_order;
+    const definition = regionalDefinition(report, field);
+    const rules = definition.regions || definition.regions_in_code_order;
     return Array.isArray(rules) ? rules.filter((rule) => record(rule).region_id) : [];
   }
 
@@ -5051,6 +5296,14 @@
       near_body_upper: "Near-body upper",
       near_wake: "Near wake",
       upstream_and_outer: "Upstream & outer",
+      nacelle_installation_envelope_proxy: "Nacelle installation envelope",
+      inboard_high_lift_envelope_proxy: "Inboard high-lift envelope",
+      outboard_high_lift_envelope_proxy: "Outboard high-lift envelope",
+      fuselage_tail_and_remaining: "Fuselage, tail & remaining",
+      near_airframe_sdf_band: "Near-airframe SDF band",
+      aft_airframe_wake_envelope_proxy: "Aft-airframe wake envelope",
+      near_aircraft_flow_envelope: "Near-aircraft flow envelope",
+      farfield_and_remaining: "Farfield & remaining",
     };
     return labels[regionId] || humanize(regionId);
   }
@@ -5061,12 +5314,28 @@
   }
 
   function regionalPooled(region, weighting) {
-    return record(record(region)[weighting]).pooled;
+    const nested = record(record(region)[weighting]).pooled;
+    return nested && typeof nested === "object" ? nested : record(region);
   }
 
   function regionalErrorShare(region, weighting) {
-    const fraction = finiteNumber(regionalPooled(region, weighting)?.fraction_of_support_squared_error);
+    const pooled = regionalPooled(region, weighting);
+    const fraction = finiteNumber(pooled?.fraction_of_support_squared_error ?? region?.squared_error_fraction);
     return fraction === null ? null : 100 * fraction;
+  }
+
+  function regionalEntityShare(region) {
+    const fraction = finiteNumber(region?.entity_fraction);
+    return fraction === null ? null : 100 * fraction;
+  }
+
+  function regionalWeightShare(region, weighting) {
+    const fraction = finiteNumber(region?.weight_fraction ?? (weighting === "physical" ? region?.physical_weight_fraction : region?.entity_fraction));
+    return fraction === null ? null : 100 * fraction;
+  }
+
+  function regionalCaseStatistic(region, weighting, statistic) {
+    return finiteNumber(record(record(record(region)[weighting]).case_distribution).relative_l2_percent?.[statistic]);
   }
 
   function regionalGuideCard(rule, index) {
@@ -5101,8 +5370,12 @@
     const color = (regionId) => regionalPalette[(byId.get(regionId)?.index || 0) % regionalPalette.length];
     return `<div class="leaderboard-volume-region-guide">
       <svg viewBox="0 0 760 235" role="img" aria-label="Volume regional partition in a streamwise x-z projection">
-        <rect x="60" y="26" width="660" height="168" rx="8" fill="${color("upstream_and_outer")}1f" stroke="${color("upstream_and_outer")}" stroke-width="1.5"/>
-        <rect x="155" y="145" width="375" height="49" fill="${color("underbody_and_wheels")}3d" stroke="${color("underbody_and_wheels")}" stroke-width="1.5"/>
+        <rect x="60" y="26" width="660" height="168" rx="8" fill="${color("upstream_and_outer")}1f" stroke="${color(
+          "upstream_and_outer"
+        )}" stroke-width="1.5"/>
+        <rect x="155" y="145" width="375" height="49" fill="${color("underbody_and_wheels")}3d" stroke="${color(
+          "underbody_and_wheels"
+        )}" stroke-width="1.5"/>
         <rect x="155" y="65" width="375" height="80" fill="${color("near_body_upper")}3d" stroke="${color("near_body_upper")}" stroke-width="1.5"/>
         <rect x="530" y="26" width="190" height="168" fill="${color("near_wake")}3d" stroke="${color("near_wake")}" stroke-width="1.5"/>
         <g class="leaderboard-volume-region-labels">
@@ -5118,12 +5391,83 @@
     </div>`;
   }
 
+  function hiLiftRegionalSurfaceGuide(rules) {
+    const byId = new Map(rules.map((rule, index) => [rule.region_id, { rule, index }]));
+    const color = (regionId) => regionalPalette[(byId.get(regionId)?.index || 0) % regionalPalette.length];
+    return `<div class="leaderboard-hilift-region-guide">
+      <svg viewBox="0 0 760 300" role="img" aria-label="HiLiftAeroML surface region envelopes in a schematic normalized x-y plan view">
+        <rect x="76" y="24" width="648" height="226" rx="8" fill="${color("fuselage_tail_and_remaining")}17" stroke="${color(
+          "fuselage_tail_and_remaining"
+        )}" stroke-width="1.5"/>
+        <rect x="173" y="37" width="467" height="123" fill="${color("outboard_high_lift_envelope_proxy")}3d" stroke="${color(
+          "outboard_high_lift_envelope_proxy"
+        )}" stroke-width="1.5"/>
+        <rect x="173" y="160" width="467" height="55" fill="${color("inboard_high_lift_envelope_proxy")}3d" stroke="${color(
+          "inboard_high_lift_envelope_proxy"
+        )}" stroke-width="1.5"/>
+        <rect x="141" y="145" width="292" height="40" fill="${color("nacelle_installation_envelope_proxy")}59" stroke="${color(
+          "nacelle_installation_envelope_proxy"
+        )}" stroke-width="2"/>
+        <g class="leaderboard-volume-region-labels">
+          <text x="407" y="96" text-anchor="middle">outboard high-lift envelope</text>
+          <text x="515" y="194" text-anchor="middle">inboard envelope</text>
+          <text x="287" y="170" text-anchor="middle">nacelle / installation</text>
+          <text x="88" y="48">remaining surface</text>
+          <text x="400" y="270" text-anchor="middle">schematic plan view; each envelope also applies its released z bounds</text>
+        </g>
+        <g class="leaderboard-volume-region-axis">
+          <line x1="76" y1="258" x2="724" y2="258"/><text x="400" y="292" text-anchor="middle">normalized longitudinal x →</text>
+          <line x1="66" y1="250" x2="66" y2="24"/><text x="54" y="137" text-anchor="middle" transform="rotate(-90 54 137)">normalized spanwise y →</text>
+        </g>
+      </svg>
+      <div class="leaderboard-regional-zone-list">${rules.map(regionalGuideCard).join("")}</div>
+    </div>`;
+  }
+
+  function hiLiftRegionalVolumeGuide(rules) {
+    const byId = new Map(rules.map((rule, index) => [rule.region_id, { rule, index }]));
+    const color = (regionId) => regionalPalette[(byId.get(regionId)?.index || 0) % regionalPalette.length];
+    return `<div class="leaderboard-hilift-region-guide">
+      <svg viewBox="0 0 760 300" role="img" aria-label="HiLiftAeroML volume regions in a schematic normalized x-z projection">
+        <rect x="76" y="24" width="648" height="226" rx="8" fill="${color("farfield_and_remaining")}17" stroke="${color(
+          "farfield_and_remaining"
+        )}" stroke-width="1.5"/>
+        <rect x="108" y="37" width="583" height="200" fill="${color("near_aircraft_flow_envelope")}2e" stroke="${color(
+          "near_aircraft_flow_envelope"
+        )}" stroke-width="1.5"/>
+        <rect x="487" y="99" width="204" height="75" fill="${color("aft_airframe_wake_envelope_proxy")}42" stroke="${color(
+          "aft_airframe_wake_envelope_proxy"
+        )}" stroke-width="1.5"/>
+        <path d="M225 139 C265 112 365 108 468 127 C491 131 504 137 516 141 C489 146 465 151 431 153 C350 158 276 155 225 139 Z" fill="none" stroke="${color(
+          "near_airframe_sdf_band"
+        )}" stroke-width="13" stroke-linejoin="round" opacity="0.88"/>
+        <g class="leaderboard-volume-region-labels">
+          <text x="400" y="61" text-anchor="middle">near-aircraft flow envelope</text>
+          <text x="589" y="139" text-anchor="middle">aft wake envelope</text>
+          <text x="360" y="184" text-anchor="middle">near-airframe |SDF| band</text>
+          <text x="88" y="48">farfield / remaining</text>
+          <text x="400" y="270" text-anchor="middle">schematic x-z projection; released y bounds are listed below</text>
+        </g>
+        <g class="leaderboard-volume-region-axis">
+          <line x1="76" y1="258" x2="724" y2="258"/><text x="400" y="292" text-anchor="middle">normalized longitudinal x →</text>
+          <line x1="66" y1="250" x2="66" y2="24"/><text x="54" y="137" text-anchor="middle" transform="rotate(-90 54 137)">normalized vertical z →</text>
+        </g>
+      </svg>
+      <div class="leaderboard-regional-zone-list">${rules.map(regionalGuideCard).join("")}</div>
+    </div>`;
+  }
+
   function renderRegionalGuide(report, field) {
     const rules = regionalRules(report, field);
-    const definition = record(record(report).supports)[field.supportId]?.definition || {};
-    element("regional-zone-guide").innerHTML =
-      field.supportId.includes("surface") ? regionalSurfaceGuide(rules) : regionalVolumeGuide(rules);
-    element("regional-zone-note").textContent = definition.semantic_limit || "Released geometric regions are mutually exclusive and exhaustive.";
+    const definition = regionalDefinition(report, field);
+    const guides = {
+      hilift_surface: hiLiftRegionalSurfaceGuide,
+      hilift_volume: hiLiftRegionalVolumeGuide,
+    };
+    const guide = guides[definition.guide] || (field.domain === "surface" ? regionalSurfaceGuide : regionalVolumeGuide);
+    element("regional-zone-guide").innerHTML = guide(rules);
+    element("regional-zone-note").textContent =
+      definition.semanticLimit || definition.semantic_limit || "Released geometric regions are mutually exclusive and exhaustive.";
   }
 
   function setRegionalActionAvailability(enabled) {
@@ -5161,17 +5505,21 @@
         region_id: region.region_id,
         region: regionalLabel(region.region_id),
         relative_l2_percent: finiteNumber(regionalPooled(region, weighting)?.relative_l2_percent),
+        entity_share_percent: regionalEntityShare(region),
+        weight_share_percent: regionalWeightShare(region, weighting),
         error_share_percent: regionalErrorShare(region, weighting),
         macro_case_relative_l2_percent: finiteNumber(record(record(region)[weighting]).macro_case_mean?.relative_l2_percent),
-        median_case_relative_l2_percent: finiteNumber(record(record(region)[weighting]).case_distribution?.relative_l2_percent?.median),
-        p90_case_relative_l2_percent: finiteNumber(record(record(region)[weighting]).case_distribution?.relative_l2_percent?.p90),
+        median_case_relative_l2_percent: regionalCaseStatistic(region, weighting, "median"),
+        p90_case_relative_l2_percent: regionalCaseStatistic(region, weighting, "p90"),
       }));
     });
     const datasets = documents.map(({ row, report }, index) => {
       const byRegion = new Map((regionalFieldReport(report, field)?.regions || []).map((region) => [region.region_id, region]));
+      const regionalValues = rules.map((rule) => byRegion.get(rule.region_id));
       return {
         label: rowLabel(row),
-        data: rules.map((rule) => finiteNumber(regionalPooled(byRegion.get(rule.region_id), weighting)?.relative_l2_percent)),
+        data: regionalValues.map((region) => finiteNumber(regionalPooled(region, weighting)?.relative_l2_percent)),
+        regionalValues,
         backgroundColor: `${palette[index % palette.length]}cc`,
         borderColor: palette[index % palette.length],
         borderWidth: 1,
@@ -5199,12 +5547,27 @@
         },
         plugins: {
           legend: { labels: { color: chartTextColor() } },
-          tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${regionalNumber(context.raw)}` } },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const region = context.dataset.regionalValues?.[context.dataIndex];
+                return [
+                  `${context.dataset.label}: ${regionalNumber(context.raw)}`,
+                  `Field squared-error share: ${regionalNumber(regionalErrorShare(region, weighting))}`,
+                  `Native-entity share: ${regionalNumber(regionalEntityShare(region))}`,
+                ];
+              },
+            },
+          },
         },
       },
     });
-    const weightingLabel = weighting === "physical" ? "physical weighting" : "equal native entities";
-    const caption = `${state.dataset}, ${state.split}: ${field.label} regional relative L² error for ${documents.length} explicitly selected compatible result${documents.length === 1 ? "" : "s"}, using ${weightingLabel}. The four released geometric regions are mutually exclusive and exhaustive. Regional diagnostics have zero official scoring weight. ${releaseStamp()}.`;
+    const weightingLabel = regionalWeightingLabel(weighting, field);
+    const caption = `${state.dataset}, ${state.split}: ${field.label} regional relative L² error for ${
+      documents.length
+    } explicitly selected compatible result${
+      documents.length === 1 ? "" : "s"
+    }, using ${weightingLabel}. The four released geometric regions are mutually exclusive and exhaustive. Regional diagnostics have zero official scoring weight. ${releaseStamp()}.`;
     setChartSummary(
       "regional-chart-summary",
       `${field.label} regional relative L2 error bar chart for ${state.dataset}, ${state.split}; ${documents.length} selected compatible submissions across ${rules.length} exhaustive regions. ${weightingLabel}; lower is better. Regional diagnostics have zero official scoring weight.`
@@ -5223,23 +5586,32 @@
           { field: "scope", type: "nominal", title: "Prediction scope" },
           { field: "region", type: "nominal", title: "Region" },
           { field: "relative_l2_percent", type: "quantitative", title: "Regional relative L2 (%)" },
+          { field: "entity_share_percent", type: "quantitative", title: "Native-entity share (%)" },
+          { field: "weight_share_percent", type: "quantitative", title: "Field-weight share (%)" },
           { field: "error_share_percent", type: "quantitative", title: "Share of field squared error (%)" },
         ],
       },
     });
+    const columns = [
+      { label: "Model", value: "model" },
+      { label: "Submission ID", value: "submission_id" },
+      { label: "Prediction scope", value: "scope" },
+      { label: "Region", value: "region" },
+      { label: "Regional rel. L2 (%)", value: (value) => regionalNumber(value.relative_l2_percent) },
+      { label: "Native-entity share (%)", value: (value) => regionalNumber(value.entity_share_percent) },
+      { label: "Field-weight share (%)", value: (value) => regionalNumber(value.weight_share_percent) },
+      { label: "Field error share (%)", value: (value) => regionalNumber(value.error_share_percent) },
+    ];
+    if (values.some((value) => value.median_case_relative_l2_percent !== null)) {
+      columns.push(
+        { label: "Median case rel. L2 (%)", value: (value) => regionalNumber(value.median_case_relative_l2_percent) },
+        { label: "P90 case rel. L2 (%)", value: (value) => regionalNumber(value.p90_case_relative_l2_percent) }
+      );
+    }
     renderNumericTable(
       "regional-data-table",
       `${field.label} regional diagnostics. All values are report-only and have zero official scoring weight.`,
-      [
-        { label: "Model", value: "model" },
-        { label: "Submission ID", value: "submission_id" },
-        { label: "Prediction scope", value: "scope" },
-        { label: "Region", value: "region" },
-        { label: "Regional rel. L2 (%)", value: (value) => regionalNumber(value.relative_l2_percent) },
-        { label: "Field error share (%)", value: (value) => regionalNumber(value.error_share_percent) },
-        { label: "Median case rel. L2 (%)", value: (value) => regionalNumber(value.median_case_relative_l2_percent) },
-        { label: "P90 case rel. L2 (%)", value: (value) => regionalNumber(value.p90_case_relative_l2_percent) },
-      ],
+      columns,
       values
     );
     setRegionalActionAvailability(true);
@@ -5247,11 +5619,16 @@
 
   async function prepareRegionalExplorer() {
     const version = ++state.regionalLoadVersion;
-    if (activeDatasetSlug() !== "drivaerml") {
-      clearRegionalExplorer("Regional native-field diagnostics are currently available for DrivAerML only.");
+    const datasetDefinition = regionalDatasetDefinition();
+    if (!datasetDefinition) {
+      clearRegionalExplorer("Regional native-field diagnostics are currently available for DrivAerML and HiLiftAeroML.");
       return;
     }
     const field = regionalFieldDefinition();
+    if (!field) {
+      clearRegionalExplorer("This dataset does not define any regional fields.");
+      return;
+    }
     const selected = figureRows();
     const declared = selected.filter((row) => regionalBinding(row));
     if (!declared.length) {
@@ -5275,7 +5652,7 @@
     if (version !== state.regionalLoadVersion) return;
     const compatible = loaded.filter(({ report }) => regionalFieldReport(report, field));
     if (!compatible.length) {
-      const volume = field.supportId.includes("volume");
+      const volume = field.domain === "volume";
       clearRegionalExplorer(
         volume
           ? "None of the selected checksum-verified reports contains this volume field. Surface-only results deliberately have no volume diagnostics."
@@ -5283,18 +5660,16 @@
       );
       return;
     }
-    const weighting = regionalWeighting(regionalFieldReport(compatible[0].report, field));
-    const primary = regionalFieldReport(compatible[0].report, field)?.primary_weighting || "equal_entity";
-    const weightingSelect = element("regional-weighting");
-    if (weightingSelect) {
-      weightingSelect.options[0].textContent = `Official field weighting (${primary === "physical" ? "physical" : "equal native entities"})`;
-    }
+    const firstFieldReport = regionalFieldReport(compatible[0].report, field);
+    configureRegionalWeighting(firstFieldReport, field);
+    const weighting = regionalWeighting(firstFieldReport, field);
+    const weightingLabel = regionalWeightingLabel(weighting, field);
     renderRegionalGuide(compatible[0].report, field);
     renderRegionalChart(compatible, field, weighting);
-    const unsupported = declared.length - compatible.length;
+    const unsupported = loaded.filter(({ report }) => report && !regionalFieldReport(report, field)).length;
     const failed = loaded.filter(({ error }) => error).length;
     element("regional-status").textContent = [
-      `${compatible.length} checksum-verified result${compatible.length === 1 ? "" : "s"} shown using ${weighting === "physical" ? "physical weighting" : "equal native entities"}.`,
+      `${compatible.length} checksum-verified result${compatible.length === 1 ? "" : "s"} shown using ${weightingLabel}.`,
       unsupported ? `${unsupported} selected result${unsupported === 1 ? "" : "s"} omitted because this field was not submitted.` : "",
       failed ? `${failed} report${failed === 1 ? "" : "s"} failed checksum or contract verification.` : "",
       "Regional values have zero official scoring weight.",

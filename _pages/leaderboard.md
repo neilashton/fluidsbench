@@ -285,7 +285,7 @@ chart:
     <div class="leaderboard-panel-heading">
       <div>
         <h3>Native field regions</h3>
-        <p>Explore where the selected DrivAerML field error occurs. These diagnostics are checksum-bound, report-only, and have zero official scoring weight.</p>
+        <p>Explore where selected DrivAerML and HiLiftAeroML native-field errors occur. These diagnostics are checksum-bound, report-only, and have zero official scoring weight.</p>
       </div>
       <div class="chart-control-row">
         <div class="chart-control">
