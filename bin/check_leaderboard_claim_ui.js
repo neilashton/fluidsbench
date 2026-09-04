@@ -47,6 +47,7 @@ window.__FluidsBenchClaimTest = {
   activeMetricDefinitions,
   bibtexEscape,
   bindProfileCoordinateIdentities,
+  buildHiLiftCompactSeries,
   caseIds,
   canonicalResultPermalink,
   citationValues,
@@ -63,6 +64,8 @@ window.__FluidsBenchClaimTest = {
   groundTruthIndex,
   headlineMetricDefinitions,
   indexedProfileCase,
+  materializeHiLiftCompactPrediction,
+  materializeHiLiftCompactTruth,
   leaderboardManifestProvenance,
   claimRecordCheck,
   nativeProfileIndexSplitId,
@@ -112,6 +115,7 @@ ${source.slice(markerIndex)}`;
 const elements = new Map();
 const context = {
   Blob,
+  DecompressionStream,
   Map,
   Set,
   TextDecoder,
@@ -140,6 +144,17 @@ const context = {
   },
   async fetch(value) {
     const url = new URL(value);
+    const groundTruthMarker = "/profile-ground-truth/";
+    const groundTruthOffset = decodeURIComponent(url.pathname).lastIndexOf(groundTruthMarker);
+    if (groundTruthOffset >= 0) {
+      const relative = decodeURIComponent(url.pathname).slice(groundTruthOffset + groundTruthMarker.length);
+      const groundTruthRoot = path.resolve(root, "assets/data/profile-ground-truth");
+      const target = path.resolve(groundTruthRoot, relative);
+      if (!target.startsWith(`${groundTruthRoot}${path.sep}`) || !fs.existsSync(target)) {
+        return new TestResponse("not found", { status: 404 });
+      }
+      return new TestResponse(fs.readFileSync(target), { status: 200 });
+    }
     const assetRoots = ["leaderboard/", "submissions/", "evaluation/", "validation/"];
     const decodedPath = decodeURIComponent(url.pathname);
     const offsets = assetRoots.map((assetRoot) => decodedPath.lastIndexOf(`/${assetRoot}`)).filter((offset) => offset >= 0);
@@ -2010,10 +2025,93 @@ function verifyDatasetSubmissionAvailability() {
   );
 }
 
+async function verifyHiLiftCompactProfileOverlay() {
+  const truthIndexPath = path.join(
+    root,
+    "assets/data/profile-ground-truth/datasets/hiliftaeroml/compact-full360-v1/index.json"
+  );
+  const truthIndex = JSON.parse(fs.readFileSync(truthIndexPath, "utf8"));
+  const caseId = truthIndex.case_ids[0];
+  const truthContext = {
+    index: truthIndex,
+    indexUrl: "https://example.test/profile-ground-truth/datasets/hiliftaeroml/compact-full360-v1/index.json",
+    indexSha256: sha256File(truthIndexPath),
+    caseSetId: "caseset-ac791749e527",
+    nativeProfileTruth: false,
+    nativeTruthVersion: null,
+    hiLiftCompactTruth: true,
+  };
+  const truthMetadata = await api.indexedProfileCase(
+    truthContext,
+    caseId,
+    api.state.groundTruthChunks,
+    "HiLiftAeroML ground truth"
+  );
+  const truth = await api.materializeHiLiftCompactTruth(truthMetadata, "HiLiftAeroML ground truth");
+  assert.equal(truth.series.length, 15);
+  assert.equal(truth._fluidsbenchHiLiftCompactTruth, true);
+  assert.match(truth._fluidsbenchProvenance.artifact_url, /plot-profile-truth\.npz$/);
+
+  const predictionIndexRelative =
+    "submissions/hiliftaeroml/hiliftaeroml-transolver-full360-candidate-v1/profiles/index.json";
+  const predictionIndexPath = path.join(submissionRoot, predictionIndexRelative);
+  const predictionIndex = JSON.parse(fs.readFileSync(predictionIndexPath, "utf8"));
+  const predictionContext = {
+    index: predictionIndex,
+    indexUrl: `https://example.test/assets/${predictionIndexRelative}`,
+    indexSha256: sha256File(predictionIndexPath),
+    hiLiftCompactPrediction: true,
+  };
+  const predictionMetadata = await api.indexedProfileCase(
+    predictionContext,
+    caseId,
+    api.state.profileChunks,
+    "HiLiftAeroML Transolver"
+  );
+  const prediction = await api.materializeHiLiftCompactPrediction(
+    predictionMetadata,
+    truth,
+    "HiLiftAeroML Transolver"
+  );
+  assert.equal(prediction.series.length, 15);
+  assert.match(prediction._fluidsbenchProvenance.artifact_url, /compact-profile-predictions\.npz$/);
+
+  const family = { id: "", placementMode: "" };
+  const cpPanel = { id: "pressure_profiles" };
+  const cpQuantity = { id: "cp" };
+  const truthCp = api.profileSeries(truth, cpPanel, "pressure_belt_a", cpQuantity, family);
+  const predictionCp = api.profileSeries(prediction, cpPanel, "pressure_belt_a", cpQuantity, family);
+  assert.ok(truthCp.points.length > 100);
+  assert.equal(predictionCp.points.length, truthCp.points.length);
+  assert.ok(truthCp.segmentCount > 1);
+  assert.equal(api.profileSeriesCompatibility(truthCp, predictionCp), true);
+
+  const velocityPanel = { id: "velocity_profiles" };
+  const velocityQuantity = { id: "velocity_ratio" };
+  const truthVelocity = api.profileSeries(truth, velocityPanel, "hlpw5_b_2", velocityQuantity, family);
+  const predictionVelocity = api.profileSeries(prediction, velocityPanel, "hlpw5_b_2", velocityQuantity, family);
+  assert.ok(truthVelocity.points.length <= 801);
+  assert.equal(predictionVelocity.points.length, truthVelocity.points.length);
+  assert.equal(api.profileSeriesCompatibility(truthVelocity, predictionVelocity), true);
+
+  const mismatched = {
+    ...predictionMetadata,
+    surface_cp: {
+      ...predictionMetadata.surface_cp,
+      support_identity_sha256: "0".repeat(64),
+    },
+  };
+  await assert.rejects(
+    api.materializeHiLiftCompactPrediction(mismatched, truth, "tampered HiLift prediction"),
+    /support_identity_sha256 differs/
+  );
+}
+
 verifyDrivaerLegacyTruthFailsClosed()
   .then(() => verifyNativeV3CpDisplayCoordinates())
   .then(() => verifyCurrentRun419ProfileFixture())
   .then(() => verifyRetainedNativeRun419Bundle())
+  .then(() => verifyHiLiftCompactProfileOverlay())
   .then(() => verifyGeneratedClaimRecords())
   .then(() => {
     verifyPredictionEvidenceLabels();

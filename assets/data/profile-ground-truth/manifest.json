@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0",
   "data_release": {
-    "id": "prototype-profile-ground-truth-2026-08-21",
+    "id": "prototype-profile-ground-truth-2026-09-04",
     "status": "prototype_dummy_data",
-    "generated_at": "2026-08-21T00:00:00Z",
+    "generated_at": "2026-09-04T07:00:00Z",
     "source_repository": "https://github.com/neilashton/fluidsbench",
     "source_ref": "dev",
     "source_commit": null
@@ -287,144 +287,159 @@
     {
       "id": "hiliftaeroml",
       "name": "HiLiftAeroML",
+      "compact_profile_truth": {
+        "source_kind": "native_cfd",
+        "analytical_dummy": false,
+        "plot_only": true,
+        "release_id": "hiliftaeroml-compact-profile-truth-full360-v1",
+        "format": "fluidsbench-hiliftaeroml-compact-profile-truth-v1",
+        "profile_contract_id": "hiliftaeroml-compact-profile-predictions-v2-candidate",
+        "profile_contract_sha256": "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c",
+        "case_set_id": "caseset-ac791749e527",
+        "case_count": 360,
+        "master_index_file": "datasets/hiliftaeroml/compact-full360-v1/index.json",
+        "master_index_sha256": "255e6eff307c2ba983db8d4d63b5958ce073cc558546a3b4f385988d5ee42a2c"
+      },
       "splits": [
         {
           "id": "full",
           "label": "Full",
-          "case_set_id": "standard",
+          "case_set_id": "caseset-ac791749e527",
           "case_count": 360
         },
         {
           "id": "medium",
           "label": "Medium",
-          "case_set_id": "standard",
+          "case_set_id": "caseset-ac791749e527",
           "case_count": 360
         },
         {
           "id": "scarce",
           "label": "Scarce",
-          "case_set_id": "standard",
+          "case_set_id": "caseset-ac791749e527",
           "case_count": 360
         },
         {
           "id": "super_scarce",
           "label": "Super scarce",
-          "case_set_id": "standard",
+          "case_set_id": "caseset-ac791749e527",
           "case_count": 360
         },
         {
           "id": "geometry",
           "label": "Geometry",
-          "case_set_id": "geometry",
+          "case_set_id": "caseset-53990ea68fa6",
           "case_count": 360
         },
         {
           "id": "geometry_medium",
           "label": "Geometry medium",
-          "case_set_id": "geometry",
+          "case_set_id": "caseset-53990ea68fa6",
           "case_count": 360
         },
         {
           "id": "geometry_scarce",
           "label": "Geometry scarce",
-          "case_set_id": "geometry",
+          "case_set_id": "caseset-53990ea68fa6",
           "case_count": 360
         },
         {
           "id": "geometry_super_scarce",
           "label": "Geometry super scarce",
-          "case_set_id": "geometry",
+          "case_set_id": "caseset-53990ea68fa6",
           "case_count": 360
         },
         {
           "id": "single_aoa_4",
           "label": "AoA 4",
-          "case_set_id": "single_aoa_4",
+          "case_set_id": "caseset-7a743a20b3bd",
           "case_count": 36
         },
         {
           "id": "single_aoa_12",
           "label": "AoA 12",
-          "case_set_id": "single_aoa_12",
+          "case_set_id": "caseset-02fc12ff3494",
           "case_count": 36
         },
         {
           "id": "single_aoa_22",
           "label": "AoA 22",
-          "case_set_id": "single_aoa_22",
+          "case_set_id": "caseset-85ecccd9ccda",
           "case_count": 36
         },
         {
           "id": "aoa",
           "label": "AoA extrapolation",
-          "case_set_id": "aoa",
+          "case_set_id": "caseset-29693354ed8a",
           "case_count": 900
         },
         {
           "id": "deflection",
           "label": "Deflection",
-          "case_set_id": "deflection",
+          "case_set_id": "caseset-c0ecb14de138",
           "case_count": 360
         },
         {
           "id": "stall",
           "label": "Stall",
-          "case_set_id": "stall",
+          "case_set_id": "caseset-804491c8956e",
           "case_count": 723
         }
       ],
       "case_sets": [
         {
-          "id": "standard",
-          "index_file": "datasets/hiliftaeroml/standard/index.json",
-          "index_sha256": "47ebe9cc6e77e486878af40d30ae4ec0b41eaa891f2bb5676d78e5ec6eb0872b",
+          "id": "caseset-ac791749e527",
+          "index_file": "datasets/hiliftaeroml/compact-full360-v1/index.json",
+          "index_sha256": "255e6eff307c2ba983db8d4d63b5958ce073cc558546a3b4f385988d5ee42a2c",
           "case_count": 360,
-          "case_id_status": "prototype_generated"
+          "case_id_status": "official",
+          "coverage": "complete_split",
+          "truth_role": "native_cfd_plot_only_not_scoring_source"
         },
         {
-          "id": "geometry",
+          "id": "caseset-53990ea68fa6",
           "index_file": "datasets/hiliftaeroml/geometry/index.json",
           "index_sha256": "91d868fd3b61f6b5f8917e18ec43c57fc3adb884ca4bab60a3cbd00a0e3716d4",
           "case_count": 360,
           "case_id_status": "prototype_generated"
         },
         {
-          "id": "single_aoa_4",
+          "id": "caseset-7a743a20b3bd",
           "index_file": "datasets/hiliftaeroml/single_aoa_4/index.json",
           "index_sha256": "f1047939ee102d9884b1190e4e5fe2ed88181765b1210d49bca979265c279c3b",
           "case_count": 36,
           "case_id_status": "prototype_generated"
         },
         {
-          "id": "single_aoa_12",
+          "id": "caseset-02fc12ff3494",
           "index_file": "datasets/hiliftaeroml/single_aoa_12/index.json",
           "index_sha256": "6b564a010ae7ab9e1fb23dba5373c7bb2619dff50b9b237197d113a7e09502a3",
           "case_count": 36,
           "case_id_status": "prototype_generated"
         },
         {
-          "id": "single_aoa_22",
+          "id": "caseset-85ecccd9ccda",
           "index_file": "datasets/hiliftaeroml/single_aoa_22/index.json",
           "index_sha256": "f97763e562f8aaf0d65862fd420043b046e3013db64dde91510c8b072a0f4328",
           "case_count": 36,
           "case_id_status": "prototype_generated"
         },
         {
-          "id": "aoa",
+          "id": "caseset-29693354ed8a",
           "index_file": "datasets/hiliftaeroml/aoa/index.json",
           "index_sha256": "daf50e2055673bdd2115fa570fbdd92e1856df090895befcfc01ca89edfb4d0e",
           "case_count": 900,
           "case_id_status": "prototype_generated"
         },
         {
-          "id": "deflection",
+          "id": "caseset-c0ecb14de138",
           "index_file": "datasets/hiliftaeroml/deflection/index.json",
           "index_sha256": "9673f98e73ca14e7c9cc718f430b58711987873fda46f2b1badac7a04447228b",
           "case_count": 360,
           "case_id_status": "prototype_generated"
         },
         {
-          "id": "stall",
+          "id": "caseset-804491c8956e",
           "index_file": "datasets/hiliftaeroml/stall/index.json",
           "index_sha256": "e9d7162369b83794eeaa8458c3f41983f894e95875852af1051d9bb8cc5152a7",
           "case_count": 723,

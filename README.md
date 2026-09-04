@@ -12,7 +12,7 @@ FluidsBench brings together dataset-specific benchmark definitions, public score
 
 **Submissions are currently closed.**
 
-The current leaderboard is a prototype. Displayed rows and profile curves are illustrative dummy data, not official results, and should not be cited or promoted as leaderboard claims.
+The current leaderboard is a prototype and has no official or citable rows. Most displayed rows remain illustrative fixtures. The HiLiftAeroML Full360 Transolver preview is a real surrogate-inference result paired with real CFD profile truth, but it remains an owner-review candidate and is not an official leaderboard claim.
 
 ## Evaluation approach
 
