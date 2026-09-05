@@ -90,14 +90,18 @@ window.__FluidsBenchClaimTest = {
   regionalDatasetDefinition,
   regionalDefinition,
   regionalErrorShare,
+  regionalCaseMacro,
+  regionalCaseStatistic,
   regionalFields,
   regionalFieldsForDataset,
   regionalFieldReport,
   regionalPooled,
+  regionalPrimaryMetricValue,
   regionalPrimaryWeighting,
   regionalReportUrl,
   regionalRules,
   regionalScope,
+  regionalUsesWholeSupportMetric,
   resolvedProfileCoordinateView,
   radarMetricAxes,
   radarNormalizedValue,
@@ -238,10 +242,10 @@ assert.deepEqual(Array.from(api.regionalRules(regionalReport, { supportId: "driv
 ]);
 
 const hiLiftRegionalBinding = {
-  format: "hiliftaeroml-regional-diagnostics-aggregate-v1",
+  format: "hiliftaeroml-regional-diagnostics-aggregate-v2",
   file: "regional-diagnostics.json",
   sha256: "b".repeat(64),
-  contract_sha256: "1579b0262f3368fe3748eb53025aa5e46c0a32c8ff1616c9becdbb5dedd85650",
+  contract_sha256: "8cf926d06706b8cc7fd58d821f395bf8cb6565ef1f3aabe6be18e0a279101da4",
   definition_id: "hiliftaeroml-native-geometric-regions-v1",
   case_count: 360,
   role: "report_only",
@@ -256,7 +260,7 @@ const hiLiftRegionalRow = {
   regional_diagnostics: hiLiftRegionalBinding,
 };
 assert.deepEqual(api.regionalBinding(hiLiftRegionalRow), hiLiftRegionalBinding);
-assert.equal(api.regionalDatasetDefinition("HiLiftAeroML").schemaVersion, 1);
+assert.equal(api.regionalDatasetDefinition("HiLiftAeroML").schemaVersion, 2);
 assert.equal(api.regionalFieldsForDataset("hiliftaeroml").surface_pressure.reportFieldId, "pressure");
 assert.equal(api.regionalFieldsForDataset("hiliftaeroml").volume_velocity.primaryWeighting, "equal_entity");
 assert.equal(
@@ -275,8 +279,22 @@ const hiLiftRegionalReport = {
         regions: [
           {
             region_id: "nacelle_installation_envelope_proxy",
+            whole_support_normalized_rmse_percent: 4.1,
             relative_l2_percent: 6.2,
+            r2: -0.25,
             squared_error_fraction: 0.25,
+            case_macro: {
+              whole_support_normalized_rmse_percent: { value: 3.7, defined_case_count: 360 },
+            },
+            case_distribution: {
+              whole_support_normalized_rmse_percent: {
+                defined_case_count: 360,
+                minimum: 1.0,
+                median: 3.5,
+                p90: 6.0,
+                maximum: 8.0,
+              },
+            },
           },
         ],
       },
@@ -290,6 +308,12 @@ assert.equal(api.regionalErrorShare(hiLiftRegionalReport.surface.fields.pressure
 assert.equal(api.regionalPrimaryWeighting(hiLiftRegionalReport.surface.fields.pressure, hiLiftSurfacePressure), "physical");
 assert.equal(api.regionalRules(hiLiftRegionalReport, hiLiftSurfacePressure).length, 4);
 assert.equal(api.regionalDefinition(hiLiftRegionalReport, hiLiftSurfacePressure).guide, "hilift_surface");
+const hiLiftVolumePressure = api.regionalFieldsForDataset("hiliftaeroml").volume_pressure;
+const hiLiftRegionFixture = hiLiftRegionalReport.surface.fields.pressure.regions[0];
+assert.equal(api.regionalUsesWholeSupportMetric(hiLiftVolumePressure), true);
+assert.equal(api.regionalUsesWholeSupportMetric(hiLiftSurfacePressure), false);
+assert.equal(api.regionalPrimaryMetricValue(hiLiftRegionFixture, "equal_entity", hiLiftVolumePressure), 3.7);
+assert.equal(api.regionalCaseStatistic(hiLiftRegionFixture, "equal_entity", "p90", "whole_support_normalized_rmse_percent"), 6.0);
 
 api.state.metrics = new Map([["score", { id: "score", unit: "" }]]);
 const policy = {
@@ -2112,6 +2136,15 @@ async function verifyHiLiftRegionalReport() {
   const volumeReport = api.regionalFieldReport(report, volumeVelocity);
   assert.equal(volumeReport.regions.length, 4);
   assert.equal(api.regionalPrimaryWeighting(volumeReport, volumeVelocity), "equal_entity");
+  assert.ok(volumeReport.regions.every((region) => Number.isFinite(api.regionalPrimaryMetricValue(region, "equal_entity", volumeVelocity))));
+  assert.ok(volumeReport.regions.every((region) => Number.isFinite(api.regionalPooled(region, "equal_entity").r2)));
+
+  const volumePressure = api.regionalFieldsForDataset("hiliftaeroml").volume_pressure;
+  const pressureReport = api.regionalFieldReport(report, volumePressure);
+  const farfieldPressure = pressureReport.regions.find((region) => region.region_id === "farfield_and_remaining");
+  assert.ok(farfieldPressure.relative_l2_percent > 100);
+  assert.ok(api.regionalPrimaryMetricValue(farfieldPressure, "equal_entity", volumePressure) < 4);
+  assert.ok(farfieldPressure.r2 < 0);
 
   const wrongHashRow = {
     ...row,
