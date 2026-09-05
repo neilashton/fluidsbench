@@ -111,9 +111,9 @@
       },
     },
     hiliftaeroml: {
-      reportSchema: "hiliftaeroml-regional-diagnostics-aggregate-v1",
-      schemaVersion: 1,
-      contractSha256: "1579b0262f3368fe3748eb53025aa5e46c0a32c8ff1616c9becdbb5dedd85650",
+      reportSchema: "hiliftaeroml-regional-diagnostics-aggregate-v2",
+      schemaVersion: 2,
+      contractSha256: "8cf926d06706b8cc7fd58d821f395bf8cb6565ef1f3aabe6be18e0a279101da4",
       definitionId: "hiliftaeroml-native-geometric-regions-v1",
       layout: "domains",
       fields: {
@@ -143,6 +143,7 @@
           supportId: "volume_native_valid_points",
           primaryWeighting: "equal_entity",
           primaryWeightingLabel: "equal valid native points",
+          primaryRegionalMetric: "case_macro_whole_support_normalized_rmse_percent",
         },
         volume_velocity: {
           id: "volume_velocity",
@@ -152,6 +153,7 @@
           supportId: "volume_native_valid_points",
           primaryWeighting: "equal_entity",
           primaryWeightingLabel: "equal valid native points",
+          primaryRegionalMetric: "case_macro_whole_support_normalized_rmse_percent",
         },
       },
       supports: {
@@ -1010,6 +1012,28 @@
     return values.every((value) => value !== null && value >= 0) && Math.abs(values.reduce((sum, value) => sum + value, 0) - 1) <= 1e-8;
   }
 
+  function validHiLiftCaseMacroMetric(value, caseCount, allowNegative = false) {
+    const metric = record(value);
+    const numeric = finiteNumber(metric.value);
+    const count = metric.defined_case_count;
+    return (
+      Number.isSafeInteger(count) &&
+      count >= 0 &&
+      count <= caseCount &&
+      ((count === 0 && numeric === null) || (count > 0 && numeric !== null && (allowNegative || numeric >= 0)))
+    );
+  }
+
+  function validHiLiftCaseDistribution(value, caseCount, allowNegative = false) {
+    const distribution = record(value);
+    const count = distribution.defined_case_count;
+    const values = ["minimum", "median", "p90", "maximum"].map((key) => finiteNumber(distribution[key]));
+    if (!Number.isSafeInteger(count) || count < 0 || count > caseCount) return false;
+    if (count === 0) return values.every((item) => item === null);
+    if (values.some((item) => item === null || (!allowNegative && item < 0))) return false;
+    return values.every((item, index) => index === 0 || values[index - 1] <= item);
+  }
+
   function validHiLiftRegionalReport(report, row, binding, definition) {
     const reconstruction = record(report.reconstruction);
     if (
@@ -1044,18 +1068,48 @@
       for (const fieldId of requiredFields) {
         const field = record(record(support.fields)[fieldId]);
         const regions = Array.isArray(field.regions) ? field.regions : [];
+        const globalRelativeL2 = finiteNumber(record(field.global).relative_l2_percent);
+        const reconstructedRelativeL2 = Math.sqrt(
+          regions.reduce((sum, region) => {
+            const fraction = finiteNumber(region?.weight_fraction);
+            const value = finiteNumber(region?.whole_support_normalized_rmse_percent);
+            return sum + (fraction === null || value === null ? Number.NaN : fraction * value * value);
+          }, 0)
+        );
         if (
           regions.length !== expectedRegions.length ||
           regions.some((region, index) => region?.region_id !== expectedRegions[index]) ||
           regions.some((region) =>
-            ["relative_l2_percent", "mae", "rmse"].some((metric) => {
+            ["whole_support_normalized_rmse_percent", "relative_l2_percent", "mae", "rmse"].some((metric) => {
               const value = finiteNumber(region?.[metric]);
               return value === null || value < 0;
             })
           ) ||
+          regions.some((region) => {
+            const r2 = finiteNumber(region?.r2);
+            const r2Status = region?.r2_status;
+            const macro = record(region?.case_macro);
+            const distribution = record(region?.case_distribution);
+            return (
+              !["ok", "empty", "zero_target_variance"].includes(r2Status) ||
+              ((r2Status === "ok") !== (r2 !== null)) ||
+              !validHiLiftCaseMacroMetric(macro.whole_support_normalized_rmse_percent, binding.case_count) ||
+              !validHiLiftCaseMacroMetric(macro.relative_l2_percent, binding.case_count) ||
+              !validHiLiftCaseMacroMetric(macro.r2, binding.case_count, true) ||
+              !validHiLiftCaseMacroMetric(macro.mae, binding.case_count) ||
+              !validHiLiftCaseMacroMetric(macro.rmse, binding.case_count) ||
+              !validHiLiftCaseDistribution(distribution.whole_support_normalized_rmse_percent, binding.case_count) ||
+              !validHiLiftCaseDistribution(distribution.relative_l2_percent, binding.case_count) ||
+              !validHiLiftCaseDistribution(distribution.r2, binding.case_count, true)
+            );
+          }) ||
           !fractionsReconstruct(regions, "entity_fraction") ||
           !fractionsReconstruct(regions, "weight_fraction") ||
-          !fractionsReconstruct(regions, "squared_error_fraction")
+          !fractionsReconstruct(regions, "squared_error_fraction") ||
+          globalRelativeL2 === null ||
+          !Number.isFinite(reconstructedRelativeL2) ||
+          Math.abs(reconstructedRelativeL2 - globalRelativeL2) >
+            1e-10 * Math.max(1, Math.abs(globalRelativeL2))
         ) {
           return false;
         }
@@ -5313,6 +5367,11 @@
     return numeric === null ? "—" : `${formatNumber(numeric, 3)}%`;
   }
 
+  function regionalScalarNumber(value) {
+    const numeric = finiteNumber(value);
+    return numeric === null ? "—" : formatNumber(numeric, 3);
+  }
+
   function regionalPooled(region, weighting) {
     const nested = record(record(region)[weighting]).pooled;
     return nested && typeof nested === "object" ? nested : record(region);
@@ -5334,8 +5393,28 @@
     return fraction === null ? null : 100 * fraction;
   }
 
-  function regionalCaseStatistic(region, weighting, statistic) {
-    return finiteNumber(record(record(record(region)[weighting]).case_distribution).relative_l2_percent?.[statistic]);
+  function regionalCaseMacro(region, weighting, metricId) {
+    const flat = record(record(record(region).case_macro)[metricId]);
+    const flatValue = finiteNumber(flat.value);
+    if (flatValue !== null) return flatValue;
+    return finiteNumber(record(record(region)[weighting]).macro_case_mean?.[metricId]);
+  }
+
+  function regionalCaseStatistic(region, weighting, statistic, metricId = "relative_l2_percent") {
+    const flat = finiteNumber(record(record(record(region).case_distribution)[metricId])[statistic]);
+    if (flat !== null) return flat;
+    return finiteNumber(record(record(record(region)[weighting]).case_distribution)[metricId]?.[statistic]);
+  }
+
+  function regionalUsesWholeSupportMetric(field) {
+    return field?.primaryRegionalMetric === "case_macro_whole_support_normalized_rmse_percent";
+  }
+
+  function regionalPrimaryMetricValue(region, weighting, field) {
+    if (regionalUsesWholeSupportMetric(field)) {
+      return regionalCaseMacro(region, weighting, "whole_support_normalized_rmse_percent");
+    }
+    return finiteNumber(regionalPooled(region, weighting)?.relative_l2_percent);
   }
 
   function regionalGuideCard(rule, index) {
@@ -5496,6 +5575,16 @@
     if (!canvas || typeof Chart === "undefined") return;
     const rules = regionalRules(documents[0].report, field);
     const labels = rules.map((rule) => regionalLabel(rule.region_id));
+    const wholeSupportPrimary = regionalUsesWholeSupportMetric(field);
+    const primaryLabel = wholeSupportPrimary
+      ? "Equal-case whole-volume-normalized regional RMSE (%)"
+      : "Regional relative L² error (%)";
+    const primaryCaption = wholeSupportPrimary
+      ? "equal-case mean regional RMSE normalized by each case's whole-volume truth RMS"
+      : "regional relative L² error";
+    const caseDistributionMetric = wholeSupportPrimary
+      ? "whole_support_normalized_rmse_percent"
+      : "relative_l2_percent";
     const values = documents.flatMap(({ row, report }) => {
       const fieldReport = regionalFieldReport(report, field);
       return (fieldReport?.regions || []).map((region) => ({
@@ -5504,13 +5593,16 @@
         scope: regionalScope(row),
         region_id: region.region_id,
         region: regionalLabel(region.region_id),
+        primary_metric_percent: regionalPrimaryMetricValue(region, weighting, field),
+        pooled_whole_support_normalized_rmse_percent: finiteNumber(regionalPooled(region, weighting)?.whole_support_normalized_rmse_percent),
         relative_l2_percent: finiteNumber(regionalPooled(region, weighting)?.relative_l2_percent),
+        regional_r2: finiteNumber(regionalPooled(region, weighting)?.r2),
         entity_share_percent: regionalEntityShare(region),
         weight_share_percent: regionalWeightShare(region, weighting),
         error_share_percent: regionalErrorShare(region, weighting),
-        macro_case_relative_l2_percent: finiteNumber(record(record(region)[weighting]).macro_case_mean?.relative_l2_percent),
-        median_case_relative_l2_percent: regionalCaseStatistic(region, weighting, "median"),
-        p90_case_relative_l2_percent: regionalCaseStatistic(region, weighting, "p90"),
+        macro_case_relative_l2_percent: regionalCaseMacro(region, weighting, "relative_l2_percent"),
+        median_case_primary_metric_percent: regionalCaseStatistic(region, weighting, "median", caseDistributionMetric),
+        p90_case_primary_metric_percent: regionalCaseStatistic(region, weighting, "p90", caseDistributionMetric),
       }));
     });
     const datasets = documents.map(({ row, report }, index) => {
@@ -5518,7 +5610,7 @@
       const regionalValues = rules.map((rule) => byRegion.get(rule.region_id));
       return {
         label: rowLabel(row),
-        data: regionalValues.map((region) => finiteNumber(regionalPooled(region, weighting)?.relative_l2_percent)),
+        data: regionalValues.map((region) => regionalPrimaryMetricValue(region, weighting, field)),
         regionalValues,
         backgroundColor: `${palette[index % palette.length]}cc`,
         borderColor: palette[index % palette.length],
@@ -5528,7 +5620,7 @@
     });
     destroyChart("regional");
     canvas.hidden = false;
-    canvas.setAttribute("aria-label", `${field.label} relative L2 error in released native geometric regions`);
+    canvas.setAttribute("aria-label", `${field.label} ${primaryCaption} in released native geometric regions`);
     state.charts.regional = new Chart(canvas, {
       type: "bar",
       data: { labels, datasets },
@@ -5540,7 +5632,7 @@
           x: { ticks: { color: chartTextColor(), maxRotation: 25, minRotation: 0 }, grid: { display: false } },
           y: {
             beginAtZero: true,
-            title: { display: true, text: "Regional relative L² error (%)", color: chartTextColor() },
+            title: { display: true, text: primaryLabel, color: chartTextColor() },
             ticks: { color: chartTextColor() },
             grid: { color: chartGridColor() },
           },
@@ -5551,11 +5643,21 @@
             callbacks: {
               label(context) {
                 const region = context.dataset.regionalValues?.[context.dataIndex];
-                return [
+                const lines = [
                   `${context.dataset.label}: ${regionalNumber(context.raw)}`,
-                  `Field squared-error share: ${regionalNumber(regionalErrorShare(region, weighting))}`,
-                  `Native-entity share: ${regionalNumber(regionalEntityShare(region))}`,
                 ];
+                if (wholeSupportPrimary) {
+                  lines.push(
+                    `Pooled whole-volume-normalized RMSE: ${regionalNumber(regionalPooled(region, weighting)?.whole_support_normalized_rmse_percent)}`,
+                    `Pooled local relative L²: ${regionalNumber(regionalPooled(region, weighting)?.relative_l2_percent)}`,
+                    `Pooled regional R²: ${regionalScalarNumber(regionalPooled(region, weighting)?.r2)}`
+                  );
+                }
+                lines.push(
+                  `Field squared-error share: ${regionalNumber(regionalErrorShare(region, weighting))}`,
+                  `Native-entity share: ${regionalNumber(regionalEntityShare(region))}`
+                );
+                return lines;
               },
             },
           },
@@ -5563,14 +5665,17 @@
       },
     });
     const weightingLabel = regionalWeightingLabel(weighting, field);
-    const caption = `${state.dataset}, ${state.split}: ${field.label} regional relative L² error for ${
+    const normalizationNote = wholeSupportPrimary
+      ? " Each case uses its complete volume truth RMS as the denominator; pooled local relative L2 and regional R2 remain available in the tooltip and numeric table."
+      : "";
+    const caption = `${state.dataset}, ${state.split}: ${field.label} ${primaryCaption} for ${
       documents.length
     } explicitly selected compatible result${
       documents.length === 1 ? "" : "s"
-    }, using ${weightingLabel}. The four released geometric regions are mutually exclusive and exhaustive. Regional diagnostics have zero official scoring weight. ${releaseStamp()}.`;
+    }, using ${weightingLabel}. The four released geometric regions are mutually exclusive and exhaustive.${normalizationNote} Regional diagnostics have zero official scoring weight and do not change the official field or overall score. ${releaseStamp()}.`;
     setChartSummary(
       "regional-chart-summary",
-      `${field.label} regional relative L2 error bar chart for ${state.dataset}, ${state.split}; ${documents.length} selected compatible submissions across ${rules.length} exhaustive regions. ${weightingLabel}; lower is better. Regional diagnostics have zero official scoring weight.`
+      `${field.label} ${primaryCaption} bar chart for ${state.dataset}, ${state.split}; ${documents.length} selected compatible submissions across ${rules.length} exhaustive regions. ${weightingLabel}; lower is better. Regional diagnostics have zero official scoring weight.`
     );
     setFigureCaption("regional", caption, caption);
     state.figureSpecs.set("regional", {
@@ -5578,14 +5683,17 @@
       mark: { type: "bar", tooltip: true },
       encoding: {
         x: { field: "region", type: "nominal", sort: labels, title: "Released geometric region" },
-        y: { field: "relative_l2_percent", type: "quantitative", title: "Regional relative L2 error (%)", scale: { zero: true } },
+        y: { field: "primary_metric_percent", type: "quantitative", title: primaryLabel, scale: { zero: true } },
         color: { field: "model", type: "nominal", legend: { title: "Model", labelLimit: 260 } },
         tooltip: [
           { field: "model", type: "nominal", title: "Model" },
           { field: "submission_id", type: "nominal", title: "Submission ID" },
           { field: "scope", type: "nominal", title: "Prediction scope" },
           { field: "region", type: "nominal", title: "Region" },
-          { field: "relative_l2_percent", type: "quantitative", title: "Regional relative L2 (%)" },
+          { field: "primary_metric_percent", type: "quantitative", title: primaryLabel },
+          { field: "pooled_whole_support_normalized_rmse_percent", type: "quantitative", title: "Pooled whole-support-normalized RMSE (%)" },
+          { field: "relative_l2_percent", type: "quantitative", title: "Pooled local relative L2 (%)" },
+          { field: "regional_r2", type: "quantitative", title: "Pooled regional R2" },
           { field: "entity_share_percent", type: "quantitative", title: "Native-entity share (%)" },
           { field: "weight_share_percent", type: "quantitative", title: "Field-weight share (%)" },
           { field: "error_share_percent", type: "quantitative", title: "Share of field squared error (%)" },
@@ -5597,15 +5705,33 @@
       { label: "Submission ID", value: "submission_id" },
       { label: "Prediction scope", value: "scope" },
       { label: "Region", value: "region" },
-      { label: "Regional rel. L2 (%)", value: (value) => regionalNumber(value.relative_l2_percent) },
+    ];
+    if (wholeSupportPrimary) {
+      columns.push(
+        { label: "Equal-case whole-volume NRMSE (%)", value: (value) => regionalNumber(value.primary_metric_percent) },
+        { label: "Pooled whole-volume NRMSE (%)", value: (value) => regionalNumber(value.pooled_whole_support_normalized_rmse_percent) },
+        { label: "Pooled local rel. L2 (%)", value: (value) => regionalNumber(value.relative_l2_percent) },
+        { label: "Pooled regional R2", value: (value) => regionalScalarNumber(value.regional_r2) }
+      );
+    } else {
+      columns.push(
+        { label: "Regional rel. L2 (%)", value: (value) => regionalNumber(value.relative_l2_percent) }
+      );
+      if (values.some((value) => value.regional_r2 !== null)) {
+        columns.push(
+          { label: "Regional R2", value: (value) => regionalScalarNumber(value.regional_r2) }
+        );
+      }
+    }
+    columns.push(
       { label: "Native-entity share (%)", value: (value) => regionalNumber(value.entity_share_percent) },
       { label: "Field-weight share (%)", value: (value) => regionalNumber(value.weight_share_percent) },
-      { label: "Field error share (%)", value: (value) => regionalNumber(value.error_share_percent) },
-    ];
-    if (values.some((value) => value.median_case_relative_l2_percent !== null)) {
+      { label: "Field error share (%)", value: (value) => regionalNumber(value.error_share_percent) }
+    );
+    if (values.some((value) => value.median_case_primary_metric_percent !== null)) {
       columns.push(
-        { label: "Median case rel. L2 (%)", value: (value) => regionalNumber(value.median_case_relative_l2_percent) },
-        { label: "P90 case rel. L2 (%)", value: (value) => regionalNumber(value.p90_case_relative_l2_percent) }
+        { label: wholeSupportPrimary ? "Median case whole-volume NRMSE (%)" : "Median case rel. L2 (%)", value: (value) => regionalNumber(value.median_case_primary_metric_percent) },
+        { label: wholeSupportPrimary ? "P90 case whole-volume NRMSE (%)" : "P90 case rel. L2 (%)", value: (value) => regionalNumber(value.p90_case_primary_metric_percent) }
       );
     }
     renderNumericTable(
