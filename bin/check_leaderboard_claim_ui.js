@@ -54,6 +54,7 @@ window.__FluidsBenchClaimTest = {
   claimEligibility,
   decimalHalfUp,
   defaultProfileCoordinateView,
+  decodeHiLiftVelocityStorage,
   ensureRegionalReport,
   ensureClaimRecord,
   ensureClaimsIndex,
@@ -2188,6 +2189,76 @@ async function verifyHiLiftCompactProfileOverlay() {
   assert.equal(aoa4Truth.series.length, 15);
   assert.equal(aoa4Truth._fluidsbenchHiLiftCompactTruth, true);
 
+  const expectedPreviewSplits = new Map([
+    ["full", ["Full", "caseset-ac791749e527", 360]],
+    ["single_aoa_4", ["AoA 4", "caseset-7a743a20b3bd", 36]],
+    ["single_aoa_12", ["AoA 12", "caseset-02fc12ff3494", 36]],
+    ["single_aoa_22", ["AoA 22", "caseset-85ecccd9ccda", 36]],
+    ["super_scarce", ["Super scarce", "caseset-ac791749e527", 360]],
+    ["geometry_scarce", ["Geometry scarce", "caseset-53990ea68fa6", 360]],
+    ["geometry_super_scarce", ["Geometry super scarce", "caseset-53990ea68fa6", 360]],
+  ]);
+  const previewRows = feed.filter((entry) => entry.dataset_id === "hiliftaeroml");
+  assert.equal(previewRows.length, expectedPreviewSplits.size, "all seven retained HiLiftAeroML previews must be present");
+  for (const row of previewRows) {
+    const expected = expectedPreviewSplits.get(row.split_id);
+    assert.ok(expected, `unexpected HiLiftAeroML preview split ${row.split_id}`);
+    const [splitLabel, caseSetId, caseCount] = expected;
+    assert.equal(row.split, splitLabel);
+    assert.equal(row.case_set_id, caseSetId);
+    assert.equal(row.profile_data?.case_count, caseCount);
+
+    const splitTruthContext = await api.groundTruthIndex("HiLiftAeroML", splitLabel);
+    assert.equal(splitTruthContext.caseSetId, caseSetId);
+    const predictionIndexRelativeForSplit = row.profile_data.index_file;
+    const predictionIndexPathForSplit = path.join(submissionRoot, predictionIndexRelativeForSplit);
+    const predictionIndexForSplit = JSON.parse(fs.readFileSync(predictionIndexPathForSplit, "utf8"));
+    assert.equal(predictionIndexForSplit.submission_id, row.submission_id);
+    assert.equal(predictionIndexForSplit.split_id, row.split_id);
+    assert.equal(predictionIndexForSplit.case_set_id, caseSetId);
+    assert.equal(predictionIndexForSplit.case_count, caseCount);
+    assert.equal(row.profile_data.index_sha256, sha256File(predictionIndexPathForSplit));
+
+    const splitCaseId = predictionIndexForSplit.chunks[0].case_ids[0];
+    const splitTruthMetadata = await api.indexedProfileCase(
+      splitTruthContext,
+      splitCaseId,
+      api.state.groundTruthChunks,
+      `HiLiftAeroML ${splitLabel} ground truth`
+    );
+    const splitTruth = await api.materializeHiLiftCompactTruth(
+      splitTruthMetadata,
+      `HiLiftAeroML ${splitLabel} ground truth`
+    );
+    const splitPredictionContext = {
+      index: predictionIndexForSplit,
+      indexUrl: `https://example.test/assets/${predictionIndexRelativeForSplit}`,
+      indexSha256: sha256File(predictionIndexPathForSplit),
+      caseSetId,
+      hiLiftCompactPrediction: true,
+    };
+    const splitPredictionMetadata = await api.indexedProfileCase(
+      splitPredictionContext,
+      splitCaseId,
+      api.state.profileChunks,
+      `HiLiftAeroML ${row.submission_id}`
+    );
+    const splitPrediction = await api.materializeHiLiftCompactPrediction(
+      splitPredictionMetadata,
+      splitTruth,
+      `HiLiftAeroML ${row.submission_id}`
+    );
+    assert.equal(splitTruth.series.length, 15);
+    assert.equal(splitPrediction.series.length, 15);
+    const splitFamily = { id: "", placementMode: "" };
+    const splitTruthCp = api.profileSeries(splitTruth, { id: "pressure_profiles" }, "pressure_belt_a", { id: "cp" }, splitFamily);
+    const splitPredictionCp = api.profileSeries(splitPrediction, { id: "pressure_profiles" }, "pressure_belt_a", { id: "cp" }, splitFamily);
+    const splitTruthVelocity = api.profileSeries(splitTruth, { id: "velocity_profiles" }, "hlpw5_b_2", { id: "velocity_ratio" }, splitFamily);
+    const splitPredictionVelocity = api.profileSeries(splitPrediction, { id: "velocity_profiles" }, "hlpw5_b_2", { id: "velocity_ratio" }, splitFamily);
+    assert.equal(api.profileSeriesCompatibility(splitTruthCp, splitPredictionCp), true);
+    assert.equal(api.profileSeriesCompatibility(splitTruthVelocity, splitPredictionVelocity), true);
+  }
+
   const predictionIndexRelative = "submissions/hiliftaeroml/hiliftaeroml-transolver-full360-candidate-v1/profiles/index.json";
   const predictionIndexPath = path.join(submissionRoot, predictionIndexRelative);
   const predictionIndex = JSON.parse(fs.readFileSync(predictionIndexPath, "utf8"));
@@ -2262,11 +2333,42 @@ async function verifyHiLiftCompactProfileOverlay() {
   await assert.rejects(api.materializeHiLiftCompactPrediction(mismatched, truth, "tampered HiLift prediction"), /support_identity_sha256 differs/);
 }
 
+function verifyHiLiftVelocityStorageDecoder() {
+  const values = [0, -0, 0.625, 1, 1.0000001192092896, 16];
+  const count = values.length;
+  const bitsBuffer = new ArrayBuffer(count * 4);
+  const bitsView = new DataView(bitsBuffer);
+  values.forEach((value, index) => bitsView.setFloat32(index * 4, value, true));
+  const words = values.map((_value, index) => bitsView.getUint32(index * 4, true));
+  const deltas = words.map((word, index) =>
+    index === 0 ? word : (word - words[index - 1]) >>> 0
+  );
+  const stored = new Array(count * 4);
+  for (let index = 0; index < count; index += 1) {
+    for (let lane = 0; lane < 4; lane += 1) {
+      stored[lane * count + index] = (deltas[index] >>> (lane * 8)) & 0xff;
+    }
+  }
+  const decoded = api.decodeHiLiftVelocityStorage(stored, count, "test velocity");
+  const decodedBuffer = new ArrayBuffer(count * 4);
+  const decodedView = new DataView(decodedBuffer);
+  decoded.forEach((value, index) => decodedView.setFloat32(index * 4, value, true));
+  assert.deepEqual(
+    Array.from(decoded, (_value, index) => decodedView.getUint32(index * 4, true)),
+    words
+  );
+  assert.throws(
+    () => api.decodeHiLiftVelocityStorage(stored.slice(1), count, "bad velocity"),
+    /storage length differs/
+  );
+}
+
 verifyDrivaerLegacyTruthFailsClosed()
   .then(() => verifyNativeV3CpDisplayCoordinates())
   .then(() => verifyCurrentRun419ProfileFixture())
   .then(() => verifyRetainedNativeRun419Bundle())
   .then(() => verifyHiLiftRegionalReport())
+  .then(() => verifyHiLiftVelocityStorageDecoder())
   .then(() => verifyHiLiftCompactProfileOverlay())
   .then(() => verifyGeneratedClaimRecords())
   .then(() => {

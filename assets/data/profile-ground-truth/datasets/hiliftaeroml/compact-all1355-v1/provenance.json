@@ -2,21 +2,21 @@
   "schema": "fluidsbench-hiliftaeroml-compact-profile-truth-provenance-v1",
   "schema_version": "1.0",
   "release_id": "hiliftaeroml-compact-profile-truth-all1355-v1",
-  "generated_at": "2026-09-04T09:21:24Z",
+  "generated_at": "2026-09-06T22:58:11Z",
   "generator": {
     "file": "bin/export_hiliftaeroml_compact_profile_truth.py",
     "sha256": "55cd569e29573498d788ca6029e59577d022fe60b3272b387af8121c9d97d65d"
   },
   "source_repository": "https://github.com/neilashton/fluidsbench-submission",
-  "source_revision": "01868446db44c2029e73e3263835e2e84cfda4fa",
+  "source_revision": "84a17ffbc296a1ae6a47b738282d5badba3df9e8",
   "source_implementation": {
     "compact_profile_evaluator": {
       "file": "reference/hiliftaeroml/compact_profile_evaluator.py",
-      "sha256": "9819234fb042a87c56c5bf369743a8a365e022076b27084d30211294836268cb"
+      "sha256": "705ba1c6d2866b502ff1760e6a2ad538bca4439659bff9bc4b93ac5c30a0659d"
     },
     "compact_profiles": {
       "file": "reference/hiliftaeroml/compact_profiles.py",
-      "sha256": "406cf1d8c4bfb15f5530c6d5e38f2445d753a3fd30b937a915b516c57160b5ad"
+      "sha256": "8dc93c742d307b9e6f5f478bcf63e2f02fd4bc24de566e1229f71570fb62f48a"
     },
     "native_profile_truth": {
       "file": "reference/hiliftaeroml/native_profile_truth.py",
