@@ -44,6 +44,7 @@
         "dataset_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "split": { "type": "string", "minLength": 1 },
         "split_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$" },
+        "prediction_scope": { "enum": ["surface_and_volume", "surface_only"] },
         "submission_schema_version": { "enum": ["1.0", "2.0", "3.0"] }
       }
     },
@@ -94,6 +95,7 @@
         "spatial_discretization": { "$ref": "#/$defs/file_binding" },
         "discretization_cases": { "$ref": "#/$defs/file_binding" },
         "case_metrics": { "$ref": "#/$defs/file_binding" },
+        "regional_diagnostics": { "$ref": "#/$defs/file_binding" },
         "prediction_artifact_checks": { "$ref": "#/$defs/file_binding" },
         "maintainer_validation": {
           "type": "object",
@@ -128,7 +130,9 @@
             "properties": {
               "academic_citation": { "const": false },
               "promotion": { "const": false },
-              "reason_code": { "const": "prototype_dummy_data" }
+              "reason_code": {
+                "enum": ["prototype_dummy_data", "pre_release_reference"]
+              }
             }
           },
           "result_permalink": { "type": "null" },
@@ -283,7 +287,7 @@
         "academic_citation": { "type": "boolean" },
         "promotion": { "type": "boolean" },
         "reason_code": {
-          "enum": ["prototype_dummy_data", "approved_submitted_data_result", "not_approved_and_validated"]
+          "enum": ["prototype_dummy_data", "pre_release_reference", "approved_submitted_data_result", "not_approved_and_validated"]
         },
         "reason": { "type": "string", "minLength": 1 }
       }

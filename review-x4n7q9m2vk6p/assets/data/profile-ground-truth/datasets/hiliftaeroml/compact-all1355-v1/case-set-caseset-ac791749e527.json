@@ -8,7 +8,7 @@
   "dataset_id": "hiliftaeroml",
   "dataset_revision": "hiliftaeroml-native-profile-truth-v1-candidate",
   "profile_contract_id": "hiliftaeroml-compact-profile-predictions-v2-candidate",
-  "profile_contract_sha256": "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c",
+  "profile_contract_sha256": "b1fd29b2cb6c1c84c694ddffc5d85f6cd68fd175b79c3695a443aa78bf962c2f",
   "source_profile_truth_release_id": "hiliftaeroml-native-profile-truth-v1-candidate",
   "source_profile_truth_manifest_sha256": "3e20b857e12055e16f1d248d125b8df62a3669c604411dc67322fe98d9ab4477",
   "source_prerequisite_authority_index_sha256": "991988cba62214ee85e7066f53a8bc82f639baa76b92f07b4e375e0364986ea4",
@@ -424,8 +424,8 @@
     {
       "chunk_id": "chunk-000",
       "file": "chunks/caseset-ac791749e527/chunk-000.json",
-      "sha256": "972a3dfbbd9885a4a1a94e847a597994ad5d733c4cad05c6d9a623701e175dfc",
-      "byte_size": 27412,
+      "sha256": "4fb34c558e133ffbc34b03e7f42592632afc6278f969657594df3dc61d9ea94e",
+      "byte_size": 28842,
       "case_count": 10,
       "case_ids": [
         "geo_LHC001_AoA_20",
@@ -443,8 +443,8 @@
     {
       "chunk_id": "chunk-001",
       "file": "chunks/caseset-ac791749e527/chunk-001.json",
-      "sha256": "75127289839284d4250f0bf923afea5157950d1d5a6f88cb80625ce9574e7770",
-      "byte_size": 27422,
+      "sha256": "6ee12c46a0ec15bce8ea03d95c201bddf5eea0be4826816f848403a83ca4ad01",
+      "byte_size": 28852,
       "case_count": 10,
       "case_ids": [
         "geo_LHC021_AoA_16",
@@ -462,8 +462,8 @@
     {
       "chunk_id": "chunk-002",
       "file": "chunks/caseset-ac791749e527/chunk-002.json",
-      "sha256": "6869e3be273e936479c8f71f5d4cf1b9d8f8e541f8ce5f0f3ce69148c20283c3",
-      "byte_size": 27413,
+      "sha256": "2e1b07a2a9b5decba42268dbe83438e7b14509950b5a7080b739063ae3166d19",
+      "byte_size": 28843,
       "case_count": 10,
       "case_ids": [
         "geo_LHC039_AoA_4",
@@ -481,8 +481,8 @@
     {
       "chunk_id": "chunk-003",
       "file": "chunks/caseset-ac791749e527/chunk-003.json",
-      "sha256": "15213c01354c712c574355d4785099331c3670ea532b91fd5daf541a7d697bdd",
-      "byte_size": 27422,
+      "sha256": "170b2c4fcbfef5ffc9dac6db764552107be89564ea578c02fb1b1f2e68121016",
+      "byte_size": 28852,
       "case_count": 10,
       "case_ids": [
         "geo_LHC057_AoA_18",
@@ -500,8 +500,8 @@
     {
       "chunk_id": "chunk-004",
       "file": "chunks/caseset-ac791749e527/chunk-004.json",
-      "sha256": "8eb00d59ba87aa6b5f6423fe56a45caa2939a779c711d63d3382e7c0c403bd9c",
-      "byte_size": 27419,
+      "sha256": "70c80a80b94162cf8b440ed1563cdaf0d27492c46eddb11a0424ff92e9ca7c78",
+      "byte_size": 28849,
       "case_count": 10,
       "case_ids": [
         "geo_LHC077_AoA_20",
@@ -519,8 +519,8 @@
     {
       "chunk_id": "chunk-005",
       "file": "chunks/caseset-ac791749e527/chunk-005.json",
-      "sha256": "150c9b1eba8d03500cdecc41a402e0c75317464145f23ea4890e4fe743d2b947",
-      "byte_size": 27422,
+      "sha256": "c1b4961226459c186bb7c3d3c97268af75ae44d6afa5a8211874b66de4c335b1",
+      "byte_size": 28852,
       "case_count": 10,
       "case_ids": [
         "geo_LHC099_AoA_22",
@@ -538,8 +538,8 @@
     {
       "chunk_id": "chunk-006",
       "file": "chunks/caseset-ac791749e527/chunk-006.json",
-      "sha256": "06ceeac698f7e0c8ca537314d541568953ac8df17801473098289475d2413903",
-      "byte_size": 27424,
+      "sha256": "356b9544019d16c29e95d9b0114b2abaa716e5d38694a62f8b3a762a61d04d82",
+      "byte_size": 28854,
       "case_count": 10,
       "case_ids": [
         "geo_LHC116_AoA_16",
@@ -557,8 +557,8 @@
     {
       "chunk_id": "chunk-007",
       "file": "chunks/caseset-ac791749e527/chunk-007.json",
-      "sha256": "956cb68852f6eefce5de5ac2bc8358aa51d28cac8558a61e974dfafc86b98681",
-      "byte_size": 27426,
+      "sha256": "eb106f16655e7a85075a543e3b9adf3d26e89c1cf3f35294ea23928f48c1648d",
+      "byte_size": 28856,
       "case_count": 10,
       "case_ids": [
         "geo_LHC139_AoA_10",
@@ -576,8 +576,8 @@
     {
       "chunk_id": "chunk-008",
       "file": "chunks/caseset-ac791749e527/chunk-008.json",
-      "sha256": "5447de4e5bdf701881b78d69468e124723fe0ea20a684c14f7ec718d82d4a7b6",
-      "byte_size": 27426,
+      "sha256": "9dc80614c7eeee55a554d917eb966613209648a3e523b3981e1a0ba9cc760a8c",
+      "byte_size": 28856,
       "case_count": 10,
       "case_ids": [
         "geo_LHC159_AoA_8",
@@ -595,8 +595,8 @@
     {
       "chunk_id": "chunk-009",
       "file": "chunks/caseset-ac791749e527/chunk-009.json",
-      "sha256": "02da93aaeb62e61d1b49056e9aa109e96fcfc360327846b408251cfc005d1e97",
-      "byte_size": 27407,
+      "sha256": "e84848528384b5f9afa1b094923d409daeafb25b0129883a2b2a26355388bb0b",
+      "byte_size": 28837,
       "case_count": 10,
       "case_ids": [
         "geo_LHC001_AoA_22",
@@ -614,8 +614,8 @@
     {
       "chunk_id": "chunk-010",
       "file": "chunks/caseset-ac791749e527/chunk-010.json",
-      "sha256": "800f4714a83188f05b7aad677d29aff51f14571f550d34bab91b4a1b9f1ca0dd",
-      "byte_size": 27419,
+      "sha256": "6d8b093064ac2b6813c2663f8ea9285094f7ebd94fed7e8990e0e81cb43437ea",
+      "byte_size": 28849,
       "case_count": 10,
       "case_ids": [
         "geo_LHC022_AoA_14",
@@ -633,8 +633,8 @@
     {
       "chunk_id": "chunk-011",
       "file": "chunks/caseset-ac791749e527/chunk-011.json",
-      "sha256": "537ff64f05df7c2a2ac18719199b3f199b439773e1ab600019d43cbde1e786d4",
-      "byte_size": 27413,
+      "sha256": "b05c69fec9cd1a7d8de7fadc2b614c59f5cd46645e411beee757366fd1541fc6",
+      "byte_size": 28843,
       "case_count": 10,
       "case_ids": [
         "geo_LHC040_AoA_10",
@@ -652,8 +652,8 @@
     {
       "chunk_id": "chunk-012",
       "file": "chunks/caseset-ac791749e527/chunk-012.json",
-      "sha256": "ded427119a4422e62dadec81b2c790316fbead0ab4934679c7401d59eeeeebed",
-      "byte_size": 27419,
+      "sha256": "11fa778b85a8a07d861d5c635fc920b4a79364ab669255a782542ffab30081e5",
+      "byte_size": 28849,
       "case_count": 10,
       "case_ids": [
         "geo_LHC058_AoA_10",
@@ -671,8 +671,8 @@
     {
       "chunk_id": "chunk-013",
       "file": "chunks/caseset-ac791749e527/chunk-013.json",
-      "sha256": "cdd1f19896c72b8191496e744ac971a205525e8e5bf11fbb421c48fd99ea3e1d",
-      "byte_size": 27425,
+      "sha256": "df570b1316735d897eeb0ed6b42dbcd427f3a79d499a14e3232fc584a85b1938",
+      "byte_size": 28855,
       "case_count": 10,
       "case_ids": [
         "geo_LHC078_AoA_12",
@@ -690,8 +690,8 @@
     {
       "chunk_id": "chunk-014",
       "file": "chunks/caseset-ac791749e527/chunk-014.json",
-      "sha256": "91ed5d3054af1e08c0bcebf8b4182a4018a3a24f75604652202d205c370864fc",
-      "byte_size": 27419,
+      "sha256": "7e714bc6e0f45752a1c16aac2c4a5f80dd6e22312e6a225a175c906c5203b9ea",
+      "byte_size": 28849,
       "case_count": 10,
       "case_ids": [
         "geo_LHC099_AoA_4",
@@ -709,8 +709,8 @@
     {
       "chunk_id": "chunk-015",
       "file": "chunks/caseset-ac791749e527/chunk-015.json",
-      "sha256": "06cbeb75886096c6829a9bf1628b0d12960c0060319ccb8cbc7f83da5e695ef2",
-      "byte_size": 27424,
+      "sha256": "5811f914795e4bc36b250fa413448295cfa4f5377b02951b1f1a26b5ffc6a595",
+      "byte_size": 28854,
       "case_count": 10,
       "case_ids": [
         "geo_LHC116_AoA_20",
@@ -728,8 +728,8 @@
     {
       "chunk_id": "chunk-016",
       "file": "chunks/caseset-ac791749e527/chunk-016.json",
-      "sha256": "d2de3de8e275f803a35fd842c61567ac0523bfe757e29c27d09b6be0f9e8cd2a",
-      "byte_size": 27432,
+      "sha256": "d6b182c9496fed2a93f9ebe9ffd04d5565a05dca0567cec09f6a9186a2348dd5",
+      "byte_size": 28862,
       "case_count": 10,
       "case_ids": [
         "geo_LHC139_AoA_14",
@@ -747,8 +747,8 @@
     {
       "chunk_id": "chunk-017",
       "file": "chunks/caseset-ac791749e527/chunk-017.json",
-      "sha256": "559baf6ab1b3cff616ea91437d3e9cf65baa0741dfccea67b80c5037061526e6",
-      "byte_size": 27426,
+      "sha256": "f60f7183665407f00d88558fc8211095999d2143911f0fe2296970ee73b62177",
+      "byte_size": 28856,
       "case_count": 10,
       "case_ids": [
         "geo_LHC160_AoA_4",
@@ -766,8 +766,8 @@
     {
       "chunk_id": "chunk-018",
       "file": "chunks/caseset-ac791749e527/chunk-018.json",
-      "sha256": "05531a9e0ffead45120cb5df1a2822c0c56beb457352e149b36902f05c30e81f",
-      "byte_size": 27413,
+      "sha256": "d8f567e8e0d5169298068517027955e5a6e98414af856574ccc590327faf8cf2",
+      "byte_size": 28843,
       "case_count": 10,
       "case_ids": [
         "geo_LHC001_AoA_8",
@@ -785,8 +785,8 @@
     {
       "chunk_id": "chunk-019",
       "file": "chunks/caseset-ac791749e527/chunk-019.json",
-      "sha256": "0e9d7a4e62cf3af1d65cde779b6e9491e84a47c83b290c3259bec5a50a1b3666",
-      "byte_size": 27416,
+      "sha256": "fff7654b0aa3849afeca04ab5fcb28aee6f9d6fac5eac23dd52404abacebe998",
+      "byte_size": 28846,
       "case_count": 10,
       "case_ids": [
         "geo_LHC022_AoA_6",
@@ -804,8 +804,8 @@
     {
       "chunk_id": "chunk-020",
       "file": "chunks/caseset-ac791749e527/chunk-020.json",
-      "sha256": "059649f18766181d297557645e9a9f266a461e7862a3f57d9ad45da24c3566f8",
-      "byte_size": 27419,
+      "sha256": "73513bbcc1c2e4d09a9f0df5ce7c811822e22816e0e4f3927e0321d7b23f49a2",
+      "byte_size": 28849,
       "case_count": 10,
       "case_ids": [
         "geo_LHC040_AoA_12",
@@ -823,8 +823,8 @@
     {
       "chunk_id": "chunk-021",
       "file": "chunks/caseset-ac791749e527/chunk-021.json",
-      "sha256": "de9b815fc1af46f7569e0c7f9eb0933cb94b247174de84c49671935d8f052d88",
-      "byte_size": 27416,
+      "sha256": "1bb71305e628a4297517c91ef5a14b2da7b8e6f8ca6daec20b12d94af8c45cf4",
+      "byte_size": 28846,
       "case_count": 10,
       "case_ids": [
         "geo_LHC058_AoA_16",
@@ -842,8 +842,8 @@
     {
       "chunk_id": "chunk-022",
       "file": "chunks/caseset-ac791749e527/chunk-022.json",
-      "sha256": "601bc9717cc50b685d991f8e4082eb08a0210814a9b0d3b4a4b9536561800b9f",
-      "byte_size": 27416,
+      "sha256": "9bcd6d1f5d56cd8fb0288323e3cadfb1ec1c9606cfca9d32c5eeca937ee5e920",
+      "byte_size": 28846,
       "case_count": 10,
       "case_ids": [
         "geo_LHC078_AoA_14",
@@ -861,8 +861,8 @@
     {
       "chunk_id": "chunk-023",
       "file": "chunks/caseset-ac791749e527/chunk-023.json",
-      "sha256": "622c07355dd6993c6aae70c31eaf7ec43f11ea147639d7702740237b921444b1",
-      "byte_size": 27410,
+      "sha256": "1caec46dd5470403fe1adacd7e679de78ed140ac6fed8c244f86be30b1c70dc1",
+      "byte_size": 28840,
       "case_count": 10,
       "case_ids": [
         "geo_LHC099_AoA_8",
@@ -880,8 +880,8 @@
     {
       "chunk_id": "chunk-024",
       "file": "chunks/caseset-ac791749e527/chunk-024.json",
-      "sha256": "3a7bc6551127f9f3b4dd59b5bbb7ef27609ef0c2a8b200ba5bbca7b8d384cfa4",
-      "byte_size": 27418,
+      "sha256": "b47b4716fa01e3fa251894677f50bcdff33d81ed4a970e0be8bac321295279d2",
+      "byte_size": 28848,
       "case_count": 10,
       "case_ids": [
         "geo_LHC117_AoA_14",
@@ -899,8 +899,8 @@
     {
       "chunk_id": "chunk-025",
       "file": "chunks/caseset-ac791749e527/chunk-025.json",
-      "sha256": "a7cf4942bf2f9b6081790242ae607e463f3ae3b773264dd91bce6b2e4a4c66bc",
-      "byte_size": 27426,
+      "sha256": "9c1ed85744d3efba116f98b1d736f03b9918ef828d44226e7ef77cf8529478e5",
+      "byte_size": 28856,
       "case_count": 10,
       "case_ids": [
         "geo_LHC139_AoA_18",
@@ -918,8 +918,8 @@
     {
       "chunk_id": "chunk-026",
       "file": "chunks/caseset-ac791749e527/chunk-026.json",
-      "sha256": "0d5365a12c00a63e60719fb33a70ad26925f2305d533408278e59f4a831df3e0",
-      "byte_size": 27426,
+      "sha256": "f33a57ef465068231ea9caf33f7ca54f45a89e71486d8dce45f4de5d97317063",
+      "byte_size": 28856,
       "case_count": 10,
       "case_ids": [
         "geo_LHC161_AoA_6",
@@ -937,8 +937,8 @@
     {
       "chunk_id": "chunk-027",
       "file": "chunks/caseset-ac791749e527/chunk-027.json",
-      "sha256": "1bd030babb0d7c82885d753eac0dd13a919a3689b99294fc7fa8ccdde63b7ae1",
-      "byte_size": 27420,
+      "sha256": "007b7c5536ce337627007b6d67f76144e11712e5aabbc80c92bb0d8905c74b53",
+      "byte_size": 28850,
       "case_count": 10,
       "case_ids": [
         "geo_LHC002_AoA_20",
@@ -956,8 +956,8 @@
     {
       "chunk_id": "chunk-028",
       "file": "chunks/caseset-ac791749e527/chunk-028.json",
-      "sha256": "82474b74df9e1efbb5d2ceedc625bbcbcab46d947e9d1e265af70e2f8ace388e",
-      "byte_size": 27422,
+      "sha256": "092d83f7b5530b4a8055209ff4365c55540077b60fd8e84cd9ca940f1ea29614",
+      "byte_size": 28852,
       "case_count": 10,
       "case_ids": [
         "geo_LHC023_AoA_12",
@@ -975,8 +975,8 @@
     {
       "chunk_id": "chunk-029",
       "file": "chunks/caseset-ac791749e527/chunk-029.json",
-      "sha256": "6ee2744b427817874224d0fcf378f6f1bcd059f3787c4ac43d3230aab0c418fd",
-      "byte_size": 27422,
+      "sha256": "3f56712bfc9d9967230c977937de908052634878e27c35d5fe031dda179e337b",
+      "byte_size": 28852,
       "case_count": 10,
       "case_ids": [
         "geo_LHC040_AoA_14",
@@ -994,8 +994,8 @@
     {
       "chunk_id": "chunk-030",
       "file": "chunks/caseset-ac791749e527/chunk-030.json",
-      "sha256": "f6200c763edac025387cebe705abec23be5c5e4068b46fcb3c67575750acfa2c",
-      "byte_size": 27419,
+      "sha256": "306c6fbb2c9c7b46e821397d394725dff6dc6b6d9f0df63932cf6c2f8f1d1dfb",
+      "byte_size": 28849,
       "case_count": 10,
       "case_ids": [
         "geo_LHC058_AoA_18",
@@ -1013,8 +1013,8 @@
     {
       "chunk_id": "chunk-031",
       "file": "chunks/caseset-ac791749e527/chunk-031.json",
-      "sha256": "0cb410059c53232ac98189f5ecc0054a9e28e3740f025e554d1ddfeaa2859460",
-      "byte_size": 27422,
+      "sha256": "a9e66d3c45f1b930bcd1b16dde7fd657fa76fcc83d8ba73cdf71700455534795",
+      "byte_size": 28852,
       "case_count": 10,
       "case_ids": [
         "geo_LHC078_AoA_4",
@@ -1032,8 +1032,8 @@
     {
       "chunk_id": "chunk-032",
       "file": "chunks/caseset-ac791749e527/chunk-032.json",
-      "sha256": "c9e3f17fe23f63f7df7286a2e3be9bbc1d37079c81ec93a0158792096a40d689",
-      "byte_size": 27428,
+      "sha256": "6ce8c32374bdd57d31811a952bd613a2c71ce52884de3d756adb0e21a2524a85",
+      "byte_size": 28858,
       "case_count": 10,
       "case_ids": [
         "geo_LHC100_AoA_10",
@@ -1051,8 +1051,8 @@
     {
       "chunk_id": "chunk-033",
       "file": "chunks/caseset-ac791749e527/chunk-033.json",
-      "sha256": "d6b852e937a587160c1acc36cd5622acda451f282ea4877376a78a5f1fd503c0",
-      "byte_size": 27415,
+      "sha256": "fa9a9a7090a2929bbf516737745e7a8b126ca1bbec2d625029ebc6256cd9d0b5",
+      "byte_size": 28845,
       "case_count": 10,
       "case_ids": [
         "geo_LHC117_AoA_18",
@@ -1070,8 +1070,8 @@
     {
       "chunk_id": "chunk-034",
       "file": "chunks/caseset-ac791749e527/chunk-034.json",
-      "sha256": "16f4bdb1c513e097e6fa7fd0e5ce6e9bbba44d9c6eaf9727470fcf8e4e29e475",
-      "byte_size": 27429,
+      "sha256": "a72d814bc3523109979f4bc207a8c10492da77cfc417a96fa570d63a224244bb",
+      "byte_size": 28859,
       "case_count": 10,
       "case_ids": [
         "geo_LHC139_AoA_8",
@@ -1089,8 +1089,8 @@
     {
       "chunk_id": "chunk-035",
       "file": "chunks/caseset-ac791749e527/chunk-035.json",
-      "sha256": "cc4074893983b673c24f6684b99159e201abbe55c3c5f8078a3b99d23e9e6cce",
-      "byte_size": 27432,
+      "sha256": "f67e05189e96d1d0ccf5c12b64ba9f5fff884e93ee9eff2cb82f8970d2324108",
+      "byte_size": 28862,
       "case_count": 10,
       "case_ids": [
         "geo_LHC162_AoA_14",
