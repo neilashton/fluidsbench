@@ -71,7 +71,7 @@ HILIFT_COMPACT_PROFILE_CONTRACT_ID = (
     "hiliftaeroml-compact-profile-predictions-v2-candidate"
 )
 HILIFT_COMPACT_PROFILE_CONTRACT_SHA256 = (
-    "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c"
+    "b1fd29b2cb6c1c84c694ddffc5d85f6cd68fd175b79c3695a443aa78bf962c2f"
 )
 HILIFT_COMPACT_CASE_SET_ID = "caseset-ac791749e527"
 HILIFT_NATIVE_TRUTH_RELEASE_ID = "hiliftaeroml-native-profile-truth-v1-candidate"
@@ -2490,6 +2490,23 @@ def _all_finite_f4(data: bytes, *, nonnegative: bool = False) -> bool:
     return True
 
 
+def _decode_hilift_velocity_storage(data: bytes, count: int) -> bytes:
+    if len(data) != count * 4:
+        raise ValueError("HiLift compact velocity storage length differs")
+    decoded = bytearray(len(data))
+    word = 0
+    for index in range(count):
+        delta = (
+            data[index]
+            | (data[count + index] << 8)
+            | (data[2 * count + index] << 16)
+            | (data[3 * count + index] << 24)
+        )
+        word = (word + delta) & 0xFFFFFFFF
+        struct.pack_into("<I", decoded, index * 4, word)
+    return bytes(decoded)
+
+
 def hiliftaeroml_compact_truth_errors(
     ground_truth_root: Path,
     dataset_manifest: dict[str, Any],
@@ -3276,6 +3293,9 @@ def hiliftaeroml_compact_truth_errors(
                 "invalid_row_count",
                 "prediction_dtype",
                 "prediction_array",
+                "storage_dtype",
+                "storage_encoding",
+                "stored_byte_count",
             )
             if any(
                 prediction_cp.get(key) != truth_cp.get(key)
@@ -3325,11 +3345,22 @@ def hiliftaeroml_compact_truth_errors(
                     )
                     or arrays["velocity_speed_over_u_inf"][:2]
                     != (
-                        "<f4",
-                        prediction_velocity.get("valid_row_count"),
+                        "|u1",
+                        prediction_velocity.get("stored_byte_count"),
                     )
+                    or prediction_velocity.get("storage_dtype") != "uint8"
+                    or prediction_velocity.get("storage_encoding")
+                    != (
+                        "little_endian_float32_bits_unsigned_delta_modulo_"
+                        "2pow32_byte_shuffle_v1"
+                    )
+                    or prediction_velocity.get("stored_byte_count")
+                    != prediction_velocity.get("valid_row_count", 0) * 4
                     or not _all_finite_f4(
-                        arrays["velocity_speed_over_u_inf"][2],
+                        _decode_hilift_velocity_storage(
+                            arrays["velocity_speed_over_u_inf"][2],
+                            prediction_velocity.get("valid_row_count", 0),
+                        ),
                         nonnegative=True,
                     )
                 ):

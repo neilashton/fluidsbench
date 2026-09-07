@@ -47,7 +47,8 @@
   };
   const hiLiftCompactPredictionFormat = "fluidsbench-hiliftaeroml-compact-profile-chunks-v2-candidate";
   const hiLiftCompactProfileContractId = "hiliftaeroml-compact-profile-predictions-v2-candidate";
-  const hiLiftCompactProfileContractSha256 = "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c";
+  const hiLiftCompactProfileContractSha256 = "b1fd29b2cb6c1c84c694ddffc5d85f6cd68fd175b79c3695a443aa78bf962c2f";
+  const hiLiftVelocityStorageEncoding = "little_endian_float32_bits_unsigned_delta_modulo_2pow32_byte_shuffle_v1";
   const hiLiftCompactTruthReleaseId = "hiliftaeroml-compact-profile-truth-all1355-v1";
   const hiLiftCompactTruthCaseCount = 1355;
   const hiLiftCompactTruthCaseSetCount = 8;
@@ -6036,6 +6037,31 @@
     return array.values;
   }
 
+  function decodeHiLiftVelocityStorage(stored, expectedCount, label) {
+    if (
+      !Array.isArray(stored) ||
+      !Number.isSafeInteger(expectedCount) ||
+      expectedCount < 1 ||
+      stored.length !== expectedCount * 4
+    ) {
+      throw new Error(`${label} compact velocity storage length differs from its contract`);
+    }
+    const buffer = new ArrayBuffer(expectedCount * 4);
+    const view = new DataView(buffer);
+    let word = 0;
+    for (let index = 0; index < expectedCount; index += 1) {
+      const delta =
+        (stored[index] |
+          (stored[expectedCount + index] << 8) |
+          (stored[2 * expectedCount + index] << 16) |
+          (stored[3 * expectedCount + index] << 24)) >>>
+        0;
+      word = (word + delta) >>> 0;
+      view.setUint32(index * 4, word, true);
+    }
+    return Array.from({ length: expectedCount }, (_unused, index) => view.getFloat32(index * 4, true));
+  }
+
   function verifiedProfileArtifactUrl(profileCase, artifact, label) {
     if (
       artifact?.format !== "numpy-npz-v1" ||
@@ -6318,6 +6344,9 @@
         "invalid_row_count",
         "prediction_dtype",
         "prediction_array",
+        "storage_dtype",
+        "storage_encoding",
+        "stored_byte_count",
       ],
       label
     );
@@ -6326,7 +6355,19 @@
     if (loaded.byteLength !== profileCase.artifact.byte_size) throw new Error(`${label} NPZ byte size differs from its JSON binding`);
     exactProfileArrayInventory(loaded.arrays, ["cp_q_delta", "velocity_speed_over_u_inf"], label);
     const deltas = requiredProfileArray(loaded.arrays, "cp_q_delta", "<i2", label);
-    const velocity = requiredProfileArray(loaded.arrays, "velocity_speed_over_u_inf", "<f4", label);
+    const storedVelocity = requiredProfileArray(loaded.arrays, "velocity_speed_over_u_inf", "|u1", label);
+    if (
+      profileCase.volume_velocity.storage_dtype !== "uint8" ||
+      profileCase.volume_velocity.storage_encoding !== hiLiftVelocityStorageEncoding ||
+      profileCase.volume_velocity.stored_byte_count !== storedVelocity.length
+    ) {
+      throw new Error(`${label} compact velocity storage metadata differs from its contract`);
+    }
+    const velocity = decodeHiLiftVelocityStorage(
+      storedVelocity,
+      profileCase.volume_velocity.valid_row_count,
+      label
+    );
     const support = truthCase._fluidsbenchHiLiftPlotSupport;
     if (deltas.length !== support.cpX.length || velocity.length !== support.velocityTruth.length) {
       throw new Error(`${label} compact prediction lengths differ from public plot support`);

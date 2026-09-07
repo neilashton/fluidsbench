@@ -76,7 +76,9 @@ The browser SHA-verifies the all-case master index, selected case-set index,
 JSON chunk, common velocity support, and selected case artifact. It
 independently verifies and decodes the participant's prediction-only NPZ,
 checks the exact support and prediction-order identities, reconstructs
-delta-coded Cp, restores velocity gaps, and only then plots the two curves.
+delta-coded Cp, losslessly reverses the shuffled unsigned-delta float32
+velocity-bit transform, restores velocity gaps, and only then plots the two
+curves. Both participant NPZ members use browser-native ZIP Deflate.
 Regenerate the derived release from the authorized lossless native-truth and
 frozen prerequisite-authority checkouts with:
 

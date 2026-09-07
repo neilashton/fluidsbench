@@ -8,7 +8,7 @@
   "dataset_id": "hiliftaeroml",
   "dataset_revision": "hiliftaeroml-native-profile-truth-v1-candidate",
   "profile_contract_id": "hiliftaeroml-compact-profile-predictions-v2-candidate",
-  "profile_contract_sha256": "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c",
+  "profile_contract_sha256": "b1fd29b2cb6c1c84c694ddffc5d85f6cd68fd175b79c3695a443aa78bf962c2f",
   "source_profile_truth_release_id": "hiliftaeroml-native-profile-truth-v1-candidate",
   "source_profile_truth_manifest_sha256": "3e20b857e12055e16f1d248d125b8df62a3669c604411dc67322fe98d9ab4477",
   "source_prerequisite_authority_index_sha256": "991988cba62214ee85e7066f53a8bc82f639baa76b92f07b4e375e0364986ea4",
@@ -100,8 +100,8 @@
     {
       "chunk_id": "chunk-000",
       "file": "chunks/caseset-02fc12ff3494/chunk-000.json",
-      "sha256": "efbfe99922950fe7c3ab452526b65205bcd206b595d8277bb0e320ee693d75f8",
-      "byte_size": 27428,
+      "sha256": "2e04797f42fff5e63f7a4b33b10da4f86787d4fcf47ae038e7b887cb51353718",
+      "byte_size": 28858,
       "case_count": 10,
       "case_ids": [
         "geo_LHC006_AoA_12",
@@ -119,8 +119,8 @@
     {
       "chunk_id": "chunk-001",
       "file": "chunks/caseset-02fc12ff3494/chunk-001.json",
-      "sha256": "791c527fb057f67a55cc1abf139a43c4c8e6ca96b58d9592aeecee3f9c083ae8",
-      "byte_size": 27429,
+      "sha256": "b7f36f69ae9d78510de6f5f1f8862c7d79509f84c224701f90de8e93dcfaacc3",
+      "byte_size": 28859,
       "case_count": 10,
       "case_ids": [
         "geo_LHC027_AoA_12",
@@ -138,8 +138,8 @@
     {
       "chunk_id": "chunk-002",
       "file": "chunks/caseset-02fc12ff3494/chunk-002.json",
-      "sha256": "3f93f213bc619c512526a35f1e4b0774c2834058b61c3bc9c1b098a374adbded",
-      "byte_size": 27429,
+      "sha256": "a7f11a8135d41b48ec31548d8b1ad3e5406a3d0312791505c0a976c8563d28d6",
+      "byte_size": 28859,
       "case_count": 10,
       "case_ids": [
         "geo_LHC041_AoA_12",
@@ -157,8 +157,8 @@
     {
       "chunk_id": "chunk-003",
       "file": "chunks/caseset-02fc12ff3494/chunk-003.json",
-      "sha256": "e3d0c3d3c543e5d573b729da05b6bb603fbb6c8032e82f58f1b6217b59c8c43f",
-      "byte_size": 16585,
+      "sha256": "0e48d91549c2c6501bf4a9ebc6fd5a9c5861cbf760f98009e8b278a0a52d7e9b",
+      "byte_size": 17443,
       "case_count": 6,
       "case_ids": [
         "geo_LHC074_AoA_12",

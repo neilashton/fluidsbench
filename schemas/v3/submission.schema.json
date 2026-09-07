@@ -139,6 +139,9 @@
     "split_sha256": {
       "$ref": "#/$defs/sha256"
     },
+    "prediction_scope": {
+      "enum": ["surface_and_volume", "surface_only"]
+    },
     "parameter_count_millions": {
       "type": "number",
       "minimum": 0
@@ -260,6 +263,9 @@
     },
     "profile_data": {
       "$ref": "#/$defs/profile_data"
+    },
+    "regional_diagnostics": {
+      "$ref": "#/$defs/regional_diagnostics"
     }
   },
   "$defs": {
@@ -1200,6 +1206,54 @@
         }
       }
     },
+    "regional_diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "file",
+        "sha256",
+        "contract_sha256",
+        "case_count",
+        "role",
+        "weight",
+        "official_score_changed"
+      ],
+      "properties": {
+        "format": {
+          "enum": [
+            "drivaerml-regional-aggregate-v2",
+            "hiliftaeroml-regional-diagnostics-aggregate-v1",
+            "hiliftaeroml-regional-diagnostics-aggregate-v2"
+          ]
+        },
+        "file": {
+          "const": "regional-diagnostics.json"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "contract_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "definition_id": {
+          "$ref": "#/$defs/safe_id"
+        },
+        "case_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "role": {
+          "const": "report_only"
+        },
+        "weight": {
+          "const": 0.0
+        },
+        "official_score_changed": {
+          "const": false
+        }
+      }
+    },
     "profile_data": {
       "type": "object",
       "additionalProperties": false,
@@ -1208,7 +1262,9 @@
         "format": {
           "enum": [
             "fluidsbench-profile-chunks-v1",
-            "fluidsbench-drivaerml-relative-profile-chunks-v3-candidate"
+            "fluidsbench-drivaerml-relative-profile-chunks-v3-candidate",
+            "fluidsbench-hiliftaeroml-native-profile-chunks-v1-candidate",
+            "fluidsbench-hiliftaeroml-compact-profile-chunks-v2-candidate"
           ]
         },
         "index_file": {
@@ -1226,8 +1282,62 @@
         },
         "profile_ground_truth_manifest_sha256": {
           "$ref": "#/$defs/sha256"
+        },
+        "evaluator_support_release_id": {
+          "$ref": "#/$defs/safe_id"
+        },
+        "evaluator_support_manifest_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "compact_profile_implementation_binding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "activation_effect",
+            "code_revision",
+            "implementation_manifest_sha256",
+            "base_dataset_evaluator_scope"
+          ],
+          "properties": {
+            "status": { "const": "unbound_worktree_candidate" },
+            "activation_effect": { "const": "none" },
+            "code_revision": { "type": "null" },
+            "implementation_manifest_sha256": { "type": "null" },
+            "base_dataset_evaluator_scope": {
+              "const": "native_v1_base_field_force_and_noncompact_scoring_only"
+            }
+          }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "format": {
+                "const": "fluidsbench-hiliftaeroml-compact-profile-chunks-v2-candidate"
+              }
+            },
+            "required": ["format"]
+          },
+          "then": {
+            "required": [
+              "evaluator_support_release_id",
+              "evaluator_support_manifest_sha256",
+              "compact_profile_implementation_binding"
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {"required": ["evaluator_support_release_id"]},
+                {"required": ["evaluator_support_manifest_sha256"]},
+                {"required": ["compact_profile_implementation_binding"]}
+              ]
+            }
+          }
+        }
+      ]
     }
   },
   "allOf": [

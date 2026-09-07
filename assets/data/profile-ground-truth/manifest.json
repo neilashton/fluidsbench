@@ -294,11 +294,11 @@
         "release_id": "hiliftaeroml-compact-profile-truth-all1355-v1",
         "format": "fluidsbench-hiliftaeroml-compact-profile-truth-v1",
         "profile_contract_id": "hiliftaeroml-compact-profile-predictions-v2-candidate",
-        "profile_contract_sha256": "1e84265c60f0a50e56b1ac59c8d159b1617c920b7a717ce3fafe03ee561ee01c",
+        "profile_contract_sha256": "b1fd29b2cb6c1c84c694ddffc5d85f6cd68fd175b79c3695a443aa78bf962c2f",
         "case_count": 1355,
         "case_set_count": 8,
         "master_index_file": "datasets/hiliftaeroml/compact-all1355-v1/index.json",
-        "master_index_sha256": "07ba8bec0ae1079659114cc054a9a3c61344727328ec6cd6741cf93ad789d5d4"
+        "master_index_sha256": "5473aca0d923b8801ddd6e4788fe3597c748370b20668b780fe5dea749ea57a2"
       },
       "splits": [
         {
@@ -390,7 +390,7 @@
         {
           "id": "caseset-ac791749e527",
           "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-ac791749e527.json",
-          "index_sha256": "08bdff34bff366147a952e3fd713c819a0d1d845fd9999a8d37cfcfe6707b7ca",
+          "index_sha256": "4cc4934d426618fe1370088ab45d67a6325145094e5e2a8099ff76219396ac33",
           "case_count": 360,
           "case_id_status": "official",
           "coverage": "complete_split",
@@ -399,7 +399,7 @@
         {
           "id": "caseset-53990ea68fa6",
           "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-53990ea68fa6.json",
-          "index_sha256": "1ed32606d1f2ff984a313f402651b523efc89b03001b595ac0bd2cf09e08f087",
+          "index_sha256": "1462a9e2d10bfe3c1a36ab292def7c8d24a7070647da4d71a970d8cac212779f",
           "case_count": 360,
           "case_id_status": "official",
           "coverage": "complete_split",
@@ -408,7 +408,7 @@
         {
           "id": "caseset-7a743a20b3bd",
           "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-7a743a20b3bd.json",
-          "index_sha256": "ffd141538a9e90c7dd81509e37d3d0748b7ee7a5c1d8141ada943df4010a387b",
+          "index_sha256": "115a7a29cfd3e8833ccf2f212bc0a1fe45245efc23055620fde7f216844d1e80",
           "case_count": 36,
           "case_id_status": "official",
           "coverage": "complete_split",
@@ -417,7 +417,7 @@
         {
           "id": "caseset-02fc12ff3494",
           "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-02fc12ff3494.json",
-          "index_sha256": "5cf6e82b517333b600de5435a5c0c6a98eadd69b4e73ff7f4cf0516d1822bd61",
+          "index_sha256": "62d22b8c62a9888e501994bb9c8df89a38919972a8ce09789c71850000c284ec",
           "case_count": 36,
           "case_id_status": "official",
           "coverage": "complete_split",
@@ -426,7 +426,7 @@
         {
           "id": "caseset-85ecccd9ccda",
           "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-85ecccd9ccda.json",
-          "index_sha256": "000be6f184c5b35c482926f7cf169eaeacaab41cad00fd0d32ea8db5232ec691",
+          "index_sha256": "123351e2037d7c0053ffdac445b368c3943d9a3ca0348ac81964f488bbf71f56",
           "case_count": 36,
           "case_id_status": "official",
           "coverage": "complete_split",
@@ -435,7 +435,7 @@
         {
           "id": "caseset-29693354ed8a",
           "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-29693354ed8a.json",
-          "index_sha256": "bf63f9f694208b39457bb3b174884e9a08896331faf37cd006b9fd314054d44e",
+          "index_sha256": "ca7ab1872c12ebbd32b96cc70ab87f727b2bca2aea94f01376140435bba559ec",
           "case_count": 900,
           "case_id_status": "official",
           "coverage": "complete_split",
@@ -444,7 +444,7 @@
         {
           "id": "caseset-c0ecb14de138",
           "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-c0ecb14de138.json",
-          "index_sha256": "5e54a58083422e4f9f65fe1207bd449bebce57952963edf291ccd183e2605f42",
+          "index_sha256": "c1c0d2e4d14fade4c9b087515438a21f247a180aae180f9146a6aba89af865bd",
           "case_count": 360,
           "case_id_status": "official",
           "coverage": "complete_split",
@@ -453,7 +453,7 @@
         {
           "id": "caseset-804491c8956e",
           "index_file": "datasets/hiliftaeroml/compact-all1355-v1/case-set-caseset-804491c8956e.json",
-          "index_sha256": "073dea969bac32f4b0937bbb8fd11e0f1346ebce3ad32aa68be5e2de5c8d0511",
+          "index_sha256": "c77496fe076ccdf996d736bde3e05f6fef037d7ce0d568252456234ab7e72270",
           "case_count": 723,
           "case_id_status": "official",
           "coverage": "complete_split",
