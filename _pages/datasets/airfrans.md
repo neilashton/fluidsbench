@@ -142,8 +142,10 @@ compact_masthead: true
       <div>
         <dt>Velocity profile R<sup>2</sup></dt>
         <dd>
-          One R<sup>2</sup> over the required <code>U_x/U_inf</code> and <code>U_y/U_inf</code> samples, flattened across the four stations, all
-          evaluated cases, 1,001 sample points, and both Cartesian components.
+          Calculate R<sup>2</sup> separately for each of the four stations and two Cartesian velocity components
+          (<code>U_x/U_inf</code> and <code>U_y/U_inf</code>), using all cases and 1,001 samples per case in the selected official split.
+          Bound each of these eight R<sup>2</sup> values to [0, 1], then average them equally to obtain the single velocity-profile metric.
+          This gives every station and velocity component equal weight. Partial-case scores are calibration diagnostics only.
         </dd>
       </div>
       <div>
