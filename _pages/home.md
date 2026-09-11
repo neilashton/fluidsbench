@@ -5,6 +5,7 @@ permalink: /
 page_title: "About FluidsBench"
 page_subtitle: A public benchmark designed for comparable, citable evaluation of AI surrogate models in fluid dynamics
 description: Learn how FluidsBench evaluates CFD surrogate models and meet the academic and industry team behind the benchmark.
+show_navbar_brand: true
 ---
 
 <div class="about-page">
