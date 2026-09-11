@@ -267,8 +267,9 @@ compact_masthead: true
     </div>
     <p>
       The exact HLPW-5 cutting-plane equations and element-specific extraction macros are available in the
-      <a href="https://aiaa-hlpw.org/HLPW/index-workshop5.html">workshop archive</a>. The leaderboard curves are currently
-      illustrative dummy data, but their station coverage and coordinate convention match the workshop format.
+      <a href="https://aiaa-hlpw.org/HLPW/index-workshop5.html">workshop archive</a>. The development leaderboard curves use
+      checksum-bound predictions from retained Transolver and GeoTransolver inference, with the same workshop station coverage
+      and coordinate convention as the public plot-only ground truth.
     </p>
   </section>
 
@@ -277,8 +278,8 @@ compact_masthead: true
     <p>
       Use all 16 locations from the official HLPW-5 Case 2.4 velocity-profile template. Each trace is extracted vertically
       at fixed full-scale <code>x,y</code> coordinates, with <code>z_offset_in = z - z_surface</code>. Coordinates are in
-      inches and station IDs must match the values below. The prototype leaderboard values are dummy data; the locations
-      and coordinate convention are taken from the
+      inches and station IDs must match the values below. The development leaderboard traces are checksum-bound retained
+      inference predictions; the locations and coordinate convention are taken from the
       <a href="https://aiaa-hlpw.org/HLPW/index-workshop5.html">HLPW-5 workshop archive</a>.
     </p>
     <div class="dataset-table-wrap">

@@ -6,9 +6,9 @@ submissions. Evaluation cases remain a declared test partition and must not be u
 preprocessing statistics.
 
 The top-level review release and legacy analytical fixtures remain explicitly marked `prototype_dummy_data`; they are not native CFD
-truth and must not be presented as such. DrivAerML and the HiLiftAeroML Full360 case set are explicit exceptions within this review
-release: their separately declared, checksum-bound `native_cfd` bundles contain dataset-owner-produced native values and are never
-sourced from the analytical fixture generator. Publishing either reference bundle does not make a leaderboard result official. An
+truth and must not be presented as such. DrivAerML and the complete 1,355-case HiLiftAeroML release are explicit exceptions within this
+review release: their separately declared, checksum-bound `native_cfd` bundles contain dataset-owner-produced native values and are
+never sourced from the analytical fixture generator. Publishing either reference bundle does not make a leaderboard result official. An
 official result still requires a validated submission package and maintainer approval; none of the current rows is official or
 approved. Public code, model,
 environment, and artifact-documentation links are optional and do not affect rank, academic-citation eligibility, or promotion
