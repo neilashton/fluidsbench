@@ -127,7 +127,9 @@ ${source.slice(markerIndex)}`;
 
 const elements = new Map();
 const context = {
+  ArrayBuffer,
   Blob,
+  DataView,
   DecompressionStream,
   Map,
   Set,
@@ -135,6 +137,7 @@ const context = {
   TextEncoder,
   URL,
   URLSearchParams,
+  Uint8Array,
   Response: TestResponse,
   console,
   document: {
@@ -2194,12 +2197,30 @@ async function verifyHiLiftCompactProfileOverlay() {
     ["single_aoa_4", ["AoA 4", "caseset-7a743a20b3bd", 36]],
     ["single_aoa_12", ["AoA 12", "caseset-02fc12ff3494", 36]],
     ["single_aoa_22", ["AoA 22", "caseset-85ecccd9ccda", 36]],
-    ["super_scarce", ["Super scarce", "caseset-ac791749e527", 360]],
+    ["geometry", ["Geometry", "caseset-53990ea68fa6", 360]],
     ["geometry_scarce", ["Geometry scarce", "caseset-53990ea68fa6", 360]],
     ["geometry_super_scarce", ["Geometry super scarce", "caseset-53990ea68fa6", 360]],
+    ["super_scarce", ["Super scarce", "caseset-ac791749e527", 360]],
+    ["aoa", ["AoA extrapolation", "caseset-29693354ed8a", 900]],
+    ["deflection", ["Deflection", "caseset-c0ecb14de138", 360]],
+    ["stall", ["Stall", "caseset-804491c8956e", 723]],
   ]);
+  const expectedRowsPerSplit = new Map(
+    [...expectedPreviewSplits].map(([splitId]) => [splitId, splitId === "deflection" ? 1 : 2])
+  );
   const previewRows = feed.filter((entry) => entry.dataset_id === "hiliftaeroml");
-  assert.equal(previewRows.length, expectedPreviewSplits.size, "all seven retained HiLiftAeroML previews must be present");
+  assert.equal(
+    previewRows.length,
+    [...expectedRowsPerSplit.values()].reduce((sum, count) => sum + count, 0),
+    "all retained Transolver and GeoTransolver HiLiftAeroML previews must be present"
+  );
+  for (const [splitId, expectedCount] of expectedRowsPerSplit) {
+    assert.equal(
+      previewRows.filter((row) => row.split_id === splitId).length,
+      expectedCount,
+      `unexpected HiLiftAeroML preview count for ${splitId}`
+    );
+  }
   for (const row of previewRows) {
     const expected = expectedPreviewSplits.get(row.split_id);
     assert.ok(expected, `unexpected HiLiftAeroML preview split ${row.split_id}`);
