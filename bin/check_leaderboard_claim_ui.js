@@ -2194,6 +2194,7 @@ async function verifyHiLiftCompactProfileOverlay() {
 
   const expectedPreviewSplits = new Map([
     ["full", ["Full", "caseset-ac791749e527", 360]],
+    ["scarce", ["Scarce", "caseset-ac791749e527", 360]],
     ["single_aoa_4", ["AoA 4", "caseset-7a743a20b3bd", 36]],
     ["single_aoa_12", ["AoA 12", "caseset-02fc12ff3494", 36]],
     ["single_aoa_22", ["AoA 22", "caseset-85ecccd9ccda", 36]],
@@ -2206,13 +2207,16 @@ async function verifyHiLiftCompactProfileOverlay() {
     ["stall", ["Stall", "caseset-804491c8956e", 723]],
   ]);
   const expectedRowsPerSplit = new Map(
-    [...expectedPreviewSplits].map(([splitId]) => [splitId, splitId === "deflection" ? 1 : 2])
+    [...expectedPreviewSplits].map(([splitId]) => [
+      splitId,
+      splitId === "scarce" ? 1 : 2,
+    ])
   );
   const previewRows = feed.filter((entry) => entry.dataset_id === "hiliftaeroml");
   assert.equal(
     previewRows.length,
     [...expectedRowsPerSplit.values()].reduce((sum, count) => sum + count, 0),
-    "all retained Transolver and GeoTransolver HiLiftAeroML previews must be present"
+    "all 23 retained Transolver and GeoTransolver HiLiftAeroML previews must be present"
   );
   for (const [splitId, expectedCount] of expectedRowsPerSplit) {
     assert.equal(
