@@ -12,7 +12,7 @@ FluidsBench brings together dataset-specific benchmark definitions, public score
 
 **Submissions are currently closed.**
 
-The current leaderboard is a prototype and has no official or citable rows. Most displayed rows remain illustrative fixtures. The retained HiLiftAeroML Transolver and GeoTransolver previews use real surrogate-inference results paired with real CFD profile truth across the official splits, but they remain owner-review candidates and are not official leaderboard claims.
+The current leaderboard is a prototype and has no official or citable rows. Most displayed rows remain illustrative fixtures. The 23 retained HiLiftAeroML previews (11 Transolver and 12 GeoTransolver) use real surrogate-inference results paired with real CFD profile truth across the represented Table 5 splits, but they remain owner-review candidates and are not official leaderboard claims.
 
 ## Evaluation approach
 
