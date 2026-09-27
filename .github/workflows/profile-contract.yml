@@ -25,9 +25,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: neilashton/fluidsbench-submission
-          # Public schemas and the canonical source audit from current dev.
+          # Complete-case compute schema and the canonical source audit.
           # The feed above retains existing non-HiLift dataset contracts.
-          ref: 9eea95f71a8b5f8cd98935aa18dbd81abec8bbb4
+          ref: f9e26fb571482ee9a155b5fb756e12b4e95caa67
           sparse-checkout: |
             schemas
             docs

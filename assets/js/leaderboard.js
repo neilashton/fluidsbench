@@ -347,7 +347,8 @@
     metricView: "summary",
     workspaceView: "leaderboard",
     computeMode: "inference",
-    computeAxis: "wall",
+    computeAxis: "throughput",
+    computeConditions: "",
     computeHardware: "",
     computeSort: "score",
     analysisView: "comparison",
@@ -739,7 +740,8 @@
     params.set("metric_view", state.metricView);
     params.set("view", state.workspaceView);
     if (state.computeMode !== "inference") params.set("compute", state.computeMode);
-    if (state.computeAxis !== "wall") params.set("compute_axis", state.computeAxis);
+    if (state.computeAxis !== "throughput") params.set("compute_axis", state.computeAxis);
+    if (state.computeConditions) params.set("compute_conditions", state.computeConditions);
     if (state.computeHardware) params.set("compute_hardware", state.computeHardware);
     if (state.computeSort !== "score") params.set("compute_sort", state.computeSort);
     params.set("analysis", state.analysisView);
@@ -10213,9 +10215,12 @@
       ? restored.params.get("view")
       : "leaderboard";
     state.computeMode = restored.params.get("compute") === "training" ? "training" : "inference";
-    state.computeAxis = restored.params.get("compute_axis") === "device" ? "device" : "wall";
+    state.computeAxis = ["wall", "device", "throughput"].includes(restored.params.get("compute_axis"))
+      ? restored.params.get("compute_axis")
+      : "throughput";
+    state.computeConditions = restored.params.get("compute_conditions") || "";
     state.computeHardware = restored.params.get("compute_hardware") || "";
-    state.computeSort = ["score", "wall", "device", "parameters", "model"].includes(restored.params.get("compute_sort"))
+    state.computeSort = ["score", "throughput", "wall", "device", "parameters", "model"].includes(restored.params.get("compute_sort"))
       ? restored.params.get("compute_sort")
       : "score";
     state.analysisView = restored.params.get("analysis") || "comparison";
@@ -10533,7 +10538,8 @@
   }
 
   function computeAxisValue(item) {
-    if (state.computeMode === "training") return item.training.deviceHours;
+    if (state.computeMode === "training") return item.training.plotDeviceHours;
+    if (state.computeAxis === "throughput") return item.inference.casesPerSecond;
     return state.computeAxis === "device" ? item.inference.deviceSecondsPerCase : item.inference.wallSecondsPerCase;
   }
 
@@ -10557,7 +10563,22 @@
       [{ value: "", label: `All ${deviceLabel} models` }, ...hardwareOptions],
       state.computeHardware
     );
-    const items = all.filter((item) => !state.computeHardware || item[state.computeMode].accelerator.filterKey === state.computeHardware);
+    element("compute-conditions-control").hidden = training;
+    state.computeConditions = populateSelect(
+      element("compute-conditions"),
+      [
+        { value: "", label: "All reported conditions" },
+        ...new Map(
+          all.map((item) => [item.inference.conditionsKey, { value: item.inference.conditionsKey, label: item.inference.conditionsLabel }])
+        ).values(),
+      ],
+      state.computeConditions
+    );
+    const items = all.filter(
+      (item) =>
+        (!state.computeHardware || item[state.computeMode].accelerator.filterKey === state.computeHardware) &&
+        (training || !state.computeConditions || item.inference.conditionsKey === state.computeConditions)
+    );
     document
       .querySelectorAll("[data-compute-mode]")
       .forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.computeMode === state.computeMode)));
@@ -10570,7 +10591,12 @@
       element("compute-sort"),
       [
         { value: "score", label: `${scoreLabel} (${higher ? "high" : "low"} first)` },
-        ...(!training ? [{ value: "wall", label: "Elapsed time (low first)" }] : []),
+        ...(!training
+          ? [
+              { value: "throughput", label: "Complete cases/s (high first)" },
+              { value: "wall", label: "Elapsed time (low first)" },
+            ]
+          : []),
         { value: "device", label: "Device time (low first)" },
         { value: "parameters", label: "Parameters (low first)" },
         { value: "model", label: "Model (A–Z)" },
@@ -10580,6 +10606,7 @@
     const sortValue = (item) =>
       ({
         score: item.score,
+        throughput: item.inference.casesPerSecond,
         wall: item.inference.wallSecondsPerCase,
         device: training ? item.training.deviceHours : item.inference.deviceSecondsPerCase,
         parameters: item.row.parameterCount,
@@ -10588,14 +10615,29 @@
       (left, right) =>
         (state.computeSort === "model"
           ? 0
-          : window.FluidsBenchCompute.compareNumbers(sortValue(left), sortValue(right), state.computeSort === "score" && higher)) ||
-        rowLabel(left.row).localeCompare(rowLabel(right.row))
+          : window.FluidsBenchCompute.compareNumbers(
+              sortValue(left),
+              sortValue(right),
+              (state.computeSort === "score" && higher) || state.computeSort === "throughput"
+            )) || rowLabel(left.row).localeCompare(rowLabel(right.row))
     );
     const timed = items.filter((item) => computeAxisValue(item) !== null);
-    element("compute-coverage").textContent = `${timed.length} of ${items.length} results with timings`;
+    element("compute-coverage").textContent = `${timed.length} of ${items.length} results ${
+      training ? "with measured training totals" : "with timings"
+    }`;
     const headers = training
       ? ["Model", scoreLabel, "Parameters", "Training device-hours", "Reported stages", deviceLabel, "Count", "Training scope"]
-      : ["Model", scoreLabel, "Parameters", "Elapsed time / case", "Device time / case", deviceLabel, "Count", "Timing scope"];
+      : [
+          "Model",
+          scoreLabel,
+          "Parameters",
+          "Complete cases/s",
+          "Elapsed time / case",
+          "Device time / case",
+          deviceLabel,
+          "Count",
+          "Timing conditions",
+        ];
     element("compute-table-head").innerHTML = `<tr>${headers.map((label) => `<th scope="col">${escapeHtml(label)}</th>`).join("")}</tr>`;
     element("compute-table-caption").textContent = `${state.dataset} / ${state.split}: ${
       training ? "training" : "inference"
@@ -10614,10 +10656,14 @@
               : "";
           const values = training
             ? [
-                `${escapeHtml(computeQuantity(train.deviceHours, "device-h"))}${partial}`,
+                `${escapeHtml(computeQuantity(train.deviceHours, "device-h"))}<small>${escapeHtml(train.measurementBasisLabel)}</small>${partial}`,
                 `${stages}${train.upstreamCount ? `<small>+ ${train.upstreamCount} upstream</small>` : ""}`,
               ]
-            : [escapeHtml(computeQuantity(inf.wallSecondsPerCase, "s")), escapeHtml(computeQuantity(inf.deviceSecondsPerCase, "device-s"))];
+            : [
+                escapeHtml(computeQuantity(inf.casesPerSecond)),
+                escapeHtml(computeQuantity(inf.wallSecondsPerCase, "s")),
+                escapeHtml(computeQuantity(inf.deviceSecondsPerCase, "device-s")),
+              ];
           return `<tr class="${item.selected ? "is-selected" : ""}">
         <th scope="row"><button class="ux-compute-model" type="button" data-compute-details="${escapeHtml(
           row.id
@@ -10629,35 +10675,44 @@
           row.id
         )}" aria-label="Measurement notes for ${escapeHtml(rowLabel(row))}">Measurement notes ↗</button></small></th>
         <td>${escapeHtml(formatMetric(item.score, definition))}</td><td>${escapeHtml(computeQuantity(row.parameterCount, "M"))}</td>
-        <td>${values[0]}</td><td>${values[1]}</td>
+        ${values.map((value) => `<td>${value}</td>`).join("")}
         <td class="ux-compute-hardware"><span>${escapeHtml(gpu.label)}</span>${
           gpu.model && gpu.vendor ? `<small>${escapeHtml(gpu.vendor)}</small>` : ""
         }</td>
         <td class="ux-compute-device-count">${escapeHtml(gpuCount)}<small>${escapeHtml(countScope)}</small></td>
         <td>${escapeHtml(training ? train.scope : inf.scope)}<small>${escapeHtml(
-          training ? trainingLabel(row) : inf.cases !== null ? `${inf.cases} cases` : "Case count not reported"
+          training
+            ? trainingLabel(row)
+            : `${inf.cases !== null ? `${inf.cases} complete cases` : "Case count not reported"} · ${inf.precision} · ${inf.protocolLabel}`
         )}</small></td>
       </tr>`;
         })
-        .join("") || `<tr><td colspan="8" class="ux-compute-no-rows">No results match these filters.</td></tr>`;
+        .join("") || `<tr><td colspan="${headers.length}" class="ux-compute-no-rows">No results match these filters.</td></tr>`;
     renderComputeChart(items, scoreLabel, higher);
   }
 
   function renderComputeChart(items, scoreLabel, higher) {
     destroyChart("compute");
     const training = state.computeMode === "training";
+    const throughput = !training && state.computeAxis === "throughput";
     const axisLabel = training
       ? "Training device-hours · submitter stages"
-      : state.computeAxis === "device"
-        ? "Device time / case (device-s)"
-        : "Elapsed time / case (s)";
+      : throughput
+        ? "Complete cases / second"
+        : state.computeAxis === "device"
+          ? "Device time / case (device-s)"
+          : "Elapsed time / case (s)";
     const points = items
       .filter((item) => computeAxisValue(item) !== null && item.score !== null)
       .map((item) => ({ x: computeAxisValue(item), y: item.score, item }));
-    element("compute-chart-title").textContent = training ? "Score vs training compute" : "Score vs inference time";
-    element("compute-chart-direction").textContent = `Less ${training ? "compute" : "time"} ← · ${higher ? "Higher" : "Lower"} score ${
-      higher ? "↑" : "↓"
-    }`;
+    element("compute-chart-title").textContent = training
+      ? "Score vs training compute"
+      : throughput
+        ? "Score vs inference throughput"
+        : "Score vs inference time";
+    element("compute-chart-direction").textContent = `${throughput ? "More cases/s →" : `Less ${training ? "compute" : "time"} ←`} · ${
+      higher ? "Higher" : "Lower"
+    } score ${higher ? "↑" : "↓"}`;
     element("compute-chart-context").textContent = `${state.dataset} · ${state.split}${
       dataRelease().status !== "official" ? " · Preview timings may be provisional; see measurement notes." : ""
     }`;
@@ -10666,16 +10721,18 @@
     element("compute-empty").hidden = available;
     element("compute-empty").innerHTML = points.length
       ? "<strong>Chart unavailable</strong><p>All measurements are available in the table below.</p>"
-      : `<strong>${items.length ? "No comparable timings reported yet" : "No results for this selection"}</strong><p>${
+      : `<strong>${items.length ? "No measured timings to plot" : "No results for this selection"}</strong><p>${
           training
-            ? "Complete submitter-stage compute and a physics score are needed for this chart."
+            ? "Training totals must be complete and explicitly measured. Estimates and older totals with an unspecified basis remain in the table."
             : "Reported time, case count and a physics score are needed for this chart."
         }</p>`;
     const omitted = items.length - points.length;
     element("compute-chart-summary").textContent = `${points.length} result${points.length === 1 ? "" : "s"} plotted${
-      omitted ? ` · ${omitted} missing a complete timing or score` : ""
+      omitted ? ` · ${omitted} without an eligible timing or score` : ""
     }. ${
-      training ? "Submitter training only; upstream compute is excluded." : "Campaign average per case, not single-prediction latency."
+      training
+        ? "Measured submitter training only; estimates, unspecified totals and upstream compute are excluded."
+        : "Throughput covers complete cases; seconds/case is a campaign average, not single-request latency. Timing conditions and hardware can differ."
     } Larger points mark your comparison selection. Values and measurement notes are in the table.`;
     if (!available) return;
     const canvas = element("compute-chart");
@@ -10730,6 +10787,7 @@
                   training ? " per stage" : ""
                 }`,
                 context.raw.item[state.computeMode].scope,
+                training ? context.raw.item.training.measurementBasisLabel : context.raw.item.inference.conditionsLabel,
               ],
             },
           },
@@ -10772,6 +10830,9 @@
           submitted
             ? `<dl>
         ${detailsRow("GPU / accelerator model", window.FluidsBenchCompute.accelerator(compute).filterLabel)}
+        ${detailsRow("Hardware identity basis", humanize(compute.hardware_identity_basis || "Not specified"))}
+        ${detailsRow("Measurement basis", humanize(window.FluidsBenchCompute.measurementBasis(compute)))}
+        ${detailsRow("Cost scope", humanize(compute.cost_scope || "Not specified"))}
         ${detailsRow("Hardware description", compute.hardware || "Not reported")}
         ${detailsRow("Devices per job", computeQuantity(window.FluidsBenchCompute.accelerator(compute).devicesPerJob))}
         ${detailsRow("Maximum concurrent devices", computeQuantity(finiteNumber(compute.max_concurrent_device_count)))}
@@ -10790,13 +10851,31 @@
     return `<section class="ux-compute-details" aria-label="Compute summary">
       <div class="ux-compute-details-heading"><h4>Compute</h4><button class="leaderboard-action-button" type="button" data-open-compute>Explore compute →</button></div>
       <dl class="ux-compute-summary">
+        ${detailsRow("Inference · complete cases/s", computeQuantity(inf.casesPerSecond))}
         ${detailsRow("Inference · elapsed / case", computeQuantity(inf.wallSecondsPerCase, "s"))}
         ${detailsRow("Inference · device / case", computeQuantity(inf.deviceSecondsPerCase, "device-s"))}
-        ${detailsRow("Training · submitter stages", computeQuantity(train.deviceHours, "device-hours"))}
+        ${detailsRow("Training · submitter stages", `${computeQuantity(train.deviceHours, "device-hours")} · ${train.measurementBasisLabel}`)}
       </dl>
       <details class="ux-compute-measurements"><summary>Hardware, timing scope and measurement notes</summary><div>
         <h5>Inference</h5><dl>
           ${detailsRow("GPU / accelerator model", inf.accelerator.filterLabel)}
+          ${detailsRow("Hardware identity basis", humanize(inf.accelerator.identityBasis))}
+          ${detailsRow("Timing protocol", inf.protocolLabel)}
+          ${detailsRow("Output support", humanize(inf.outputSupport || "Not reported"))}
+          ${detailsRow("Precision", inf.precision)}
+          ${detailsRow(
+            "Batch size per invocation",
+            inf.execution.batch_size == null
+              ? "Not reported / variable"
+              : `${computeQuantity(inf.execution.batch_size)} ${inf.execution.batch_unit || "(unit not reported)"}`
+          )}
+          ${detailsRow("Warm-up cases", computeQuantity(inf.execution.warmup_cases))}
+          ${detailsRow("Measured complete-split repetitions", computeQuantity(inf.repetitions))}
+          ${detailsRow("Software / runtime", inf.execution.software || "Not reported")}
+          ${detailsRow("Execution notes", inf.execution.notes || "Not reported")}
+          ${detailsRow("Setup elapsed time (separate)", computeQuantity(inf.setupSeconds, "s"))}
+          ${detailsRow("Peak memory per device", computeQuantity(inf.peakMemoryBytes, "bytes"))}
+          ${detailsRow("Maximum concurrent jobs", computeQuantity(inf.concurrentJobs))}
           ${detailsRow("Hardware description", inf.hardware || "Not reported")}
           ${detailsRow("Devices per inference job", computeQuantity(inf.accelerator.devicesPerJob))}
           ${detailsRow("Maximum concurrent devices", computeQuantity(inf.devices))}
@@ -10887,6 +10966,7 @@
       button.addEventListener("click", () => {
         state.computeMode = button.dataset.computeMode;
         state.computeHardware = "";
+        state.computeConditions = "";
         state.computeSort = "score";
         renderCompute();
         updateUrl();
@@ -10895,6 +10975,7 @@
     [
       ["compute-hardware", "computeHardware"],
       ["compute-axis", "computeAxis"],
+      ["compute-conditions", "computeConditions"],
       ["compute-sort", "computeSort"],
     ].forEach(([id, key]) => {
       element(id)?.addEventListener("change", (event) => {
@@ -10962,6 +11043,7 @@
       if (event.target.closest("[data-open-compute]")) {
         element("details-dialog")?.close();
         state.computeHardware = "";
+        state.computeConditions = "";
         activateWorkspace("compute");
         element("ux-tab-compute")?.focus();
       }
