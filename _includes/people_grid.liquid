@@ -4,22 +4,9 @@
     <p class="about-section-intro">The advisory board helps keep the benchmark scientifically useful and relevant across academia and industry.</p>
     <div class="advisory-grid">
       {% for person in include.people %}
-        <article class="advisory-person{% if person.image %} advisory-person--with-photo{% endif %}">
-          {% if person.image %}
-            <img
-              class="advisory-person__photo"
-              src="{{ person.image | relative_url }}"
-              alt="{{ person.name }}"
-              width="48"
-              height="48"
-              loading="lazy"
-              decoding="async"
-            >
-          {% endif %}
-          <div class="advisory-person__info">
-            <h3>{{ person.name }}</h3>
-            <p>{{ person.affiliation }}</p>
-          </div>
+        <article class="advisory-person">
+          <h3>{{ person.name }}</h3>
+          <p>{{ person.affiliation }}</p>
         </article>
       {% endfor %}
     </div>
