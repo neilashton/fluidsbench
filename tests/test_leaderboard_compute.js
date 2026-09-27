@@ -141,3 +141,72 @@ test("mixed, unknown and CPU records do not acquire GPU labels", () => {
   assert.equal(result.type, "cpu");
   assert.equal(result.label, "EPYC 9654");
 });
+
+test("complete-case throughput is the reciprocal of campaign average, never device time", () => {
+  const result = summarize(row()).inference;
+  assert.equal(result.casesPerSecond, 0.1);
+  for (const value of [0, null, -1, Infinity, NaN, "100"]) {
+    const input = row();
+    input.methodology.inference_compute.campaign_wall_time_seconds = value;
+    assert.equal(summarize(input).inference.casesPerSecond, null);
+  }
+  const input = row();
+  input.methodology.inference_compute.case_count = 1.5;
+  assert.equal(summarize(input).inference.casesPerSecond, null);
+  input.methodology.record_kind = "prototype_fixture";
+  assert.equal(summarize(input).inference.casesPerSecond, null);
+});
+
+test("only complete and explicitly measured training totals are plotted", () => {
+  assert.equal(summarize(row([stage(12)])).training.plotDeviceHours, null);
+  const measured = stage(12, { measurement_basis: "measured" });
+  assert.equal(summarize(row([measured])).training.plotDeviceHours, 12);
+  for (const basis of [undefined, "estimated", "unknown"]) {
+    const result = summarize(row([measured, stage(8, { measurement_basis: basis })])).training;
+    assert.equal(result.deviceHours, 20, "labelled historical totals remain available in the table");
+    assert.equal(result.plotDeviceHours, null);
+  }
+  const incomplete = summarize(row([measured, stage(undefined, { measurement_basis: "measured" })])).training;
+  assert.equal(incomplete.plotDeviceHours, null);
+});
+
+test("GB200 example preserves historical timing and owner-attested hardware", () => {
+  const fixture = require("./fixtures/hilift-gb200-compute.json");
+  const before = JSON.stringify(fixture);
+  const { inference: inf, training: train } = summarize(fixture);
+  assert.equal(inf.casesPerSecond, 36 / 14351);
+  assert.equal(inf.wallSecondsPerCase, 14351 / 36);
+  assert.equal(inf.deviceSecondsPerCase, 53880 / 36);
+  assert.equal(inf.accelerator.label, "GB200");
+  assert.equal(inf.accelerator.identityBasis, "owner_confirmed");
+  assert.equal(inf.accelerator.devicesPerJob, 4);
+  assert.equal(inf.devices, 8);
+  assert.equal(inf.precision, "FP32");
+  assert.equal(inf.protocol, "legacy_reported");
+  assert.equal(inf.repetitions, null);
+  assert.equal(inf.execution.warmup_cases, null);
+  assert.equal(train.measurementBasis, "estimated");
+  assert.equal(train.deviceHours, 239.731732 + 265.816752);
+  assert.equal(train.plotDeviceHours, null);
+  assert.equal(JSON.stringify(fixture), before, "compute display cannot mutate source data");
+});
+
+test("timing condition filters distinguish protocols, precision and output support", () => {
+  const input = row();
+  const legacy = summarize(input).inference;
+  input.methodology.inference_compute.timing_protocol = "fluidsbench-complete-case-v1";
+  input.methodology.inference_compute.execution = { precision: "fp32" };
+  const v1 = summarize(input).inference;
+  assert.notEqual(v1.conditionsKey, legacy.conditionsKey);
+  assert.match(v1.protocolLabel, /declared/);
+  input.prediction_scope = "surface_only";
+  const surface = summarize(input).inference;
+  input.prediction_scope = "surface_and_volume";
+  assert.notEqual(summarize(input).inference.conditionsKey, surface.conditionsKey);
+  input.methodology.inference_compute.execution.precision = "bf16";
+  assert.notEqual(summarize(input).inference.conditionsKey, v1.conditionsKey);
+  assert.equal(legacy.precision, "Not reported");
+  input.methodology.inference_compute.campaign_runs = [{}, {}, {}];
+  assert.equal(summarize(input).inference.repetitions, 3);
+  assert.equal(summarize(input).inference.casesPerSecond, 0.1, "repetitions do not multiply unique cases");
+});

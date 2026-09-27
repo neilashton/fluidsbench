@@ -352,7 +352,7 @@ chart:
 
   <section id="ux-panel-compute" class="ux-compute" data-workspace-panel="compute" role="tabpanel" aria-labelledby="ux-tab-compute" hidden>
     <div class="ux-compute-heading">
-      <div><p class="ux-eyebrow">Resources behind the results</p><h2>Explore the compute trade-off</h2><p>Compare physics scores with the time and hardware each model uses.</p></div>
+      <div><p class="ux-eyebrow">Resources behind the results</p><h2>Explore the compute trade-off</h2><p>Compare physics scores with inference throughput, training cost and hardware.</p></div>
       <div class="ux-compute-modes" role="group" aria-label="Compute view">
         <button type="button" data-compute-mode="inference" aria-pressed="true">Inference</button>
         <button type="button" data-compute-mode="training" aria-pressed="false">Training</button>
@@ -360,11 +360,12 @@ chart:
     </div>
     <div class="ux-compute-controls">
       <label><span id="compute-hardware-label">GPU model</span> <select id="compute-hardware" aria-label="Filter compute by GPU or device model"><option value="">All GPU models</option></select></label>
-      <label id="compute-axis-control">Compare by <select id="compute-axis"><option value="wall">Elapsed time / case</option><option value="device">Device time / case</option></select></label>
+      <label id="compute-axis-control">Compare by <select id="compute-axis"><option value="throughput">Complete cases / second</option><option value="wall">Elapsed time / case</option><option value="device">Device time / case</option></select></label>
+      <label id="compute-conditions-control">Timing conditions <select id="compute-conditions"><option value="">All reported conditions</option></select></label>
       <span id="compute-coverage" role="status"></span>
     </div>
     <section class="ux-compute-chart-card" aria-labelledby="compute-chart-title">
-      <div class="ux-compute-chart-heading"><h3 id="compute-chart-title">Score vs inference time</h3><span id="compute-chart-direction">Less time ← · Higher score ↑</span></div>
+      <div class="ux-compute-chart-heading"><h3 id="compute-chart-title">Score vs inference throughput</h3><span id="compute-chart-direction">More cases/s → · Higher score ↑</span></div>
       <p id="compute-chart-context" class="ux-compute-caption"></p>
       <div class="ux-compute-chart-frame" id="compute-chart-frame"><canvas id="compute-chart" role="img" aria-label="Physics score versus compute" aria-describedby="compute-chart-summary"></canvas></div>
       <div id="compute-empty" class="ux-compute-empty" hidden><strong>No timings reported yet</strong><p>Models will appear here as compute measurements become available.</p></div>
@@ -376,10 +377,11 @@ chart:
     </div>
     <p class="ux-compute-footnote">Submitter-reported compute; hardware and timing scope may differ. Compute does not affect the physics score or leaderboard rank.</p>
     <details class="ux-compute-guide"><summary>How to read these numbers</summary><div>
+      <p><strong>Complete cases/s</strong> is the number of cases divided by campaign wall time. A case covers one benchmark geometry and condition, every required output and all points in its declared output support, including every chunk pass. A query batch or subsampled mesh is not a complete case.</p>
       <p><strong>Elapsed time / case</strong> is campaign wall time divided by the number of cases. Parallel work makes this a campaign average, not the latency of one prediction. <strong>Device time / case</strong> is total reported device-seconds divided by cases.</p>
-      <p><strong>Training device-hours</strong> sum the reported allocation across submitter training stages, including the runs covered by each stage. Upstream pretraining is excluded and flagged separately. Elapsed stage times are kept separate because stages can overlap.</p>
+      <p><strong>Training device-hours</strong> sum the reported allocation across submitter training stages, including the runs covered by each stage. Upstream pretraining is excluded and flagged separately. Elapsed stage times are kept separate because stages can overlap. Estimates and legacy totals with an unspecified measurement basis are labelled in the table and excluded from the training chart. Stage notes distinguish final training from search/tuning when reported.</p>
       <p><strong>GPU count</strong> shows maximum concurrent devices across the inference campaign, or the largest reported maximum for a training stage. It does not describe how many GPUs one prediction needs. Unconfirmed GPU models stay unconfirmed; the original hardware descriptions and any per-job counts are in measurement notes.</p>
-      <p>Compare within the same dataset and split, and check hardware, device counts and preprocessing/mapping scope. Device-hours on different hardware are not equivalent. Missing or incomplete measurements are never treated as zero. Open a model for its full measurement notes.</p>
+      <p>Compare within the same dataset and split, and match output support, hardware, device counts, precision and timing protocol. The timing-conditions filter narrows reported metadata; matching labels do not certify equivalent workloads. Legacy timers keep their original scope and are not certified against the complete-case v1 protocol. Device-hours on different hardware are not equivalent. Missing or incomplete measurements are never treated as zero. Open a model for its full measurement notes.</p>
     </div></details>
   </section>
 
