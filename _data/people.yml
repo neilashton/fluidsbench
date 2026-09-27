@@ -113,3 +113,7 @@ advisory_board:
   - name: Danielle Maddix Robinson
     affiliation: Siemens
     initials: DMR
+  - name: Victor Oancea
+    affiliation: Dassault Systèmes
+    initials: VO
+    image: /assets/img/people/victor-oancea.jpg
