@@ -62,6 +62,35 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
+    <h3>Overall score</h3>
+    <p>
+      The score combines <strong>50% fields, 25% forces, and 25% profiles</strong>.
+      Field and force weights match AhmedML, HiLiftAeroML, and WindsorML. AirfRANS uses its balanced velocity-profile
+      metric for the entire profile share because it has no scored Cp-cut family.
+    </p>
+    <div class="dataset-table-wrap">
+      <table class="dataset-table compact">
+        <thead><tr><th>Component</th><th>Overall weight</th><th>Zero-score error cap</th></tr></thead>
+        <tbody>
+          <tr><td>Airfoil pressure relative L2</td><td>15%</td><td>15%</td></tr>
+          <tr><td>Airfoil wall-shear relative L2</td><td>10%</td><td>20%</td></tr>
+          <tr><td>Flow-domain velocity relative L2</td><td>15%</td><td>12%</td></tr>
+          <tr><td>Flow-domain pressure relative L2</td><td>10%</td><td>15%</td></tr>
+          <tr><td>Drag coefficient R<sup>2</sup></td><td>15%</td><td>—</td></tr>
+          <tr><td>Lift coefficient R<sup>2</sup></td><td>10%</td><td>—</td></tr>
+          <tr><td>Balanced velocity-profile R<sup>2</sup></td><td>25%</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Each field component scores <code>100 × clip(1 − error / cap, 0, 1)</code>; each force or profile component scores
+      <code>100 × clip(R², 0, 1)</code>. The overall score is their weighted sum. The candidate scoring version
+      <code>airfrans-scoring-v2-candidate</code> replaces the former 67%/22%/11% balance. Field definitions and profile extraction
+      are unchanged; submissions remain closed pending the approved scoring release.
+    </p>
+  </section>
+
+  <section class="dataset-panel">
     <h3>Required velocity-profile stations</h3>
     <p>
       Extract Cartesian <code>U_x/U_inf</code> and <code>U_y/U_inf</code> along a 0.1 m line normal to the extrados at each station. Every line
@@ -142,8 +171,10 @@ compact_masthead: true
       <div>
         <dt>Velocity profile R<sup>2</sup></dt>
         <dd>
-          One R<sup>2</sup> over the required <code>U_x/U_inf</code> and <code>U_y/U_inf</code> samples, flattened across the four stations, all
-          evaluated cases, 1,001 sample points, and both Cartesian components.
+          Calculate R<sup>2</sup> separately for each of the four stations and two Cartesian velocity components
+          (<code>U_x/U_inf</code> and <code>U_y/U_inf</code>), using all cases and 1,001 samples per case in the selected official split.
+          Bound each of these eight R<sup>2</sup> values to [0, 1], then average them equally to obtain the single velocity-profile metric.
+          This gives every station and velocity component equal weight. Partial-case scores are calibration diagnostics only.
         </dd>
       </div>
       <div>
