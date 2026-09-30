@@ -439,10 +439,10 @@
       "status_label": "Official case lists; scoring definition in preparation",
       "submissions_open": false,
       "source_pin": "d35d4035d8ba6fa98c1a6662be925c2fc777610b",
-      "summary": "FluidsBench binds the four official AirfRANS evaluation lists. The current scored flow fields are U and p—not nut—and the boundary task scores pressure plus wall shear derived by the fixed evaluator. Required diagnostics are Ux/U∞ and Uy/U∞ on 1,001-point extrados-normal lines at x/c = 0.25, 0.50, 0.75, and 0.95. Pressure-profile Cp is not a current leaderboard metric.",
+      "summary": "FluidsBench binds the four official AirfRANS evaluation lists. The current scored flow fields are U and p—not nut—and the boundary task scores pressure plus wall shear derived by the fixed evaluator. Required diagnostics are Ux/U∞ and Uy/U∞ on 1,001-point extrados-normal lines at x/c = 0.25, 0.50, 0.75, and 0.95. Pressure-profile Cp is not a current leaderboard metric. The candidate overall score uses 50% fields, 25% drag/lift, and 25% balanced velocity profiles.",
       "split_ids": ["full", "scarce", "reynolds_extrapolation", "aoa_extrapolation"],
       "case_id_status": "official",
-      "contract_digest": "2f6bd2db08ea8cbba8908502b7e77a1eb96e0a8c1dcf609ca01337a8b2694312"
+      "contract_digest": "a304efe8a2a31e669ed6d7099f87df98b9292a062695b484d75bbfd8b7622800"
     },
     "visual": {
       "inputs": "Airfoil geometry + Reynolds number + angle of attack",

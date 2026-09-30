@@ -1,8 +1,8 @@
 {
-  "source_commit": "b4c04d6131c81578eca4e7ef8bee53ebb9f69ec3",
-  "manifest_sha256": "d2bfca3409040416b57694dd98819323b373ec98733b6bb609262ca678e7fdc4",
+  "source_commit": "f0f5b455929f18fef5c9b41c04beba7468bb3c84",
+  "manifest_sha256": "f17593d7bca82afd9eed3ec63f00598623cc9093842441cbade498a0f7552fa3",
   "release": {
-    "id": "prototype-dev-2026-09-16-deb0cb44c653",
+    "id": "prototype-dev-2026-09-16-4c51b08f226c",
     "status": "prototype_dummy_data",
     "asset_base_url": "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/",
     "archive_url": null
@@ -35,7 +35,7 @@
     },
     "airfrans": {
       "open": false,
-      "specification_sha256": "fa6b9b77a81c4a12d89642b17a64f7007f6f997599028f76ba4f742cb7d8d098",
+      "specification_sha256": "3136e684ec208f49508d0ae35ccbbf74022088f796a703909e6cff5950ffdf5f",
       "scoring_release_id": null
     },
     "blendednet": {
