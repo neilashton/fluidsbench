@@ -9,7 +9,7 @@ nav_order: 6
 
 <h3> Organizering Committee</h3>
 
-- Neil Ashton (NVIDIA)
+- Neil Ashton (Mistral)
 - Paola (Sorbonne University)
 - Astrid Walle (Siemens Energy)
 - Jean Kossai (NVIDIA)
