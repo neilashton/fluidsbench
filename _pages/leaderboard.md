@@ -511,12 +511,15 @@ chart:
   ];
   window.FluidsBenchPressureReferences = {{ site.data.pressure_references | jsonify }};
   window.FluidsBenchPressureReferenceUrl = {{ '/pressure-references/' | relative_url | jsonify }};
+  window.FluidsBenchProfileLocationDefinitionsUrl =
+    {{ '/assets/data/profile-locations/drivaerml-v9.json' | relative_url | jsonify }};
   window.FluidsBenchProfileGroundTruthBaseUrl =
     new URL("{{ '/assets/data/profile-ground-truth/' | relative_url }}", window.location.origin).href;
 </script>
 <script defer src="{{ '/assets/js/leaderboard-compute.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/leaderboard-scores.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/leaderboard-verification.js' | relative_url | bust_file_cache }}"></script>
+<script defer src="{{ '/assets/js/profile-locations.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/leaderboard.js' | relative_url | bust_file_cache }}"></script>
 
 {% else %}
