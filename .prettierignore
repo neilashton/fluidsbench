@@ -5,3 +5,6 @@ assets/plotly/demo.html
 lighthouse_results/**
 _posts/2015-10-20-math.md
 assets/data/profile-ground-truth/**
+
+# Preserve the byte-for-byte pinned dataset definition.
+assets/data/profile-locations/*.json

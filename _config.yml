@@ -260,7 +260,9 @@ jekyll-minifier:
     - "assets/data/profile-ground-truth/*.json"
     - "schemas/v2/*.json"
     - "schemas/releases/*.json"
-    - "assets/js/leaderboard.js"
+    - "assets/js/leaderboard*.js"
+    - "assets/js/profile-locations.js"
+    - "assets/data/profile-locations/*.json"
     - "assets/js/launch.js"
   uglifier_args:
     harmony: true

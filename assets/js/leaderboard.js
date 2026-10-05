@@ -6635,6 +6635,49 @@
     });
   }
 
+  const profileLocationGuides = new WeakMap();
+
+  function renderProfileLocationGuide(index) {
+    const panel = activeDataset()?.diagnostic_panels?.[index];
+    const container = element(`profile-${index}-locations`);
+    if (!container) return;
+    const supported = activeDatasetSlug() === "drivaerml" && ["velocity_profiles", "pressure_profiles"].includes(panel?.id);
+    container.hidden = !supported;
+    if (!supported || !window.FluidsBenchProfileLocationGuide) return;
+    let guide = profileLocationGuides.get(container);
+    if (!guide) {
+      guide = new window.FluidsBenchProfileLocationGuide(container, {
+        definitionsUrl: window.FluidsBenchProfileLocationDefinitionsUrl,
+        onSelect(stationId) {
+          const family = selectedProfileFamily(panel);
+          if (family?.placementMode !== "constant" || !family.stations.some((station) => station.id === stationId)) return;
+          panelSelection(panel).station = stationId;
+          element(`profile-${index}-station`).value = stationId;
+          renderProfileChart(index);
+          updateUrl();
+        },
+        onFixed() {
+          const family = profileFamilies(panel).find((candidate) => candidate.placementMode === "constant");
+          if (!family) return;
+          const selection = panelSelection(panel);
+          selection.family = family.id;
+          selection.station = family.stations[0]?.id || "";
+          renderPanelControls(index);
+          renderProfileChart(index);
+          updateUrl();
+        },
+      });
+      profileLocationGuides.set(container, guide);
+    }
+    const family = selectedProfileFamily(panel);
+    guide.update({
+      placement: family?.placementMode,
+      quantity: panel.id === "velocity_profiles" ? "velocity" : "cp",
+      stationId: panelSelection(panel).station,
+      stationIds: profileStations(panel, family).map((station) => station.id),
+    });
+  }
+
   function renderPanelControls(index) {
     const panel = activeDataset()?.diagnostic_panels?.[index];
     const section = document.querySelector(`[data-profile-panel="${index}"]`);
@@ -6712,6 +6755,7 @@
     const coordinateControl = element(`profile-${index}-coordinate`)?.closest(".chart-control");
     if (coordinateControl) coordinateControl.hidden = !isDrivaermlCpPanel(panel);
     syncProfileCaseSelects();
+    renderProfileLocationGuide(index);
   }
 
   function profilePanelElement(panel, index) {
@@ -6745,6 +6789,7 @@
       </div>
       <div id="profile-${index}-families" class="profile-family-tabs" role="tablist" aria-label="Profile support family"></div>
       <p id="profile-${index}-family-notice" class="profile-family-notice"></p>
+      <div id="profile-${index}-locations" class="profile-location-guide" aria-label="Profile location guide" hidden></div>
       <div class="leaderboard-figure-toolbar" role="group" aria-label="${escapeHtml(panel.title)} figure and data actions">
         <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="svg" disabled>SVG</button>
         <button class="leaderboard-action-button" type="button" data-figure-key="profile-${index}" data-figure-format="png" disabled>High-res PNG</button>
@@ -8129,6 +8174,7 @@
   }
 
   function renderProfileChart(index) {
+    renderProfileLocationGuide(index);
     const figureKey = `profile-${index}`;
     invalidateProfileFigure(figureKey);
     const panel = activeDataset()?.diagnostic_panels?.[index];
