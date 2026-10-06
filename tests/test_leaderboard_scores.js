@@ -137,6 +137,24 @@ test(
     const surfaceRow = { prediction_scope: "surface_only", ...row({ ...perfectSurface, overall_score: 60 }) };
     near(breakdown(drivaer, surfaceRow).total, 60, "published surface-only ceiling");
     cases.push({ definition: drivaer, entry: surfaceRow, name: "DrivAerML perfect surface-only fixture" });
+    for (const name of ["AhmedML", "WindsorML", "HiLiftAeroML"]) {
+      const definition = manifest.datasets.find((item) => item.name === name);
+      const policy = definition.overall_score_composite.surface_only_policy;
+      assert.equal(policy.maximum_overall_score, 60, `${name} declares its ceiling`);
+      const values = Object.fromEntries(
+        definition.overall_score_composite.components
+          .filter((component) => !policy.unavailable_component_metric_ids.includes(component.metric_id))
+          .map((component) => [component.metric_id, component.transform === "bounded_quality" ? 1 : 0])
+      );
+      const entry = { prediction_scope: "surface_only", metric_values: { ...values, overall_score: 60 } };
+      const result = breakdown(definition, entry);
+      near(result.total, 60, `${name} surface-only ceiling`);
+      assert.equal(result.components.filter((component) => component.status === "scope_unavailable").length, 3);
+      cases.push({ definition, entry, name: `${name} perfect surface-only` });
+      const degraded = { prediction_scope: "surface_only", metric_values: { ...values, surface_pressure_rel_l2: 7.5, overall_score: 52.5 } };
+      near(breakdown(definition, degraded).total, 52.5, `${name} original weights retained`);
+      cases.push({ definition, entry: degraded, name: `${name} degraded surface-only` });
+    }
     for (const raw of [-0.5, 0, 0.456789123456, 1, 1.4, 3, 15, 30]) {
       for (const component of [error(), quality(), { metric_id: "error", weight: 1, transform: "physics_null_skill", baseline_error: 2 }]) {
         if (raw < 0 && component.transform === "physics_null_skill") continue;

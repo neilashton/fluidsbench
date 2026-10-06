@@ -18,16 +18,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: neilashton/fluidsbench-submission
-          # AirfRANS scoring-v2 snapshot of the existing preview contracts.
+          # Surface-only aerodynamic scoring and existing preview contracts.
           # Publish the paired submission history before the website.
-          ref: f0f5b455929f18fef5c9b41c04beba7468bb3c84
+          ref: af7f724d782a7c95613ba35fba3ef37fae4663f0
           path: fluidsbench-submission
       - uses: actions/checkout@v4
         with:
           repository: neilashton/fluidsbench-submission
-          # Complete-case compute schema and the re-audited AirfRANS source pin.
-          # The feed above retains all non-AirfRANS preview contracts.
-          ref: bd7145b687559b444cd1034cef5cdd71174fdb51
+          # Public schemas and pressure audit from the same submission snapshot.
+          ref: af7f724d782a7c95613ba35fba3ef37fae4663f0
           sparse-checkout: |
             schemas
             docs

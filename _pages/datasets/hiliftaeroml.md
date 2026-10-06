@@ -497,3 +497,5 @@ S_overall  = sum(weight_q * S_q)</code></pre>
     </ul>
   </section>
 </div>
+
+Surface-only submissions may declare `prediction_scope: surface_only`. They must predict surface pressure and wall shear over every required surface entity and case, retain the force evaluation, and provide every required Cp cut. Volume fields and velocity-profile predictions are omitted. Their original score contributions (15% volume velocity, 10% volume pressure, and 15% velocity profiles) are fixed to zero without renormalizing the remaining weights, so the maximum overall score is **60/100**. Full surface-and-volume submissions retain a maximum of 100/100. Candidate submission and release gates still apply.

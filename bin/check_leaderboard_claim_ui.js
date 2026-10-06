@@ -184,6 +184,9 @@ const context = {
   async fetch(value) {
     const url = new URL(value);
     fetchedUrls.push(url.href);
+    if (url.pathname.endsWith("/surface-fixture.npz")) {
+      return new TestResponse(fs.readFileSync(path.join(root, "tests/fixtures/hiliftaeroml-surface-only-predictions.npz")));
+    }
     const groundTruthMarker = "/profile-ground-truth/";
     const groundTruthOffset = decodeURIComponent(url.pathname).lastIndexOf(groundTruthMarker);
     if (groundTruthOffset >= 0) {
@@ -2605,6 +2608,32 @@ async function verifyHiLiftCompactProfileOverlay() {
   const prediction = await api.materializeHiLiftCompactPrediction(predictionMetadata, truth, "HiLiftAeroML Transolver");
   assert.equal(prediction.series.length, 15);
   assert.match(prediction._fluidsbenchProvenance.artifact_url, /compact-profile-predictions\.npz$/);
+
+  const surfaceFixture = path.join(root, "tests/fixtures/hiliftaeroml-surface-only-predictions.npz");
+  const surfaceMetadata = {
+    ...predictionMetadata,
+    _fluidsbenchPredictionScope: "surface_only",
+    artifact: {
+      ...predictionMetadata.artifact,
+      file: `artifacts/${caseId}/surface-fixture.npz`,
+      sha256: sha256File(surfaceFixture),
+      byte_size: fs.statSync(surfaceFixture).size,
+      array_order: ["cp_q_delta"],
+    },
+  };
+  delete surfaceMetadata.volume_velocity;
+  const surfacePrediction = await api.materializeHiLiftCompactPrediction(surfaceMetadata, truth, "HiLift surface-only");
+  assert.equal(surfacePrediction.series.length, 10);
+  assert.ok(surfacePrediction.series.every((series) => series.panel_id === "pressure_profiles"));
+  assert.deepEqual(Array.from(surfacePrediction.series[0].prediction), Array.from(prediction.series[0].prediction));
+  await assert.rejects(
+    api.materializeHiLiftCompactPrediction({ ...surfaceMetadata, _fluidsbenchPredictionScope: "surface_and_volume" }, truth, "missing volume"),
+    /volume_velocity/
+  );
+  await assert.rejects(
+    api.materializeHiLiftCompactPrediction({ ...surfaceMetadata, volume_velocity: predictionMetadata.volume_velocity }, truth, "fabricated volume"),
+    /surface-only profile contains volume/
+  );
 
   const family = { id: "", placementMode: "" };
   const cpPanel = { id: "pressure_profiles" };

@@ -5,5 +5,5 @@ preview_mode: true
 # Generate an unlinked, noindex committee page without changing the launch homepage.
 committee_review: true
 # Versioned AirfRANS 50/25/25 scores; preserves the other preview contracts.
-leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/f0f5b455929f18fef5c9b41c04beba7468bb3c84/
-submission_source_ref: f0f5b455929f18fef5c9b41c04beba7468bb3c84
+leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/af7f724d782a7c95613ba35fba3ef37fae4663f0/
+submission_source_ref: af7f724d782a7c95613ba35fba3ef37fae4663f0

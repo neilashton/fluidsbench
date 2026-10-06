@@ -56,7 +56,7 @@
       "summary": "The owner-review candidate scores complete native boundary pMean and wallShearStressMean, complete native-volume UMean and pMean, reconstructed force coefficients, three 128-point surface Cp cuts, four 128-point wake-velocity profiles, and report-only near-body/wake/farfield diagnostics. Case IDs and source bytes are pinned, but public submissions remain closed pending owner approval.",
       "split_ids": ["full", "medium", "scarce", "super_scarce", "geometry", "high_drag", "low_drag", "image_wake"],
       "case_id_status": "official",
-      "contract_digest": "67a2231186a9eae2aed7fdef913130cdbaf758eab7e343ee91ce8e2667107c41"
+      "contract_digest": "99b32351a242af4f7d89e5e1613ed4a481d26dc9b71ff735661ffffe8e5646ef"
     },
     "visual": {
       "inputs": "Ahmed geometry + flow conditions",
@@ -290,7 +290,7 @@
       "summary": "All eight Hugging Face splits are bound to the available native field files. Ground-truth profiles cover all 233 distinct test cases, with fixed and body-height-relative families. No model results are published. Public submissions remain closed pending owner review and completion of the submission workflow.",
       "split_ids": ["full", "medium", "scarce", "super_scarce", "geometry", "high_drag", "low_drag", "image_wake"],
       "case_id_status": "official_intersected_with_published",
-      "contract_digest": "f0ded6cce0ed4015cc5f8b3b88649896a4a2208772bb9338f8f485ab9815af1a"
+      "contract_digest": "5b8afa7d80204b6db2b233ed2648ce660c8c79cf58e513c6f746f76132e15f9e"
     },
     "visual": {
       "inputs": "Windsor geometry + WMLES conditions",
@@ -372,7 +372,7 @@
         "stall"
       ],
       "case_id_status": "official",
-      "contract_digest": "a622719206c50ed1d0c25c97295a34c927b9a99620a33173c4aa4e7ddc485561"
+      "contract_digest": "b2c2f3459a377b34a9082c92743056201dc60e63809cb22a7289ad4acf4cb312"
     },
     "visual": {
       "inputs": "CRM-HL geometry + angle of attack",

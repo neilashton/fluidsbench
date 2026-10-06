@@ -1,6 +1,6 @@
 {
-  "source_commit": "f0f5b455929f18fef5c9b41c04beba7468bb3c84",
-  "manifest_sha256": "f17593d7bca82afd9eed3ec63f00598623cc9093842441cbade498a0f7552fa3",
+  "source_commit": "af7f724d782a7c95613ba35fba3ef37fae4663f0",
+  "manifest_sha256": "9284221f745ecba70d89a02a36db808d1200a9b8049ff9d41bab096ef405f5a9",
   "release": {
     "id": "prototype-dev-2026-09-16-4c51b08f226c",
     "status": "prototype_dummy_data",
@@ -10,7 +10,7 @@
   "datasets": {
     "ahmedml": {
       "open": false,
-      "specification_sha256": "e87462f702c1bf0e7133902acdf46263b2dc9ee0cc5434d972e110c1005d18b4",
+      "specification_sha256": "d9feed09741ae694332a5dc95135f687f49784fa24d767567ef974d3a402babf",
       "scoring_release_id": null
     },
     "drivaerml": {
@@ -20,17 +20,17 @@
     },
     "drivaernetplusplus": {
       "open": false,
-      "specification_sha256": "e25ff6aa601912fa928804c5b1a084b37ae0110e858ac33ee5b396fc2f55673e",
+      "specification_sha256": "4e6ad2834dd5f63190ba4c4f8479c7e9ba32bf9cdc996869994342d3dbb37085",
       "scoring_release_id": null
     },
     "windsorml": {
       "open": false,
-      "specification_sha256": "ff79e2a7375a903d4c98ff1aa8ce9e4ce9a27596ce709e67109a721554f33b08",
+      "specification_sha256": "e742d220e6cb8998b841b658c08cbf40e1410f17627870d6903e3a4bfa40088b",
       "scoring_release_id": null
     },
     "hiliftaeroml": {
       "open": false,
-      "specification_sha256": "864c80b632c9b6c4ba21ffa92b0da64b09a30987a5b6eb1e8f75ea72768bbfee",
+      "specification_sha256": "88e06e0d56042b4226d65e4b6efd56e8f06d1cf3fd8ee9c6b813d41ec63af039",
       "scoring_release_id": null
     },
     "airfrans": {

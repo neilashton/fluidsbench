@@ -3073,6 +3073,7 @@
       (cached.data?.contract_id !== hiLiftCompactProfileContractId ||
         cached.data?.contract_sha256 !== hiLiftCompactProfileContractSha256 ||
         cached.data?.dataset_id !== "hiliftaeroml" ||
+        (cached.data?.prediction_scope || "surface_and_volume") !== regionalScope(row) ||
         !expectedCaseSetId ||
         cached.data?.case_set_id !== expectedCaseSetId ||
         !Number.isInteger(expectedCaseCount) ||
@@ -3088,6 +3089,7 @@
       indexSha256: cached.sha256,
       caseSetId: expectedCaseSetId,
       hiLiftCompactPrediction,
+      predictionScope: regionalScope(row),
     };
   }
 
@@ -3154,6 +3156,7 @@
     }
     if (context.hiLiftCompactPrediction) {
       if (
+        (cached.data?.prediction_scope || "surface_and_volume") !== (context.predictionScope || "surface_and_volume") ||
         cached.data?.schema !== "hiliftaeroml-compact-profile-chunk-v2-candidate" ||
         cached.data?.schema_version !== "2.0" ||
         cached.data?.format !== hiLiftCompactPredictionFormat ||
@@ -3272,6 +3275,7 @@
       _fluidsbenchRelativeProfileV3: relativeProfileV3,
       _fluidsbenchHiLiftCompactTruth: Boolean(context.hiLiftCompactTruth),
       _fluidsbenchHiLiftCompactPrediction: Boolean(context.hiLiftCompactPrediction),
+      _fluidsbenchPredictionScope: context.predictionScope || "surface_and_volume",
       _fluidsbenchAhmedNativeProfileTruth: Boolean(context.ahmedNativeTruth),
       _fluidsbenchWindsorNativeProfileTruth: Boolean(context.windsorNativeTruth),
       _fluidsbenchHiLiftIndex: context.hiLiftCompactTruth ? context.index : null,
@@ -4903,6 +4907,11 @@
         modelName.appendChild(badge);
       }
       cell.appendChild(modelName);
+      if (regionalScope(submission) === "surface_only") {
+        const scopeBadge = chip("leaderboard-revision-badge", "Surface only · max 60/100");
+        scopeBadge.title = "Volume fields and velocity profiles contribute zero; original score weights are retained.";
+        cell.appendChild(scopeBadge);
+      }
       if (state.metricView === "summary") {
         const byline = document.createElement("span");
         byline.className = "ux-model-byline";
@@ -6986,6 +6995,7 @@
       });
     }
 
+    if (velocityValues === null) return series;
     const denseVelocity = new Array(support.velocityMask.length).fill(null);
     let velocityCursor = 0;
     support.velocityMask.forEach((valid, index) => {
@@ -7173,42 +7183,50 @@
       ],
       label
     );
-    requireHiLiftMetadataMatch(
-      truthCase,
-      profileCase,
-      "volume_velocity",
-      [
-        "support_identity_sha256",
-        "prediction_order_sha256",
-        "station_order",
-        "station_count",
-        "row_count",
-        "valid_row_count",
-        "invalid_row_count",
-        "prediction_dtype",
-        "prediction_array",
-        "storage_dtype",
-        "storage_encoding",
-        "stored_byte_count",
-      ],
-      label
-    );
+    const surfaceOnly = profileCase._fluidsbenchPredictionScope === "surface_only";
+    if (surfaceOnly && profileCase.volume_velocity !== undefined) throw new Error(`${label} surface-only profile contains volume predictions`);
+    if (!surfaceOnly)
+      requireHiLiftMetadataMatch(
+        truthCase,
+        profileCase,
+        "volume_velocity",
+        [
+          "support_identity_sha256",
+          "prediction_order_sha256",
+          "station_order",
+          "station_count",
+          "row_count",
+          "valid_row_count",
+          "invalid_row_count",
+          "prediction_dtype",
+          "prediction_array",
+          "storage_dtype",
+          "storage_encoding",
+          "stored_byte_count",
+        ],
+        label
+      );
     const artifactUrl = verifiedProfileArtifactUrl(profileCase, profileCase.artifact, label);
     const loaded = await fetchVerifiedProfileNpz(artifactUrl, profileCase.artifact.sha256, label);
     if (loaded.byteLength !== profileCase.artifact.byte_size) throw new Error(`${label} NPZ byte size differs from its JSON binding`);
-    exactProfileArrayInventory(loaded.arrays, ["cp_q_delta", "velocity_speed_over_u_inf"], label);
+    exactProfileArrayInventory(loaded.arrays, surfaceOnly ? ["cp_q_delta"] : ["cp_q_delta", "velocity_speed_over_u_inf"], label);
+    if (!arraysExactlyEqual(profileCase.artifact.array_order, surfaceOnly ? ["cp_q_delta"] : ["cp_q_delta", "velocity_speed_over_u_inf"]))
+      throw new Error(`${label} prediction array order differs from its scope`);
     const deltas = requiredProfileArray(loaded.arrays, "cp_q_delta", "<i2", label);
-    const storedVelocity = requiredProfileArray(loaded.arrays, "velocity_speed_over_u_inf", "|u1", label);
-    if (
-      profileCase.volume_velocity.storage_dtype !== "uint8" ||
-      profileCase.volume_velocity.storage_encoding !== hiLiftVelocityStorageEncoding ||
-      profileCase.volume_velocity.stored_byte_count !== storedVelocity.length
-    ) {
-      throw new Error(`${label} compact velocity storage metadata differs from its contract`);
+    let velocity = null;
+    if (!surfaceOnly) {
+      const storedVelocity = requiredProfileArray(loaded.arrays, "velocity_speed_over_u_inf", "|u1", label);
+      if (
+        profileCase.volume_velocity.storage_dtype !== "uint8" ||
+        profileCase.volume_velocity.storage_encoding !== hiLiftVelocityStorageEncoding ||
+        profileCase.volume_velocity.stored_byte_count !== storedVelocity.length
+      ) {
+        throw new Error(`${label} compact velocity storage metadata differs from its contract`);
+      }
+      velocity = decodeHiLiftVelocityStorage(storedVelocity, profileCase.volume_velocity.valid_row_count, label);
     }
-    const velocity = decodeHiLiftVelocityStorage(storedVelocity, profileCase.volume_velocity.valid_row_count, label);
     const support = truthCase._fluidsbenchHiLiftPlotSupport;
-    if (deltas.length !== support.cpX.length || velocity.length !== support.velocityTruth.length) {
+    if (deltas.length !== support.cpX.length || (!surfaceOnly && velocity.length !== support.velocityTruth.length)) {
       throw new Error(`${label} compact prediction lengths differ from public plot support`);
     }
     const cp = new Array(deltas.length);
@@ -7222,7 +7240,7 @@
         cp[index] = quantized / 1024;
       }
     }
-    if (velocity.some((value) => !Number.isFinite(value) || value < 0)) {
+    if (!surfaceOnly && velocity.some((value) => !Number.isFinite(value) || value < 0)) {
       throw new Error(`${label} compact velocity prediction contains non-finite or negative values`);
     }
     const materialized = {
@@ -8179,6 +8197,10 @@
     invalidateProfileFigure(figureKey);
     const panel = activeDataset()?.diagnostic_panels?.[index];
     const canvas = element(`profile-${index}-chart`);
+    const section = document.querySelector(`[data-profile-panel="${index}"]`);
+    const rows = figureRows();
+    if (section) section.hidden = panel?.id === "velocity_profiles" && rows.length > 0 && rows.every((row) => regionalScope(row) === "surface_only");
+    if (section?.hidden) return;
     if (state.profileReadyVersion !== state.profileLoadVersion || !panel || !canvas || typeof Chart === "undefined") return;
     const selection = panelSelection(panel);
     const family = selectedProfileFamily(panel);
@@ -10032,7 +10054,9 @@
         ${detailsRow("Split ID", row.split_id)}
         ${detailsRow(
           "Prediction scope",
-          regionalScope(row) === "surface_only" ? "Surface only (volume components fixed to zero)" : "Surface and volume"
+          regionalScope(row) === "surface_only"
+            ? "Surface only · max 60/100 (volume fields and velocity profiles contribute zero)"
+            : "Surface and volume"
         )}
         ${detailsRow("Submitted by", row.submitter)}
         ${detailsRow("Institution", row.institution)}

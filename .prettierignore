@@ -8,3 +8,7 @@ assets/data/profile-ground-truth/**
 
 # Preserve the byte-for-byte pinned dataset definition.
 assets/data/profile-locations/*.json
+
+# Preserve byte-for-byte copies of the pinned submission contract.
+schemas/v3/submission.schema.json
+schemas/v3/evaluation-evidence.schema.json
