@@ -4,7 +4,7 @@
     <small>Exact files, weighting and complete-case rules</small>
   </summary>
   <div class="dataset-inline-disclosure-body dataset-scoring-contract">
-    <p class="dataset-scoring-status"><strong>Submissions are currently closed.</strong></p>
+    <p class="dataset-scoring-status"><strong>{% if site.data.submission_status.datasets[include.slug].open and site.launch.accepting_submissions %}Submissions are open{% if site.launch.dev_intake %} on dev{% endif %}.{% else %}Submissions are currently closed.{% endif %}</strong></p>
     <p>
       <strong>Final predictions must cover the complete reference support.</strong> For every scored case, this means every required entity, exactly
       once, in the actual field-bearing mesh or curve file from the named public dataset release. FluidsBench binds those files, their ordering, any

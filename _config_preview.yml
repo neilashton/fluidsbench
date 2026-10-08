@@ -4,6 +4,11 @@ baseurl: /review-x4n7q9m2vk6p
 preview_mode: true
 # Generate an unlinked, noindex committee page without changing the launch homepage.
 committee_review: true
+submission_target_branch: dev
+launch:
+  phase: collecting
+  dev_intake: true
 # Versioned AirfRANS 50/25/25 scores; preserves the other preview contracts.
 leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/f0f5b455929f18fef5c9b41c04beba7468bb3c84/
-submission_source_ref: f0f5b455929f18fef5c9b41c04beba7468bb3c84
+# Current dev intake contract; prototype result data retain the separate pin above.
+submission_source_ref: 76e3b9a2da8455feb5a2290c82438093fe2830ac

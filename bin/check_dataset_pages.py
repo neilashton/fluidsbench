@@ -180,7 +180,11 @@ def check_submission_contracts(catalog: dict[str, Any], submission_root: Path) -
         split_ids = [split.get("id") for split in spec.get("splits", [])]
         require(benchmark.get("split_ids") == split_ids, f"{prefix} split IDs drifted", errors)
         case_statuses = {split.get("case_id_status") for split in spec.get("splits", [])}
-        require(case_statuses == {benchmark.get("case_id_status")}, f"{prefix} case-ID status drifted: {sorted(case_statuses)}", errors)
+        if benchmark.get("case_id_status") == "mixed":
+            require(benchmark.get("case_id_status_by_split") == {split["id"]: split.get("case_id_status") for split in spec["splits"]},
+                    f"{prefix} per-split case-ID status drifted", errors)
+        else:
+            require(case_statuses == {benchmark.get("case_id_status")}, f"{prefix} case-ID status drifted: {sorted(case_statuses)}", errors)
 
         actual_digest = contract_digest(spec)
         require(

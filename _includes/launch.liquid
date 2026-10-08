@@ -7,7 +7,7 @@
         leaderboard
       </h1>
       <p class="launch-description">Assess physics AI surrogate models across realistic fluid dynamics datasets</p>
-      <p class="launch-invitation">Be part of the first release.</p>
+      <p class="launch-invitation">{% if site.launch.dev_intake %}Development intake is open.{% else %}Be part of the first release.{% endif %}</p>
       <div class="launch-actions">
         <a class="ux-primary-link" href="{{ '/run/' | relative_url }}">
           {%- if site.launch.can_submit %}Submit your model{% else %}Prepare your model{% endif %}
@@ -26,6 +26,16 @@
         {% endif %}
       </p>
     </div>
+    {% if site.launch.dev_intake %}
+    <aside class="launch-countdown-card" aria-label="Development intake">
+      <div class="launch-countdown-top"><span class="launch-countdown-label">Development intake</span></div>
+      <p class="launch-date">AirfRANS</p>
+      <p>Full · Scarce · AoA extrapolation</p>
+      <p>Submit a result package for review on <code>dev</code>. Reynolds extrapolation remains closed.</p>
+      <p class="launch-provisional">Development review · no first-release cutoff</p>
+      <a class="launch-secondary-link" href="{{ '/run/' | relative_url }}#airfrans">Submission guide →</a>
+    </aside>
+    {% else %}
     <aside
       class="launch-countdown-card"
       aria-label="First leaderboard release"
@@ -81,6 +91,7 @@
         >Check for the latest release <span aria-hidden="true">↻</span></a
       >
     </aside>
+    {% endif %}
   </section>
 
   <section class="launch-value" aria-label="What FluidsBench measures">
@@ -155,7 +166,7 @@
     <div class="launch-section-heading">
       <div>
         <p class="ux-page-eyebrow">Bring your model</p>
-        <h2 id="launch-participate-title">A clear route to the first release.</h2>
+        <h2 id="launch-participate-title">{% if site.launch.dev_intake %}Submit a development result.{% else %}A clear route to the first release.{% endif %}</h2>
       </div>
       <a href="{{ '/run/' | relative_url }}">Submission guide <span aria-hidden="true">→</span></a>
     </div>
@@ -197,8 +208,9 @@
       <details>
         <summary>When will I be able to see the results?</summary>
         <p>
+          {% if site.launch.dev_intake %}Submitted results and review are visible in GitHub PRs against dev. Official leaderboard publication is a separate step.{% else %}
           The first official leaderboard is planned for {{ site.launch.reveal_at | date: '%-d %B %Y' }}. It will bring together reviewed submissions
-          received by the first-release cutoff. Submissions continue afterwards, with later results appearing in subsequent releases.
+          received by the first-release cutoff. Submissions continue afterwards, with later results appearing in subsequent releases.{% endif %}
         </p>
       </details>
       <details>

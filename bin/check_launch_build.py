@@ -64,7 +64,7 @@ def validate_coming_soon(root):
     return errors
 
 
-def validate(root: Path, phase: str, committee_review: bool = False) -> list[str]:
+def validate(root: Path, phase: str, committee_review: bool = False, dev_intake: bool = False) -> list[str]:
     errors = validate_coming_soon(root)
     index = (root / "index.html").read_text()
     review_path = root / COMMITTEE_REVIEW
@@ -110,7 +110,15 @@ def validate(root: Path, phase: str, committee_review: bool = False) -> list[str
         if 'data-countdown' in index:
             errors.append("live build still contains the announcement countdown")
     else:
-        if f'data-launch-phase="{phase}"' not in index or 'data-countdown' not in index:
+        if dev_intake:
+            run = (root / "run/index.html").read_text()
+            if phase != "collecting" or not committee_review or "Development intake" not in index or 'data-countdown' in index:
+                errors.append("dev intake must be a labelled collecting preview without a production countdown")
+            if '/compare/dev...' not in run or '/compare/main...' in run:
+                errors.append("dev intake submission PRs must target dev")
+            if "Reynolds extrapolation is closed" not in run:
+                errors.append("dev intake must identify the closed Reynolds split")
+        elif f'data-launch-phase="{phase}"' not in index or 'data-countdown' not in index:
             errors.append("prelaunch homepage has the wrong phase or no countdown")
         for path in root.rglob("*.html"):
             if committee_review and path == review_path:
@@ -131,8 +139,9 @@ def main() -> int:
     parser.add_argument("root", type=Path)
     parser.add_argument("--phase", choices=("announced", "collecting", "reviewing", "live"), required=True)
     parser.add_argument("--committee-review", action="store_true", help="Allow only the unlinked dev committee page")
+    parser.add_argument("--dev-intake", action="store_true", help="Check the hosted dev intake boundary")
     args = parser.parse_args()
-    errors = validate(args.root, args.phase, args.committee_review)
+    errors = validate(args.root, args.phase, args.committee_review, args.dev_intake)
     for error in errors:
         print("ERROR:", error)
     if not errors:

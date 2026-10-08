@@ -39,6 +39,12 @@ module FluidsBench
       launch = site.data.fetch("launch", {}).merge(site.config.fetch("launch", {}))
       phase = launch["phase"]
       reject!("unknown phase #{phase.inspect}") unless %w[announced collecting reviewing live].include?(phase)
+      if launch["dev_intake"] == true
+        reject!("dev intake is allowed only in the hosted dev preview") unless
+          site.config["preview_mode"] == true && site.config["url"] == "https://fluidsbench.org" &&
+          site.config["baseurl"] == "/review-x4n7q9m2vk6p" &&
+          site.config["submission_target_branch"] == "dev" && phase == "collecting"
+      end
       dates = %w[opens_at cutoff_at reveal_at].map do |key|
         value = launch[key].to_s
         reject!("#{key} must include an explicit timezone") unless value.match?(/(?:Z|[+-]\d\d:\d\d)\z/)

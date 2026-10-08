@@ -9,6 +9,7 @@ hide_header_background: true
 ---
 
 {% assign source_ref = site.submission_source_ref | default: 'main' %}
+{% assign submission_branch = site.submission_target_branch | default: 'main' %}
 {% assign source_root = 'https://github.com/neilashton/fluidsbench-submission/tree/' | append: source_ref %}
 {% comment %}Current process guidance is separate from the frozen evaluation/data revision.{% endcomment %}
 {% assign verification_ref = 'main' %}{% if site.preview_mode %}{% assign verification_ref = 'dev' %}{% endif %}
@@ -17,8 +18,8 @@ hide_header_background: true
 
 <aside class="ux-page-notice" aria-label="Submission status">
   {% if site.launch.can_submit %}
-    <strong>Submissions are open</strong>
-    <p>Choose an open dataset below. {% if site.launch.deadline_passed or site.launch.phase == 'reviewing' or site.launch.phase == 'live' %}New submissions will be considered for subsequent releases.{% else %}Submit a complete package by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M' }} UTC for consideration in the first release.{% endif %}</p>
+    <strong>{% if site.launch.dev_intake %}Development intake is open{% else %}Submissions are open{% endif %}</strong>
+    <p>{% if site.launch.dev_intake %}AirfRANS Full, Scarce and AoA extrapolation are open. Submit PRs against <code>dev</code>; packages remain subject to maintainer review. Development intake has no first-release cutoff.{% else %}Choose an open dataset below. {% if site.launch.deadline_passed or site.launch.phase == 'reviewing' or site.launch.phase == 'live' %}New submissions will be considered for subsequent releases.{% else %}Submit a complete package by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M' }} UTC for consideration in the first release.{% endif %}{% endif %}</p>
   {% else %}
     <strong>Submissions in preparation</strong>
     <p>Explore the tools now. Each dataset opens after its evaluation rules and scoring release are approved.{% if site.launch.phase == 'announced' %} Opening is planned for {{ site.launch.opens_at | date: '%-d %B %Y' }}.{% endif %}</p>
@@ -57,8 +58,12 @@ python3 -m reference.example_calculation</code></pre>
         <p>The dataset guide and leaderboard will be available here when ready.</p>
         {% else %}
         <h3>{{ site.data.dataset_catalog[slug].name }} <span>{% if availability.open and site.launch.accepting_submissions %}Open for submissions{% elsif availability.open %}Ready for opening{% else %}In preparation{% endif %}</span></h3>
+        {% if availability.open and site.launch.accepting_submissions %}
+        <p>Open splits: {% for split in availability.open_splits %}{{ split.label }}{% unless forloop.last %}, {% endunless %}{% endfor %}.</p>
+        {% if slug == 'airfrans' %}<p>Reynolds extrapolation is closed. <a href="{{ source_root }}/benchmark-specs/airfrans/RELEASES.md">Dev downloads and submission guide ↗</a></p>{% endif %}
+        {% endif %}
         <div class="launch-submit-links"><a href="{{ '/datasets/' | append: slug | append: '/' | relative_url }}">Dataset guide →</a><a href="{{ source_root }}/benchmark-specs/{{ slug }}">Evaluation requirements ↗</a>
-        {% if availability.open and site.launch.accepting_submissions %}<a href="https://github.com/neilashton/fluidsbench-submission/compare/main...">Open a submission PR ↗</a>{% endif %}</div>
+        {% if availability.open and site.launch.accepting_submissions %}<a href="https://github.com/neilashton/fluidsbench-submission/compare/{{ submission_branch }}...">Open a submission PR ↗</a>{% endif %}</div>
         {% endif %}
       </article>
       {% endunless %}
@@ -77,6 +82,7 @@ python3 -m reference.example_calculation</code></pre>
   </ol>
 </section>
 
+{% unless site.launch.dev_intake %}
 <details class="ux-page-disclosure" id="first-release-dates">
   <summary>First-release dates</summary>
   <div>
@@ -92,11 +98,13 @@ python3 -m reference.example_calculation</code></pre>
 <details class="ux-page-disclosure" id="first-release-policy">
   <summary>How does inclusion in the first release work?</summary>
   <div>
-    <p>For an open dataset, propose one new result directory through a pull request against <code>main</code> in the submission repository. Contributions and reviews are public, including the submitted scores.</p>
+    <p>For an open dataset, propose one new result directory through a pull request against <code>{{ submission_branch }}</code> in the submission repository. Contributions and reviews are public, including the submitted scores.</p>
     <p>A complete package must satisfy the published evaluation rules at the first-release cutoff. Maintainers record its exact commit and finish their review before publication. Waiting for a maintainer or an automated check does not by itself make an otherwise complete package late.</p>
     <p>Submission does not guarantee acceptance. Incomplete packages or substantive changes after the cutoff are considered for a later release. The benchmark continues accepting submissions after the first leaderboard is published.</p>
   </div>
 </details>
+
+{% endunless %}
 
 <details class="ux-page-disclosure" id="optional-verification">
   <summary>How do I request the blue Metrics verified badge?</summary>

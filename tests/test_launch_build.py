@@ -89,6 +89,16 @@ class LaunchBuildTests(unittest.TestCase):
         self.write(f"datasets/{slug}/index.html", card + '<section id="dataset-start">Download predictions</section>')
         self.assertTrue(any("instead of evaluation instructions" in error for error in self.errors(False)))
 
+    def test_dev_intake_targets_dev_and_cannot_reveal_a_production_countdown(self):
+        self.write(check_launch_build.COMMITTEE_REVIEW, self.review)
+        self.write('index.html', '<div data-launch-phase="collecting">Development intake</div>')
+        self.write('run/index.html', '<a href="https://github.com/neilashton/fluidsbench-submission/compare/dev...">Submit</a>Reynolds extrapolation is closed')
+        self.assertEqual(check_launch_build.validate(self.root, 'collecting', True, True), [])
+        self.write('run/index.html', '<a href="https://github.com/neilashton/fluidsbench-submission/compare/main...">Submit</a>Reynolds extrapolation is closed')
+        self.assertIn('dev intake submission PRs must target dev', check_launch_build.validate(self.root, 'collecting', True, True))
+        self.write('index.html', '<div data-launch-phase="collecting" data-countdown>Development intake</div>')
+        self.assertTrue(check_launch_build.validate(self.root, 'collecting', True, True))
+
 
 if __name__ == "__main__":
     unittest.main()
