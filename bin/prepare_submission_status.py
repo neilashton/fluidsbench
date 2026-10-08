@@ -33,6 +33,8 @@ def snapshot(source: Path, catalog: dict, display: dict) -> dict:
             "open": bool(is_open),
             "specification_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
             "scoring_release_id": support.get("release_id"),
+            "open_splits": [{"id": split["id"], "label": split["label"]}
+                            for split in spec.get("splits", [])] if is_open else [],
         }
     return {
         "source_commit": commit,

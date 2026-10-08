@@ -222,9 +222,10 @@
       "submissions_open": false,
       "source_pin": "Dataverse DOI 10.7910/DVN/K7PWNJ, version 1.0",
       "summary": "The active dev contract is still a one-case prototype. It scores kinematic surface pressure p at every native VTK PointData location with area-weighted relative L2 as primary and equal-point relative L2 as secondary. It does not yet activate the reviewed 1,154-case test proposal, wall shear, volume fields, forces, or profiles.",
-      "split_ids": ["default"],
-      "case_id_status": "prototype_generated",
-      "contract_digest": "abb850a0a49532aaa89254001650e187a861f9e73f573876effc15a10611e471"
+      "split_ids": ["default", "official_test"],
+      "case_id_status": "mixed",
+      "case_id_status_by_split": {"default": "prototype_generated", "official_test": "official"},
+      "contract_digest": "52f8afa7c0e27e341547e4d5967e26ebf84e1640e6f3558364879f29eb6df972"
     },
     "visual": {
       "inputs": "Vehicle mesh + body category",
@@ -435,14 +436,14 @@
       "source_label": "AirfRANS paper and airfoil-sampling table"
     },
     "benchmark": {
-      "status": "owner_review_required",
-      "status_label": "Official case lists; scoring definition in preparation",
-      "submissions_open": false,
+      "status": "official",
+      "status_label": "Approved dev scoring contract",
+      "submissions_open": true,
       "source_pin": "d35d4035d8ba6fa98c1a6662be925c2fc777610b",
-      "summary": "FluidsBench binds the four official AirfRANS evaluation lists. The current scored flow fields are U and p—not nut—and the boundary task scores pressure plus wall shear derived by the fixed evaluator. Required diagnostics are Ux/U∞ and Uy/U∞ on 1,001-point extrados-normal lines at x/c = 0.25, 0.50, 0.75, and 0.95. Pressure-profile Cp is not a current leaderboard metric. The candidate overall score uses 50% fields, 25% drag/lift, and 25% balanced velocity profiles.",
-      "split_ids": ["full", "scarce", "reynolds_extrapolation", "aoa_extrapolation"],
+      "summary": "Dev intake supports Full, Scarce and AoA extrapolation; Reynolds remains closed. The current scored flow fields are U and p—not nut—and the boundary task scores pressure plus wall shear derived by the fixed evaluator. Required diagnostics are Ux/U∞ and Uy/U∞ on 1,001-point extrados-normal lines at x/c = 0.25, 0.50, 0.75, and 0.95. Pressure-profile Cp is not a current leaderboard metric. The approved overall score uses 50% fields, 25% drag/lift, and 25% balanced velocity profiles.",
+      "split_ids": ["full", "scarce", "aoa_extrapolation"],
       "case_id_status": "official",
-      "contract_digest": "a304efe8a2a31e669ed6d7099f87df98b9292a062695b484d75bbfd8b7622800"
+      "contract_digest": "a50bd4b92b95030c5cafef94d96b529a20bc5f0e9b4f13a5741a8816be4fe232"
     },
     "visual": {
       "inputs": "Airfoil geometry + Reynolds number + angle of attack",

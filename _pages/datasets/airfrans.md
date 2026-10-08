@@ -84,9 +84,10 @@ compact_masthead: true
     </div>
     <p>
       Each field component scores <code>100 × clip(1 − error / cap, 0, 1)</code>; each force or profile component scores
-      <code>100 × clip(R², 0, 1)</code>. The overall score is their weighted sum. The candidate scoring version
-      <code>airfrans-scoring-v2-candidate</code> replaces the former 67%/22%/11% balance. Field definitions and profile extraction
-      are unchanged; submissions remain closed pending the approved scoring release.
+      <code>100 × clip(R², 0, 1)</code>. The overall score is their weighted sum. The approved scoring version
+      <code>airfrans-scoring-v2</code> replaces the former 67%/22%/11% balance. Field definitions and profile extraction
+      are unchanged. {% if site.launch.dev_intake %}Dev intake is open for Full, Scarce and AoA extrapolation; Reynolds remains closed.
+      <a href="https://github.com/neilashton/fluidsbench-submission/tree/{{ site.submission_source_ref }}/benchmark-specs/airfrans/RELEASES.md">Download the dev supports and truth, then submit against dev.</a>{% else %}Check the submission guide for current availability.{% endif %}
     </p>
   </section>
 

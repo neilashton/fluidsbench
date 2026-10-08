@@ -17,7 +17,17 @@ Time passing never changes dataset approval or publishes a ranking. The clock di
 For provisional dates it instead explains that the date needs confirmation. No URL query parameter bypasses prelaunch mode.
 Retired standalone result demos are excluded from site builds. Public source repositories remain public.
 
-## Before announcing or collecting
+## Development intake
+
+The hosted preview overrides the phase to `collecting` with `dev_intake: true`
+and `submission_target_branch: dev`. AirfRANS Full, Scarce and AoA are open;
+Reynolds is closed. Preview copy has no production deadline or countdown.
+The build guard rejects this mode outside the hosted dev preview. `_data/launch.yml`
+remains `announced`, and pushing `dev` updates only the review prefix.
+Editable dev support/truth prereleases are downloadable from the submission repo.
+Submission and approval PRs both target `dev`. This does not launch production.
+
+## Before announcing or collecting in production
 
 1. Agree the two deadlines and a reveal time, set `dates_confirmed: true`, and nominate a release maintainer and backup, dataset
    reviewers, and a community contact. Set `community_discord_url` when a public invite exists. The site already has GitHub/contact fallbacks.
@@ -25,8 +35,8 @@ Retired standalone result demos are excluded from site builds. Public source rep
    submission for each one. Site configuration cannot open a closed scoring contract. Rotor37, VKI-LS59 and BlendedNet
    remain visible only as greyed-out **Coming soon** entries, without dataset instructions, submission actions or selectable results.
 3. Promote the tested submission contract to submission `main` before directing real participants to submit against it. Pin the
-   matching source commit in website `_config.yml`, `_config_preview.yml`, `_config_leaderboard_review.yml` (local data URL), and the
-   checkout in `profile-contract.yml`. Keep the raw data URLs consistent with that pin. Regenerate the score-free availability snapshot:
+   matching intake source commit in website `_config.yml` and `_config_preview.yml`, and the intake checkout in `profile-contract.yml`.
+   The unranked prototype feed and its matching fixture truth remain at their separately pinned historical data revision until a leaderboard publication is authorised. Keep the raw data URLs consistent with that pin. Regenerate the score-free availability snapshot:
 
    ```sh
    python3 bin/prepare_submission_status.py --submission-root ../fluidsbench-submission

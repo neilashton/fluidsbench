@@ -138,4 +138,18 @@ check(site.config["launch"]["leaderboard_visible"], "official pinned release can
 site.config["leaderboard_manifest_sha256"] = "0" * 64
 rejected(site, "wrong release digest was accepted")
 
+# Opening dev intake cannot change the production launch or redirect PRs to main.
+site = site_for("collecting")
+site.config.merge!({ "baseurl" => "/review-x4n7q9m2vk6p", "submission_target_branch" => "dev" })
+site.config["launch"]["dev_intake"] = true
+site.data["submission_status"]["datasets"].each { |slug, item| item["open"] = slug == "airfrans" }
+FluidsBench::Launch.new.generate(site)
+check(site.config["launch"]["can_submit"] && !site.config["launch"]["leaderboard_visible"], "dev intake changed publication")
+[{ "preview_mode" => false }, { "submission_target_branch" => "main" }, { "baseurl" => "" }].each do |override|
+  guarded = site_for("collecting")
+  guarded.config.merge!({ "baseurl" => "/review-x4n7q9m2vk6p", "submission_target_branch" => "dev" }).merge!(override)
+  guarded.config["launch"]["dev_intake"] = true
+  rejected(guarded, "dev intake escaped the hosted dev branch")
+end
+
 puts "Launch phases, publication gates, dataset independence, local and committee review checks passed."

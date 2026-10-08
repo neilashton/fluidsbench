@@ -15,7 +15,8 @@ icon: ⚛️ # the emoji used as the favicon (alternatively, provide image name 
 url: https://fluidsbench.org # the base hostname & protocol for your site
 baseurl: # the subpath of your site, e.g. /blog/. Leave blank for root
 leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/f0f5b455929f18fef5c9b41c04beba7468bb3c84/
-submission_source_ref: f0f5b455929f18fef5c9b41c04beba7468bb3c84
+# Current dev intake contract; prototype result data retain the separate pin above.
+submission_source_ref: 76e3b9a2da8455feb5a2290c82438093fe2830ac
 # Public community invite: no expiry or use limit; opens the start-here channel.
 community_discord_url: "https://discord.gg/zVZsXAeVKp"
 last_updated: true # set to true if you want to display last updated in the footer
