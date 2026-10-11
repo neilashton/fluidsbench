@@ -80,11 +80,19 @@ compact_masthead: true
     <p>
       The four data-efficiency splits share validation and test cases; only training size changes. The five distinct test sets contain
       233 unique available cases. The <code>full</code> split is the published seed-42 benchmark, not a reconstruction of the paper's 60/20/20 split.
-      Use validation for model selection and reserve test cases for final evaluation. Submissions remain closed pending owner review.
+      Use validation for model selection and reserve test cases for final evaluation. Official submissions remain closed pending owner review.
     </p>
   </section>
 
   <section class="dataset-panel">
+    <h3>Development workflow</h3>
+    <p>
+      Development candidate PRs are accepted against <code>dev</code>. Follow the
+      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/examples/windsorml-v3-candidate/README.md">WindsorML evaluation and packaging guide</a>.
+      The commands verify the pinned data, package all 16 fixed and relative profiles per case,
+      and validate the complete result. A separate maintainer registration publishes the reviewed
+      package on the dev leaderboard as a pre-release reference. Production and official intake remain unchanged.
+    </p>
     {% include dataset_submission.html slug="windsorml" dataset="WindsorML" %}
 
   </section>

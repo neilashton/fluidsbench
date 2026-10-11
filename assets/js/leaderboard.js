@@ -3065,6 +3065,17 @@
       throw new Error(`${rowLabel(row)} profile index checksum does not match the verified leaderboard feed`);
     }
     const hiLiftCompactPrediction = cached.data?.format === hiLiftCompactPredictionFormat;
+    const windsorPrediction = row.dataset_id === "windsorml" && row.schema_version === "3.0";
+    if (windsorPrediction && (
+      cached.data?.format !== "fluidsbench-profile-chunks-v1" ||
+      cached.data?.dataset_id !== "windsorml" ||
+      cached.data?.submission_id !== row.submission_id ||
+      cached.data?.split_id !== row.split_id ||
+      cached.data?.case_set_id !== row.profile_data?.case_set_id ||
+      cached.data?.case_count !== row.profile_data?.case_count ||
+      cached.data?.case_id_status !== "official_intersected_with_published"
+    )) throw new Error(`${rowLabel(row)} WindsorML prediction index identity differs`);
+
     const expectedCaseSetId = row.profile_data?.case_set_id || row.case_set_id;
     const expectedCaseCount = row.profile_data?.case_count;
     const predictionCaseIds = caseIds(cached.data);
@@ -3088,6 +3099,7 @@
       indexSha256: cached.sha256,
       caseSetId: expectedCaseSetId,
       hiLiftCompactPrediction,
+      windsorPrediction,
     };
   }
 
@@ -3274,6 +3286,7 @@
       _fluidsbenchHiLiftCompactPrediction: Boolean(context.hiLiftCompactPrediction),
       _fluidsbenchAhmedNativeProfileTruth: Boolean(context.ahmedNativeTruth),
       _fluidsbenchWindsorNativeProfileTruth: Boolean(context.windsorNativeTruth),
+      _fluidsbenchWindsorPrediction: Boolean(context.windsorPrediction),
       _fluidsbenchHiLiftIndex: context.hiLiftCompactTruth ? context.index : null,
       _fluidsbenchArtifactBaseUrl: context.hiLiftCompactTruth || context.hiLiftCompactPrediction ? new URL(".", context.indexUrl).href : baseUrl,
       _fluidsbenchProfileSchema: cached.data?.schema || cached.data?.schema_version || null,
@@ -7149,6 +7162,36 @@
     return materialized;
   }
 
+  function materializeWindsorPrediction(profileCase, truthCase, label) {
+    if (!profileCase?._fluidsbenchWindsorPrediction) return profileCase;
+    if (!truthCase?._fluidsbenchWindsorNativeProfileTruth || profileCase.case_id !== truthCase.case_id) {
+      throw new Error(`${label} WindsorML predictions require verified native truth for the same case`);
+    }
+    validateWindsorNativeCase(truthCase);
+    const key = (series) => `${series.panel_id}/${series.station_id}/${series.quantity_id}`;
+    const references = new Map(truthCase.series.map((series) => [key(series), series]));
+    const seen = new Set();
+    if (!Array.isArray(profileCase.series) || profileCase.series.length !== 16) {
+      throw new Error(`${label} WindsorML predictions require all sixteen fixed and relative series`);
+    }
+    const series = profileCase.series.map((submitted) => {
+      const identity = key(submitted);
+      const reference = references.get(identity);
+      if (!reference || seen.has(identity) ||
+          Object.keys(submitted).sort().join(",") !== "coordinate,panel_id,prediction,quantity_id,station_id" ||
+          !arraysExactlyEqual(submitted.coordinate, reference.coordinate) ||
+          !Array.isArray(submitted.prediction) || submitted.prediction.length !== 128 ||
+          submitted.prediction.some((value) => !Number.isFinite(value))) {
+        throw new Error(`${label} WindsorML prediction series or ordered coordinates differ from frozen native support`);
+      }
+      seen.add(identity);
+      const { value, ...metadata } = reference;
+      return { ...metadata, prediction: submitted.prediction };
+    });
+    return { ...profileCase, series, profile_support_sha256: truthCase.profile_support_sha256,
+             _fluidsbenchWindsorNativeProfilePrediction: true };
+  }
+
   async function materializeHiLiftCompactPrediction(profileCase, truthCase, label) {
     if (!profileCase?._fluidsbenchHiLiftCompactPrediction) return profileCase;
     if (!truthCase?._fluidsbenchHiLiftCompactTruth || !truthCase?._fluidsbenchHiLiftPlotSupport) {
@@ -7798,8 +7841,8 @@
     const label = `${source?.case_id || "profile case"}/${panel.id}/${expectedFamily || "legacy"}/${stationId}/${quantity.id}`;
     if (matches.length !== 1) throw new Error(`${label} is ambiguous because ${matches.length} matching series were supplied`);
     const selected = matches[0];
-    if (source?._fluidsbenchWindsorNativeProfileTruth) {
-      validateWindsorNativeCase(source);
+    if (source?._fluidsbenchWindsorNativeProfileTruth || source?._fluidsbenchWindsorNativeProfilePrediction) {
+      if (source._fluidsbenchWindsorNativeProfileTruth) validateWindsorNativeCase(source);
       const parsed = legacyProfileSeries(selected);
       return {
         ...parsed,
@@ -7813,8 +7856,8 @@
         coordinateUnit: selected.coordinate_unit,
         supportIdentity: source.profile_support_sha256,
         representation: "materialized",
-        nativeTruth: true,
-        nativeTruthSource: windsorNativeBinding,
+        nativeTruth: Boolean(source._fluidsbenchWindsorNativeProfileTruth),
+        nativeTruthSource: source._fluidsbenchWindsorNativeProfileTruth ? windsorNativeBinding : null,
         nativeDatasetRevision: windsorNativeBinding.dataset_revision,
         selectedSeries: selected,
         materializedSeries: selected,
@@ -8118,7 +8161,8 @@
         rowMetadata.map(async ({ id, row, value, error }) => {
           if (!value || error) return { id, value, error };
           try {
-            return { id, value: await materializeHiLiftCompactPrediction(value, groundTruthCase, rowLabel(row)), error: null };
+            const decoded = await materializeHiLiftCompactPrediction(value, groundTruthCase, rowLabel(row));
+            return { id, value: materializeWindsorPrediction(decoded, groundTruthCase, rowLabel(row)), error: null };
           } catch (materializeError) {
             console.error(materializeError);
             return { id, value: null, error: materializeError.message };

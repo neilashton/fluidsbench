@@ -52,8 +52,8 @@
       "code_evidence": [
         {
           "path": "benchmark-specs/ahmedml/submission-spec.json",
-          "sha256": "e87462f702c1bf0e7133902acdf46263b2dc9ee0cc5434d972e110c1005d18b4",
-          "finding": "The audited dev scoring specification; not modified by this documentation audit."
+          "sha256": "7fcab80981005024ec6d1744683e785dd86dab54f26901bf60e5dea82c2b170a",
+          "finding": "The audited dev scoring specification; not modified by this documentation audit. Re-audited 2026-10-11: only the closed-reason text now documents AhmedML development intake; pressure fields, units and scoring definitions are unchanged."
         },
         {
           "path": "reference/ahmedml/evaluator.py",
@@ -359,8 +359,8 @@
         },
         {
           "path": "scripts/validate_submission.py",
-          "sha256": "b7376318fd18a54c61fe7d0283ef4793a3826f9f97711f041f0a172fe5600867",
-          "finding": "Requires the SI export evidence and retains the original closed-candidate validation receipts when checking corrected packages. Rechecked after the FluidsBench repository transfer: only repository URL checks changed; HiLiftAeroML validation is unchanged. Rechecked for the AirfRANS pre-release registration: the new per-package candidate view is restricted to hash-bound AirfRANS references; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-08: the validator change selects AirfRANS dataset-local truth and its retained historical contract; the HiLiftAeroML pressure, units and evaluation paths remain unchanged."
+          "sha256": "bc9a41926269aa45102107d6c6b4d2267b0746443ae336fdcab9d5c3f16c2544",
+          "finding": "Requires the SI export evidence and retains the original closed-candidate validation receipts when checking corrected packages. Rechecked after the FluidsBench repository transfer: only repository URL checks changed; HiLiftAeroML validation is unchanged. Rechecked for the AirfRANS pre-release registration: the new per-package candidate view is restricted to hash-bound AirfRANS references; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-08: the validator change selects AirfRANS dataset-local truth and its retained historical contract; the HiLiftAeroML pressure, units and evaluation paths remain unchanged. Re-audited 2026-10-11: the new development intake path is restricted to AhmedML candidates in the prototype dev release; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-11 for WindsorML development intake: the added candidate registry, intersected split handling, and native-profile checks leave HiLiftAeroML pressure and SI export validation unchanged."
         },
         {
           "path": "benchmark-specs/hiliftaeroml/dimensional-export-correction-v1/verification.json",
@@ -426,8 +426,8 @@
       "code_evidence": [
         {
           "path": "benchmark-specs/windsorml/submission-spec.json",
-          "sha256": "ff79e2a7375a903d4c98ff1aa8ce9e4ce9a27596ce709e67109a721554f33b08",
-          "finding": "The audited dev scoring specification; not modified by this documentation audit."
+          "sha256": "aa073a92b35d66b5661759006128208ea66d59e6863cf3406f26b63b6e95d4f9",
+          "finding": "The audited dev scoring specification; not modified by this documentation audit. Re-audited 2026-10-11: adds schema-v3 candidate support and complete fixed/relative profile coverage; pressure fields, reductions, offsets and weights are unchanged."
         },
         {
           "path": "reference/windsorml/contract.py",
@@ -436,8 +436,8 @@
         },
         {
           "path": "reference/windsorml/evaluator.py",
-          "sha256": "7fd72aea865b7b87ae0ccd4f90a8b40d2ea88ba945b30b816e0ed97aed774af9",
-          "finding": "Both scalar arrays enter statistics directly; no volume pressure-reference subtraction."
+          "sha256": "01b0e1495bec40c9eb5fc6479350d1103bce7d43d39b6b81d8b9bd18e0e223f9",
+          "finding": "Both scalar arrays enter statistics directly; no volume pressure-reference subtraction. Re-audited 2026-10-11: retains prediction-input hashes after evaluation; native pressure comparisons and force integration are unchanged."
         }
       ]
     },

@@ -56,7 +56,7 @@
       "summary": "The owner-review candidate scores complete native boundary pMean and wallShearStressMean, complete native-volume UMean and pMean, reconstructed force coefficients, three 128-point surface Cp cuts, four 128-point wake-velocity profiles, and report-only near-body/wake/farfield diagnostics. Case IDs and source bytes are pinned, but public submissions remain closed pending owner approval.",
       "split_ids": ["full", "medium", "scarce", "super_scarce", "geometry", "high_drag", "low_drag", "image_wake"],
       "case_id_status": "official",
-      "contract_digest": "67a2231186a9eae2aed7fdef913130cdbaf758eab7e343ee91ce8e2667107c41"
+      "contract_digest": "cfe264b0ab3f31c60858ec371d8b46787bbdd2facd47e4d883bc3500aaec36ec"
     },
     "visual": {
       "inputs": "Ahmed geometry + flow conditions",
@@ -288,10 +288,10 @@
       "status_label": "Native benchmark candidate",
       "submissions_open": false,
       "source_pin": "Hugging Face revision 8a6ca32",
-      "summary": "All eight Hugging Face splits are bound to the available native field files. Ground-truth profiles cover all 233 distinct test cases, with fixed and body-height-relative families. No model results are published. Public submissions remain closed pending owner review and completion of the submission workflow.",
+      "summary": "All eight Hugging Face splits are bound to available native field files. Ground-truth profiles cover all 233 distinct test cases, with fixed and body-height-relative families. Development packages can be evaluated, assembled and submitted to dev; reviewed packages appear after separate maintainer registration. Official submissions remain closed pending owner review.",
       "split_ids": ["full", "medium", "scarce", "super_scarce", "geometry", "high_drag", "low_drag", "image_wake"],
       "case_id_status": "official_intersected_with_published",
-      "contract_digest": "f0ded6cce0ed4015cc5f8b3b88649896a4a2208772bb9338f8f485ab9815af1a"
+      "contract_digest": "f0232beb7e389586add55c896b2ea59854fc5349a53b26d792126bfd44463904"
     },
     "visual": {
       "inputs": "Windsor geometry + WMLES conditions",
