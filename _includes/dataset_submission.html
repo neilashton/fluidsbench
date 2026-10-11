@@ -8,8 +8,13 @@
       <strong
         ><a href="{{ '/run/' | relative_url }}#{{ include.slug }}">Check this dataset's submission availability</a> before preparing a result.</strong
       >
+      {% if site.launch.dev_intake and include.slug == 'drivaerml' %}
+      DrivAerML development candidates are accepted against <code>dev</code> for pre-release review and display. Official submissions remain closed.
+      Contributors propose one result directory
+      {% else %}
       Contributions are accepted only while its exact scoring-support release is marked <code>official</code> and open. For an open dataset,
-      contributors propose one result directory at <code>submissions/{{ include.slug }}/&lt;submission-id&gt;/</code> in the
+      contributors propose one result directory
+      {% endif %} at <code>submissions/{{ include.slug }}/&lt;submission-id&gt;/</code> in the
       <a href="https://github.com/neilashton/fluidsbench-submission">FluidsBench submission repository</a>. The planned result package contains:
     </p>
     <ul>
@@ -55,7 +60,7 @@
     </p>
     <p>
       Before opening a pull request, run
-      <code>python scripts/validate_submission.py --contributor-stage submissions/{{ include.slug }}/&lt;submission-id&gt;</code>. The validator
+      <code>python scripts/validate_submission.py {% if site.launch.dev_intake and include.slug == 'drivaerml' %}--dev-intake {% endif %}--contributor-stage submissions/{{ include.slug }}/&lt;submission-id&gt;</code>. The validator
       checks the schema, split identity, scoring-support binding, derived-score arithmetic, profile coverage, reported discretization, array lengths,
       ordering, finite values, and file hashes. It checks the submitted package's internal consistency; it does not run the contributor's model or
       recalculate base metrics from full fields.

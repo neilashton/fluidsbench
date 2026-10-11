@@ -1,6 +1,6 @@
 {
-  "source_commit": "62371fefef2fe05fc2361908dc80075b28cc64f0",
-  "manifest_sha256": "66b1939ae4d445e5bed72762db6dd30cca1cf6335814b5cced064c6afe52e132",
+  "source_commit": "0a2ee98655f0e957eb69d9203e9639724960ce3b",
+  "manifest_sha256": "2e8e7a89f96e07ee3dfeb62c3763d507a585390b1e5b2ca42f5e277d8fe014df",
   "release": {
     "id": "prototype-dev-2026-09-29-b7435a38c0c1",
     "status": "prototype_dummy_data",
@@ -16,7 +16,7 @@
     },
     "drivaerml": {
       "open": false,
-      "specification_sha256": "791b38e009442f5975d2dcdec0ec30a3d3cfa2f8c05be13841aaf2318f93cf1f",
+      "specification_sha256": "697528a831899ae32b57f29ac1b59db2928014406119213b9b19df7283a12f69",
       "scoring_release_id": null,
       "open_splits": []
     },

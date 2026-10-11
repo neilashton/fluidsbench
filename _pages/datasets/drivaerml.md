@@ -136,6 +136,19 @@ compact_masthead: true
 
   </section>
 
+  <section class="dataset-panel">
+    <h3>Development workflow</h3>
+    <p>
+      Development candidate PRs are accepted against <code>dev</code>. Follow the
+      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/examples/drivaerml-v3-candidate/README.md">DrivAerML evaluation and packaging guide</a>.
+      The commands extract fixed and relative profiles from native predictions, compute the complete score set,
+      verify checkpoint bytes, and validate the full selected split. Full-field packages contain 40 profile series per case;
+      surface-only packages contain eight Cp series and retain the overall-score ceiling of 60.
+      A maintainer registers the reviewed package for dev leaderboard display as a non-citable pre-release reference.
+      Official submissions remain closed pending the remaining release checks.
+    </p>
+  </section>
+
   <section id="dataset-evaluation" class="dataset-panel">
     {% include dataset_scoring_contract.html slug="drivaerml" dataset="DrivAerML" %}
   </section>

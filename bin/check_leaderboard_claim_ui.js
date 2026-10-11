@@ -1263,6 +1263,28 @@ async function verifyNativeRun419AgainstCurrentFixture(nativeRecord) {
   await api.bindProfileCoordinateIdentities(currentCase);
 
   const drivaerml = manifest.datasets.find((dataset) => dataset.slug === "drivaerml");
+  // A surface-only dev package carries eight Cp series; native truth retains
+  // all 40. Both fixed cuts and relative aliases must resolve without velocity.
+  const surfaceOnly = {
+    ...currentCase,
+    prediction_scope: "surface_only",
+    series: currentCase.series.filter((series) => series.panel_id === "pressure_profiles"),
+  };
+  assert.equal(surfaceOnly.series.length, 8);
+  for (const series of surfaceOnly.series) {
+    const panel = drivaerml.diagnostic_panels.find((candidate) => candidate.id === series.panel_id);
+    const family = api.profileFamilies(panel).find((candidate) => candidate.id === series.family_id);
+    const quantity = panel.quantities.find((candidate) => candidate.id === series.quantity_id);
+    const truth = api.profileSeries(nativeCase, panel, series.station_id, quantity, family);
+    const prediction = api.profileSeries(surfaceOnly, panel, series.station_id, quantity, family);
+    assert.equal(api.profileSeriesCompatibility(truth, prediction), true);
+    assert.equal(prediction.points.length, truth.points.length);
+  }
+  const velocityPanel = drivaerml.diagnostic_panels.find((panel) => panel.id === "velocity_profiles");
+  const velocityFamily = api.profileFamilies(velocityPanel)[0];
+  const velocityStation = api.profileStations(velocityPanel, velocityFamily)[0];
+  assert.equal(api.profileSeries(surfaceOnly, velocityPanel, velocityStation.id, velocityPanel.quantities[0], velocityFamily), null);
+
   const compared = [];
   let materializedCpCount = 0;
   nativeCase.series.forEach((series) => {

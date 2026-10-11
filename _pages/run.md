@@ -82,6 +82,12 @@ python3 -m reference.example_calculation</code></pre>
   </ol>
 </section>
 
+{% if site.launch.dev_intake %}
+<p>DrivAerML also accepts complete development candidate packages against <code>dev</code>.
+Follow the <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/examples/drivaerml-v3-candidate/README.md">DrivAerML workflow</a>.
+A maintainer registers reviewed packages for the dev leaderboard; official DrivAerML intake remains closed.</p>
+{% endif %}
+
 {% unless site.launch.dev_intake %}
 <details class="ux-page-disclosure" id="first-release-dates">
   <summary>First-release dates</summary>
