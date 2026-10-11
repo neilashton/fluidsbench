@@ -146,7 +146,7 @@
         "metric_id": { "$ref": "#/$defs/safe_id" },
         "quantity_id": { "$ref": "#/$defs/safe_id" },
         "reduction": {
-          "enum": ["relative_l1_percent", "relative_l2_percent", "mae", "mse", "rmse", "r2", "dataset_reference"]
+          "enum": ["relative_l1_percent", "relative_l2_percent", "mae", "mse", "rmse", "r2", "maximum", "dataset_reference"]
         },
         "weighting": { "enum": ["uniform", "support_weights"] },
         "dataset_weighting": {
