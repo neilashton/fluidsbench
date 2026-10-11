@@ -36,7 +36,7 @@ Submission and approval PRs both target `dev`. This does not launch production.
    remain visible only as greyed-out **Coming soon** entries, without dataset instructions, submission actions or selectable results.
 3. Promote the tested submission contract to submission `main` before directing real participants to submit against it. Pin the
    matching intake source commit in website `_config.yml` and `_config_preview.yml`, and the intake checkout in `profile-contract.yml`.
-   The unranked prototype feed and its matching fixture truth remain at their separately pinned historical data revision until a leaderboard publication is authorised. Keep the raw data URLs consistent with that pin. Regenerate the score-free availability snapshot:
+   The production configuration retains its separately pinned historical prototype feed until a leaderboard publication is authorised. The dev review feed follows submission `dev`, as described under Committee review below. Regenerate the score-free availability snapshot:
 
    ```sh
    python3 bin/prepare_submission_status.py --submission-root ../fluidsbench-submission
@@ -95,6 +95,14 @@ Only `_config_preview.yml` enables `committee_review`; the generator rejects thi
 The page reuses the leaderboard template, labels its results as a prototype, and declares noindex. It has no incoming site
 navigation links and is excluded from the sitemap. Anyone with the URL can access it; it is not an authenticated private page.
 Share the direct URL with reviewers separately from the launch homepage. Production builds do not generate this page.
+
+The dev leaderboard reads `leaderboard/manifest.json` and its generated feeds directly from
+`fluidsbench-submission/dev`. Merging regenerated feeds into submission `dev` updates the review page on a subsequent
+load after GitHub's raw-content cache refreshes; no website pin change or redeployment is needed. Submission intake alone
+does not add a row: AhmedML candidates still need dev-only pre-release registration and feed regeneration, and other
+results follow their dataset's publication process. The website's dev PR and push checks validate the current submission
+packages, generated feeds and website scores against submission `dev`, alongside the pinned historical fixture-truth
+checks. Production feed settings and the audited intake/availability pin remain separate.
 
 The dev deployment validates both the announcement homepage and the single allowed review page with
 `python3 bin/check_launch_build.py _site --phase announced --committee-review`. It rejects incoming links, missing review

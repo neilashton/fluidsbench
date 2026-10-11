@@ -18,8 +18,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: neilashton/fluidsbench-submission
-          # Historical prototype result feed and matching fixture truth.
-          # Intake contracts advance separately below.
+          # Historical prototype fixture truth uses its original specifications.
+          # Current dev feeds are validated separately below.
           ref: f0f5b455929f18fef5c9b41c04beba7468bb3c84
           path: fluidsbench-submission
       - uses: actions/checkout@v4
@@ -45,3 +45,21 @@ jobs:
       - run: node --test fluidsbench/tests/test_launch.js fluidsbench/tests/test_leaderboard_compute.js fluidsbench/tests/test_leaderboard_scores.js fluidsbench/tests/test_leaderboard_verification.js fluidsbench/tests/test_profile_locations.js
       - run: node fluidsbench/bin/check_leaderboard_claim_ui.js
       - run: python -m unittest discover -s fluidsbench/tests -p "test_*.py"
+      - name: Checkout current dev leaderboard data
+        if: github.base_ref == 'dev' || github.ref_name == 'dev'
+        uses: actions/checkout@v4
+        with:
+          repository: neilashton/fluidsbench-submission
+          ref: dev
+          path: fluidsbench-submission-dev
+      - name: Install dev feed validation dependencies
+        if: github.base_ref == 'dev' || github.ref_name == 'dev'
+        run: python -m pip install -r fluidsbench-submission-dev/requirements.txt
+      - name: Validate current dev submissions and generated feeds
+        if: github.base_ref == 'dev' || github.ref_name == 'dev'
+        run: python fluidsbench-submission-dev/scripts/manage_leaderboard.py check --dev-intake
+      - name: Check website scores against current dev results
+        if: github.base_ref == 'dev' || github.ref_name == 'dev'
+        env:
+          FLUIDSBENCH_SUBMISSION_ROOT: ${{ github.workspace }}/fluidsbench-submission-dev
+        run: node --test fluidsbench/tests/test_leaderboard_scores.js
