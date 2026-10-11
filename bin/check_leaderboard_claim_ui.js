@@ -105,6 +105,7 @@ window.__FluidsBenchClaimTest = {
   projectProfileSeries,
   profileSeries,
   profileSeriesCompatibility,
+  materializeWindsorPrediction,
   profileStations,
   regionalBinding,
   regionalDatasetDefinition,
@@ -2711,6 +2712,14 @@ async function verifyWindsorNativeGroundTruth() {
         checked.add(caseId);
         const truth = await api.indexedProfileCase(index, caseId, cache, "WindsorML test");
         assert.equal(truth._fluidsbenchWindsorNativeProfileTruth, true);
+        const submitted = { case_id: caseId, _fluidsbenchWindsorPrediction: true, series: truth.series.map((series) => ({
+          panel_id: series.panel_id, station_id: series.station_id, quantity_id: series.quantity_id,
+          coordinate: series.coordinate, prediction: series.value.map((value) => value + 0.01),
+        })) };
+        const prediction = api.materializeWindsorPrediction(submitted, truth, "synthetic WindsorML test");
+        assert.equal(prediction._fluidsbenchWindsorNativeProfilePrediction, true);
+        assert.equal(prediction.series.some((series) => "value" in series), false);
+
         let count = 0;
         for (const panel of windsor.diagnostic_panels) {
           assert.equal(api.profileFamilies(panel).length, 2);
@@ -2720,6 +2729,11 @@ async function verifyWindsorNativeGroundTruth() {
               assert.equal(series.points.length, 128);
               assert.equal(series.droppedPointCount, 0);
               assert.equal(series.nativeTruth, true);
+              const predicted = api.profileSeries(prediction, panel, station.id, panel.quantities[0], family);
+              assert.equal(predicted.nativeTruth, false);
+              assert.equal(api.profileSeriesCompatibility(series, predicted), true);
+              assert.ok(Math.abs(predicted.points[0].y - series.points[0].y - 0.01) < 1e-12);
+
               assert.equal(series.scoringRole, family.placementMode === "relative" ? "report_only" : "ranked_candidate");
               count += 1;
             }
@@ -2732,6 +2746,22 @@ async function verifyWindsorNativeGroundTruth() {
     const index = await api.groundTruthIndex("WindsorML", "Full");
     const caseId = api.caseIds(index.index)[0];
     const truth = await api.indexedProfileCase(index, caseId, cache, "WindsorML test");
+
+    const submitted = { case_id: caseId, _fluidsbenchWindsorPrediction: true, series: truth.series.map((series) => ({
+      panel_id: series.panel_id, station_id: series.station_id, quantity_id: series.quantity_id,
+      coordinate: [...series.coordinate], prediction: [...series.value],
+    })) };
+    for (const mutate of [
+      (value) => value.series.pop(),
+      (value) => value.series[0].coordinate[0] += 1e-6,
+      (value) => value.series[0].prediction[0] = null,
+      (value) => value.series[0].station_id = "unlisted",
+      (value) => value.series[1] = value.series[0],
+      (value) => value.case_id = "run_0",
+    ]) {
+      const bad = JSON.parse(JSON.stringify(submitted)); mutate(bad);
+      assert.throws(() => api.materializeWindsorPrediction(bad, truth, "tampered WindsorML"), /WindsorML/);
+    }
     const panel = windsor.diagnostic_panels[0];
     const family = api.profileFamilies(panel)[0];
     for (const mutation of [

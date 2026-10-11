@@ -27,7 +27,7 @@ jobs:
           repository: neilashton/fluidsbench-submission
           # Current intake contracts, schemas and pressure audit.
           # Publish this dev revision before the paired website changes.
-          ref: 76e3b9a2da8455feb5a2290c82438093fe2830ac
+          ref: 62371fefef2fe05fc2361908dc80075b28cc64f0
           sparse-checkout: |
             schemas
             docs

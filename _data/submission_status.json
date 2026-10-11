@@ -1,6 +1,6 @@
 {
-  "source_commit": "76e3b9a2da8455feb5a2290c82438093fe2830ac",
-  "manifest_sha256": "bcaafb4296f6aab3830bef7b3876bc122444ae138990e782e84a6bffa17d8e63",
+  "source_commit": "62371fefef2fe05fc2361908dc80075b28cc64f0",
+  "manifest_sha256": "66b1939ae4d445e5bed72762db6dd30cca1cf6335814b5cced064c6afe52e132",
   "release": {
     "id": "prototype-dev-2026-09-29-b7435a38c0c1",
     "status": "prototype_dummy_data",
@@ -10,7 +10,7 @@
   "datasets": {
     "ahmedml": {
       "open": false,
-      "specification_sha256": "e87462f702c1bf0e7133902acdf46263b2dc9ee0cc5434d972e110c1005d18b4",
+      "specification_sha256": "7fcab80981005024ec6d1744683e785dd86dab54f26901bf60e5dea82c2b170a",
       "scoring_release_id": null,
       "open_splits": []
     },
@@ -28,7 +28,7 @@
     },
     "windsorml": {
       "open": false,
-      "specification_sha256": "ff79e2a7375a903d4c98ff1aa8ce9e4ce9a27596ce709e67109a721554f33b08",
+      "specification_sha256": "aa073a92b35d66b5661759006128208ea66d59e6863cf3406f26b63b6e95d4f9",
       "scoring_release_id": null,
       "open_splits": []
     },
