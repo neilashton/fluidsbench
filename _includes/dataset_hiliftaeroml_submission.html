@@ -5,6 +5,14 @@
     <small>Native inference, packaging and local validation</small>
   </summary>
   <div class="dataset-inline-disclosure-body">
+    {% if site.launch.dev_intake %}
+    <p>
+      <strong>Development workflow:</strong> new packages can use checkpoint verification, dev validation and maintainer registration.
+      The complete compact scoring-support bundle is still required and its download publication is pending.
+      Follow the <a href="https://github.com/neilashton/fluidsbench-submission/blob/{{ hilift_submission_ref }}/examples/hiliftaeroml-v3-candidate/README.md#development-pr-workflow">HiLiftAeroML dev workflow</a>
+      for the current prerequisite and commands. Official intake remains closed.
+    </p>
+    {% endif %}
     <p>
       <strong>Public submissions are closed.</strong> The current workflow supports local or benchmark-owner-coordinated schema-v3 dry runs. Follow
       the
@@ -50,7 +58,7 @@
   /path/to/hiliftaeroml-my-method-v2</code></pre>
     <p>
       A passing dry run validates the local package. It does not approve, register or publish a result. Use the candidate route while intake is
-      closed; <code>--contributor-stage</code> becomes appropriate only after an official scoring-support release opens. Remaining source, support
+      closed. {% if site.launch.dev_intake %}The separate dev workflow uses <code>--dev-intake --contributor-stage</code> and requires complete compact scoring support.{% else %}<code>--contributor-stage</code> becomes appropriate only after an official scoring-support release opens.{% endif %} Remaining source, support
       publication and owner-review requirements are recorded in the
       <a
         href="https://github.com/neilashton/fluidsbench-submission/blob/{{ hilift_submission_ref }}/benchmark-specs/hiliftaeroml/CANDIDATE_ACTIVATION_CHECKLIST.md"

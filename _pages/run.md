@@ -86,6 +86,8 @@ python3 -m reference.example_calculation</code></pre>
 <p>DrivAerML also accepts complete development candidate packages against <code>dev</code>.
 Follow the <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/examples/drivaerml-v3-candidate/README.md">DrivAerML workflow</a>.
 A maintainer registers reviewed packages for the dev leaderboard; official DrivAerML intake remains closed.</p>
+<p>HiLiftAeroML has a <a href="https://github.com/neilashton/fluidsbench-submission/blob/{{ site.submission_source_ref }}/examples/hiliftaeroml-v3-candidate/README.md#development-pr-workflow">development packaging and registration workflow</a>.
+Its complete compact scoring-support download is still pending; check that prerequisite before starting a new submission.</p>
 {% endif %}
 
 {% unless site.launch.dev_intake %}
