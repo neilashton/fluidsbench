@@ -128,10 +128,10 @@
       "status_label": "Candidate benchmark definition",
       "submissions_open": false,
       "source_pin": "7a5c0948ce27be709b1116a3a190f806e7a8f79f",
-      "summary": "The candidate contract binds all 484 public cases, eight official split lists, pMeanTrim and wallShearStressMeanTrim on every native surface polygon, UMeanTrim and pMeanTrim on every native volume cell, constant-reference force truth, AutoCFD5 velocity profiles, and continuous Cp cuts. Surface area sidecars, equal-cell volume accumulation, and all-case native profile truth are published; evaluator freezing, remaining diagnostic review, and genuine-model sensitivity analysis remain before public submissions can open.",
+      "summary": "The candidate contract binds all 484 public cases, eight official split lists, pMeanTrim and wallShearStressMeanTrim on every native surface polygon, UMeanTrim and pMeanTrim on every native volume cell, constant-reference force truth, AutoCFD5 velocity profiles, and continuous Cp cuts. Surface area sidecars, equal-cell volume accumulation, all-case native profile truth, and AutoCFD5 trapezoidal profile scoring are available for development submissions. Packaging, intake and maintainer registration are enabled on dev; official ranking awaits the production release, genuine-model sensitivity evidence and an independent full-split trial.",
       "split_ids": ["full", "medium", "scarce", "super_scarce", "geometry", "high_drag", "low_drag", "rear_separation"],
       "case_id_status": "official",
-      "contract_digest": "cc1bd84323980273139bd55e958982eed2312751ad15e4e962de70524bba6a4c"
+      "contract_digest": "074b524ddc9bfecc159b24e74730f55255c5f0d169463f3e79e815dc4091170c"
     },
     "visual": {
       "inputs": "DrivAer geometry + flow conditions",

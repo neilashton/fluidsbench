@@ -1,6 +1,6 @@
 {
-  "source_commit": "0a2ee98655f0e957eb69d9203e9639724960ce3b",
-  "manifest_sha256": "2e8e7a89f96e07ee3dfeb62c3763d507a585390b1e5b2ca42f5e277d8fe014df",
+  "source_commit": "8228659b2c4020121adce79455eee8046ed23be9",
+  "manifest_sha256": "b1c48a28b378896441f098cf7adbaca790f076f909717daf932aa48520ecff48",
   "release": {
     "id": "prototype-dev-2026-09-29-b7435a38c0c1",
     "status": "prototype_dummy_data",
@@ -10,36 +10,48 @@
   "datasets": {
     "ahmedml": {
       "open": false,
+      "dev_candidate": true,
+      "guide": "examples/ahmedml-v3-candidate/README.md",
       "specification_sha256": "7fcab80981005024ec6d1744683e785dd86dab54f26901bf60e5dea82c2b170a",
       "scoring_release_id": null,
       "open_splits": []
     },
     "drivaerml": {
       "open": false,
-      "specification_sha256": "697528a831899ae32b57f29ac1b59db2928014406119213b9b19df7283a12f69",
+      "dev_candidate": true,
+      "guide": "examples/drivaerml-v3-candidate/README.md",
+      "specification_sha256": "64cb4c355429f667b6e496d713a77731e08bc3539ebc8ec83d0fc981a3caeb23",
       "scoring_release_id": null,
       "open_splits": []
     },
     "drivaernetplusplus": {
       "open": false,
+      "dev_candidate": false,
+      "guide": null,
       "specification_sha256": "4e6ad2834dd5f63190ba4c4f8479c7e9ba32bf9cdc996869994342d3dbb37085",
       "scoring_release_id": null,
       "open_splits": []
     },
     "windsorml": {
       "open": false,
+      "dev_candidate": true,
+      "guide": "examples/windsorml-v3-candidate/README.md",
       "specification_sha256": "aa073a92b35d66b5661759006128208ea66d59e6863cf3406f26b63b6e95d4f9",
       "scoring_release_id": null,
       "open_splits": []
     },
     "hiliftaeroml": {
       "open": false,
+      "dev_candidate": false,
+      "guide": null,
       "specification_sha256": "864c80b632c9b6c4ba21ffa92b0da64b09a30987a5b6eb1e8f75ea72768bbfee",
       "scoring_release_id": null,
       "open_splits": []
     },
     "airfrans": {
       "open": true,
+      "dev_candidate": false,
+      "guide": "examples/airfrans-participant/README.md",
       "specification_sha256": "d12207fb79ccde80dba2563028ef9f36079dd1e1343c5289f97e3388178752d0",
       "scoring_release_id": "airfrans-native-support-v1",
       "open_splits": [
@@ -59,18 +71,24 @@
     },
     "blendednet": {
       "open": false,
+      "dev_candidate": false,
+      "guide": null,
       "specification_sha256": "7fdbc1f205e290687d4a2fbef8620293ec3a29e7900196be642bd60fb6684545",
       "scoring_release_id": null,
       "open_splits": []
     },
     "rotor37": {
       "open": false,
+      "dev_candidate": false,
+      "guide": null,
       "specification_sha256": "edb83b0bfd53a227ed0af73704dd5ec48f4b74f89750d069fa8adb30d4f606c6",
       "scoring_release_id": null,
       "open_splits": []
     },
     "vki-ls59": {
       "open": false,
+      "dev_candidate": false,
+      "guide": null,
       "specification_sha256": "7b60689a619a094152b063fb4cdf2a716a0790f288ca140737f3355bbc53ef7e",
       "scoring_release_id": null,
       "open_splits": []

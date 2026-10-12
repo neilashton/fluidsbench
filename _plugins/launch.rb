@@ -79,7 +79,8 @@ module FluidsBench
       launch["accepting_submissions"] = %w[collecting reviewing live].include?(phase)
       display = site.data.fetch("leaderboard_display", {})
       launch["open_count"] = status.fetch("datasets", {}).count do |slug, item|
-        item["open"] == true && !display.fetch(slug, {})["hidden"] && !display.fetch(slug, {})["coming_soon"]
+        (item["open"] == true || (launch["dev_intake"] == true && item["dev_candidate"] == true)) &&
+          !display.fetch(slug, {})["hidden"] && !display.fetch(slug, {})["coming_soon"]
       end
       launch["can_submit"] = launch["accepting_submissions"] && launch["open_count"] > 0
       launch["deadline_passed"] = site.time >= dates[1]
