@@ -81,16 +81,13 @@ python3 -m reference.example_calculation</code></pre>
     <li><div><h3>Choose a dataset and split</h3><p>Read its guide, download a representative case and check the evaluation requirements before planning a full run.</p><a href="{{ '/datasets/' | relative_url }}">Browse dataset guides <span aria-hidden="true">→</span></a></div></li>
     <li><div><h3>Generate predictions</h3><p>Run your model on the specified evaluation cases. Map predictions onto every required scoring location, even if your model uses a different mesh or representation.</p><a href="{{ source_root }}/benchmark-specs">Dataset specifications <span aria-hidden="true">↗</span></a></div></li>
     <li><div><h3>Evaluate and package the evidence</h3><p>Use the reference tools and dataset instructions to calculate metrics, extract profiles and record your model, evaluation and spatial coverage.</p><a href="{{ source_root }}/examples/v3-template">Result package template <span aria-hidden="true">↗</span></a><span class="ux-link-separator" aria-hidden="true">·</span><a href="{{ source_root }}/METHODOLOGY.md">Methodology guide <span aria-hidden="true">↗</span></a></div></li>
-    <li><div><h3>Validate, then submit when open</h3><p>For an open dataset, validate your result directory before proposing it through a pull request. Replace the placeholders below with your dataset and submission IDs.</p><pre class="ux-inline-code"><code>python3 scripts/validate_submission.py --contributor-stage \
-  submissions/&lt;dataset-id&gt;/&lt;submission-id&gt;</code></pre><p class="ux-small-note">The contributor validator requires an official, open scoring release. Passing validation alone does not approve a result for publication.</p></div></li>
+    <li><div><h3>Validate your package</h3><p>{% if site.launch.dev_intake %}For any of the four available dev workflows, validate your result directory before proposing a PR to <code>dev</code>.{% else %}For an open dataset, validate your result directory before proposing it through a pull request.{% endif %} Replace the placeholders below with your dataset and submission IDs.</p><pre class="ux-inline-code"><code>python3 scripts/validate_submission.py {% if site.launch.dev_intake %}--dev-intake {% endif %}--contributor-stage \
+  submissions/&lt;dataset-id&gt;/&lt;submission-id&gt;</code></pre><p class="ux-small-note">{% if site.launch.dev_intake %}The validator accepts AirfRANS on its approved release and AhmedML, WindsorML and DrivAerML on their dev candidate contracts. Other closed datasets remain closed.{% else %}The contributor validator requires an official, open scoring release.{% endif %} Passing validation alone does not approve a result for publication.</p></div></li>
   </ol>
 </section>
 
 {% if site.launch.dev_intake %}
 
-<p>For AhmedML, WindsorML and DrivAerML candidates, use the dataset quickstart above and validate with:</p>
-<pre class="ux-inline-code"><code>python3 scripts/validate_submission.py --dev-intake --contributor-stage \
-  submissions/&lt;dataset-id&gt;/&lt;submission-id&gt;</code></pre>
 <p>Open a PR to <code>dev</code> containing only your new submission directory. After review, a maintainer registers the unchanged package and regenerates the dev feed. AirfRANS uses maintainer approval and feed regeneration instead. Passing contributor checks or merging the initial PR does not itself publish a row.</p>
 {% endif %}
 
