@@ -27,7 +27,7 @@ jobs:
           repository: neilashton/fluidsbench-submission
           # Current intake contracts, schemas and pressure audit.
           # Publish this dev revision before the paired website changes.
-          ref: 0a2ee98655f0e957eb69d9203e9639724960ce3b
+          ref: 8228659b2c4020121adce79455eee8046ed23be9
           sparse-checkout: |
             schemas
             docs
@@ -62,4 +62,8 @@ jobs:
         if: github.base_ref == 'dev' || github.ref_name == 'dev'
         env:
           FLUIDSBENCH_SUBMISSION_ROOT: ${{ github.workspace }}/fluidsbench-submission-dev
-        run: node --test fluidsbench/tests/test_leaderboard_scores.js
+        run: |
+          node --test fluidsbench/tests/test_leaderboard_scores.js fluidsbench/tests/test_airfrans_profiles.js
+          python fluidsbench/bin/check_dataset_pages.py --submission-root fluidsbench-submission-dev
+          python fluidsbench/bin/check_pressure_references.py --submission-root fluidsbench-submission-dev
+          python fluidsbench/bin/prepare_submission_status.py --submission-root fluidsbench-submission-dev --check-contracts

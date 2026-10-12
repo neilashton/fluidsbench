@@ -13,16 +13,16 @@ import prepare_submission_status
 
 
 class AvailabilityTests(unittest.TestCase):
-    def result(self, specification, hidden=False):
+    def result(self, specification, hidden=False, slug="example", branch="dev"):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "leaderboard").mkdir()
-            (root / "leaderboard/manifest.json").write_text(json.dumps({"data_release": {"id": "test", "status": "prototype_dummy_data"}}))
-            folder = root / "benchmark-specs/example"
+            (root / "leaderboard/manifest.json").write_text(json.dumps({"data_release": {"id": "test", "status": "prototype_dummy_data", "source_ref": branch}}))
+            folder = root / "benchmark-specs" / slug
             folder.mkdir(parents=True)
             (folder / "submission-spec.json").write_text(json.dumps(specification))
             with patch.object(prepare_submission_status.subprocess, "check_output", return_value="a" * 40):
-                return prepare_submission_status.snapshot(root, {"example": {}}, {"example": {"hidden": hidden}})
+                return prepare_submission_status.snapshot(root, {slug: {}}, {slug: {"hidden": hidden}})
 
     def official(self):
         return {"status": "official", "scoring_support": {"status": "official", "submissions_open": True,
@@ -45,6 +45,19 @@ class AvailabilityTests(unittest.TestCase):
 
     def test_hidden_dataset_is_omitted_even_if_its_contract_opens(self):
         self.assertEqual(self.result(self.official(), hidden=True)["datasets"], {})
+
+    def test_dev_candidates_stay_closed_to_official_and_production_intake(self):
+        spec = {"status": "candidate_native_support", "scoring_support": {
+            "status": "owner_review_required", "submissions_open": False,
+            "candidate_manifest": {"manifest_sha256": "b" * 64}}}
+        for slug in ("ahmedml", "windsorml", "drivaerml"):
+            availability = self.result(spec, slug=slug)["datasets"][slug]
+            self.assertTrue(availability["dev_candidate"])
+            self.assertFalse(availability["open"])
+            self.assertTrue(availability["guide"])
+            self.assertFalse(self.result(spec, slug=slug, branch="main")["datasets"][slug]["dev_candidate"])
+        for slug in ("hiliftaeroml", "drivaernetplusplus", "airfrans"):
+            self.assertFalse(self.result(spec, slug=slug)["datasets"][slug]["dev_candidate"])
 
     def test_snapshot_records_exact_source_and_contract_without_scores(self):
         result = self.result(self.official())

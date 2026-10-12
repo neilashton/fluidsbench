@@ -8,3 +8,6 @@ assets/data/profile-ground-truth/**
 
 # Preserve the byte-for-byte pinned dataset definition.
 assets/data/profile-locations/*.json
+
+# Lossless, checksum-bound native AirfRANS browser artifacts.
+assets/data/airfrans-native-profiles/**

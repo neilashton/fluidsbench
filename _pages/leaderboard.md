@@ -500,7 +500,14 @@ chart:
   window.FluidsBenchLeaderboardManifestSha256 =
     {{ site.leaderboard_manifest_sha256 | default: "" | jsonify }};
   window.FluidsBenchSubmissionSourceRef =
-    {{ site.submission_source_ref | default: "main" | jsonify }};
+    {% if site.launch.dev_intake %}"dev"{% else %}{{ site.submission_source_ref | default: "main" | jsonify }}{% endif %};
+  window.FluidsBenchDevIntake = {{ site.launch.dev_intake | default: false | jsonify }};
+  window.FluidsBenchSubmissionAvailability = {{ site.data.submission_status.datasets | jsonify }};
+  {% if site.preview_mode %}
+  window.FluidsBenchAirfransNativeProfiles = {{ site.data.airfrans_native_profiles | jsonify }};
+  window.FluidsBenchAirfransNativeProfiles.manifest_url = new URL(
+    {{ '/' | append: site.data.airfrans_native_profiles.manifest_path | relative_url | jsonify }}, window.location.origin).href;
+  {% endif %}
   window.FluidsBenchLeaderboardDisplay =
     {{ site.data.leaderboard_display | default: empty | jsonify }};
   window.FluidsBenchComingSoonDatasets = [
@@ -520,6 +527,7 @@ chart:
 <script defer src="{{ '/assets/js/leaderboard-scores.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/leaderboard-verification.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/profile-locations.js' | relative_url | bust_file_cache }}"></script>
+<script defer src="{{ '/assets/js/airfrans-profiles.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/leaderboard.js' | relative_url | bust_file_cache }}"></script>
 
 {% else %}

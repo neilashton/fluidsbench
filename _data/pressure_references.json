@@ -57,8 +57,8 @@
         },
         {
           "path": "reference/ahmedml/evaluator.py",
-          "sha256": "29667f5a5234f9a50b71cb19cc6e41ce6ec56e8baf9817422e0688f73e7fcfc9",
-          "finding": "Native pMean enters field accumulators directly; no fitted pressure offset."
+          "sha256": "d2ca7a36d9e47af3333714ae12066ef347d4087282bd2ea6cf773a221662366c",
+          "finding": "Native pMean enters field accumulators directly; no fitted pressure offset. Re-audited 2026-10-12: only regional weighted summation changed to pairwise float64 sums; pressure units, reference, conversions and whole-field scoring are unchanged."
         },
         {
           "path": "reference/ahmedml/contract.py",
@@ -160,8 +160,8 @@
       "code_evidence": [
         {
           "path": "benchmark-specs/drivaerml/submission-spec.json",
-          "sha256": "697528a831899ae32b57f29ac1b59db2928014406119213b9b19df7283a12f69",
-          "finding": "The audited dev scoring specification; not modified by this documentation audit. Re-audited 2026-10-11: dev support/evaluator/v10 profile bindings and intake guidance updated; native pressure fields, reference, units and field reductions are unchanged."
+          "sha256": "64cb4c355429f667b6e496d713a77731e08bc3539ebc8ec83d0fc981a3caeb23",
+          "finding": "Re-audited 2026-10-12: dev v2 aligns Cp profile integration with AutoCFD5 trapezoidal weights and versions the support release. Native pMeanTrim units, outlet reference, Cp conversion and field/force reductions are unchanged."
         },
         {
           "path": "reference/drivaerml/evaluator.py",
@@ -359,8 +359,8 @@
         },
         {
           "path": "scripts/validate_submission.py",
-          "sha256": "fd4aed174219e336f042b898c11f449861816dc7e023e49a00d0b0c4824d952f",
-          "finding": "Requires the SI export evidence and retains the original closed-candidate validation receipts when checking corrected packages. Rechecked after the FluidsBench repository transfer: only repository URL checks changed; HiLiftAeroML validation is unchanged. Rechecked for the AirfRANS pre-release registration: the new per-package candidate view is restricted to hash-bound AirfRANS references; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-08: the validator change selects AirfRANS dataset-local truth and its retained historical contract; the HiLiftAeroML pressure, units and evaluation paths remain unchanged. Re-audited 2026-10-11: the new development intake path is restricted to AhmedML candidates in the prototype dev release; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-11 for WindsorML development intake: the added candidate registry, intersected split handling, and native-profile checks leave HiLiftAeroML pressure and SI export validation unchanged. Re-audited 2026-10-11: adds DrivAerML dev intake, native profile score validation, surface-only omission rules and maximum-residual reduction; HiLiftAeroML pressure handling is unchanged."
+          "sha256": "c651f5d84a8582241bd78fd7989effe23e70ebf7e779014da7bfe69c0991a7bd",
+          "finding": "Requires the SI export evidence and retains the original closed-candidate validation receipts when checking corrected packages. Rechecked after the FluidsBench repository transfer: only repository URL checks changed; HiLiftAeroML validation is unchanged. Rechecked for the AirfRANS pre-release registration: the new per-package candidate view is restricted to hash-bound AirfRANS references; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-08: the validator change selects AirfRANS dataset-local truth and its retained historical contract; the HiLiftAeroML pressure, units and evaluation paths remain unchanged. Re-audited 2026-10-11: the new development intake path is restricted to AhmedML candidates in the prototype dev release; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-11 for WindsorML development intake: the added candidate registry, intersected split handling, and native-profile checks leave HiLiftAeroML pressure and SI export validation unchanged. Re-audited 2026-10-11: adds DrivAerML dev intake, native profile score validation, surface-only omission rules and maximum-residual reduction; HiLiftAeroML pressure handling is unchanged. Re-audited 2026-10-12: the only validator change selects the new DrivAerML dev release; other datasets and pressure conversions are unchanged. Re-audited 2026-10-12 for AirfRANS atomic packaging: a Python-only option permits validation in a staging directory; CLI path enforcement, pressure calculations and SI export validation are unchanged."
         },
         {
           "path": "benchmark-specs/hiliftaeroml/dimensional-export-correction-v1/verification.json",
