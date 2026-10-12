@@ -7,6 +7,9 @@
   const groundTruthBaseUrl = window.FluidsBenchProfileGroundTruthBaseUrl;
   const leaderboardDisplay = window.FluidsBenchLeaderboardDisplay || {};
   const comingSoonDatasets = window.FluidsBenchComingSoonDatasets || [];
+  const airfransProfiles = window.FluidsBenchAirfransNativeProfiles
+    ? window.FluidsBenchAirfransProfiles.createLoader(window.FluidsBenchAirfransNativeProfiles)
+    : null;
   const palette = [
     "#0072b2",
     "#d55e00",
@@ -2664,6 +2667,9 @@
 
   async function groundTruthIndex(datasetName, splitName) {
     const manifest = await ensureGroundTruthManifest();
+    if (airfransProfiles && datasetName === "AirfRANS" && dataRelease().source_ref === "dev") {
+      return airfransProfiles.getIndex(activeSplitDefinition()?.id);
+    }
     const dataset = (manifest.datasets || []).find((candidate) => candidate.name === datasetName);
     const split = (dataset?.splits || []).find((candidate) => candidate.label === splitName);
     const caseSet = (dataset?.case_sets || []).find((candidate) => candidate.id === split?.case_set_id);
@@ -3066,15 +3072,17 @@
     }
     const hiLiftCompactPrediction = cached.data?.format === hiLiftCompactPredictionFormat;
     const windsorPrediction = row.dataset_id === "windsorml" && row.schema_version === "3.0";
-    if (windsorPrediction && (
-      cached.data?.format !== "fluidsbench-profile-chunks-v1" ||
-      cached.data?.dataset_id !== "windsorml" ||
-      cached.data?.submission_id !== row.submission_id ||
-      cached.data?.split_id !== row.split_id ||
-      cached.data?.case_set_id !== row.profile_data?.case_set_id ||
-      cached.data?.case_count !== row.profile_data?.case_count ||
-      cached.data?.case_id_status !== "official_intersected_with_published"
-    )) throw new Error(`${rowLabel(row)} WindsorML prediction index identity differs`);
+    if (
+      windsorPrediction &&
+      (cached.data?.format !== "fluidsbench-profile-chunks-v1" ||
+        cached.data?.dataset_id !== "windsorml" ||
+        cached.data?.submission_id !== row.submission_id ||
+        cached.data?.split_id !== row.split_id ||
+        cached.data?.case_set_id !== row.profile_data?.case_set_id ||
+        cached.data?.case_count !== row.profile_data?.case_count ||
+        cached.data?.case_id_status !== "official_intersected_with_published")
+    )
+      throw new Error(`${rowLabel(row)} WindsorML prediction index identity differs`);
 
     const expectedCaseSetId = row.profile_data?.case_set_id || row.case_set_id;
     const expectedCaseCount = row.profile_data?.case_count;
@@ -3120,6 +3128,7 @@
   }
 
   async function indexedProfileCase(context, caseId, cache, label) {
+    if (context.airfransNativeTruth) return airfransProfiles.getCase(context, caseId);
     const references = isNativeProfileTruthSplitIndex(context.index) ? context.index?.chunk_refs : context.index?.chunks;
     const entry = (references || []).find((chunk) => (chunk.case_ids || []).includes(caseId));
     if (!entry) return null;
@@ -3696,20 +3705,27 @@
     const support = record(dataset?.scoring_support);
     const supportStatus = String(firstValue(support.status, dataset?.scoring_support_status, "not_published"));
     const workflowOpen = support.submissions_open === true;
-    const open = supportStatus === "official" && workflowOpen;
+    const availability = window.FluidsBenchSubmissionAvailability?.[activeDatasetSlug()] || {};
+    const devCandidate = window.FluidsBenchDevIntake === true && dataRelease().source_ref === "dev" && availability.dev_candidate === true;
+    const splitId = activeSplitDefinition()?.id;
+    const open =
+      devCandidate ||
+      (supportStatus === "official" && workflowOpen && (!availability.open_splits || availability.open_splits.some((split) => split.id === splitId)));
     const status = element("submission-status");
     const button = element("open-submission-repo");
     if (status) {
-      status.textContent = open ? "Submissions open" : "Submissions closed";
+      status.textContent = devCandidate ? "Dev submissions open" : open ? "Submissions open" : "Submissions closed";
       status.className = `leaderboard-submit-status${open ? " is-open" : ""}`;
-      status.title = open
-        ? `${dataset.name} submissions use ${support.release_id || "the official scoring-support release"}.`
-        : "This dataset is not currently accepting leaderboard submissions.";
+      status.title = devCandidate
+        ? "Submit a candidate to dev. Maintainer registration is required for preview display."
+        : open
+          ? `${dataset.name} submissions use ${support.release_id || "the official scoring-support release"}.`
+          : "This dataset is not currently accepting leaderboard submissions.";
     }
     if (button) {
       button.disabled = !open;
       button.hidden = !open;
-      button.textContent = "Submit a result";
+      button.textContent = devCandidate ? "Submit to dev" : "Submit a result";
     }
   }
 
@@ -3729,7 +3745,7 @@
         ? " — all eight WindsorML splits are available below. No model results have been submitted; the benchmark is awaiting owner review."
         : officialRelease
           ? " — submitted packages are validated and maintainer-approved."
-          : " — illustrative dummy data; not citable or suitable for leaderboard claims.";
+          : " — dev preview containing retained examples and reviewed results; not citable or suitable for official leaderboard claims.";
     }
     element("leaderboard-release-id").textContent = release.id || "Unversioned";
     const details = [];
@@ -7177,19 +7193,22 @@
     const series = profileCase.series.map((submitted) => {
       const identity = key(submitted);
       const reference = references.get(identity);
-      if (!reference || seen.has(identity) ||
-          Object.keys(submitted).sort().join(",") !== "coordinate,panel_id,prediction,quantity_id,station_id" ||
-          !arraysExactlyEqual(submitted.coordinate, reference.coordinate) ||
-          !Array.isArray(submitted.prediction) || submitted.prediction.length !== 128 ||
-          submitted.prediction.some((value) => !Number.isFinite(value))) {
+      if (
+        !reference ||
+        seen.has(identity) ||
+        Object.keys(submitted).sort().join(",") !== "coordinate,panel_id,prediction,quantity_id,station_id" ||
+        !arraysExactlyEqual(submitted.coordinate, reference.coordinate) ||
+        !Array.isArray(submitted.prediction) ||
+        submitted.prediction.length !== 128 ||
+        submitted.prediction.some((value) => !Number.isFinite(value))
+      ) {
         throw new Error(`${label} WindsorML prediction series or ordered coordinates differ from frozen native support`);
       }
       seen.add(identity);
       const { value, ...metadata } = reference;
       return { ...metadata, prediction: submitted.prediction };
     });
-    return { ...profileCase, series, profile_support_sha256: truthCase.profile_support_sha256,
-             _fluidsbenchWindsorNativeProfilePrediction: true };
+    return { ...profileCase, series, profile_support_sha256: truthCase.profile_support_sha256, _fluidsbenchWindsorNativeProfilePrediction: true };
   }
 
   async function materializeHiLiftCompactPrediction(profileCase, truthCase, label) {
@@ -8204,7 +8223,8 @@
       profileCase?._fluidsbenchNativeProfileTruth ||
         profileCase?._fluidsbenchHiLiftCompactTruth ||
         profileCase?._fluidsbenchAhmedNativeProfileTruth ||
-        profileCase?._fluidsbenchWindsorNativeProfileTruth
+        profileCase?._fluidsbenchWindsorNativeProfileTruth ||
+        profileCase?._fluidsbenchAirfransNativeProfileTruth
     );
   }
 
@@ -8212,7 +8232,8 @@
     if (profileCase?._fluidsbenchHiLiftCompactTruth) return "Native CFD ground truth (plot-only)";
     return profileCase?._fluidsbenchNativeProfileTruth ||
       profileCase?._fluidsbenchAhmedNativeProfileTruth ||
-      profileCase?._fluidsbenchWindsorNativeProfileTruth
+      profileCase?._fluidsbenchWindsorNativeProfileTruth ||
+      profileCase?._fluidsbenchAirfransNativeProfileTruth
       ? "Native CFD ground truth"
       : "Ground truth";
   }
@@ -11166,8 +11187,11 @@
     element("open-submission-repo")?.addEventListener("click", (event) => {
       if (event.currentTarget.disabled || !activeDataset()) return;
       const sourceRef = String(window.FluidsBenchSubmissionSourceRef || "main");
+      const guide = window.FluidsBenchSubmissionAvailability?.[activeDatasetSlug()]?.guide;
       window.open(
-        `https://github.com/neilashton/fluidsbench-submission/tree/${encodeURIComponent(sourceRef)}/submissions/${activeDataset().slug}`,
+        guide
+          ? `https://github.com/neilashton/fluidsbench-submission/blob/${encodeURIComponent(sourceRef)}/${guide}`
+          : `https://github.com/neilashton/fluidsbench-submission/tree/${encodeURIComponent(sourceRef)}/submissions/${activeDataset().slug}`,
         "_blank",
         "noopener,noreferrer"
       );
