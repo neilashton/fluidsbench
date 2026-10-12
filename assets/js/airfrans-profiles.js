@@ -44,7 +44,7 @@
         cache.set(
           key,
           (async () => {
-            const response = await fetcher(url);
+            const response = await fetcher(url, { cache: "no-store" });
             requireValue(response.ok, `download failed (${response.status})`);
             const bytes = await response.arrayBuffer();
             requireValue((await sha256(bytes)) === expected, "checksum mismatch");
