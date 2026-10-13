@@ -152,4 +152,13 @@ check(site.config["launch"]["can_submit"] && !site.config["launch"]["leaderboard
   rejected(guarded, "dev intake escaped the hosted dev branch")
 end
 
+# A same-time dev cutoff/reveal must build without the clock publishing the board.
+site = site_for("collecting")
+site.config.merge!(YAML.load_file(File.join(ROOT, "_config_preview.yml")))
+site.time = Time.iso8601(site.config["launch"].fetch("reveal_at"))
+FluidsBench::Launch.new.generate(site)
+check(site.config["launch"]["cutoff_at"] == site.config["launch"]["reveal_at"], "dev cutoff differs from the launch countdown")
+check(site.config["launch"]["deadline_passed"] && site.config["launch"]["reveal_passed"], "same-time deadline boundary failed")
+check(!site.config["launch"]["leaderboard_visible"], "dev countdown expiry published the board")
+
 puts "Launch phases, publication gates, dataset independence, local and committee review checks passed."

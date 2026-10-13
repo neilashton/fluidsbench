@@ -104,8 +104,10 @@ results follow their dataset's publication process. The website's dev PR and pus
 packages, generated feeds and website scores against submission `dev`, alongside the pinned historical fixture-truth
 checks. Production feed settings and the audited intake/availability pin remain separate.
 
-The dev deployment validates both the announcement homepage and the single allowed review page with
-`python3 bin/check_launch_build.py _site --phase announced --committee-review`. It rejects incoming links, missing review
+The dev homepage counts down to the planned submission cutoff and leaderboard launch at 15:00 UTC on 1 December 2026, configured in `_config_preview.yml`. The clock is informational; publishing the official leaderboard still requires a checked deployment.
+
+The dev deployment validates both the countdown homepage and the single allowed review page with
+`python3 bin/check_launch_build.py _site --phase collecting --committee-review --dev-intake`. It rejects incoming links, missing review
 labels or noindex metadata, and any other page exposing a prelaunch leaderboard. Dataset submission gates and official-release
 requirements remain in force.
 
