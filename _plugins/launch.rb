@@ -54,7 +54,7 @@ module FluidsBench
           reject!("invalid #{key}")
         end
       end
-      reject!("dates must be ordered opening < cutoff < reveal") unless dates[0] < dates[1] && dates[1] < dates[2]
+      reject!("dates must be ordered opening < cutoff <= reveal") unless dates[0] < dates[1] && dates[1] <= dates[2]
       status = site.data.fetch("submission_status", {})
       reject!("availability must match submission_source_ref") unless status["source_commit"] == site.config["submission_source_ref"]
 

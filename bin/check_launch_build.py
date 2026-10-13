@@ -112,8 +112,8 @@ def validate(root: Path, phase: str, committee_review: bool = False, dev_intake:
     else:
         if dev_intake:
             run = (root / "run/index.html").read_text()
-            if phase != "collecting" or not committee_review or "Development intake" not in index or 'data-countdown' in index:
-                errors.append("dev intake must be a labelled collecting preview without a production countdown")
+            if phase != "collecting" or not committee_review or "Development intake" not in index or 'data-countdown' not in index:
+                errors.append("dev intake must be a labelled collecting preview with a countdown")
             if '/compare/dev...' not in run or '/compare/main...' in run:
                 errors.append("dev intake submission PRs must target dev")
             if "Reynolds extrapolation is closed" not in run:

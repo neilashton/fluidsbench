@@ -8,6 +8,8 @@ submission_target_branch: dev
 launch:
   phase: collecting
   dev_intake: true
+  cutoff_at: "2026-12-01T15:00:00Z"
+  reveal_at: "2026-12-01T15:00:00Z"
 # Follow the generated dev feeds so reviewed results appear without a website repin.
 leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/
 # Intake documentation and availability retain their matching audited source pin.
