@@ -1,6 +1,8 @@
-/* Display-only guide. Fixed definitions are copied verbatim from the pinned FluidsBench DrivAerML v9 contract. */
+/* Display-only selectors over dataset-specific profile-location definitions. */
 (() => {
   "use strict";
+
+  const scenes = typeof module !== "undefined" && module.exports ? require("./profile-location-scenes.js") : window.FluidsBenchProfileLocationScenes;
 
   const palette = { V: "#007d76", U: "#3f65b4", L: "#b85b28", R: "#8a4b91", cp: "#007d76" };
   const escape = (value) =>
@@ -303,6 +305,7 @@
   }
 
   function guideMarkup(definitions, selection) {
+    if (definitions.schema === "fluidsbench-profile-location-guide-v1") return scenes.guideMarkup(definitions, selection);
     if (selection.placement !== "constant") {
       return `<div class="location-heading"><div><h3>Profile locations</h3>
         <p>Geometry-relative locations · report only</p></div><span class="location-badge">Case-specific</span></div>
@@ -369,7 +372,7 @@
       this.container = container;
       this.version = 0;
       this.definitions = fetch(definitionsUrl, { cache: "no-store" }).then((response) => {
-        if (!response.ok) throw new Error("fixed location definitions could not be loaded");
+        if (!response.ok) throw new Error("location definitions could not be loaded");
         return response.json();
       });
       // Handle a load failure even if no imported result triggers the first update.
@@ -412,7 +415,7 @@
   }
 
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { projection, guideMarkup };
+    module.exports = { projection, guideMarkup, ProfileLocationGuide };
   } else {
     window.FluidsBenchProfileLocationGuide = ProfileLocationGuide;
   }

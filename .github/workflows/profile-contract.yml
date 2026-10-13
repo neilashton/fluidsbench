@@ -39,6 +39,7 @@ jobs:
           python-version: "3.12"
       - run: python fluidsbench/bin/check_dataset_pages.py --submission-root fluidsbench-submission-schemas
       - run: python fluidsbench/bin/check_pressure_references.py --submission-root fluidsbench-submission-schemas
+      - run: python fluidsbench/bin/export_profile_locations.py --submission-root fluidsbench-submission-schemas --check
       - run: python fluidsbench/bin/check_profile_contract.py --submission-root fluidsbench-submission --schema-root fluidsbench-submission-schemas
       - run: python fluidsbench/bin/prepare_submission_status.py --submission-root fluidsbench-submission-schemas --check
       - run: ruby fluidsbench/bin/check_launch_contract.rb

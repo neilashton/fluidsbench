@@ -6670,16 +6670,19 @@
     const panel = activeDataset()?.diagnostic_panels?.[index];
     const container = element(`profile-${index}-locations`);
     if (!container) return;
-    const supported = activeDatasetSlug() === "drivaerml" && ["velocity_profiles", "pressure_profiles"].includes(panel?.id);
+    const datasetId = activeDatasetSlug();
+    const definitionsUrl = window.FluidsBenchProfileLocationDefinitionsUrls?.[datasetId];
+    const supported = Boolean(definitionsUrl) && ["velocity_profiles", "pressure_profiles"].includes(panel?.id);
     container.hidden = !supported;
+    container.dataset.locationDataset = datasetId;
     if (!supported || !window.FluidsBenchProfileLocationGuide) return;
     let guide = profileLocationGuides.get(container);
     if (!guide) {
       guide = new window.FluidsBenchProfileLocationGuide(container, {
-        definitionsUrl: window.FluidsBenchProfileLocationDefinitionsUrl,
+        definitionsUrl,
         onSelect(stationId) {
           const family = selectedProfileFamily(panel);
-          if (family?.placementMode !== "constant" || !family.stations.some((station) => station.id === stationId)) return;
+          if (!profileStations(panel, family).some((station) => station.id === stationId)) return;
           panelSelection(panel).station = stationId;
           element(`profile-${index}-station`).value = stationId;
           renderProfileChart(index);
@@ -6699,7 +6702,12 @@
       profileLocationGuides.set(container, guide);
     }
     const family = selectedProfileFamily(panel);
+    const truth = state.groundTruthCase?.case_id === state.profileCase ? state.groundTruthCase : null;
     guide.update({
+      datasetId,
+      caseId: state.profileCase,
+      bodyHeight: truth?._fluidsbenchWindsorNativeProfileTruth ? truth.body_height_m : null,
+      caseSupportSha256: truth?._fluidsbenchAhmedNativeProfileTruth ? truth.lineage?.case_support_sha256 : null,
       placement: family?.placementMode,
       quantity: panel.id === "velocity_profiles" ? "velocity" : "cp",
       stationId: panelSelection(panel).station,
