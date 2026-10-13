@@ -106,6 +106,8 @@ checks. Production feed settings and the audited intake/availability pin remain 
 
 The dev homepage counts down to the planned submission cutoff and leaderboard launch at 15:00 UTC on 1 December 2026, configured in `_config_preview.yml`. The clock is informational; publishing the official leaderboard still requires a checked deployment.
 
+The dev deployment fingerprints stylesheet URLs after PurgeCSS, using the final CSS contents. This prevents a template-only change from reusing cached CSS that had those newly visible elements removed. Both the dev deployment and the subsequent GitHub Pages publication must finish before checking the live URL.
+
 The dev deployment validates both the countdown homepage and the single allowed review page with
 `python3 bin/check_launch_build.py _site --phase collecting --committee-review --dev-intake`. It rejects incoming links, missing review
 labels or noindex metadata, and any other page exposing a prelaunch leaderboard. Dataset submission gates and official-release
