@@ -11,3 +11,6 @@ assets/data/profile-locations/*.json
 
 # Lossless, checksum-bound native AirfRANS browser artifacts.
 assets/data/airfrans-native-profiles/**
+
+# Checksum-bound native DrivAerNet++ browser artifacts.
+assets/data/drivaernetplusplus-native-profiles/**

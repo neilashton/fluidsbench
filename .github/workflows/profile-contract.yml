@@ -27,7 +27,7 @@ jobs:
           repository: neilashton/fluidsbench-submission
           # Current intake contracts, schemas and pressure audit.
           # Publish this dev revision before the paired website changes.
-          ref: 8228659b2c4020121adce79455eee8046ed23be9
+          ref: 7f5893424ba7a0c5745e8f036dbdfb7be8793651
           sparse-checkout: |
             schemas
             docs
@@ -43,7 +43,7 @@ jobs:
       - run: python fluidsbench/bin/check_profile_contract.py --submission-root fluidsbench-submission --schema-root fluidsbench-submission-schemas
       - run: python fluidsbench/bin/prepare_submission_status.py --submission-root fluidsbench-submission-schemas --check
       - run: ruby fluidsbench/bin/check_launch_contract.rb
-      - run: node --test fluidsbench/tests/test_launch.js fluidsbench/tests/test_leaderboard_compute.js fluidsbench/tests/test_leaderboard_scores.js fluidsbench/tests/test_leaderboard_verification.js fluidsbench/tests/test_profile_locations.js
+      - run: node --test fluidsbench/tests/test_launch.js fluidsbench/tests/test_leaderboard_compute.js fluidsbench/tests/test_leaderboard_scores.js fluidsbench/tests/test_leaderboard_verification.js fluidsbench/tests/test_profile_locations.js fluidsbench/tests/test_drivaernetplusplus_profiles.js
       - run: node fluidsbench/bin/check_leaderboard_claim_ui.js
       - run: python -m unittest discover -s fluidsbench/tests -p "test_*.py"
       - name: Checkout current dev leaderboard data
@@ -64,7 +64,7 @@ jobs:
         env:
           FLUIDSBENCH_SUBMISSION_ROOT: ${{ github.workspace }}/fluidsbench-submission-dev
         run: |
-          node --test fluidsbench/tests/test_leaderboard_scores.js fluidsbench/tests/test_airfrans_profiles.js
+          node --test fluidsbench/tests/test_leaderboard_scores.js fluidsbench/tests/test_airfrans_profiles.js fluidsbench/tests/test_drivaernetplusplus_profiles.js
           python fluidsbench/bin/check_dataset_pages.py --submission-root fluidsbench-submission-dev
           python fluidsbench/bin/check_pressure_references.py --submission-root fluidsbench-submission-dev
           python fluidsbench/bin/prepare_submission_status.py --submission-root fluidsbench-submission-dev --check-contracts

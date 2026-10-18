@@ -215,23 +215,28 @@ print(train.shape, train_names[:3])</code></pre>
 {% when "drivaernetplusplus" %}
 <div class="dataset-start-grid">
   <div>
-    <h4>1. Inspect the pressure-release metadata</h4>
-    <pre><code>curl -L \
-  "https://dataverse.harvard.edu/api/datasets/:persistentId/?persistentId=doi:10.7910/DVN/K7PWNJ" \
-  -o drivaernetplusplus-pressure-metadata.json</code></pre>
+    <h4>1. Get the public pressure data</h4>
+    <p>
+      Use the Dataverse / Globus transfer for the 15 <code>SurfacePressureVTK</code> family archives (about 210 GB), then verify the extracted test
+      files against the pinned release.
+    </p>
+    <pre><code>python scripts/drivaernetplusplus.py verify-data \
+  --dataset-root /data/dnpp/SurfacePressureVTK</code></pre>
   </div>
   <div>
-    <h4>2. Plan a resumable archive transfer</h4>
-    <pre><code># Example: one public pressure archive (about 18.4 GB)
-curl -L --continue-at - \
-  "https://dataverse.harvard.edu/api/access/datafile/10816644" \
-  -o E_S_WWC_WM.zip</code></pre>
+    <h4>2. Download the prepared scoring support</h4>
+    <pre><code>python scripts/drivaernetplusplus.py fetch-support \
+  --destination support/drivaernetplusplus</code></pre>
+    <p>
+      The 24 verified archives total about 5.5 GB and contain the reference pressure, dual-area weights and frozen profile points for all 1,154 test
+      designs.
+    </p>
   </div>
 </div>
 <p class="dataset-download-note">
-  Use the project's Dataverse or Globus instructions for the full collection. The current FluidsBench converter reads the public VTK pressure array
-  <code>p</code> as kinematic pressure in m²/s² and maps every native point into the scoring table. The active contract still has only one prototype
-  case; do not treat the 1,154-car proposal as open until its split and scoring-support release are finalized and merged.
+  Use the current <code>dev</code> checkout and its DrivAerNet++ participant guide for the pinned Linux environment or Docker commands, prediction
+  layout, resumable evaluation and packaging. Predict native PointData <code>p</code> in m²/s² for every test point. Dev candidates are accepted for
+  review; official submissions remain closed.
 </p>
 
 {% when "rotor37" %}

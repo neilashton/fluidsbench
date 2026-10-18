@@ -13,4 +13,4 @@ launch:
 # Follow the generated dev feeds so reviewed results appear without a website repin.
 leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/
 # Intake documentation and availability retain their matching audited source pin.
-submission_source_ref: 8228659b2c4020121adce79455eee8046ed23be9
+submission_source_ref: 7f5893424ba7a0c5745e8f036dbdfb7be8793651

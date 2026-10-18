@@ -1,8 +1,8 @@
 {
-  "source_commit": "8228659b2c4020121adce79455eee8046ed23be9",
-  "manifest_sha256": "b1c48a28b378896441f098cf7adbaca790f076f909717daf932aa48520ecff48",
+  "source_commit": "7f5893424ba7a0c5745e8f036dbdfb7be8793651",
+  "manifest_sha256": "f76c26b3dbff6372cc8b4240fc3705644e75d2fa9f28d411849d192e8f8b5c2c",
   "release": {
-    "id": "prototype-dev-2026-09-29-b7435a38c0c1",
+    "id": "prototype-dev-2026-10-18-6ef4f652a467",
     "status": "prototype_dummy_data",
     "asset_base_url": "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/",
     "archive_url": null
@@ -26,9 +26,9 @@
     },
     "drivaernetplusplus": {
       "open": false,
-      "dev_candidate": false,
-      "guide": null,
-      "specification_sha256": "4e6ad2834dd5f63190ba4c4f8479c7e9ba32bf9cdc996869994342d3dbb37085",
+      "dev_candidate": true,
+      "guide": "examples/drivaernetplusplus-v3-candidate/README.md",
+      "specification_sha256": "bdc76ca82b6121db4431b38ca179ace6151d60628bd48158ba19bb39aa836e90",
       "scoring_release_id": null,
       "open_splits": []
     },

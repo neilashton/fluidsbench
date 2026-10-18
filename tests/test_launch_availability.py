@@ -50,13 +50,13 @@ class AvailabilityTests(unittest.TestCase):
         spec = {"status": "candidate_native_support", "scoring_support": {
             "status": "owner_review_required", "submissions_open": False,
             "candidate_manifest": {"manifest_sha256": "b" * 64}}}
-        for slug in ("ahmedml", "windsorml", "drivaerml"):
+        for slug in ("ahmedml", "windsorml", "drivaerml", "drivaernetplusplus"):
             availability = self.result(spec, slug=slug)["datasets"][slug]
             self.assertTrue(availability["dev_candidate"])
             self.assertFalse(availability["open"])
             self.assertTrue(availability["guide"])
             self.assertFalse(self.result(spec, slug=slug, branch="main")["datasets"][slug]["dev_candidate"])
-        for slug in ("hiliftaeroml", "drivaernetplusplus", "airfrans"):
+        for slug in ("hiliftaeroml", "airfrans"):
             self.assertFalse(self.result(spec, slug=slug)["datasets"][slug]["dev_candidate"])
 
     def test_snapshot_records_exact_source_and_contract_without_scores(self):

@@ -31,8 +31,8 @@ compact_masthead: true
       <div>
         <dt>Current FluidsBench split</dt>
         <dd>
-          <code>default</code> currently contains one prototype-generated case. A reviewed 1,154-case proposal exists but is not active in the dev
-          submission specification.
+          <code>official_test</code> covers all 1,154 test designs and every native surface pressure point.
+          This is a dev candidate; official submissions remain closed pending owner approval.
         </dd>
       </div>
       <div>
@@ -43,7 +43,7 @@ compact_masthead: true
         <dt>Current FluidsBench status</dt>
         <dd>
           Surface pressure in the released VTK <code>p</code> array is the only confirmed field task. Wall shear, full
-          volume fields, forces, and profiles require a later release-bound evaluator.
+          volume fields and forces are outside this pressure-only release. Three evaluator-extracted Cp profiles are available for comparison only.
         </dd>
       </div>
       <div>
@@ -72,8 +72,8 @@ compact_masthead: true
     <h3>Cp stations</h3>
     <p>
       DrivAerNet++ publishes surface pressure over annotated vehicle components but not a canonical set of one-dimensional
-      Cp traces. The following traces are retained only as optional prototype interface fixtures; they are not part of the
-      confirmed scoring task and will not become official unless a release-bound extraction rule is approved.
+      Cp traces. The dev evaluator extracts these three report-only traces at frozen native points on every test design,
+      using <code>Cp = p / 450</code>. They do not contribute to the score. The proposed retirement of the wheelhouse trace awaits owner confirmation.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">
@@ -81,7 +81,6 @@ compact_masthead: true
         <tbody>
           <tr><td><code>upper_body_centerline</code></td><td>Upper-body component centreline.</td></tr>
           <tr><td><code>underbody_centerline</code></td><td>Smooth or detailed underbody centreline.</td></tr>
-          <tr><td><code>front_wheelhouse</code></td><td>Annotated front-wheel region.</td></tr>
           <tr><td><code>rear_body_centerline</code></td><td>Fastback, notchback, or estateback rear-body centreline.</td></tr>
         </tbody>
       </table>
@@ -110,8 +109,8 @@ compact_masthead: true
         <dt>Surface pressure relative L2</dt>
         <dd>
           CarBench reports an unweighted point relative L2 (each point counts equally) on the DrivAerNet++ geometry-disjoint evaluation set. FluidsBench
-          displays that source-paper value only as a prototype for the unweighted point secondary metric; the primary
-          area-weighted value requires a complete evaluator rerun.
+          evaluates both area-weighted primary and equal-point secondary relative L2 on every native test point.
+          The dev feed uses evaluated submission packages rather than source-paper table values.
         </dd>
       </div>
       <div>
@@ -123,24 +122,21 @@ compact_masthead: true
       </div>
     </dl>
     <p>
-      For the current prototype release, leaderboard rank uses the higher-is-better composite score
+      The pressure-only candidate reports the higher-is-better composite score
       <code>overall_score = clip(100 - surface_pressure_rel_l2, 0, 100)</code>, where
       <code>surface_pressure_rel_l2</code> is the primary
-      area-weighted percentage error. This provisional transformation preserves the ordering of the underlying
-      pressure error while giving every FluidsBench dataset the same ranking-column ID. The original pressure metrics
-      remain visible alongside it.
+      area-weighted percentage error. The underlying pressure metrics remain visible alongside it.
+      Dev references are unranked and do not constitute official results.
     </p>
   </section>
 
   <section class="dataset-panel">
-    <h3>CarBench values used in the prototype</h3>
+    <h3>Submitting a dev candidate</h3>
     <p>
-      The current leaderboard rows use CarBench Table 1 values for surface pressure relative L2, pressure-field
-      R<sup>2</sup>, and parameter count. The paper states that its first release focuses on surface pressure and does
-      not evaluate drag/lift coefficients or volumetric fields, so those unsupported fields have been removed from the
-      active prototype metric contract. Absolute pressure MAE/RMSE are also disabled until the release-bound unit
-      convention is confirmed. The source relative L2 is treated as an unweighted point prototype, not as the final
-      area-weighted primary metric.
+      Generate native-point pressure predictions for all 1,154 test designs, download the prepared support,
+      evaluate with recovery, and package the result using the participant guide below. Open a pull request to
+      <code>fluidsbench-submission/dev</code>. After review, a maintainer registers the exact package in the
+      dev feed. Official approval and publication are separate steps.
     </p>
   </section>
 

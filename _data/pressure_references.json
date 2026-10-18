@@ -225,18 +225,18 @@
       "code_evidence": [
         {
           "path": "benchmark-specs/drivaernetplusplus/submission-spec.json",
-          "sha256": "4e6ad2834dd5f63190ba4c4f8479c7e9ba32bf9cdc996869994342d3dbb37085",
-          "finding": "The audited dev scoring specification; not modified by this documentation audit."
+          "sha256": "bdc76ca82b6121db4431b38ca179ace6151d60628bd48158ba19bb39aa836e90",
+          "finding": "Candidate dev scoring specification. Re-audited 2026-10-18 after the move to candidate_native_support: the p units note and the pressure convention are unchanged."
         },
         {
           "path": "benchmark-specs/drivaernetplusplus/OWNER_APPROVAL.md",
-          "sha256": "90192fa4c2d5155cc58eb4d5689a7b3ac8a70caf618109c27f1d08a9602c5baf",
-          "finding": "Existing scientific approval; final support publication remains separate."
+          "sha256": "117717f32d5c9972a01ecd69bd8b1c277a09922b7f5f6c0910415f4ce964c453",
+          "finding": "Existing scientific approval, unchanged; only the outstanding-items section was updated."
         },
         {
-          "path": "reference/evaluate_predictions.py",
-          "sha256": "90f9061dbfd02e59ab7c5bcd0d57af650eb54ecec8c08dabe507e0154db25df8",
-          "finding": "Pressure arrays are reduced without a fitted offset."
+          "path": "reference/drivaernetplusplus/evaluator.py",
+          "sha256": "83a29013fc8efa66dd0856a650a4d93253411afed565075ae41247ba822de653",
+          "finding": "Scores native p exactly as submitted against stored p, with no fitted offset; profile Cp is p / 450."
         }
       ]
     },
@@ -359,8 +359,8 @@
         },
         {
           "path": "scripts/validate_submission.py",
-          "sha256": "c651f5d84a8582241bd78fd7989effe23e70ebf7e779014da7bfe69c0991a7bd",
-          "finding": "Requires the SI export evidence and retains the original closed-candidate validation receipts when checking corrected packages. Rechecked after the FluidsBench repository transfer: only repository URL checks changed; HiLiftAeroML validation is unchanged. Rechecked for the AirfRANS pre-release registration: the new per-package candidate view is restricted to hash-bound AirfRANS references; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-08: the validator change selects AirfRANS dataset-local truth and its retained historical contract; the HiLiftAeroML pressure, units and evaluation paths remain unchanged. Re-audited 2026-10-11: the new development intake path is restricted to AhmedML candidates in the prototype dev release; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-11 for WindsorML development intake: the added candidate registry, intersected split handling, and native-profile checks leave HiLiftAeroML pressure and SI export validation unchanged. Re-audited 2026-10-11: adds DrivAerML dev intake, native profile score validation, surface-only omission rules and maximum-residual reduction; HiLiftAeroML pressure handling is unchanged. Re-audited 2026-10-12: the only validator change selects the new DrivAerML dev release; other datasets and pressure conversions are unchanged. Re-audited 2026-10-12 for AirfRANS atomic packaging: a Python-only option permits validation in a staging directory; CLI path enforcement, pressure calculations and SI export validation are unchanged."
+          "sha256": "9143a4eae14c7991a7b324c406ee18b7fd19d18360770a728982864aaf30f082",
+          "finding": "Requires the SI export evidence and retains the original closed-candidate validation receipts when checking corrected packages. Rechecked after the FluidsBench repository transfer: only repository URL checks changed; HiLiftAeroML validation is unchanged. Rechecked for the AirfRANS pre-release registration: the new per-package candidate view is restricted to hash-bound AirfRANS references; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-08: the validator change selects AirfRANS dataset-local truth and its retained historical contract; the HiLiftAeroML pressure, units and evaluation paths remain unchanged. Re-audited 2026-10-11: the new development intake path is restricted to AhmedML candidates in the prototype dev release; HiLiftAeroML pressure and SI export validation are unchanged. Re-audited 2026-10-11 for WindsorML development intake: the added candidate registry, intersected split handling, and native-profile checks leave HiLiftAeroML pressure and SI export validation unchanged. Re-audited 2026-10-11: adds DrivAerML dev intake, native profile score validation, surface-only omission rules and maximum-residual reduction; HiLiftAeroML pressure handling is unchanged. Re-audited 2026-10-12: the only validator change selects the new DrivAerML dev release; other datasets and pressure conversions are unchanged. Re-audited 2026-10-12 for AirfRANS atomic packaging: a Python-only option permits validation in a staging directory; CLI path enforcement, pressure calculations and SI export validation are unchanged. Re-audited 2026-10-18 for DrivAerNet++ development intake: the added candidate registry and dev-intake block are restricted to DrivAerNet++ candidates; HiLiftAeroML pressure and SI export validation are unchanged."
         },
         {
           "path": "benchmark-specs/hiliftaeroml/dimensional-export-correction-v1/verification.json",

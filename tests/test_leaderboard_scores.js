@@ -112,6 +112,21 @@ test("group weights come from components and invalid partitions are not presente
   assert.match(contract(rules).groupReason, /incomplete/);
 });
 
+test("DrivAerNet++ pressure-only task keeps the full pressure score without a volume penalty", () => {
+  const definition = {
+    slug: "drivaernetplusplus",
+    ...dataset([{ metric_id: "surface_pressure_rel_l2", weight: 1, transform: "bounded_error", cap: 100 }]),
+  };
+  const result = breakdown(definition, { prediction_scope: "surface_only", metric_values: { surface_pressure_rel_l2: 14.77, overall_score: 85.23 } });
+  near(result.total, 85.23);
+  assert.equal(result.status, "match");
+  assert.equal(result.components[0].status, "reported");
+  assert.equal(
+    breakdown({ ...definition, slug: "unknown" }, { prediction_scope: "surface_only", metric_values: { surface_pressure_rel_l2: 14.77 } }).total,
+    null
+  );
+});
+
 const submissionRoot = path.resolve(process.env.FLUIDSBENCH_SUBMISSION_ROOT || path.join(__dirname, "../../fluidsbench-submission"));
 test(
   "every loaded result and edge case agrees with the independent Python reference scorer",
@@ -147,7 +162,9 @@ test(
       declaration: definition.overall_score_composite,
       values: entry.metric_values,
       fixedZero:
-        entry.prediction_scope === "surface_only" ? definition.overall_score_composite.surface_only_policy.unavailable_component_metric_ids : [],
+        entry.prediction_scope === "surface_only"
+          ? definition.overall_score_composite.surface_only_policy?.unavailable_component_metric_ids || []
+          : [],
     }));
     const run = spawnSync("python3", [path.join(__dirname, "score_reference.py"), submissionRoot], {
       input: JSON.stringify(oracleCases),

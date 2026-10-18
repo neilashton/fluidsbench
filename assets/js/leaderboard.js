@@ -10,6 +10,9 @@
   const airfransProfiles = window.FluidsBenchAirfransNativeProfiles
     ? window.FluidsBenchAirfransProfiles.createLoader(window.FluidsBenchAirfransNativeProfiles)
     : null;
+  const drivaernetplusplusProfiles = window.FluidsBenchDrivaernetplusplusNativeProfiles
+    ? window.FluidsBenchDrivaernetplusplusProfiles.createLoader(window.FluidsBenchDrivaernetplusplusNativeProfiles)
+    : null;
   const palette = [
     "#0072b2",
     "#d55e00",
@@ -2670,6 +2673,9 @@
     if (airfransProfiles && datasetName === "AirfRANS" && dataRelease().source_ref === "dev") {
       return airfransProfiles.getIndex(activeSplitDefinition()?.id);
     }
+    if (drivaernetplusplusProfiles && datasetName === "DrivAerNet++" && dataRelease().source_ref === "dev") {
+      return drivaernetplusplusProfiles.getIndex(activeSplitDefinition()?.id);
+    }
     const dataset = (manifest.datasets || []).find((candidate) => candidate.name === datasetName);
     const split = (dataset?.splits || []).find((candidate) => candidate.label === splitName);
     const caseSet = (dataset?.case_sets || []).find((candidate) => candidate.id === split?.case_set_id);
@@ -3129,6 +3135,7 @@
 
   async function indexedProfileCase(context, caseId, cache, label) {
     if (context.airfransNativeTruth) return airfransProfiles.getCase(context, caseId);
+    if (context.drivaernetplusplusNativeTruth) return drivaernetplusplusProfiles.getCase(context, caseId);
     const references = isNativeProfileTruthSplitIndex(context.index) ? context.index?.chunk_refs : context.index?.chunks;
     const entry = (references || []).find((chunk) => (chunk.case_ids || []).includes(caseId));
     if (!entry) return null;
@@ -3360,11 +3367,11 @@
     return rounded === null ? "N/A" : rounded.toFixed(policy.decimal_places);
   }
 
-  function isNonRankedDevelopmentFixture(row) {
-    return row?.record_type === "development_fixture";
+  function isNonRankedRow(row) {
+    return row?.record_type === "development_fixture" || (row?.dataset_id === "drivaernetplusplus" && row?.record_type === "pre_release_reference");
   }
 
-  function nonRankedDevelopmentFixtureRanking(row, policy, rankedResultCount) {
+  function nonRankedRowRanking(row, policy, rankedResultCount) {
     return {
       ...policy,
       value: finiteNumber(row?.metricValues?.[policy.metric_id]),
@@ -3375,12 +3382,12 @@
       ranked_result_count: rankedResultCount,
       tied: false,
       tie_count: 0,
-      source: "non_ranked_development_fixture",
+      source: row?.record_type === "development_fixture" ? "non_ranked_development_fixture" : "non_ranked_pre_release_reference",
     };
   }
 
   function generatedRanking(row, policy) {
-    if (isNonRankedDevelopmentFixture(row)) return null;
+    if (isNonRankedRow(row)) return null;
     const generated = row.ranking;
     if (!state.feedVerified || !generated || typeof generated !== "object") return null;
     const requiredNumberFields = ["value", "ranked_value", "rank", "ranked_result_count", "tie_count"];
@@ -3504,7 +3511,7 @@
 
   function rowsForActiveSplit() {
     const allRows = (state.rows.get(state.dataset) || []).filter((row) => row.split === state.split);
-    const rankableRows = allRows.filter((row) => !isNonRankedDevelopmentFixture(row));
+    const rankableRows = allRows.filter((row) => !isNonRankedRow(row));
     const policy = rankingPolicy();
     const fallback = fallbackRankings(rankableRows, policy);
     const fallbackById = new Map(fallback.map((item) => [item.row.id, item.ranking]));
@@ -3529,8 +3536,8 @@
       });
     }
     const rankedResultCount = fallback[0]?.ranking?.ranked_result_count || 0;
-    const developmentFixtures = allRows.filter(isNonRankedDevelopmentFixture).map((row) => {
-      const fixtureRanking = nonRankedDevelopmentFixtureRanking(row, policy, rankedResultCount);
+    const developmentFixtures = allRows.filter(isNonRankedRow).map((row) => {
+      const fixtureRanking = nonRankedRowRanking(row, policy, rankedResultCount);
       return { ...row, rank: null, _ranking: fixtureRanking };
     });
     return [...rankedRows, ...developmentFixtures];
@@ -3556,6 +3563,7 @@
 
   function rowRanking(row) {
     if (row && !isLatestRevision(row)) return null;
+    if (isNonRankedRow(row)) return row?._ranking || nonRankedRowRanking(row, rankingPolicy(), 0);
     return row?._ranking || generatedRanking(row, rankingPolicy()) || fallbackRankings([row], rankingPolicy())[0]?.ranking || null;
   }
 
@@ -4807,6 +4815,7 @@
 
   function resultStatusLabel(row) {
     if (row?.record_type === "development_fixture") return "Development fixture · non-ranked";
+    if (isNonRankedRow(row)) return "Dev reference · non-ranked";
     return humanize(row?.approvalStatus);
   }
 
@@ -8188,6 +8197,9 @@
         rowMetadata.map(async ({ id, row, value, error }) => {
           if (!value || error) return { id, value, error };
           try {
+            if (groundTruthCase?._fluidsbenchDrivaernetplusplusNativeProfileTruth) {
+              window.FluidsBenchDrivaernetplusplusProfiles.validatePrediction(value, groundTruthCase, row);
+            }
             const decoded = await materializeHiLiftCompactPrediction(value, groundTruthCase, rowLabel(row));
             return { id, value: materializeWindsorPrediction(decoded, groundTruthCase, rowLabel(row)), error: null };
           } catch (materializeError) {
@@ -8232,7 +8244,8 @@
         profileCase?._fluidsbenchHiLiftCompactTruth ||
         profileCase?._fluidsbenchAhmedNativeProfileTruth ||
         profileCase?._fluidsbenchWindsorNativeProfileTruth ||
-        profileCase?._fluidsbenchAirfransNativeProfileTruth
+        profileCase?._fluidsbenchAirfransNativeProfileTruth ||
+        profileCase?._fluidsbenchDrivaernetplusplusNativeProfileTruth
     );
   }
 
@@ -8241,7 +8254,8 @@
     return profileCase?._fluidsbenchNativeProfileTruth ||
       profileCase?._fluidsbenchAhmedNativeProfileTruth ||
       profileCase?._fluidsbenchWindsorNativeProfileTruth ||
-      profileCase?._fluidsbenchAirfransNativeProfileTruth
+      profileCase?._fluidsbenchAirfransNativeProfileTruth ||
+      profileCase?._fluidsbenchDrivaernetplusplusNativeProfileTruth
       ? "Native CFD ground truth"
       : "Ground truth";
   }
@@ -9179,6 +9193,11 @@
     const policy = rankingPolicy();
     const definition = metricDefinition(policy.metric_id);
     const rows = rowsForActiveSplit();
+    if (state.dataset === "DrivAerNet++" && dataRelease().source_ref === "dev" && rows.every(isNonRankedRow)) {
+      target.textContent =
+        "DrivAerNet++ dev references are unranked while the candidate support awaits owner approval. Scores and profiles are available for workflow testing.";
+      return;
+    }
     const rankedCount = rows[0] ? rowRanking(rows[0])?.ranked_result_count : 0;
     target.textContent = `Ranking policy for data release ${dataRelease().id || "unversioned"}, ${state.dataset} / ${state.split}: ${
       plainMetricLabel(definition) || policy.metric_id
@@ -10048,16 +10067,23 @@
           )}</dd></div>`
       )
       .join("");
-    const summaryRank = rankContext
-      ? `#${rankContext.rank} of ${rankContext.ranked_result_count}`
-      : !isLatestRevision(row)
-        ? "Superseded version"
-        : row.record_type === "development_fixture"
-          ? "Non-ranked development fixture"
-          : "Not ranked";
+    const summaryRank =
+      rankContext && Number.isFinite(rankContext.rank)
+        ? `#${rankContext.rank} of ${rankContext.ranked_result_count}`
+        : !isLatestRevision(row)
+          ? "Superseded version"
+          : row.record_type === "development_fixture"
+            ? "Non-ranked development fixture"
+            : isNonRankedRow(row)
+              ? "Dev reference · non-ranked"
+              : "Not ranked";
     const summaryRankingLabel = plainMetricLabel(metricDefinition(ranking().metric_id)) || "Ranking score";
     const packageValidationLabel =
-      dataRelease().status === "official" ? humanize(validation.status || "not recorded") : "Prototype fixture — not applicable";
+      dataRelease().status === "official"
+        ? humanize(validation.status || "not recorded")
+        : row.dataset_id === "drivaernetplusplus" && row.record_type === "pre_release_reference"
+          ? "Dev reference — owner review pending"
+          : "Prototype fixture — not applicable";
     const summaryStatus = (label, value) =>
       `<span class="leaderboard-result-status"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "Not supplied")}</span>`;
     element("details-dialog-body").innerHTML = `
@@ -10105,7 +10131,11 @@
         ${detailsRow("Split ID", row.split_id)}
         ${detailsRow(
           "Prediction scope",
-          regionalScope(row) === "surface_only" ? "Surface only (volume components fixed to zero)" : "Surface and volume"
+          row.dataset_id === "drivaernetplusplus"
+            ? "Surface pressure (complete native-point task)"
+            : regionalScope(row) === "surface_only"
+              ? "Surface only (volume components fixed to zero)"
+              : "Surface and volume"
         )}
         ${detailsRow("Submitted by", row.submitter)}
         ${detailsRow("Institution", row.institution)}
