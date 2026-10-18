@@ -76,15 +76,19 @@ test(
     const recordsRoot = path.join(specRoot, "scoring-support", binding.source_release.release_id, "case-sets/official_test/case-artifacts");
     const loader = createLoader(binding, fileFetch);
     const context = await loader.getIndex("official_test");
-    const submissionRoot = path.join(source, "submissions/drivaernetplusplus/drivaernetplusplus-carbench-transolver-dev-v1");
-    const row = read(path.join(submissionRoot, "submission.json"));
-    const predictions = new Map();
-    for (const chunk of read(path.join(submissionRoot, "profiles/index.json")).chunks) {
-      const payload = fs.readFileSync(path.join(submissionRoot, "profiles", chunk.file));
-      assert.equal(hash(payload), chunk.sha256);
-      for (const item of JSON.parse(payload).cases) predictions.set(item.case_id, item);
-    }
-    assert.equal(predictions.size, 1154);
+    const submissions = read(path.join(source, "leaderboard/datasets/drivaernetplusplus.json")).map((row) => {
+      const indexPath = path.join(source, row.profile_data.index_file);
+      const indexBytes = fs.readFileSync(indexPath);
+      assert.equal(hash(indexBytes), row.profile_data.index_sha256);
+      const predictions = new Map();
+      for (const chunk of JSON.parse(indexBytes).chunks) {
+        const payload = fs.readFileSync(path.join(path.dirname(indexPath), chunk.file));
+        assert.equal(hash(payload), chunk.sha256);
+        for (const item of JSON.parse(payload).cases) predictions.set(item.case_id, item);
+      }
+      assert.equal(predictions.size, 1154);
+      return { row, predictions };
+    });
     for (const entry of manifest.chunks) {
       const id = entry.case_ids[0];
       const bytes = fs.readFileSync(path.join(recordsRoot, id, "case-support.json"));
@@ -93,7 +97,8 @@ test(
       assert.equal(entry.source_support_npz_sha256, record.support_npz.sha256);
       assert.equal(entry.native_point_count, record.native.point_count);
       for (const station of manifest.station_ids) assert.equal(entry.station_point_counts[station], record.profile_stations[station].point_count);
-      validatePrediction(predictions.get(id), await loader.getCase(context, id), row);
+      const truth = await loader.getCase(context, id);
+      for (const {row, predictions} of submissions) validatePrediction(predictions.get(id), truth, row);
     }
   }
 );
