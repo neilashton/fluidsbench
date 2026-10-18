@@ -1582,11 +1582,11 @@ manifest.datasets.forEach((dataset) => {
     api.state.split = split.name;
     const rankedRows = api.rowsForActiveSplit();
     rankedRows.forEach((row) => {
-      if (row.record_type === "development_fixture") {
+      if (row.record_type === "development_fixture" || (row.dataset_id === "drivaernetplusplus" && row.record_type === "pre_release_reference")) {
         assert.equal(row.rank, null, `${dataset.name}/${split.name}/${row.id} development fixture must not receive a rank`);
         assert.equal(
           row._ranking.source,
-          "non_ranked_development_fixture",
+          row.record_type === "development_fixture" ? "non_ranked_development_fixture" : "non_ranked_pre_release_reference",
           `${dataset.name}/${split.name}/${row.id} must retain explicit non-ranked fixture provenance`
         );
         return;
@@ -1620,7 +1620,7 @@ async function verifyGeneratedClaimRecords() {
       api.state.split = split.name;
       for (const row of api.rowsForActiveSplit()) {
         await api.ensureClaimRecord(row);
-        if (row.record_type === "development_fixture") {
+        if (row.record_type === "development_fixture" || (row.dataset_id === "drivaernetplusplus" && row.record_type === "pre_release_reference")) {
           assert.equal(
             api.claimRecordCheck(row)?.status,
             "not_listed",

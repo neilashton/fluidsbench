@@ -259,6 +259,8 @@ jekyll-minifier:
   exclude:
     - "robots.txt"
     - "assets/data/profile-ground-truth/*.json"
+    - "assets/data/*-native-profiles/*.json"
+    - "assets/js/*-profiles.js"
     - "schemas/v2/*.json"
     - "schemas/releases/*.json"
     - "assets/js/leaderboard*.js"

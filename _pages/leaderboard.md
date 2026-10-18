@@ -504,6 +504,9 @@ chart:
   window.FluidsBenchDevIntake = {{ site.launch.dev_intake | default: false | jsonify }};
   window.FluidsBenchSubmissionAvailability = {{ site.data.submission_status.datasets | jsonify }};
   {% if site.preview_mode %}
+  window.FluidsBenchDrivaernetplusplusNativeProfiles = {{ site.data.drivaernetplusplus_native_profiles | jsonify }};
+  window.FluidsBenchDrivaernetplusplusNativeProfiles.manifest_url = new URL(
+    {{ '/' | append: site.data.drivaernetplusplus_native_profiles.manifest_path | relative_url | jsonify }}, window.location.origin).href;
   window.FluidsBenchAirfransNativeProfiles = {{ site.data.airfrans_native_profiles | jsonify }};
   window.FluidsBenchAirfransNativeProfiles.manifest_url = new URL(
     {{ '/' | append: site.data.airfrans_native_profiles.manifest_path | relative_url | jsonify }}, window.location.origin).href;
@@ -532,6 +535,7 @@ chart:
 <script defer src="{{ '/assets/js/leaderboard-verification.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/profile-location-scenes.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/profile-locations.js' | relative_url | bust_file_cache }}"></script>
+<script defer src="{{ '/assets/js/drivaernetplusplus-profiles.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/airfrans-profiles.js' | relative_url | bust_file_cache }}"></script>
 <script defer src="{{ '/assets/js/leaderboard.js' | relative_url | bust_file_cache }}"></script>
 

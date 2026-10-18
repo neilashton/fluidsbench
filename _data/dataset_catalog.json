@@ -212,20 +212,19 @@
       ],
       "operating_conditions": "The CFD condition is fixed at 30 m/s. Geometry-dependent vehicle length gives a reported Reynolds-number range of 8.366 × 10⁶ to 1.006 × 10⁷ rather than a separately sampled flow sweep.",
       "sampling": "Optimal Latin hypercube sampling with an enhanced stochastic evolutionary algorithm populates the mixed continuous/discrete design space; the current canonical collection lists 8,150 designs.",
-      "coverage": "The source spans several production-car-like categories, but the active FluidsBench dev contract still contains only one prototype pressure case. Its leaderboard coverage therefore does not yet represent the full source design space.",
+      "coverage": "The FluidsBench dev candidate covers all 1,154 designs in the official test split, across the source body, underbody and wheel families. Every native surface pressure point is scored.",
       "source_url": "https://proceedings.neurips.cc/paper_files/paper/2024/file/013cf29a9e68e4411d0593040a8a1eb3-Paper-Datasets_and_Benchmarks_Track.pdf",
       "source_label": "DrivAerNet++ paper and design-parameter table"
     },
     "benchmark": {
       "status": "owner_review_required",
-      "status_label": "Prototype pressure task",
+      "status_label": "Pressure-only dev candidate",
       "submissions_open": false,
       "source_pin": "Dataverse DOI 10.7910/DVN/K7PWNJ, version 1.0",
-      "summary": "The active dev contract is still a one-case prototype. It scores kinematic surface pressure p at every native VTK PointData location with area-weighted relative L2 as primary and equal-point relative L2 as secondary. It does not yet activate the reviewed 1,154-case test proposal, wall shear, volume fields, forces, or profiles.",
-      "split_ids": ["default", "official_test"],
-      "case_id_status": "mixed",
-      "case_id_status_by_split": {"default": "prototype_generated", "official_test": "official"},
-      "contract_digest": "52f8afa7c0e27e341547e4d5967e26ebf84e1640e6f3558364879f29eb6df972"
+      "summary": "The dev candidate scores kinematic surface pressure p at every native VTK PointData location of all 1,154 official test designs. Area-weighted relative L2 is primary and equal-point relative L2 is secondary. Three frozen native Cp traces are report-only. Official submissions remain closed pending owner approval.",
+      "split_ids": ["official_test"],
+      "case_id_status": "official",
+      "contract_digest": "ce66008a266dc5134a694fc6705afa98ef01f58809311f9ad224cb55c0ff5289"
     },
     "visual": {
       "inputs": "Vehicle mesh + body category",

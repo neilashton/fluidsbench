@@ -41,6 +41,9 @@ jobs:
           export JEKYLL_ENV=production
           bundle exec jekyll build --lsi --config _config.yml,_config_preview.yml
 
+      - name: Verify checksum-bound native profiles after the site build
+        run: python3 bin/check_native_profile_build.py _site
+
       - name: Purge unused CSS
         run: |
           npm install -g purgecss
