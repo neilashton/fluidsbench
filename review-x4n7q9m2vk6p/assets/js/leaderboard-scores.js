@@ -19,6 +19,11 @@
       components: [],
       groups: [],
       surfaceOnlyPolicy: declaration.surface_only_policy || null,
+      // DrivAerNet++ is a complete pressure-only task, not a reduced-volume entry.
+      nativeSurfaceOnlyTask:
+        dataset.slug === "drivaernetplusplus" &&
+        declaration.components?.length === 1 &&
+        declaration.components[0].metric_id === "surface_pressure_rel_l2",
     };
     if (declaration.operation !== "weighted_component_scores" || !Array.isArray(declaration.components) || !declaration.components.length)
       return result;
@@ -104,7 +109,7 @@
     };
     if (!rules.available) return result;
     const fixedZero = new Set();
-    if (row.prediction_scope === "surface_only") {
+    if (row.prediction_scope === "surface_only" && !rules.nativeSurfaceOnlyTask) {
       const policy = rules.surfaceOnlyPolicy;
       if (
         !policy ||
