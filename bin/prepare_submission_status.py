@@ -14,6 +14,7 @@ DEV_GUIDES = {
     "ahmedml": "examples/ahmedml-v3-candidate/README.md",
     "windsorml": "examples/windsorml-v3-candidate/README.md",
     "drivaerml": "examples/drivaerml-v3-candidate/README.md",
+    "drivaernetplusplus": "examples/drivaernetplusplus-v3-candidate/README.md",
     "airfrans": "examples/airfrans-participant/README.md",
 }
 
