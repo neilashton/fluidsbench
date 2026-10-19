@@ -221,7 +221,7 @@
       "status_label": "Pressure-only dev candidate",
       "submissions_open": false,
       "source_pin": "Dataverse DOI 10.7910/DVN/K7PWNJ, version 1.0",
-      "summary": "The dev candidate scores kinematic surface pressure p at every native VTK PointData location of all 1,154 official test designs. Area-weighted relative L2 is primary and equal-point relative L2 is secondary. Three frozen native Cp traces are report-only. Official submissions remain closed pending owner approval.",
+      "summary": "The dev candidate scores kinematic surface pressure p at every native VTK PointData location of all 1,154 official test designs. Area-weighted relative L2 is primary and equal-point relative L2 is secondary. Three frozen native Cp traces are report-only. The dataset owner has confirmed the scientific definition; official submissions remain closed pending final release publication and activation.",
       "split_ids": ["official_test"],
       "case_id_status": "official",
       "contract_digest": "ce66008a266dc5134a694fc6705afa98ef01f58809311f9ad224cb55c0ff5289"
