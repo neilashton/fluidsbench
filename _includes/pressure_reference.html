@@ -46,10 +46,11 @@
     <details>
       <summary>Evaluator trace</summary>
       <ul>
+        {% assign pressure_evidence_ref = site.submission_source_ref | default: site.data.pressure_references.audited_submission_revision %}
         {% for source in pressure.code_evidence %}
         <li>
           <a
-            href="https://github.com/neilashton/fluidsbench-submission/blob/{{ site.data.pressure_references.audited_submission_revision }}/{{ source.path }}"
+            href="https://github.com/neilashton/fluidsbench-submission/blob/{{ pressure_evidence_ref }}/{{ source.path }}"
             >{{ source.path | escape }}</a
           >: {{ source.finding | escape }}
         </li>
