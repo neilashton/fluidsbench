@@ -22,7 +22,7 @@ compact_masthead: true
       </div>
       <div>
         <dt>Cases</dt>
-        <dd>8,150 vehicle designs in the canonical multimodal collection.</dd>
+        <dd>8,150 pressure-release designs; 8,121 designs in the published multimodal splits.</dd>
       </div>
       <div>
         <dt>Primary CarBench task</dt>
@@ -32,7 +32,8 @@ compact_masthead: true
         <dt>Current FluidsBench split</dt>
         <dd>
           <code>official_test</code> covers all 1,154 test designs and every native surface pressure point.
-          This is a dev candidate; official submissions remain closed pending owner approval.
+          The dataset owner has confirmed the scientific definition. This remains a dev candidate;
+          official submissions are closed while the final release and activation are prepared.
         </dd>
       </div>
       <div>
@@ -73,7 +74,8 @@ compact_masthead: true
     <p>
       DrivAerNet++ publishes surface pressure over annotated vehicle components but not a canonical set of one-dimensional
       Cp traces. The dev evaluator extracts these three report-only traces at frozen native points on every test design,
-      using <code>Cp = p / 450</code>. They do not contribute to the score. The proposed retirement of the wheelhouse trace awaits owner confirmation.
+      using <code>Cp = p / 450</code>. They do not contribute to the score. The dataset owner has confirmed these three
+      stations and retirement of the wheelhouse trace, which could not be defined consistently across all test designs.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">
@@ -85,6 +87,17 @@ compact_masthead: true
         </tbody>
       </table>
     </div>
+  </section>
+
+  <section class="dataset-panel">
+    <h3>Release decisions</h3>
+    <p>
+      Every native pressure point is scored as stored, including the documented localized pressure extremes;
+      no points are masked. The 29 pressure-release designs absent from the published splits remain excluded
+      because other data modalities were incomplete. The 1,154-case test list is unchanged.
+      These decisions and the release preparation are recorded in the
+      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/drivaernetplusplus/OWNER_APPROVAL.md">dataset-owner approval record</a>.
+    </p>
   </section>
 
   <section class="dataset-panel">
