@@ -10772,7 +10772,7 @@
     );
     const timed = items.filter((item) => computeAxisValue(item) !== null);
     element("compute-coverage").textContent = `${timed.length} of ${items.length} results ${
-      training ? "with measured training totals" : "with timings"
+      training ? "with reported training totals" : "with timings"
     }`;
     const headers = training
       ? ["Model", scoreLabel, "Parameters", "Training device-hours", "Reported stages", deviceLabel, "Count", "Training scope"]
@@ -10870,17 +10870,17 @@
     element("compute-empty").hidden = available;
     element("compute-empty").innerHTML = points.length
       ? "<strong>Chart unavailable</strong><p>All measurements are available in the table below.</p>"
-      : `<strong>${items.length ? "No measured timings to plot" : "No results for this selection"}</strong><p>${
+      : `<strong>${items.length ? (training ? "No complete training totals to plot" : "No measured timings to plot") : "No results for this selection"}</strong><p>${
           training
-            ? "Training totals must be complete and explicitly measured. Estimates and older totals with an unspecified basis remain in the table."
+            ? "A reported total for every submitter training stage and a physics score are needed. Known portions of incomplete totals remain in the table."
             : "Reported time, case count and a physics score are needed for this chart."
         }</p>`;
     const omitted = items.length - points.length;
     element("compute-chart-summary").textContent = `${points.length} result${points.length === 1 ? "" : "s"} plotted${
-      omitted ? ` · ${omitted} without an eligible timing or score` : ""
+      omitted ? ` · ${omitted} without ${training ? "a complete training total" : "an eligible timing"} or score` : ""
     }. ${
       training
-        ? "Measured submitter training only; estimates, unspecified totals and upstream compute are excluded."
+        ? "Filled circles: measured. Hollow triangles: includes estimates. Hollow diamonds: basis unspecified. Submitter training only; upstream compute is excluded."
         : "Throughput covers complete cases; seconds/case is a campaign average, not single-request latency. Timing conditions and hardware can differ."
     } Larger points mark your comparison selection. Values and measurement notes are in the table.`;
     if (!available) return;
@@ -10897,9 +10897,16 @@
             data: points,
             pointRadius: points.map((point) => (point.item.selected ? 8 : 5)),
             pointHoverRadius: 10,
-            backgroundColor: points.map((point) => point.item.color),
-            borderColor: chartTextColor(),
-            borderWidth: points.map((point) => (point.item.selected ? 2 : 0)),
+            pointStyle: points.map((point) => (training ? point.item.training.plotPointStyle : "circle")),
+            backgroundColor: points.map((point) =>
+              training && point.item.training.measurementBasis !== "measured" ? "transparent" : point.item.color
+            ),
+            borderColor: points.map((point) =>
+              training && point.item.training.measurementBasis !== "measured" ? point.item.color : chartTextColor()
+            ),
+            borderWidth: points.map((point) =>
+              point.item.selected || (training && point.item.training.measurementBasis !== "measured") ? 2 : 0
+            ),
           },
         ],
       },

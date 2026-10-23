@@ -157,14 +157,17 @@ test("complete-case throughput is the reciprocal of campaign average, never devi
   assert.equal(summarize(input).inference.casesPerSecond, null);
 });
 
-test("only complete and explicitly measured training totals are plotted", () => {
-  assert.equal(summarize(row([stage(12)])).training.plotDeviceHours, null);
+test("complete training totals match the table while markers disclose their measurement basis", () => {
+  assert.equal(summarize(row([stage(12)])).training.plotDeviceHours, 12);
+  assert.equal(summarize(row([stage(12)])).training.plotPointStyle, "rectRot");
   const measured = stage(12, { measurement_basis: "measured" });
   assert.equal(summarize(row([measured])).training.plotDeviceHours, 12);
+  assert.equal(summarize(row([measured])).training.plotPointStyle, "circle");
   for (const basis of [undefined, "estimated", "unknown"]) {
     const result = summarize(row([measured, stage(8, { measurement_basis: basis })])).training;
-    assert.equal(result.deviceHours, 20, "labelled historical totals remain available in the table");
-    assert.equal(result.plotDeviceHours, null);
+    assert.equal(result.deviceHours, 20);
+    assert.equal(result.plotDeviceHours, result.deviceHours, "chart and table use the same complete reported total");
+    assert.equal(result.plotPointStyle, basis === "estimated" ? "triangle" : "rectRot");
   }
   const incomplete = summarize(row([measured, stage(undefined, { measurement_basis: "measured" })])).training;
   assert.equal(incomplete.plotDeviceHours, null);
@@ -187,7 +190,8 @@ test("GB200 example preserves historical timing and owner-attested hardware", ()
   assert.equal(inf.execution.warmup_cases, null);
   assert.equal(train.measurementBasis, "estimated");
   assert.equal(train.deviceHours, 239.731732 + 265.816752);
-  assert.equal(train.plotDeviceHours, null);
+  assert.equal(train.plotDeviceHours, train.deviceHours);
+  assert.equal(train.plotPointStyle, "triangle");
   assert.equal(JSON.stringify(fixture), before, "compute display cannot mutate source data");
 });
 
