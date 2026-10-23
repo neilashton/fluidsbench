@@ -163,7 +163,10 @@
         // Sum the reported device allocation, once per stage. Neither elapsed
         // stage times nor run counts can be used to infer total device time.
         deviceHours: complete ? knownDeviceHours : null,
-        plotDeviceHours: complete && trainingBasis === "measured" ? knownDeviceHours : null,
+        // Keep the chart consistent with the table. Marker shape and fill
+        // disclose the measurement basis without hiding reported estimates.
+        plotDeviceHours: complete ? knownDeviceHours : null,
+        plotPointStyle: { measured: "circle", estimated: "triangle", unknown: "rectRot" }[trainingBasis],
         measurementBasis: trainingBasis,
         measurementBasisLabel: trainingBasisLabel,
         knownDeviceHours,
