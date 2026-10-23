@@ -27,7 +27,7 @@ jobs:
           repository: neilashton/fluidsbench-submission
           # Current intake contracts, schemas and pressure audit.
           # Publish this dev revision before the paired website changes.
-          ref: 7089f37f89269b198e04e255e79bc753745ad33f
+          ref: 5cd9d5d66410ee70666be9f2b41c99d84d8d2e24
           sparse-checkout: |
             schemas
             docs
@@ -43,7 +43,7 @@ jobs:
       - run: python fluidsbench/bin/check_profile_contract.py --submission-root fluidsbench-submission --schema-root fluidsbench-submission-schemas
       - run: python fluidsbench/bin/prepare_submission_status.py --submission-root fluidsbench-submission-schemas --check
       - run: ruby fluidsbench/bin/check_launch_contract.rb
-      - run: node --test fluidsbench/tests/test_launch.js fluidsbench/tests/test_leaderboard_compute.js fluidsbench/tests/test_leaderboard_scores.js fluidsbench/tests/test_leaderboard_verification.js fluidsbench/tests/test_profile_locations.js fluidsbench/tests/test_drivaernetplusplus_profiles.js
+      - run: node --test fluidsbench/tests/test_launch.js fluidsbench/tests/test_leaderboard_compute.js fluidsbench/tests/test_compute_chart.js fluidsbench/tests/test_leaderboard_scores.js fluidsbench/tests/test_leaderboard_verification.js fluidsbench/tests/test_profile_locations.js fluidsbench/tests/test_drivaernetplusplus_profiles.js
       - run: node fluidsbench/bin/check_leaderboard_claim_ui.js
       - run: python -m unittest discover -s fluidsbench/tests -p "test_*.py"
       - name: Checkout current dev leaderboard data
