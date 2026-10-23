@@ -1,8 +1,8 @@
 {
-  "source_commit": "7089f37f89269b198e04e255e79bc753745ad33f",
-  "manifest_sha256": "f76c26b3dbff6372cc8b4240fc3705644e75d2fa9f28d411849d192e8f8b5c2c",
+  "source_commit": "5cd9d5d66410ee70666be9f2b41c99d84d8d2e24",
+  "manifest_sha256": "4d242f67a584ff68564c28338c59a20318b639dc611605861f38044742bbcf2a",
   "release": {
-    "id": "prototype-dev-2026-10-18-6ef4f652a467",
+    "id": "prototype-dev-2026-10-22-1868d30937bf",
     "status": "prototype_dummy_data",
     "asset_base_url": "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/",
     "archive_url": null
