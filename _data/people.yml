@@ -39,29 +39,22 @@ organisers:
     initials: DL
     image: /assets/img/people/daniel-leibovici.jpg
     profile: https://research.nvidia.com/labs/lpr/author/daniel-leibovici/
-  - name: Richard Dwight
-    affiliation: TU Delft
-    initials: RD
-    image: /assets/img/people/richard-dwight.jpg
-    crop: upper
-    profile: https://aerodynamics.lr.tudelft.nl/~rdwight/
   - name: Faez Ahmed
     affiliation: MIT
     initials: FA
     image: /assets/img/people/faez-ahmed.jpg
     crop: faez
     profile: https://sqi.mit.edu/about/people/faez-ahmed
-  - name: Rishi Ranade
-    affiliation: NVIDIA
-    initials: RR
-    image: /assets/img/people/rishi-ranade.png
-    profile: https://developer.nvidia.com/blog/author/rranade/
   - name: Emanuele Tamburini
     affiliation: Sorbonne University
     initials: ET
     image: /assets/img/people/emanuele-tamburini.jpg
     profile: https://www.linkedin.com/in/emanuele-tamburini/
     email: emanuele.tamburini@sorbonne-universite.fr
+  - name: Tyler Buchanan
+    affiliation: TU Delft
+    initials: TB
+    profile: https://www.tudelft.nl/staff/t.s.b.buchanan/
 
 advisory_board:
   - name: Siddhartha Mishra
@@ -122,3 +115,14 @@ advisory_board:
   - name: Juan Alonso
     affiliation: Luminary Cloud / Stanford University
     initials: JA
+  - name: Richard Dwight
+    affiliation: TU Delft
+    initials: RD
+    image: /assets/img/people/richard-dwight.jpg
+    crop: upper
+    profile: https://aerodynamics.lr.tudelft.nl/~rdwight/
+  - name: Rishi Ranade
+    affiliation: NVIDIA
+    initials: RR
+    image: /assets/img/people/rishi-ranade.png
+    profile: https://developer.nvidia.com/blog/author/rranade/
