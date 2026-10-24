@@ -14,5 +14,5 @@ nav_order: 6
 - Astrid Walle (Siemens Energy)
 - Jean Kossai (NVIDIA)
 - Daniel Leibovic (NVIDIA)
-- Richard Dwight (TU Delft)
+- Tyler Buchanan (TU Delft) — [Profile](https://www.tudelft.nl/staff/t.s.b.buchanan/)
 - Emanuele Tamburini (Sorbonne University) — [Email](mailto:emanuele.tamburini@sorbonne-universite.fr)
