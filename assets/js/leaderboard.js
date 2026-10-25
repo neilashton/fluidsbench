@@ -1933,7 +1933,7 @@
   }
 
   function isLatestRevision(row) {
-    return resultRevision(row).is_latest;
+    return resultRevision(row).is_latest && !row?.display_replacement?.replaced_by;
   }
 
   function normalizeRow(entry, feedIndex) {
@@ -4902,7 +4902,7 @@
         isLatestRevision(submission) ? submission.rank ?? "—" : "Archived"
       );
       if (!isLatestRevision(submission)) {
-        rankChip.title = "This superseded version is retained for history and does not occupy a current ranking position.";
+        rankChip.title = "This result is retained for history and does not occupy a current ranking position.";
       }
       if (context?.tied) {
         rankChip.title = `Joint rank ${context.rank}; ${context.tie_count} results share this published value.`;
@@ -9863,6 +9863,22 @@
     if (precisionFocused) body.querySelector("[data-score-precision]").focus({ preventScroll: true });
   }
 
+  function displayReplacementHtml(row) {
+    const replacement = row.display_replacement;
+    if (!replacement) return "";
+    const historical = Boolean(replacement.replaced_by);
+    const relatedId = historical ? replacement.replaced_by : replacement.replaces;
+    if (!relatedId || !/^[a-z0-9][a-z0-9-]{2,79}$/.test(relatedId)) return "";
+    const relatedRow = { ...row, id: relatedId, submission_id: relatedId };
+    const label = historical ? "View replacement result" : "View original prototype";
+    const description = historical
+      ? "This prototype is retained for history. Its replacement occupies the current leaderboard position."
+      : "This result replaces a prototype evaluated from the same inference run under an earlier dataset contract.";
+    return `<section><h4>Prototype replacement</h4><p>${escapeHtml(description)}</p>
+      <p>${escapeHtml(replacement.reason || "")}</p>
+      <p>${detailsLink(label, resultUrl(relatedRow))} &middot; ${detailsLink("Maintainer review", replacement.review_url)}</p></section>`;
+  }
+
   function revisionHistoryHtml(row) {
     const versions = versionsForRow(row);
     if (!versions.length) return "";
@@ -9872,7 +9888,9 @@
         const revision = resultRevision(versionRow);
         const selected = versionRow.id === row.id;
         const value = versionRow.metricValues?.[ranking().metric_id];
-        const status = revision.is_latest ? "Latest and currently ranked" : `Superseded by ${revision.latest_submission_id}`;
+        const status = versionRow.display_replacement?.replaced_by
+          ? `Historical prototype, replaced by ${versionRow.display_replacement.replaced_by}`
+          : revision.is_latest ? "Latest and currently ranked" : `Superseded by ${revision.latest_submission_id}`;
         const summary = revision.change_summary || (revision.version === 1 ? "Initial published result." : "No legacy change summary supplied.");
         return `<li class="leaderboard-revision-item${selected ? " is-selected" : ""}">
           <a href="${escapeHtml(resultUrl(versionRow))}" data-result-revision="${escapeHtml(versionRow.id)}" ${
@@ -9897,7 +9915,7 @@
     const revision = resultRevision(row);
     element("details-dialog-title").textContent = `${row.model} — ${revisionLabel(row)}`;
     element("details-dialog-subtitle").textContent = `${row.dataset} / ${row.split} · ${
-      revision.is_latest ? "latest version" : "superseded version"
+      row.display_replacement?.replaced_by ? "historical prototype" : revision.is_latest ? "latest version" : "superseded version"
     }`;
     const links = [
       detailsLink("Paper", row.paper_url),
@@ -9980,7 +9998,7 @@
     const scoringCoverage = scoringCoverageSummary(row);
     const validation = maintainerValidation(row);
     void ensureValidationEvidence(row);
-    if (revision.is_latest) void ensureClaimRecord(row);
+    if (isLatestRevision(row)) void ensureClaimRecord(row);
     const validationCheck = validationEvidenceCheck(row);
     const claimCheck = claimRecordCheck(row);
     const eligibility = claimEligibility(row);
@@ -10071,7 +10089,7 @@
       rankContext && Number.isFinite(rankContext.rank)
         ? `#${rankContext.rank} of ${rankContext.ranked_result_count}`
         : !isLatestRevision(row)
-          ? "Superseded version"
+          ? row.display_replacement?.replaced_by ? "Historical prototype" : "Superseded version"
           : row.record_type === "development_fixture"
             ? "Non-ranked development fixture"
             : isNonRankedRow(row)
@@ -10119,6 +10137,7 @@
         <summary>Ranking and submission record</summary>
         <div class="leaderboard-details-disclosure-body">
       ${rankAndClaimSection}
+      ${displayReplacementHtml(row)}
       ${revisionHistoryHtml(row)}
       <section><h4>Submission</h4><dl>
         ${detailsRow("Submission ID", row.id)}
