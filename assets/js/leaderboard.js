@@ -9890,7 +9890,9 @@
         const value = versionRow.metricValues?.[ranking().metric_id];
         const status = versionRow.display_replacement?.replaced_by
           ? `Historical prototype, replaced by ${versionRow.display_replacement.replaced_by}`
-          : revision.is_latest ? "Latest and currently ranked" : `Superseded by ${revision.latest_submission_id}`;
+          : revision.is_latest
+            ? "Latest and currently ranked"
+            : `Superseded by ${revision.latest_submission_id}`;
         const summary = revision.change_summary || (revision.version === 1 ? "Initial published result." : "No legacy change summary supplied.");
         return `<li class="leaderboard-revision-item${selected ? " is-selected" : ""}">
           <a href="${escapeHtml(resultUrl(versionRow))}" data-result-revision="${escapeHtml(versionRow.id)}" ${
@@ -10089,7 +10091,9 @@
       rankContext && Number.isFinite(rankContext.rank)
         ? `#${rankContext.rank} of ${rankContext.ranked_result_count}`
         : !isLatestRevision(row)
-          ? row.display_replacement?.replaced_by ? "Historical prototype" : "Superseded version"
+          ? row.display_replacement?.replaced_by
+            ? "Historical prototype"
+            : "Superseded version"
           : row.record_type === "development_fixture"
             ? "Non-ranked development fixture"
             : isNonRankedRow(row)
@@ -10889,7 +10893,9 @@
     element("compute-empty").hidden = available;
     element("compute-empty").innerHTML = points.length
       ? "<strong>Chart unavailable</strong><p>All measurements are available in the table below.</p>"
-      : `<strong>${items.length ? (training ? "No complete training totals to plot" : "No measured timings to plot") : "No results for this selection"}</strong><p>${
+      : `<strong>${
+          items.length ? (training ? "No complete training totals to plot" : "No measured timings to plot") : "No results for this selection"
+        }</strong><p>${
           training
             ? "A reported total for every submitter training stage and a physics score are needed. Known portions of incomplete totals remain in the table."
             : "Reported time, case count and a physics score are needed for this chart."
@@ -10923,9 +10929,7 @@
             borderColor: points.map((point) =>
               training && point.item.training.measurementBasis !== "measured" ? point.item.color : chartTextColor()
             ),
-            borderWidth: points.map((point) =>
-              point.item.selected || (training && point.item.training.measurementBasis !== "measured") ? 2 : 0
-            ),
+            borderWidth: points.map((point) => (point.item.selected || (training && point.item.training.measurementBasis !== "measured") ? 2 : 0)),
           },
         ],
       },

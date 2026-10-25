@@ -38,6 +38,6 @@ test("replacement details link both directions and reject unsafe result identifi
   assert.match(html, /&lt;script&gt;/);
   assert.match(html, /Maintainer review/);
   assert.match(render({ display_replacement: { ...replacement, replaced_by: "new-result-v1" } }), /View replacement result/);
-  assert.equal(render({ display_replacement: { ...replacement, replaces: '<script>' } }), "");
+  assert.equal(render({ display_replacement: { ...replacement, replaces: "<script>" } }), "");
   assert.equal(render({}), "");
 });
