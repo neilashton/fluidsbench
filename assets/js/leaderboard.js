@@ -2491,14 +2491,32 @@
         }
       });
     });
+    const recordsById = new Map(history.records.map((entry) => [entry.submission_id, entry]));
+    history.records.forEach((entry) => {
+      const replacement = entry.display_replacement;
+      if (!replacement?.replaced_by) return;
+      const target = recordsById.get(replacement.replaced_by);
+      if (
+        dataRelease().status !== "prototype_dummy_data" ||
+        entry.record_type !== "pre_release_reference" ||
+        !target ||
+        target === entry ||
+        target.approval?.status !== "approved" ||
+        target.dataset_id !== entry.dataset_id ||
+        target.split_id !== entry.split_id ||
+        target.display_replacement?.replaces !== entry.submission_id ||
+        replacement.source_submission_id !== entry.submission_id ||
+        replacement.replacement_submission_id !== target.submission_id
+      ) {
+        throw new Error("revision history contains an invalid prototype display replacement");
+      }
+    });
     const currentIds = new Set(
       Array.from(state.rows.values())
         .flat()
         .map((row) => row.id)
     );
-    const historyLatestIds = new Set(
-      history.records.filter((entry) => normalizedResultRevision(entry).is_latest).map((entry) => entry.submission_id)
-    );
+    const historyLatestIds = new Set(history.records.filter((entry) => isLatestRevision(entry)).map((entry) => entry.submission_id));
     if (currentIds.size !== historyLatestIds.size || Array.from(currentIds).some((id) => !historyLatestIds.has(id))) {
       throw new Error("ranked feed rows do not match the latest revision-history records");
     }

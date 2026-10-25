@@ -41,3 +41,44 @@ test("replacement details link both directions and reject unsafe result identifi
   assert.equal(render({ display_replacement: { ...replacement, replaces: "<script>" } }), "");
   assert.equal(render({}), "");
 });
+
+test("history accepts a verified replacement but rejects an unapproved or missing target", () => {
+  const oldId = "old-result-v1";
+  const newId = "new-result-v1";
+  const row = (id) => ({
+    submission_id: id,
+    dataset_id: "airfrans",
+    split_id: "aoa",
+    result_revision: { series_id: id, version: 1, supersedes: null, is_latest: true, latest_submission_id: id, version_count: 1 },
+  });
+  const oldRow = {
+    ...row(oldId),
+    record_type: "pre_release_reference",
+    display_replacement: { replaced_by: newId, source_submission_id: oldId, replacement_submission_id: newId },
+  };
+  const newRow = { ...row(newId), approval: { status: "approved" }, display_replacement: { replaces: oldId } };
+  const release = { id: "dev", status: "prototype_dummy_data", generated_at: "2026-10-25T18:00:00Z" };
+  const history = {
+    release_id: release.id,
+    release_status: release.status,
+    generated_at: release.generated_at,
+    schema_version: "1.0",
+    record_count: 2,
+    series_count: 2,
+    records: [oldRow, newRow],
+  };
+  const isLatestRevision = load("isLatestRevision", { resultRevision: (entry) => entry.result_revision });
+  const validate = load("validateRevisionHistory", {
+    dataRelease: () => release,
+    normalizedResultRevision: (entry) => entry.result_revision,
+    isLatestRevision,
+    state: { rows: new Map([["AirfRANS", [{ id: newId }]]]) },
+  });
+  const metadata = { schema_version: "1.0", record_count: 2, series_count: 2 };
+  assert.doesNotThrow(() => validate(history, metadata));
+  newRow.approval.status = "pending";
+  assert.throws(() => validate(history, metadata), /invalid prototype display replacement/);
+  newRow.approval.status = "approved";
+  oldRow.display_replacement.replaced_by = "missing-v1";
+  assert.throws(() => validate(history, metadata), /invalid prototype display replacement/);
+});
