@@ -19,7 +19,8 @@ env:
 
 jobs:
   deploy-preview:
-    runs-on: ubuntu-latest
+    # Ruby 3.2.2 is available on this image; ubuntu-latest can advance past it.
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
