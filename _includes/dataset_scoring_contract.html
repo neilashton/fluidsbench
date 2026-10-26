@@ -4,7 +4,7 @@
     <small>Exact files, weighting and complete-case rules</small>
   </summary>
   <div class="dataset-inline-disclosure-body dataset-scoring-contract">
-    <p class="dataset-scoring-status"><strong>{% if site.data.submission_status.datasets[include.slug].open and site.launch.accepting_submissions %}Submissions are open{% if site.launch.dev_intake %} on dev{% endif %}.{% else %}Submissions are currently closed.{% endif %}</strong></p>
+    <p class="dataset-scoring-status"><strong>{% if site.launch.dev_intake and site.data.submission_status.datasets[include.slug].dev_candidate %}Development candidate PRs are accepted on dev. Official submissions remain closed.{% elsif site.data.submission_status.datasets[include.slug].open and site.launch.accepting_submissions %}Submissions are open{% if site.launch.dev_intake %} on dev{% endif %}.{% else %}Submissions are currently closed.{% endif %}</strong></p>
     <p>
       <strong>Final predictions must cover the complete reference support.</strong> For every scored case, this means every required entity, exactly
       once, in the actual field-bearing mesh or curve file from the named public dataset release. FluidsBench binds those files, their ordering, any
@@ -207,6 +207,15 @@
       <li>
         Use the public <code>boundary_cell_area_&lt;run&gt;.npy</code> value for each surface polygon in the identical native VTP cell order. Each
         volume cell contributes one equal unit to the volume numerator and denominator.
+      </li>
+      {% elsif include.slug == "windsorml" %}
+      <li>
+        WindsorML uses published point dual areas for primary surface relative L2 and equal-point surface relative L2 as a secondary diagnostic.
+        Its volume fields use equal native cell weights only; no cell-volume sidecar or volume-weighted secondary metric is required.
+      </li>
+      <li>
+        Preserve the raw native point order for surface fields and cell order for volume fields. Predict the raw published
+        <code>pressureavg</code> values without a new offset or density scaling; its physical units and reference remain under audit.
       </li>
       {% elsif include.slug == "hiliftaeroml" %}
       <li>

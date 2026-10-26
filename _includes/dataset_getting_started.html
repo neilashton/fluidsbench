@@ -85,8 +85,8 @@ print(surface.cell_data["pMeanTrim"].shape)
 print(surface.cell_data["wallShearStressMeanTrim"].shape)</code></pre>
 <p class="dataset-download-note">
   Native volume files are transported as ordered <code>.00.part</code>, <code>.01.part</code>, and, for ten cases, <code>.02.part</code> segments.
-  Resolve the exact list from <code>proposal/native-source-pin.json</code>, byte-concatenate it without delimiters, and process the reconstructed VTU
-  in bounded chunks. Do not assume every case has two parts, resample the scoring support, or average chunk-level errors; accumulate numerators,
+  Resolve the exact list from <code>proposal/native-source-pin.json</code>. The participant evaluator streams those ordered parts as one logical VTU
+  in bounded chunks; it does not require a second concatenated copy. Do not assume every case has two parts, resample the scoring support, or average chunk-level errors; accumulate numerators,
   denominators, and counts before the case-level reduction. Use <code>force_mom_constref_&lt;run&gt;.csv</code> for the benchmark force convention.
 </p>
 
@@ -125,8 +125,8 @@ assert area.shape == (surface.n_points,)
 print(surface.point_data.keys())</code></pre>
 <p class="dataset-download-note">
   Remove <code>--dry-run</code> only after checking the transfer size. The dual areas apply to the exact raw VTU point order. The split metadata
-  covers 355 aggregate cases, but only runs 0–349 currently have complete per-run field folders and area sidecars; an official FluidsBench field split
-  must exclude or otherwise resolve the five incomplete cases explicitly.
+  covers 355 aggregate cases, but only runs 0–349 have complete per-run field folders and area sidecars. The dev contract already intersects each
+  source split with these published runs: Full has 35 test cases and excludes <code>run_354</code>. Use its exact case lists without replacements.
 </p>
 
 {% when "hiliftaeroml" %}

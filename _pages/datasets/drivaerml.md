@@ -53,8 +53,8 @@ compact_masthead: true
     <h3>Official source and candidate benchmark splits</h3>
     <p>
       These eight case lists are published by the source and marked <code>official</code> in the candidate FluidsBench contract. They exclude all 16
-      unavailable or held-back run IDs. Submissions remain closed until the evaluator and complete scoring-support release pass the remaining
-      activation gates.
+      unavailable or held-back run IDs. Development candidate PRs are accepted on <code>dev</code>; official submissions remain closed until the remaining
+      activation gates pass.
     </p>
 
     <div class="dataset-table-wrap">
@@ -140,7 +140,7 @@ compact_masthead: true
     <h3>Development workflow</h3>
     <p>
       Development candidate PRs are accepted against <code>dev</code>. Follow the
-      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/examples/drivaerml-v3-candidate/README.md">DrivAerML evaluation and packaging guide</a>.
+      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/drivaerml/QUICKSTART.md">DrivAerML resumable participant quickstart</a>.
       The commands extract fixed and relative profiles from native predictions, compute the complete score set,
       verify checkpoint bytes, and validate the full selected split. Full-field packages contain 40 profile series per case;
       surface-only packages contain eight Cp series and retain the overall-score ceiling of 60.
@@ -274,8 +274,10 @@ compact_masthead: true
       <div>
         <dt>Cp cut R<sup>2</sup></dt>
         <dd>
-          Equal-case, equal-cut global R² over the four continuous native-surface intersections, with normalized native intersection-segment length
-          within each cut. The report-only companion is <code>cp_cut_rmse</code>.
+          Equal-case, equal-cut global R² over the four fixed native-surface cuts, with normalized trapezoidal arc-length weighting within each cut.
+          Unsupported gaps are never bridged. The dev v2 contract replaces the historical intersection-segment-length reduction while retaining
+          the frozen geometry and truth. Historical v1 predictions must be reevaluated for dev v2; changing release labels is insufficient.
+          The report-only companion is <code>cp_cut_rmse</code>.
         </dd>
       </div>
       <div>

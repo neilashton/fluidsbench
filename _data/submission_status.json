@@ -11,7 +11,7 @@
     "ahmedml": {
       "open": false,
       "dev_candidate": true,
-      "guide": "examples/ahmedml-v3-candidate/README.md",
+      "guide": "benchmark-specs/ahmedml/QUICKSTART.md",
       "specification_sha256": "7fcab80981005024ec6d1744683e785dd86dab54f26901bf60e5dea82c2b170a",
       "scoring_release_id": null,
       "open_splits": []
@@ -19,7 +19,7 @@
     "drivaerml": {
       "open": false,
       "dev_candidate": true,
-      "guide": "examples/drivaerml-v3-candidate/README.md",
+      "guide": "benchmark-specs/drivaerml/QUICKSTART.md",
       "specification_sha256": "64cb4c355429f667b6e496d713a77731e08bc3539ebc8ec83d0fc981a3caeb23",
       "scoring_release_id": null,
       "open_splits": []
@@ -27,7 +27,7 @@
     "drivaernetplusplus": {
       "open": false,
       "dev_candidate": true,
-      "guide": "examples/drivaernetplusplus-v3-candidate/README.md",
+      "guide": "benchmark-specs/drivaernetplusplus/QUICKSTART.md",
       "specification_sha256": "bdc76ca82b6121db4431b38ca179ace6151d60628bd48158ba19bb39aa836e90",
       "scoring_release_id": null,
       "open_splits": []
@@ -35,7 +35,7 @@
     "windsorml": {
       "open": false,
       "dev_candidate": true,
-      "guide": "examples/windsorml-v3-candidate/README.md",
+      "guide": "benchmark-specs/windsorml/QUICKSTART.md",
       "specification_sha256": "aa073a92b35d66b5661759006128208ea66d59e6863cf3406f26b63b6e95d4f9",
       "scoring_release_id": null,
       "open_splits": []
@@ -51,7 +51,7 @@
     "airfrans": {
       "open": true,
       "dev_candidate": false,
-      "guide": "examples/airfrans-participant/README.md",
+      "guide": "benchmark-specs/airfrans/QUICKSTART.md",
       "specification_sha256": "d12207fb79ccde80dba2563028ef9f36079dd1e1343c5289f97e3388178752d0",
       "scoring_release_id": "airfrans-native-support-v1",
       "open_splits": [

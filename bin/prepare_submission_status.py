@@ -11,11 +11,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEV_GUIDES = {
-    "ahmedml": "examples/ahmedml-v3-candidate/README.md",
-    "windsorml": "examples/windsorml-v3-candidate/README.md",
-    "drivaerml": "examples/drivaerml-v3-candidate/README.md",
-    "drivaernetplusplus": "examples/drivaernetplusplus-v3-candidate/README.md",
-    "airfrans": "examples/airfrans-participant/README.md",
+    "ahmedml": "benchmark-specs/ahmedml/QUICKSTART.md",
+    "windsorml": "benchmark-specs/windsorml/QUICKSTART.md",
+    "drivaerml": "benchmark-specs/drivaerml/QUICKSTART.md",
+    "drivaernetplusplus": "benchmark-specs/drivaernetplusplus/QUICKSTART.md",
+    "airfrans": "benchmark-specs/airfrans/QUICKSTART.md",
 }
 
 
