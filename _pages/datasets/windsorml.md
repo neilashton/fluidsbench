@@ -88,7 +88,7 @@ compact_masthead: true
     <h3>Development workflow</h3>
     <p>
       Development candidate PRs are accepted against <code>dev</code>. Follow the
-      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/examples/windsorml-v3-candidate/README.md">WindsorML evaluation and packaging guide</a>.
+      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/windsorml/QUICKSTART.md">WindsorML resumable participant quickstart</a>.
       The commands verify the pinned data, package all 16 fixed and relative profiles per case,
       and validate the complete result. A separate maintainer registration publishes the reviewed
       package on the dev leaderboard as a pre-release reference. Production and official intake remain unchanged.

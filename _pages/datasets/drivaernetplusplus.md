@@ -147,7 +147,8 @@ compact_masthead: true
     <h3>Submitting a dev candidate</h3>
     <p>
       Generate native-point pressure predictions for all 1,154 test designs, download the prepared support,
-      evaluate with recovery, and package the result using the participant guide below. Open a pull request to
+      evaluate with recovery, and package the result using the
+      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/drivaernetplusplus/QUICKSTART.md">participant quickstart</a>. Open a pull request to
       <code>fluidsbench-submission/dev</code>. After review, a maintainer registers the exact package in the
       dev feed. Official approval and publication are separate steps.
     </p>

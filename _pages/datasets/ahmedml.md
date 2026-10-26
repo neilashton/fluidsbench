@@ -53,7 +53,7 @@ compact_masthead: true
     <h3>Published source splits</h3>
     <p>
       AhmedML publishes the eight train, validation, and test manifests below. The development evaluator binds these exact public <code>run_N</code>
-      case IDs and the immutable source revision; public submissions remain closed until owner review.
+      case IDs and the immutable source revision. Development candidate PRs are accepted on <code>dev</code>; official submissions remain closed until owner review.
     </p>
 
     <div class="dataset-table-wrap">
@@ -131,6 +131,13 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
+    <h3>Development workflow</h3>
+    <p>
+      Follow the <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/ahmedml/QUICKSTART.md">AhmedML participant quickstart</a>
+      for pinned Linux setup, data and prepared-support downloads, complete-split evaluation with resume, reports and validated packaging.
+      Predict both surface and volume fields in native cell order. The evaluator derives forces and all seven profile series per case.
+      Submit only the generated result directory to <code>dev</code>; a maintainer separately registers the reviewed package for unranked, non-citable dev display.
+    </p>
     {% include dataset_submission.html slug="ahmedml" dataset="AhmedML" %}
 
   </section>

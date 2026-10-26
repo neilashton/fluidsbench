@@ -19,6 +19,11 @@ Prototype and candidate rows remain labelled separately. The 23
 HiLiftAeroML previews (11 Transolver, 12 GeoTransolver) retain real surrogate inference and CFD profile truth across represented
 Table 5 splits, but remain unapproved owner-review candidates.
 
+AhmedML, WindsorML, DrivAerML and DrivAerNet++ accept development-candidate PRs against `dev` using their
+[participant quickstarts](https://github.com/neilashton/fluidsbench-submission/blob/dev/SUBMITTING.md).
+Separate maintainer registration controls their unranked, non-citable dev display. HiLiftAeroML intake remains closed;
+BlendedNet, Rotor37 and VKI-LS59 remain coming soon.
+
 ## Evaluation and results
 
 Evaluation partitions, case lists, ground truth, scoring locations, and metric definitions are public. Submitters run their
