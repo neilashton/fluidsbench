@@ -30,9 +30,9 @@
         minute: "2-digit",
         timeZoneName: "short",
       });
-      if (new Date(revealAt).getTimezoneOffset() !== 0) local.textContent = "· " + formatter.format(new Date(revealAt)) + " your time";
+      local.textContent = "· " + formatter.format(new Date(revealAt)) + " your time";
     } catch (_) {
-      /* The explicit UTC date remains the authoritative fallback. */
+      /* The explicit Anywhere on Earth date remains the authoritative fallback. */
     }
 
     function update() {

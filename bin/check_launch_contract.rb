@@ -88,7 +88,7 @@ site = site_for
 site.config["submission_source_ref"] = "main"
 rejected(site, "stale availability was accepted")
 site = site_for
-site.config["launch"]["cutoff_at"] = "2026-12-01T00:00:00Z"
+site.config["launch"]["cutoff_at"] = (Time.iso8601(site.data["launch"]["reveal_at"]) + 1).iso8601
 rejected(site, "cutoff after reveal was accepted")
 site = site_for
 site.config["launch"]["reveal_at"] = "2026-11-24T15:00:00"
@@ -155,7 +155,12 @@ end
 # A same-time dev cutoff/reveal must build without the clock publishing the board.
 site = site_for("collecting")
 site.config.merge!(YAML.load_file(File.join(ROOT, "_config_preview.yml")))
-site.time = Time.iso8601(site.config["launch"].fetch("reveal_at"))
+site.time = Time.iso8601(site.data["launch"].merge(site.config["launch"]).fetch("reveal_at"))
+check(site.time == Time.utc(2026, 12, 6, 11, 59, 59), "AoE deadline has the wrong UTC instant")
+site.time -= 1
+FluidsBench::Launch.new.generate(site)
+check(!site.config["launch"]["deadline_passed"] && !site.config["launch"]["reveal_passed"], "AoE deadline expired early")
+site.time += 1
 FluidsBench::Launch.new.generate(site)
 check(site.config["launch"]["cutoff_at"] == site.config["launch"]["reveal_at"], "dev cutoff differs from the launch countdown")
 check(site.config["launch"]["deadline_passed"] && site.config["launch"]["reveal_passed"], "same-time deadline boundary failed")
