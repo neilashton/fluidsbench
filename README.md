@@ -8,7 +8,14 @@ Assess physics AI surrogate models across realistic fluid dynamics datasets.
 
 ## Current status
 
-**Submissions are closed; there are no official or citable leaderboard rows.** Most rows are illustrative prototypes. The 23
+**Production submissions remain closed. AirfRANS dev intake is open for Full, Scarce and AoA extrapolation.**
+Follow the [AirfRANS participant quickstart](https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/airfrans/QUICKSTART.md)
+and submit PRs against `dev`. Reynolds remains closed. Full (200 cases) and AoA (196 cases) have completed participant
+workflow trials using existing Transolver++ predictions, including interruption/resume and packaging. The AoA package
+has also completed separate maintainer approval and publication on the development review site, with the older
+prototype-contract entry retained in history. This does not open production intake.
+
+Prototype and candidate rows remain labelled separately. The 23
 HiLiftAeroML previews (11 Transolver, 12 GeoTransolver) retain real surrogate inference and CFD profile truth across represented
 Table 5 splits, but remain unapproved owner-review candidates.
 
