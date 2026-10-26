@@ -20,7 +20,7 @@ hide_header_background: true
 <aside class="ux-page-notice" aria-label="Submission status">
   {% if site.launch.can_submit %}
     <strong>{% if site.launch.dev_intake %}Development intake is open{% else %}Submissions are open{% endif %}</strong>
-    <p>{% if site.launch.dev_intake %}AirfRANS Full, Scarce and AoA extrapolation are open. AhmedML, WindsorML and DrivAerML accept development candidates. Submit PRs against <code>dev</code>; packages remain subject to maintainer review. Submit by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M' }} UTC for the planned first leaderboard launch.{% else %}Choose an open dataset below. {% if site.launch.deadline_passed or site.launch.phase == 'reviewing' or site.launch.phase == 'live' %}New submissions will be considered for subsequent releases.{% else %}Submit a complete package by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M' }} UTC for consideration in the first release.{% endif %}{% endif %}</p>
+    <p>{% if site.launch.dev_intake %}AirfRANS Full, Scarce and AoA extrapolation are open. AhmedML, WindsorML and DrivAerML accept development candidates. Submit PRs against <code>dev</code>; packages remain subject to maintainer review. Submit by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M:%S' }} AoE (Anywhere on Earth, UTC−12) for the planned first leaderboard launch.{% else %}Choose an open dataset below. {% if site.launch.deadline_passed or site.launch.phase == 'reviewing' or site.launch.phase == 'live' %}New submissions will be considered for subsequent releases.{% else %}Submit a complete package by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M:%S' }} AoE (Anywhere on Earth, UTC−12) for consideration in the first release.{% endif %}{% endif %}</p>
   {% else %}
     <strong>Submissions in preparation</strong>
     <p>Explore the tools now. Each dataset opens after its evaluation rules and scoring release are approved.{% if site.launch.phase == 'announced' %} Opening is planned for {{ site.launch.opens_at | date: '%-d %B %Y' }}.{% endif %}</p>
@@ -98,8 +98,8 @@ python3 -m reference.example_calculation</code></pre>
   <div>
   <ul class="launch-date-list">
     <li><span>Submission opening</span><time datetime="{{ site.launch.opens_at }}">{{ site.launch.opens_at | date: '%-d %B %Y, %H:%M' }} UTC</time></li>
-    <li><span>First-release cutoff</span><time datetime="{{ site.launch.cutoff_at }}">{{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M' }} UTC</time></li>
-    <li><span>Leaderboard reveal</span><time datetime="{{ site.launch.reveal_at }}">{{ site.launch.reveal_at | date: '%-d %B %Y, %H:%M' }} UTC</time></li>
+    <li><span>First-release cutoff</span><time datetime="{{ site.launch.cutoff_at }}">{{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M:%S' }} AoE (Anywhere on Earth, UTC−12)</time></li>
+    <li><span>Leaderboard reveal</span><time datetime="{{ site.launch.reveal_at }}">{{ site.launch.reveal_at | date: '%-d %B %Y, %H:%M:%S' }} AoE (Anywhere on Earth, UTC−12)</time></li>
   </ul>
   {% unless site.launch.dates_confirmed %}<p class="ux-small-note">These dates are provisional and will be confirmed before submissions open.</p>{% endunless %}
   </div>
