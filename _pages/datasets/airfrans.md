@@ -87,7 +87,7 @@ compact_masthead: true
       <code>100 × clip(R², 0, 1)</code>. The overall score is their weighted sum. The approved scoring version
       <code>airfrans-scoring-v2</code> replaces the former 67%/22%/11% balance. Field definitions and profile extraction
       are unchanged. {% if site.launch.dev_intake %}Dev intake is open for Full, Scarce and AoA extrapolation; Reynolds remains closed.
-      <a href="https://github.com/neilashton/fluidsbench-submission/tree/{{ site.submission_source_ref }}/benchmark-specs/airfrans/RELEASES.md">Download the dev supports and truth, then submit against dev.</a>{% else %}Check the submission guide for current availability.{% endif %}
+      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/airfrans/QUICKSTART.md">Follow the participant quickstart to download support, evaluate and submit against dev.</a>{% else %}Check the submission guide for current availability.{% endif %}
     </p>
   </section>
 
@@ -165,8 +165,8 @@ compact_masthead: true
         <dt>C<sub>d</sub> and C<sub>l</sub> R<sup>2</sup></dt>
         <dd>
           R<sup>2</sup> over all evaluated cases using drag and lift coefficients computed from the predicted fields. The
-          original AirfRANS paper reports force relative errors and Spearman correlations; FluidsBench should compute
-          R<sup>2</sup> directly when evaluator outputs are available.
+          original AirfRANS paper reports force relative errors and Spearman correlations; the FluidsBench evaluator computes
+          R<sup>2</sup> directly from the derived force coefficients.
         </dd>
       </div>
       <div>
@@ -189,13 +189,27 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Prototype values</h3>
+    <h3>Result provenance and workflow status</h3>
     <p>
-      The current leaderboard rows use the full-data-regime AirfRANS baseline tables from arXiv v3. The paper reports
-      normalized-field MSE, force relative errors, Spearman correlations, and parameter counts. Because those are not the
-      final FluidsBench dimensional relative L1/L2 and R<sup>2</sup> evaluator outputs, the displayed field and force
-      scores are prototype conversions and should be replaced by official evaluator exports.
+      Historical paper-derived prototype rows use the full-data-regime AirfRANS baseline tables from arXiv v3.
+      Those converted values are distinct from results evaluated from native predictions. Check each row's provenance
+      and approval status before comparing results.
     </p>
+    {% if site.launch.dev_intake %}
+    <p>
+      Emanuele Tamburini completed the participant workflow for Full (200 cases) and AoA extrapolation (196 cases),
+      reusing existing Transolver++ predictions. The trials covered support-cache reuse, native field/profile evaluation,
+      interruption and resume, checkpoint-digest verification and package validation. The resulting overall scores
+      (53.41 Full and 40.61 AoA) match the retained inference results.
+    </p>
+    <p>
+      The AoA participant package has also completed separate maintainer approval and publication on the dev leaderboard.
+      Its older prototype-contract entry remains in history and is excluded from the current feed. Approval checks the
+      submitted package; it does not rerun the model or independently recompute base metrics from full fields.
+      Scarce is supported but has no equivalent completed participant trial recorded here. Reynolds and production intake remain closed.
+      See the <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/airfrans/QUICKSTART.md#completed-participant-trials">completed trials and submission instructions</a>.
+    </p>
+    {% endif %}
   </section>
 
   <section class="dataset-panel">
