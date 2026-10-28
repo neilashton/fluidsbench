@@ -10123,7 +10123,11 @@
         ? humanize(validation.status || "not recorded")
         : row.dataset_id === "drivaernetplusplus" && row.record_type === "pre_release_reference"
           ? "Dev reference — owner review pending"
-          : "Prototype fixture — not applicable";
+          : row.record_type === "pre_release_reference"
+            ? row.methodology?.record_kind === "submitter_reported"
+              ? "Dev submission — registered for preview"
+              : "Pre-release reference"
+            : "Prototype fixture — not applicable";
     const summaryStatus = (label, value) =>
       `<span class="leaderboard-result-status"><strong>${escapeHtml(label)}</strong>${escapeHtml(value || "Not supplied")}</span>`;
     element("details-dialog-body").innerHTML = `
