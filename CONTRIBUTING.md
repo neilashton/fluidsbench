@@ -103,6 +103,10 @@ A pull request should explain:
 
 Keep unrelated changes in separate pull requests.
 
+## Repository ownership
+
+See the [ownership transfer checklist](docs/OWNERSHIP_TRANSFER.md) for the remaining link, deployment and submission checks when moving the repositories to the FluidsBench organisation.
+
 ## Licence
 
 By contributing, you agree that your contribution is distributed under the [repository licence](LICENSE).

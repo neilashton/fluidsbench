@@ -3740,10 +3740,10 @@
     const status = element("submission-status");
     const button = element("open-submission-repo");
     if (status) {
-      status.textContent = devCandidate ? "Dev submissions open" : open ? "Submissions open" : "Submissions closed";
+      status.textContent = devCandidate ? "Accepting for preview" : open ? "Submissions open" : "Submissions closed";
       status.className = `leaderboard-submit-status${open ? " is-open" : ""}`;
       status.title = devCandidate
-        ? "Submit a candidate to dev. Maintainer registration is required for preview display."
+        ? "Submit a result for review and preview display."
         : open
           ? `${dataset.name} submissions use ${support.release_id || "the official scoring-support release"}.`
           : "This dataset is not currently accepting leaderboard submissions.";
@@ -3751,7 +3751,7 @@
     if (button) {
       button.disabled = !open;
       button.hidden = !open;
-      button.textContent = devCandidate ? "Submit to dev" : "Submit a result";
+      button.textContent = "Submit a result";
     }
   }
 
@@ -11277,11 +11277,13 @@
     element("open-submission-repo")?.addEventListener("click", (event) => {
       if (event.currentTarget.disabled || !activeDataset()) return;
       const sourceRef = String(window.FluidsBenchSubmissionSourceRef || "main");
+      const repository = safeHttpUrl(window.FluidsBenchSubmissionRepositoryUrl || dataRelease().source_repository).replace(/\/$/, "");
+      if (!repository) return;
       const guide = window.FluidsBenchSubmissionAvailability?.[activeDatasetSlug()]?.guide;
       window.open(
         guide
-          ? `https://github.com/neilashton/fluidsbench-submission/blob/${encodeURIComponent(sourceRef)}/${guide}`
-          : `https://github.com/neilashton/fluidsbench-submission/tree/${encodeURIComponent(sourceRef)}/submissions/${activeDataset().slug}`,
+          ? `${repository}/blob/${encodeURIComponent(sourceRef)}/${guide}`
+          : `${repository}/tree/${encodeURIComponent(sourceRef)}/submissions/${activeDataset().slug}`,
         "_blank",
         "noopener,noreferrer"
       );

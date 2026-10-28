@@ -11,42 +11,24 @@ hide_header_background: true
 {% assign source_ref = site.submission_source_ref | default: 'main' %}
 {% if site.launch.dev_intake %}{% assign source_ref = 'dev' %}{% endif %}
 {% assign submission_branch = site.submission_target_branch | default: 'main' %}
-{% assign source_root = 'https://github.com/neilashton/fluidsbench-submission/tree/' | append: source_ref %}
+{% assign source_root = site.submission_repository_url | append: '/tree/' | append: source_ref %}
 {% comment %}Current process guidance is separate from the frozen evaluation/data revision.{% endcomment %}
 {% assign verification_ref = 'main' %}{% if site.preview_mode %}{% assign verification_ref = 'dev' %}{% endif %}
-{% assign verification_guide_url = 'https://github.com/neilashton/fluidsbench-submission/blob/' | append: verification_ref | append: '/docs/OPTIONAL_VERIFICATION.md' %}
+{% assign verification_guide_url = site.submission_repository_url | append: '/blob/' | append: verification_ref | append: '/docs/OPTIONAL_VERIFICATION.md' %}
 {% if site.optional_verification_guide_url %}{% assign verification_guide_url = site.optional_verification_guide_url %}{% endif %}
 
 <aside class="ux-page-notice" aria-label="Submission status">
   {% if site.launch.can_submit %}
-    <strong>{% if site.launch.dev_intake %}Development intake is open{% else %}Submissions are open{% endif %}</strong>
-    <p>{% if site.launch.dev_intake %}AirfRANS Full, Scarce and AoA extrapolation are open. AhmedML, WindsorML, DrivAerML and DrivAerNet++ accept development candidates. Submit PRs against <code>dev</code>; packages remain subject to maintainer review. Submit by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M:%S' }} AoE (Anywhere on Earth, UTC−12) for the planned first leaderboard launch.{% else %}Choose an open dataset below. {% if site.launch.deadline_passed or site.launch.phase == 'reviewing' or site.launch.phase == 'live' %}New submissions will be considered for subsequent releases.{% else %}Submit a complete package by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M:%S' }} AoE (Anywhere on Earth, UTC−12) for consideration in the first release.{% endif %}{% endif %}</p>
+    <strong>Submissions are open for the datasets below</strong>
+    <p>Choose a dataset and follow its participant quickstart. {% if site.launch.deadline_passed or site.launch.phase == 'reviewing' or site.launch.phase == 'live' %}New submissions will be considered for subsequent releases.{% else %}Submit a complete package by {{ site.launch.cutoff_at | date: '%-d %B %Y, %H:%M:%S' }} AoE (Anywhere on Earth, UTC−12) for consideration in the first release.{% endif %}</p>
   {% else %}
     <strong>Submissions in preparation</strong>
     <p>Explore the tools now. Each dataset opens after its evaluation rules and scoring release are approved.{% if site.launch.phase == 'announced' %} Opening is planned for {{ site.launch.opens_at | date: '%-d %B %Y' }}.{% endif %}</p>
   {% endif %}
 </aside>
 
-<section class="ux-quickstart" aria-labelledby="quickstart-title">
-  <div>
-    <p class="ux-page-eyebrow">Start here</p>
-    <h2 id="quickstart-title">Try the reference example</h2>
-    <p>A small synthetic example checks your setup and demonstrates metric calculation. It runs locally without downloading a CFD dataset or training a model.</p>
-    <a href="{{ source_root }}/reference">Reference documentation <span aria-hidden="true">↗</span></a>
-  </div>
-  <div class="ux-code-panel">
-    <div class="ux-code-label">Terminal <span>Python 3 · macOS / Linux</span></div>
-    <pre><code>git clone https://github.com/neilashton/fluidsbench-submission.git
-cd fluidsbench-submission
-git checkout {{ source_ref }}
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install -r requirements.txt
-python3 -m reference.example_calculation</code></pre>
-  </div>
-</section>
-
 <section id="datasets" aria-labelledby="submission-datasets-title">
+  <p class="ux-page-eyebrow">Start here</p>
   <h2 id="submission-datasets-title">Choose a dataset</h2>
   <p>Start with one dataset and one supported split. Its guide sets out the required evaluation cases.</p>
   <div class="launch-submission-grid">
@@ -59,19 +41,38 @@ python3 -m reference.example_calculation</code></pre>
         <h3>{{ site.data.dataset_catalog[slug].name }} <span class="dataset-coming-soon-badge">Coming soon</span></h3>
         <p>The dataset guide and leaderboard will be available here when ready.</p>
         {% else %}
-        <h3>{{ site.data.dataset_catalog[slug].name }} <span>{% if dev_candidate %}Open for dev candidates{% elsif availability.open and site.launch.accepting_submissions %}Open for submissions{% elsif availability.open %}Ready for opening{% else %}In preparation{% endif %}</span></h3>
+        <h3>{{ site.data.dataset_catalog[slug].name }} <span>{% if dev_candidate %}Accepting for preview{% elsif availability.open and site.launch.accepting_submissions %}Open for submissions{% elsif availability.open %}Ready for opening{% else %}In preparation{% endif %}</span></h3>
         {% if availability.open and site.launch.accepting_submissions %}
         <p>Open splits: {% for split in availability.open_splits %}{{ split.label }}{% unless forloop.last %}, {% endunless %}{% endfor %}.</p>
-        {% if slug == 'airfrans' %}<p>Reynolds extrapolation is closed. <a href="{{ source_root }}/benchmark-specs/airfrans/RELEASES.md">Dev downloads and submission guide ↗</a></p>{% endif %}
+        {% if slug == 'airfrans' %}<p>Reynolds extrapolation is closed. <a href="{{ source_root }}/benchmark-specs/airfrans/RELEASES.md">Support downloads and submission guide ↗</a></p>{% endif %}
         {% endif %}
-        {% if dev_candidate %}<p>Submit a complete candidate to <code>dev</code>. A maintainer reviews and registers it for dev display; official intake remains closed.</p>{% endif %}
+        {% if dev_candidate %}<p>Reviewed results can appear in the preview before the official leaderboard release.</p>{% endif %}
         {% if site.launch.dev_intake and availability.guide %}<p><a href="{{ source_root }}/{{ availability.guide }}">Participant quickstart ↗</a></p>{% endif %}
         <div class="launch-submit-links"><a href="{{ '/datasets/' | append: slug | append: '/' | relative_url }}">Dataset guide →</a><a href="{{ source_root }}/benchmark-specs/{{ slug }}">Evaluation requirements ↗</a>
-        {% if dev_candidate or availability.open and site.launch.accepting_submissions %}<a href="https://github.com/neilashton/fluidsbench-submission/compare/{{ submission_branch }}...">Open a submission PR ↗</a>{% endif %}</div>
+        {% if dev_candidate or availability.open and site.launch.accepting_submissions %}<a href="{{ site.submission_repository_url }}/compare/{{ submission_branch }}...">Open a submission PR ↗</a>{% endif %}</div>
         {% endif %}
       </article>
       {% endunless %}
     {% endfor %}
+  </div>
+</section>
+
+<section class="ux-quickstart" aria-labelledby="quickstart-title">
+  <div>
+    <p class="ux-page-eyebrow">Check your setup</p>
+    <h2 id="quickstart-title">Try the reference example</h2>
+    <p>A small synthetic example checks your setup and demonstrates metric calculation. It runs locally without downloading a CFD dataset or training a model.</p>
+    <a href="{{ source_root }}/reference">Reference documentation <span aria-hidden="true">↗</span></a>
+  </div>
+  <div class="ux-code-panel">
+    <div class="ux-code-label">Terminal <span>Python 3 · macOS / Linux</span></div>
+    <pre><code>git clone {{ site.submission_repository_url }}.git
+cd fluidsbench-submission
+git checkout {{ source_ref }}
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 -m reference.example_calculation</code></pre>
   </div>
 </section>
 
@@ -81,15 +82,13 @@ python3 -m reference.example_calculation</code></pre>
     <li><div><h3>Choose a dataset and split</h3><p>Read its guide, download a representative case and check the evaluation requirements before planning a full run.</p><a href="{{ '/datasets/' | relative_url }}">Browse dataset guides <span aria-hidden="true">→</span></a></div></li>
     <li><div><h3>Generate predictions</h3><p>Run your model on the specified evaluation cases. Map predictions onto every required scoring location, even if your model uses a different mesh or representation.</p><a href="{{ source_root }}/benchmark-specs">Dataset specifications <span aria-hidden="true">↗</span></a></div></li>
     <li><div><h3>Evaluate and package the evidence</h3><p>Use the reference tools and dataset instructions to calculate metrics, extract profiles and record your model, evaluation and spatial coverage.</p><a href="{{ source_root }}/examples/v3-template">Result package template <span aria-hidden="true">↗</span></a><span class="ux-link-separator" aria-hidden="true">·</span><a href="{{ source_root }}/METHODOLOGY.md">Methodology guide <span aria-hidden="true">↗</span></a></div></li>
-    <li><div><h3>Validate your package</h3><p>{% if site.launch.dev_intake %}For any of the four available dev workflows, validate your result directory before proposing a PR to <code>dev</code>.{% else %}For an open dataset, validate your result directory before proposing it through a pull request.{% endif %} Replace the placeholders below with your dataset and submission IDs.</p><pre class="ux-inline-code"><code>python3 scripts/validate_submission.py {% if site.launch.dev_intake %}--dev-intake {% endif %}--contributor-stage \
-  submissions/&lt;dataset-id&gt;/&lt;submission-id&gt;</code></pre><p class="ux-small-note">{% if site.launch.dev_intake %}The validator accepts AirfRANS on its approved release and AhmedML, WindsorML and DrivAerML on their dev candidate contracts. Other closed datasets remain closed.{% else %}The contributor validator requires an official, open scoring release.{% endif %} Passing validation alone does not approve a result for publication.</p></div></li>
+    <li><div><h3>Validate your package</h3><p>Validate the generated result directory before opening a pull request. Replace the placeholders with your dataset and submission IDs.</p><pre class="ux-inline-code"><code>python3 scripts/validate_submission.py {% if site.launch.dev_intake %}--dev-intake {% endif %}--contributor-stage \
+  submissions/&lt;dataset-id&gt;/&lt;submission-id&gt;</code></pre><p class="ux-small-note">Use this command for a dataset currently accepting submissions above. Maintainers review the package before publication.</p></div></li>
   </ol>
 </section>
 
-{% if site.launch.dev_intake %}
-
-<p>Open a PR to <code>dev</code> containing only your new submission directory. After review, a maintainer registers the unchanged package and regenerates the dev feed. AirfRANS uses maintainer approval and feed regeneration instead. Passing contributor checks or merging the initial PR does not itself publish a row.</p>
-{% endif %}
+<p>Open a pull request against <code>{{ submission_branch }}</code> containing only your new submission directory.
+Follow <a href="{{ source_root }}/SUBMITTING.md">Submitting a result</a> for the checklist and review process.</p>
 
 {% unless site.launch.dev_intake %}
 

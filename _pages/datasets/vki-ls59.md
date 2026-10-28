@@ -13,6 +13,7 @@ compact_masthead: true
 {% if site.data.leaderboard_display["vki-ls59"].coming_soon %}
 {% include dataset_coming_soon.html slug="vki-ls59" %}
 {% else %}
+
 <div class="dataset-page">
   {% include dataset_intro.html slug="vki-ls59" %}
 
@@ -102,7 +103,7 @@ compact_masthead: true
       <li><a href="https://huggingface.co/datasets/PLAID-datasets/VKI-LS59">PLAID VKI-LS59 dataset</a></li>
       <li><a href="https://zenodo.org/records/14840512">VKI-LS59 archive on Zenodo</a></li>
       <li><a href="https://arxiv.org/abs/2505.02974">PLAID benchmark paper</a></li>
-      <li><a href="https://github.com/neilashton/fluidsbench-submission">FluidsBench submission repository</a></li>
+      <li><a href="{{ site.submission_repository_url }}">FluidsBench submission repository</a></li>
     </ul>
   </section>
 </div>

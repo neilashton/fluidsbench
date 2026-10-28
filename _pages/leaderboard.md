@@ -499,6 +499,7 @@ chart:
   window.FluidsBenchLeaderboardPreviewMode = {{ site.preview_mode | default: false | jsonify }};
   window.FluidsBenchLeaderboardManifestSha256 =
     {{ site.leaderboard_manifest_sha256 | default: "" | jsonify }};
+  window.FluidsBenchSubmissionRepositoryUrl = {{ site.submission_repository_url | jsonify }};
   window.FluidsBenchSubmissionSourceRef =
     {% if site.launch.dev_intake %}"dev"{% else %}{{ site.submission_source_ref | default: "main" | jsonify }}{% endif %};
   window.FluidsBenchDevIntake = {{ site.launch.dev_intake | default: false | jsonify }};
