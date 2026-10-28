@@ -52,6 +52,8 @@ jobs:
         with:
           repository: neilashton/fluidsbench-submission
           ref: dev
+          # Registered candidate packages validate their pinned evaluator commits.
+          fetch-depth: 0
           path: fluidsbench-submission-dev
       - name: Install dev feed validation dependencies
         if: github.base_ref == 'dev' || github.ref_name == 'dev'
