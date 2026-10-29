@@ -36,7 +36,7 @@ hide_header_background: true
 <section class="ux-support-section" id="contribute" aria-labelledby="contribute-title">
   <h2 id="contribute-title">Help build the benchmark</h2>
   <div class="ux-feature-grid">
-    <article class="ux-feature"><h3>Evaluate a model</h3><p>Explore the reference tools and prepare your evaluation for when dataset submissions open.</p><a href="{{ '/run/' | relative_url }}">Get started <span aria-hidden="true">→</span></a></article>
+    <article class="ux-feature"><h3>Evaluate a model</h3><p>Choose an open dataset, run the reference evaluation and prepare your submission.</p><a href="{{ '/run/' | relative_url }}">Get started <span aria-hidden="true">→</span></a></article>
     <article class="ux-feature"><h3>Propose a dataset</h3><p>Share the physical problem, available data and proposed evaluation with the organising team.</p><a href="mailto:admin@fluidsbench.org?subject=FluidsBench%20dataset%20proposal">Contact the team <span aria-hidden="true">→</span></a></article>
     <article class="ux-feature"><h3>Improve the tools</h3><p>Report an issue or contribute to the evaluation code, documentation or website.</p><a href="{{ site.submission_repository_url }}/issues">Evaluation issues <span aria-hidden="true">↗</span></a><a href="{{ site.website_repository_url }}/issues">Website issues <span aria-hidden="true">↗</span></a></article>
   </div>
