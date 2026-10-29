@@ -1,28 +1,13 @@
 # FluidsBench
 
+## Start here
+
 Assess physics AI surrogate models across realistic fluid dynamics datasets.
 
-- [Website](https://fluidsbench.org/)
-- [Development review site](https://fluidsbench.org/review-x4n7q9m2vk6p/) — work in progress
-- **[Submit results: specifications, evaluators, and instructions](https://github.com/neilashton/fluidsbench-submission)**
-
-## Current status
-
-**Production submissions remain closed. AirfRANS dev intake is open for Full, Scarce and AoA extrapolation.**
-Follow the [AirfRANS participant quickstart](https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/airfrans/QUICKSTART.md)
-and submit PRs against `dev`. Reynolds remains closed. Full (200 cases) and AoA (196 cases) have completed participant
-workflow trials using existing Transolver++ predictions, including interruption/resume and packaging. The AoA package
-has also completed separate maintainer approval and publication on the development review site, with the older
-prototype-contract entry retained in history. This does not open production intake.
-
-Prototype and candidate rows remain labelled separately. The 23
-HiLiftAeroML previews (11 Transolver, 12 GeoTransolver) retain real surrogate inference and CFD profile truth across represented
-Table 5 splits, but remain unapproved owner-review candidates.
-
-AhmedML, WindsorML, DrivAerML and DrivAerNet++ accept development-candidate PRs against `dev` using their
-[participant quickstarts](https://github.com/neilashton/fluidsbench-submission/blob/dev/SUBMITTING.md).
-Separate maintainer registration controls their unranked, non-citable dev display. HiLiftAeroML intake remains closed;
-BlendedNet, Rotor37 and VKI-LS59 remain coming soon.
+- **[Choose a dataset and submit a result](https://github.com/neilashton/fluidsbench-submission/tree/dev)** — quickstarts, evaluation tools and submission instructions.
+- **[Explore the website](https://fluidsbench.org/)** — dataset descriptions and benchmark information.
+- **[Review the upcoming release](https://fluidsbench.org/review-x4n7q9m2vk6p/)** — preview website and current participant guidance.
+- **[Contribute to the website](CONTRIBUTING.md)** — setup, validation and development instructions.
 
 ## Evaluation and results
 

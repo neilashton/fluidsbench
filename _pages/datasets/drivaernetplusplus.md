@@ -32,8 +32,7 @@ compact_masthead: true
         <dt>Current FluidsBench split</dt>
         <dd>
           <code>official_test</code> covers all 1,154 test designs and every native surface pressure point.
-          The dataset owner has confirmed the scientific definition. This remains a dev candidate;
-          official submissions are closed while the final release and activation are prepared.
+          The dataset owner has confirmed the scientific definition. See the submission guide for current availability.
         </dd>
       </div>
       <div>
@@ -73,7 +72,7 @@ compact_masthead: true
     <h3>Cp stations</h3>
     <p>
       DrivAerNet++ publishes surface pressure over annotated vehicle components but not a canonical set of one-dimensional
-      Cp traces. The dev evaluator extracts these three report-only traces at frozen native points on every test design,
+      Cp traces. The evaluator extracts these three report-only traces at frozen native points on every test design,
       using <code>Cp = p / 450</code>. They do not contribute to the score. The dataset owner has confirmed these three
       stations and retirement of the wheelhouse trace, which could not be defined consistently across all test designs.
     </p>
@@ -96,7 +95,7 @@ compact_masthead: true
       no points are masked. The 29 pressure-release designs absent from the published splits remain excluded
       because other data modalities were incomplete. The 1,154-case test list is unchanged.
       These decisions and the release preparation are recorded in the
-      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/drivaernetplusplus/OWNER_APPROVAL.md">dataset-owner approval record</a>.
+      <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/drivaernetplusplus/OWNER_APPROVAL.md">dataset-owner approval record</a>.
     </p>
   </section>
 
@@ -123,7 +122,7 @@ compact_masthead: true
         <dd>
           CarBench reports an unweighted point relative L2 (each point counts equally) on the DrivAerNet++ geometry-disjoint evaluation set. FluidsBench
           evaluates both area-weighted primary and equal-point secondary relative L2 on every native test point.
-          The dev feed uses evaluated submission packages rather than source-paper table values.
+          The preview displays evaluated submission packages rather than source-paper table values.
         </dd>
       </div>
       <div>
@@ -144,13 +143,11 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Submitting a dev candidate</h3>
+    <h3>Evaluate and submit</h3>
     <p>
       Generate native-point pressure predictions for all 1,154 test designs, download the prepared support,
       evaluate with recovery, and package the result using the
-      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/drivaernetplusplus/QUICKSTART.md">participant quickstart</a>. Open a pull request to
-      <code>fluidsbench-submission/dev</code>. After review, a maintainer registers the exact package in the
-      dev feed. Official approval and publication are separate steps.
+      <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/drivaernetplusplus/QUICKSTART.md">participant quickstart</a>. Follow the <a href="{{ '/run/' | relative_url }}#drivaernetplusplus">submission instructions</a> to propose the generated result directory for review.
     </p>
   </section>
 

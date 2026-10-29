@@ -8,7 +8,7 @@
       </h1>
       <p class="launch-description">Assess physics AI surrogate models across realistic fluid dynamics datasets</p>
       <p class="launch-invitation">
-        {% if site.launch.dev_intake %}Development intake is open.{% else %}Be part of the first release.{% endif %}
+        {% if site.launch.dev_intake %}Preview submissions are open.{% else %}Be part of the first release.{% endif %}
       </p>
       <div class="launch-actions">
         <a class="ux-primary-link" href="{{ '/run/' | relative_url }}">
@@ -171,7 +171,7 @@
       <div>
         <p class="ux-page-eyebrow">Bring your model</p>
         <h2 id="launch-participate-title">
-          {% if site.launch.dev_intake %}Submit a development result.{% else %}A clear route to the first release.{% endif %}
+          {% if site.launch.dev_intake %}Submit your result.{% else %}A clear route to the first release.{% endif %}
         </h2>
       </div>
       <a href="{{ '/run/' | relative_url }}">Submission guide <span aria-hidden="true">→</span></a>
@@ -215,10 +215,12 @@
         <summary>When will I be able to see the results?</summary>
         <p>
           {% if site.launch.dev_intake -%}
-            Submitted results and review are visible in GitHub PRs against dev. Official leaderboard publication is a separate step.
+            Submissions and reviews are visible in GitHub pull requests. Reviewed results can appear in the preview before the official leaderboard
+            release.
           {%- else %}
-            The first official leaderboard is planned for {{ site.launch.reveal_at | date: '%-d %B %Y' }} Anywhere on Earth (UTC−12). It will bring together reviewed submissions
-            received by the first-release cutoff. Submissions continue afterwards, with later results appearing in subsequent releases.
+            The first official leaderboard is planned for {{ site.launch.reveal_at | date: '%-d %B %Y' }} Anywhere on Earth (UTC−12). It will bring
+            together reviewed submissions received by the first-release cutoff. Submissions continue afterwards, with later results appearing in
+            subsequent releases.
           {%- endif %}
         </p>
       </details>

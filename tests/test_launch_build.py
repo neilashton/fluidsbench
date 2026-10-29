@@ -91,12 +91,12 @@ class LaunchBuildTests(unittest.TestCase):
 
     def test_dev_intake_targets_dev_and_keeps_the_homepage_countdown(self):
         self.write(check_launch_build.COMMITTEE_REVIEW, self.review)
-        self.write('index.html', '<div data-launch-phase="collecting" data-countdown>Development intake</div>')
+        self.write('index.html', '<div data-launch-phase="collecting" data-countdown>Preview submissions</div>')
         self.write('run/index.html', '<a href="https://github.com/neilashton/fluidsbench-submission/compare/dev...">Submit</a>Reynolds extrapolation is closed')
         self.assertEqual(check_launch_build.validate(self.root, 'collecting', True, True), [])
         self.write('run/index.html', '<a href="https://github.com/neilashton/fluidsbench-submission/compare/main...">Submit</a>Reynolds extrapolation is closed')
         self.assertIn('dev intake submission PRs must target dev', check_launch_build.validate(self.root, 'collecting', True, True))
-        self.write('index.html', '<div data-launch-phase="collecting">Development intake</div>')
+        self.write('index.html', '<div data-launch-phase="collecting">Preview submissions</div>')
         self.assertIn('dev intake must be a labelled collecting preview with a countdown', check_launch_build.validate(self.root, 'collecting', True, True))
 
 

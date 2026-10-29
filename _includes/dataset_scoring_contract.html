@@ -4,7 +4,13 @@
     <small>Exact files, weighting and complete-case rules</small>
   </summary>
   <div class="dataset-inline-disclosure-body dataset-scoring-contract">
-    <p class="dataset-scoring-status"><strong>{% if site.launch.dev_intake and site.data.submission_status.datasets[include.slug].dev_candidate %}Development candidate PRs are accepted on dev. Official submissions remain closed.{% elsif site.data.submission_status.datasets[include.slug].open and site.launch.accepting_submissions %}Submissions are open{% if site.launch.dev_intake %} on dev{% endif %}.{% else %}Submissions are currently closed.{% endif %}</strong></p>
+    <p class="dataset-scoring-status">
+      <strong
+        >{% if site.launch.dev_intake and site.data.submission_status.datasets[include.slug].dev_candidate %}Submissions are accepted for preview.{%
+        elsif site.data.submission_status.datasets[include.slug].open and site.launch.accepting_submissions %}Submissions are open.{% else
+        %}Submissions are currently closed.{% endif %}</strong
+      >
+    </p>
     <p>
       <strong>Final predictions must cover the complete reference support.</strong> For every scored case, this means every required entity, exactly
       once, in the actual field-bearing mesh or curve file from the named public dataset release. FluidsBench binds those files, their ordering, any
@@ -210,8 +216,8 @@
       </li>
       {% elsif include.slug == "windsorml" %}
       <li>
-        WindsorML uses published point dual areas for primary surface relative L2 and equal-point surface relative L2 as a secondary diagnostic.
-        Its volume fields use equal native cell weights only; no cell-volume sidecar or volume-weighted secondary metric is required.
+        WindsorML uses published point dual areas for primary surface relative L2 and equal-point surface relative L2 as a secondary diagnostic. Its
+        volume fields use equal native cell weights only; no cell-volume sidecar or volume-weighted secondary metric is required.
       </li>
       <li>
         Preserve the raw native point order for surface fields and cell order for volume fields. Predict the raw published

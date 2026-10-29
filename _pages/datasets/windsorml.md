@@ -80,18 +80,17 @@ compact_masthead: true
     <p>
       The four data-efficiency splits share validation and test cases; only training size changes. The five distinct test sets contain
       233 unique available cases. The <code>full</code> split is the published seed-42 benchmark, not a reconstruction of the paper's 60/20/20 split.
-      Use validation for model selection and reserve test cases for final evaluation. Official submissions remain closed pending owner review.
+      Use validation for model selection and reserve test cases for final evaluation.
     </p>
   </section>
 
   <section class="dataset-panel">
-    <h3>Development workflow</h3>
+    <h3>Evaluate and submit</h3>
     <p>
-      Development candidate PRs are accepted against <code>dev</code>. Follow the
-      <a href="https://github.com/neilashton/fluidsbench-submission/blob/dev/benchmark-specs/windsorml/QUICKSTART.md">WindsorML resumable participant quickstart</a>.
+      Follow the
+      <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/windsorml/QUICKSTART.md">WindsorML resumable participant quickstart</a>.
       The commands verify the pinned data, package all 16 fixed and relative profiles per case,
-      and validate the complete result. A separate maintainer registration publishes the reviewed
-      package on the dev leaderboard as a pre-release reference. Production and official intake remain unchanged.
+      and validate the complete result. Follow the <a href="{{ '/run/' | relative_url }}#windsorml">submission instructions</a> to propose the generated directory for review.
     </p>
     {% include dataset_submission.html slug="windsorml" dataset="WindsorML" %}
 

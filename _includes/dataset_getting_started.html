@@ -7,8 +7,7 @@
 <p>
   Start with the source documentation and split metadata, then download one representative case before planning a full transfer. The commands below
   pin the source snapshot audited for this page. For leaderboard work, always use the separate scoring source pin and case lists in the
-  <a
-    href="https://github.com/neilashton/fluidsbench-submission/tree/{{ site.submission_source_ref | default: 'main' }}/benchmark-specs/{{ include.slug }}"
+  <a href="{{ site.submission_repository_url }}/tree/{{ site.submission_source_ref | default: 'main' }}/benchmark-specs/{{ include.slug }}"
     >FluidsBench benchmark specification</a
   >.
 </p>
@@ -86,8 +85,9 @@ print(surface.cell_data["wallShearStressMeanTrim"].shape)</code></pre>
 <p class="dataset-download-note">
   Native volume files are transported as ordered <code>.00.part</code>, <code>.01.part</code>, and, for ten cases, <code>.02.part</code> segments.
   Resolve the exact list from <code>proposal/native-source-pin.json</code>. The participant evaluator streams those ordered parts as one logical VTU
-  in bounded chunks; it does not require a second concatenated copy. Do not assume every case has two parts, resample the scoring support, or average chunk-level errors; accumulate numerators,
-  denominators, and counts before the case-level reduction. Use <code>force_mom_constref_&lt;run&gt;.csv</code> for the benchmark force convention.
+  in bounded chunks; it does not require a second concatenated copy. Do not assume every case has two parts, resample the scoring support, or average
+  chunk-level errors; accumulate numerators, denominators, and counts before the case-level reduction. Use
+  <code>force_mom_constref_&lt;run&gt;.csv</code> for the benchmark force convention.
 </p>
 
 {% when "windsorml" %}
@@ -125,7 +125,7 @@ assert area.shape == (surface.n_points,)
 print(surface.point_data.keys())</code></pre>
 <p class="dataset-download-note">
   Remove <code>--dry-run</code> only after checking the transfer size. The dual areas apply to the exact raw VTU point order. The split metadata
-  covers 355 aggregate cases, but only runs 0–349 have complete per-run field folders and area sidecars. The dev contract already intersects each
+  covers 355 aggregate cases, but only runs 0–349 have complete per-run field folders and area sidecars. The scoring contract already intersects each
   source split with these published runs: Full has 35 test cases and excludes <code>run_354</code>. Use its exact case lists without replacements.
 </p>
 
@@ -234,9 +234,8 @@ print(train.shape, train_names[:3])</code></pre>
   </div>
 </div>
 <p class="dataset-download-note">
-  Use the current <code>dev</code> checkout and its DrivAerNet++ participant guide for the pinned Linux environment or Docker commands, prediction
-  layout, resumable evaluation and packaging. Predict native PointData <code>p</code> in m²/s² for every test point. Dev candidates are accepted for
-  review; official submissions remain closed.
+  Follow the DrivAerNet++ participant quickstart for the pinned Linux environment or Docker commands, prediction layout, resumable evaluation and
+  packaging. Predict native PointData <code>p</code> in m²/s² for every test point. Check the submission guide for current availability.
 </p>
 
 {% when "rotor37" %}

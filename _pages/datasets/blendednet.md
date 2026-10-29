@@ -13,6 +13,7 @@ compact_masthead: true
 {% if site.data.leaderboard_display.blendednet.coming_soon %}
 {% include dataset_coming_soon.html slug="blendednet" %}
 {% else %}
+
 <div class="dataset-page">
   {% include dataset_intro.html slug="blendednet" %}
 
@@ -20,7 +21,7 @@ compact_masthead: true
     {% include dataset_getting_started.html heading=2 slug="blendednet" %}
   </section>
 
-  {% include dataset_design_space.html slug="blendednet" %}
+{% include dataset_design_space.html slug="blendednet" %}
 
   <section class="dataset-section">
     <h2>Candidate benchmark split</h2>
@@ -111,7 +112,7 @@ compact_masthead: true
       <li><a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/VJT9EP">BlendedNet dataset on Harvard Dataverse</a></li>
       <li><a href="https://doi.org/10.1115/DETC2025-168977">ASME conference paper</a></li>
       <li><a href="https://arxiv.org/abs/2509.07209">Open-access paper on arXiv</a></li>
-      <li><a href="https://github.com/neilashton/fluidsbench-submission">FluidsBench submission repository</a></li>
+      <li><a href="{{ site.submission_repository_url }}">FluidsBench submission repository</a></li>
     </ul>
   </section>
 </div>
