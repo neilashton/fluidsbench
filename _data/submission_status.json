@@ -1,44 +1,148 @@
 {
-  "source_commit": "5cd9d5d66410ee70666be9f2b41c99d84d8d2e24",
-  "manifest_sha256": "4d242f67a584ff68564c28338c59a20318b639dc611605861f38044742bbcf2a",
+  "source_commit": "26278ddee9a4b6228f83b3bac29199473be42dba",
+  "manifest_sha256": "c3450b35a64832dc058886598457d601a7464f89409849f9bfd9a077c10af1eb",
   "release": {
-    "id": "prototype-dev-2026-10-22-1868d30937bf",
-    "status": "prototype_dummy_data",
+    "id": "fluidsbench-2026-unreleased",
+    "status": "unreleased",
     "asset_base_url": "https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/",
     "archive_url": null
   },
   "datasets": {
     "ahmedml": {
-      "open": false,
-      "dev_candidate": true,
+      "open": true,
+      "dev_candidate": false,
       "guide": "benchmark-specs/ahmedml/QUICKSTART.md",
-      "specification_sha256": "7fcab80981005024ec6d1744683e785dd86dab54f26901bf60e5dea82c2b170a",
-      "scoring_release_id": null,
-      "open_splits": []
+      "specification_sha256": "7b3f224689c8d81dd5bf8056c37a8b99a66d74a300d68d9812f40e5a42e8e84d",
+      "scoring_release_id": "ahmedml-native-support-v1",
+      "open_splits": [
+        {
+          "id": "full",
+          "label": "Full"
+        },
+        {
+          "id": "medium",
+          "label": "Medium"
+        },
+        {
+          "id": "scarce",
+          "label": "Scarce"
+        },
+        {
+          "id": "super_scarce",
+          "label": "Super scarce"
+        },
+        {
+          "id": "geometry",
+          "label": "Geometry OOD"
+        },
+        {
+          "id": "high_drag",
+          "label": "High drag OOD"
+        },
+        {
+          "id": "low_drag",
+          "label": "Low drag OOD"
+        },
+        {
+          "id": "image_wake",
+          "label": "Image wake OOD"
+        }
+      ]
     },
     "drivaerml": {
-      "open": false,
-      "dev_candidate": true,
+      "open": true,
+      "dev_candidate": false,
       "guide": "benchmark-specs/drivaerml/QUICKSTART.md",
-      "specification_sha256": "64cb4c355429f667b6e496d713a77731e08bc3539ebc8ec83d0fc981a3caeb23",
-      "scoring_release_id": null,
-      "open_splits": []
+      "specification_sha256": "c1c4869d39648de4d6c43def2b0583fb2c5fe537223d1ec2009b07c406949ff6",
+      "scoring_release_id": "drivaerml-native-support-v3",
+      "open_splits": [
+        {
+          "id": "full",
+          "label": "Full"
+        },
+        {
+          "id": "medium",
+          "label": "Medium"
+        },
+        {
+          "id": "scarce",
+          "label": "Scarce"
+        },
+        {
+          "id": "super_scarce",
+          "label": "Super scarce"
+        },
+        {
+          "id": "geometry",
+          "label": "Geometry"
+        },
+        {
+          "id": "high_drag",
+          "label": "High drag"
+        },
+        {
+          "id": "low_drag",
+          "label": "Low drag"
+        },
+        {
+          "id": "rear_separation",
+          "label": "Rear separation"
+        }
+      ]
     },
     "drivaernetplusplus": {
-      "open": false,
-      "dev_candidate": true,
+      "open": true,
+      "dev_candidate": false,
       "guide": "benchmark-specs/drivaernetplusplus/QUICKSTART.md",
-      "specification_sha256": "bdc76ca82b6121db4431b38ca179ace6151d60628bd48158ba19bb39aa836e90",
-      "scoring_release_id": null,
-      "open_splits": []
+      "specification_sha256": "56f542579f9b62a2dbd1ab989e5f89ccc7800c93e50d2abec998c64e45bd34df",
+      "scoring_release_id": "drivaernetplusplus-native-pressure-support-v1",
+      "open_splits": [
+        {
+          "id": "official_test",
+          "label": "Official test"
+        }
+      ]
     },
     "windsorml": {
-      "open": false,
-      "dev_candidate": true,
+      "open": true,
+      "dev_candidate": false,
       "guide": "benchmark-specs/windsorml/QUICKSTART.md",
-      "specification_sha256": "aa073a92b35d66b5661759006128208ea66d59e6863cf3406f26b63b6e95d4f9",
-      "scoring_release_id": null,
-      "open_splits": []
+      "specification_sha256": "9cf77df2b2e403dcbd81f276f4bfc6f54a1b0b9284462f7bbf1e72897fa94ab6",
+      "scoring_release_id": "windsorml-native-support-v1",
+      "open_splits": [
+        {
+          "id": "full",
+          "label": "Full"
+        },
+        {
+          "id": "medium",
+          "label": "Medium"
+        },
+        {
+          "id": "scarce",
+          "label": "Scarce"
+        },
+        {
+          "id": "super_scarce",
+          "label": "Super scarce"
+        },
+        {
+          "id": "geometry",
+          "label": "Geometry OOD"
+        },
+        {
+          "id": "high_drag",
+          "label": "High drag"
+        },
+        {
+          "id": "low_drag",
+          "label": "Low drag"
+        },
+        {
+          "id": "image_wake",
+          "label": "Image wake"
+        }
+      ]
     },
     "hiliftaeroml": {
       "open": false,

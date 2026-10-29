@@ -1,5 +1,5 @@
 # Announced -> collecting -> reviewing -> live. Publication is always an explicit build.
-phase: announced
+phase: collecting
 dates_confirmed: true
 opens_at: "2026-10-06T15:00:00Z"
 # End of 5 December Anywhere on Earth (6 December 11:59:59 UTC).

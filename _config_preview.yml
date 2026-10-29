@@ -7,9 +7,11 @@ committee_review: true
 submission_target_branch: dev
 launch:
   phase: collecting
-  dev_intake: true
+  dev_intake: false
   # Use the shared Anywhere on Earth deadline and launch date in _data/launch.yml.
-# Follow the generated dev feeds so reviewed results appear without a website repin.
-leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/dev/
+# Pin the blank review feed; this preview does not publish submitted results.
+leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/26278ddee9a4b6228f83b3bac29199473be42dba/
 # Intake documentation and availability retain their matching audited source pin.
-submission_source_ref: 5cd9d5d66410ee70666be9f2b41c99d84d8d2e24
+submission_source_ref: 26278ddee9a4b6228f83b3bac29199473be42dba
+
+launch_empty_preview: true

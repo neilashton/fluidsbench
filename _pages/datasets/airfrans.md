@@ -65,7 +65,7 @@ compact_masthead: true
     <h3>Overall score</h3>
     <p>
       The score combines <strong>50% fields, 25% forces, and 25% profiles</strong>.
-      Field and force weights match AhmedML, HiLiftAeroML, and WindsorML. AirfRANS uses its balanced velocity-profile
+      Field and force weights match AhmedML and WindsorML. AirfRANS uses its balanced velocity-profile
       metric for the entire profile share because it has no scored Cp-cut family.
     </p>
     <div class="dataset-table-wrap">
@@ -86,8 +86,8 @@ compact_masthead: true
       Each field component scores <code>100 × clip(1 − error / cap, 0, 1)</code>; each force or profile component scores
       <code>100 × clip(R², 0, 1)</code>. The overall score is their weighted sum. The approved scoring version
       <code>airfrans-scoring-v2</code> replaces the former 67%/22%/11% balance. Field definitions and profile extraction
-      are unchanged. {% if site.launch.dev_intake %}Submissions are accepted for Full, Scarce and AoA extrapolation; Reynolds remains closed.
-      <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/airfrans/QUICKSTART.md">Follow the participant quickstart to download support, evaluate and submit.</a>{% else %}Check the submission guide for current availability.{% endif %}
+      are unchanged. Submissions are accepted for Full, Scarce and AoA extrapolation; Reynolds remains closed.
+      <a href="{{ site.submission_repository_url }}/blob/{{ site.submission_source_ref }}/benchmark-specs/airfrans/QUICKSTART.md">Follow the participant quickstart to download support, evaluate and submit.</a>
     </p>
   </section>
 
@@ -195,7 +195,7 @@ compact_masthead: true
       Those converted values are distinct from results evaluated from native predictions. Check each row's provenance
       and approval status before comparing results.
     </p>
-    <p>For the completed workflow checks, see the <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/airfrans/PARTICIPANT_TRIALS.md">participant trial record</a>.</p>
+
   </section>
 
   <section class="dataset-panel">

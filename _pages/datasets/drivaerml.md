@@ -22,7 +22,7 @@ compact_masthead: true
       </div>
       <div>
         <dt>Cases</dt>
-        <dd>500 designed simulations; 484 complete cases are currently public and bound by the candidate contract.</dd>
+        <dd>500 designed simulations; 484 complete cases are currently public and bound by the published contract.</dd>
       </div>
       <div>
         <dt>Solver</dt>
@@ -52,7 +52,7 @@ compact_masthead: true
   <section class="dataset-panel">
     <h3>Benchmark splits</h3>
     <p>
-      These eight case lists are published by the source and marked <code>official</code> in the candidate FluidsBench contract. They exclude all 16
+      These eight case lists are published by the source and marked <code>official</code> in the published FluidsBench contract. They exclude all 16
       unavailable or held-back run IDs. Check the submission guide for current availability.
     </p>
 
@@ -139,7 +139,7 @@ compact_masthead: true
     <h3>Evaluate and submit</h3>
     <p>
       Follow the
-      <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/drivaerml/QUICKSTART.md">DrivAerML resumable participant quickstart</a>.
+      <a href="{{ site.submission_repository_url }}/blob/{{ site.submission_source_ref }}/benchmark-specs/drivaerml/QUICKSTART.md">DrivAerML resumable participant quickstart</a>.
       The commands extract fixed and relative profiles from native predictions, compute the complete score set,
       verify checkpoint bytes, and validate the full selected split. Full-field packages contain 40 profile series per case;
       surface-only packages contain eight Cp series and retain the overall-score ceiling of 60.
@@ -178,15 +178,14 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Candidate AutoCFD5 velocity profiles</h3>
+    <h3>AutoCFD5 velocity profiles</h3>
     <p>
       The velocity diagnostic uses all 16 AutoCFD5 lines: <code>V1</code>–<code>V6</code>, <code>U1</code>–<code>U6</code>, <code>L1</code>, and
-      <code>R1</code>–<code>R3</code>. The fixed-locations view uses physical distance in metres on the current primary/candidate 10 mm support; the
+      <code>R1</code>–<code>R3</code>. The fixed-locations view uses physical distance in metres on the published primary 10 mm support; the
       geometry-relative view uses normalized arc length on its distinct retained support and is labelled diagnostic, not scored. Both display native
       <code>|UMeanTrim| / 38.889</code> values. Unsupported rows remain explicit gaps, and the dashboard never substitutes or overlays one placement
-      family's support for the other. The candidate fixed-family reduction is an equal-case, equal-line global R² with normalized trapezoidal
-      arclength support per line; normalized RMSE and the experimental subset are report-only diagnostics. Displaying either all-case native view does
-      not activate relative scoring or open submissions.
+      family's support for the other. The fixed-family reduction is an equal-case, equal-line global R² with normalized trapezoidal
+      arclength support per line; normalized RMSE and the experimental subset are report-only diagnostics. Relative diagnostics remain report-only and do not contribute to the score.
     </p>
   </section>
 
@@ -205,7 +204,7 @@ compact_masthead: true
       <div>
         <dt>MAE and RMSE diagnostics</dt>
         <dd>
-          The current candidate reports area-weighted and equal-polygon MAE/RMSE for both surface arrays, and equal-cell MAE/RMSE for both volume
+          The evaluator reports area-weighted and equal-polygon MAE/RMSE for both surface arrays, and equal-cell MAE/RMSE for both volume
           arrays. Relative L1 is not part of the active DrivAerML metric list.
         </dd>
       </div>

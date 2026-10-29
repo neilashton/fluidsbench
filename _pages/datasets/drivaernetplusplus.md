@@ -95,7 +95,7 @@ compact_masthead: true
       no points are masked. The 29 pressure-release designs absent from the published splits remain excluded
       because other data modalities were incomplete. The 1,154-case test list is unchanged.
       These decisions and the release preparation are recorded in the
-      <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/drivaernetplusplus/OWNER_APPROVAL.md">dataset-owner approval record</a>.
+      <a href="{{ site.submission_repository_url }}/blob/{{ site.submission_source_ref }}/benchmark-specs/drivaernetplusplus/OWNER_APPROVAL.md">dataset-owner approval record</a>.
     </p>
   </section>
 
@@ -122,7 +122,7 @@ compact_masthead: true
         <dd>
           CarBench reports an unweighted point relative L2 (each point counts equally) on the DrivAerNet++ geometry-disjoint evaluation set. FluidsBench
           evaluates both area-weighted primary and equal-point secondary relative L2 on every native test point.
-          The preview displays evaluated submission packages rather than source-paper table values.
+          Leaderboard results come from reviewed submission packages.
         </dd>
       </div>
       <div>
@@ -134,11 +134,10 @@ compact_masthead: true
       </div>
     </dl>
     <p>
-      The pressure-only candidate reports the higher-is-better composite score
+      The pressure-only benchmark reports the higher-is-better composite score
       <code>overall_score = clip(100 - surface_pressure_rel_l2, 0, 100)</code>, where
       <code>surface_pressure_rel_l2</code> is the primary
       area-weighted percentage error. The underlying pressure metrics remain visible alongside it.
-      Dev references are unranked and do not constitute official results.
     </p>
   </section>
 
@@ -147,7 +146,7 @@ compact_masthead: true
     <p>
       Generate native-point pressure predictions for all 1,154 test designs, download the prepared support,
       evaluate with recovery, and package the result using the
-      <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/drivaernetplusplus/QUICKSTART.md">participant quickstart</a>. Follow the <a href="{{ '/run/' | relative_url }}#drivaernetplusplus">submission instructions</a> to propose the generated result directory for review.
+      <a href="{{ site.submission_repository_url }}/blob/{{ site.submission_source_ref }}/benchmark-specs/drivaernetplusplus/QUICKSTART.md">participant quickstart</a>. Follow the <a href="{{ '/run/' | relative_url }}#drivaernetplusplus">submission instructions</a> to propose the generated result directory for review.
     </p>
   </section>
 

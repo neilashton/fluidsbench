@@ -52,7 +52,7 @@ compact_masthead: true
   <section class="dataset-panel">
     <h3>Published source splits</h3>
     <p>
-      AhmedML publishes the eight train, validation, and test manifests below. The development evaluator binds these exact public <code>run_N</code>
+      AhmedML publishes the eight train, validation, and test manifests below. The evaluator binds these exact public <code>run_N</code>
       case IDs and the immutable source revision. Check the submission guide for current availability.
     </p>
 
@@ -133,7 +133,7 @@ compact_masthead: true
   <section class="dataset-panel">
     <h3>Evaluate and submit</h3>
     <p>
-      Follow the <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/ahmedml/QUICKSTART.md">AhmedML participant quickstart</a>
+      Follow the <a href="{{ site.submission_repository_url }}/blob/{{ site.submission_source_ref }}/benchmark-specs/ahmedml/QUICKSTART.md">AhmedML participant quickstart</a>
       for pinned Linux setup, data and prepared-support downloads, complete-split evaluation with resume, reports and validated packaging.
       Predict both surface and volume fields in native cell order. The evaluator derives forces and all seven profile series per case.
       Submit only the generated result directory, following the <a href="{{ '/run/' | relative_url }}#ahmedml">submission instructions</a>.
