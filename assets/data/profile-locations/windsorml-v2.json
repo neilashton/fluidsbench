@@ -2,7 +2,7 @@
   "schema": "fluidsbench-profile-location-guide-v1",
   "dataset_id": "windsorml",
   "source_repository": "neilashton/fluidsbench-submission",
-  "source_ref": "5ed998dad4c671b5dbdcf36809fd2a42def9b230",
+  "source_ref": "8ce4f8acb6eae3776e10e73a8010e67a5a6895c3",
   "definition": {
     "schema_version": "2.0",
     "id": "windsorml-profile-definition-v2",
