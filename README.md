@@ -1,3 +1,5 @@
+> **FluidsBench has moved.** The maintained repository is [FluidsBench/fluidsbench](https://github.com/FluidsBench/fluidsbench) on `main`. Visit [fluidsbench.org](https://fluidsbench.org/) for the live benchmark and [submission instructions](https://github.com/FluidsBench/fluidsbench-submission#start-here). This repository preserves development history and test submissions; it no longer accepts submissions or publishes the website.
+
 # FluidsBench
 
 FluidsBench is an open benchmark for evaluating machine-learning models on realistic fluid dynamics problems. It brings together public datasets, shared evaluation tools and leaderboards to compare prediction accuracy and computational cost across models. This repository contains the FluidsBench website and leaderboard interface.
