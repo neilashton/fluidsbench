@@ -41,7 +41,7 @@ hide_header_background: true
         <h3>{{ site.data.dataset_catalog[slug].name }} <span class="dataset-coming-soon-badge">Coming soon</span></h3>
         <p>The dataset guide and leaderboard will be available here when ready.</p>
         {% else %}
-        <h3>{{ site.data.dataset_catalog[slug].name }} <span>{% if dev_candidate %}Accepting for preview{% elsif availability.open and site.launch.accepting_submissions %}Open for submissions{% elsif availability.open %}Ready for opening{% else %}In preparation{% endif %}</span></h3>
+        <h3>{{ site.data.dataset_catalog[slug].name }} <span>{% if dev_candidate %}Accepting for preview{% elsif availability.open and site.launch.accepting_submissions %}Open for submissions{% elsif availability.open %}Ready for opening{% else %}Coming soon{% endif %}</span></h3>
         {% if availability.open and site.launch.accepting_submissions %}
         <p>Open splits: {% for split in availability.open_splits %}{{ split.label }}{% unless forloop.last %}, {% endunless %}{% endfor %}.</p>
         {% if slug == 'airfrans' %}<p>Reynolds extrapolation is closed. <a href="{{ source_root }}/benchmark-specs/airfrans/RELEASES.md">Support downloads and submission guide ↗</a></p>{% endif %}

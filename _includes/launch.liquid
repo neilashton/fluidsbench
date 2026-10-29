@@ -133,7 +133,7 @@
       </div>
     {% endif %}
     <div class="launch-dataset-grid">
-      {% assign featured = 'airfrans,drivaerml,hiliftaeroml' | split: ',' %}
+      {% assign featured = 'airfrans,drivaerml,drivaernetplusplus' | split: ',' %}
       {% for slug in featured -%}
         {%- assign dataset = site.data.dataset_catalog[slug] %}
         {% unless site.data.leaderboard_display[slug].hidden %}
@@ -156,7 +156,7 @@
     <div class="dataset-coming-soon-list" aria-label="Datasets coming soon">
       {% for entry in site.data.dataset_catalog -%}
         {%- assign slug = entry[0] %}
-        {% if site.data.leaderboard_display[slug].coming_soon %}
+        {% if site.data.leaderboard_display[slug].coming_soon or slug == "hiliftaeroml" %}
           <span class="dataset-coming-soon" data-dataset-id="{{ slug }}" data-dataset-status="coming-soon">
             {{- entry[1].name }}
             <span class="dataset-coming-soon-badge">Coming soon</span></span

@@ -3762,12 +3762,15 @@
     const dataWarningTitle = element("leaderboard-data-warning-title");
     const dataWarningText = element("leaderboard-data-warning-text");
     const officialRelease = release.status === "official";
+    const emptyRelease = state.manifest?.datasets?.every((dataset) => dataset.submission_count === 0) === true;
     const windsorTruthOnly = activeDatasetSlug() === "windsorml" && activeDataset()?.submission_count === 0;
     if (dataWarning) dataWarning.className = `leaderboard-data-warning${officialRelease ? " is-official" : ""}`;
     if (dataWarningTitle)
-      dataWarningTitle.textContent = windsorTruthOnly ? "Native CFD ground truth" : officialRelease ? "Official release" : "Prototype results";
+      dataWarningTitle.textContent = emptyRelease ? "No results yet" : windsorTruthOnly ? "Native CFD ground truth" : officialRelease ? "Official release" : "Prototype results";
     if (dataWarningText) {
-      dataWarningText.textContent = windsorTruthOnly
+      dataWarningText.textContent = emptyRelease
+        ? " — the leaderboard is ready for its first reviewed model submissions."
+        : windsorTruthOnly
         ? " — all eight WindsorML splits are available below. No model results have been submitted; the benchmark is awaiting owner review."
         : officialRelease
           ? " — submitted packages are validated and maintainer-approved."
@@ -5010,7 +5013,9 @@
       cell.colSpan = Math.max(1, activeColumns().length);
       cell.className = "leaderboard-empty";
       cell.textContent =
-        activeDatasetSlug() === "windsorml" && activeDataset()?.submission_count === 0
+        state.manifest?.datasets?.every((dataset) => dataset.submission_count === 0) === true
+          ? "No model results have been published yet."
+          : activeDatasetSlug() === "windsorml" && activeDataset()?.submission_count === 0
           ? "No WindsorML model results yet. Explore native CFD ground-truth profiles below."
           : "No leaderboard rows match this dataset, split, and model type.";
       row.appendChild(cell);
