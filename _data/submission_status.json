@@ -1,5 +1,5 @@
 {
-  "source_commit": "de555652a0fd3765d5a5130ad7f26a9e8a5997be",
+  "source_commit": "5ed998dad4c671b5dbdcf36809fd2a42def9b230",
   "manifest_sha256": "c3450b35a64832dc058886598457d601a7464f89409849f9bfd9a077c10af1eb",
   "release": {
     "id": "fluidsbench-2026-unreleased",
@@ -53,7 +53,7 @@
       "open": true,
       "dev_candidate": false,
       "guide": "benchmark-specs/drivaerml/QUICKSTART.md",
-      "specification_sha256": "c1c4869d39648de4d6c43def2b0583fb2c5fe537223d1ec2009b07c406949ff6",
+      "specification_sha256": "596f6f695c92888a0b4b136e31d7e56d031fff387d2ad11f6702463cbd68d33c",
       "scoring_release_id": "drivaerml-native-support-v3",
       "open_splits": [
         {
