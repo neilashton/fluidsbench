@@ -1,3 +1,5 @@
+> **FluidsBench has moved.** The maintained repository is [FluidsBench/fluidsbench](https://github.com/FluidsBench/fluidsbench) on `main`. Visit [fluidsbench.org](https://fluidsbench.org/) for the live benchmark and [submission instructions](https://github.com/FluidsBench/fluidsbench-submission#start-here). This repository preserves development history and test submissions; it no longer accepts submissions or publishes the website.
+
 # FluidsBench
 
 **An open benchmark for the next generation of Computational Fluid Dynamics AI models.**
