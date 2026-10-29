@@ -17,9 +17,9 @@ baseurl: # the subpath of your site, e.g. /blog/. Leave blank for root
 # Active navigation and contribution links. Update these after repository transfer.
 submission_repository_url: https://github.com/neilashton/fluidsbench-submission
 website_repository_url: https://github.com/neilashton/fluidsbench
-leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/26278ddee9a4b6228f83b3bac29199473be42dba/
+leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/bad86daccdaa2d59ec53de3e3e9033eb72a83913/
 # Submission contracts and empty review feed are pinned to the same reviewed source.
-submission_source_ref: 26278ddee9a4b6228f83b3bac29199473be42dba
+submission_source_ref: bad86daccdaa2d59ec53de3e3e9033eb72a83913
 # Public community invite: no expiry or use limit; opens the start-here channel.
 community_discord_url: "https://discord.gg/zVZsXAeVKp"
 last_updated: true # set to true if you want to display last updated in the footer

@@ -2,7 +2,7 @@
   "schema": "fluidsbench-profile-location-guide-v1",
   "dataset_id": "hiliftaeroml",
   "source_repository": "neilashton/fluidsbench-submission",
-  "source_ref": "26278ddee9a4b6228f83b3bac29199473be42dba",
+  "source_ref": "bad86daccdaa2d59ec53de3e3e9033eb72a83913",
   "source": {
     "file": "leaderboard/manifest.json",
     "sha256": "c3450b35a64832dc058886598457d601a7464f89409849f9bfd9a077c10af1eb"

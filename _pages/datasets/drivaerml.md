@@ -152,7 +152,7 @@ compact_masthead: true
   </section>
 
   <section class="dataset-panel">
-    <h3>Candidate continuous Cp cuts</h3>
+    <h3>Continuous Cp cuts</h3>
     <p>
       These four FluidsBench cuts follow the validation regions used by DrivAerML but are defined as continuous intersections of each participant's
       complete native surface prediction. They are distinct from the 209 discrete AutoCFD5 pressure taps, which are explicitly excluded from the
@@ -272,8 +272,7 @@ compact_masthead: true
         <dt>Cp cut R<sup>2</sup></dt>
         <dd>
           Equal-case, equal-cut global R² over the four fixed native-surface cuts, with normalized trapezoidal arc-length weighting within each cut.
-          Unsupported gaps are never bridged. The current profile contract replaces the historical intersection-segment-length reduction while retaining
-          the frozen geometry and truth. Predictions evaluated with the earlier contract must be reevaluated with the current contract; changing release labels is insufficient.
+          Unsupported gaps are never bridged.
           The report-only companion is <code>cp_cut_rmse</code>.
         </dd>
       </div>
@@ -372,7 +371,7 @@ S_overall  = sum(weight_q * S_q)</code></pre>
     <ul>
       <li><a href="https://caemldatasets.org/drivaerml/">DrivAerML dataset page</a></li>
       <li><a href="https://arxiv.org/abs/2408.11969">DrivAerML paper</a></li>
-      <li><a href="{{ '/' | relative_url }}?dataset=drivaerml">Automotive CFD leaderboard prototype</a></li>
+      <li><a href="{{ '/' | relative_url }}?dataset=drivaerml">FluidsBench leaderboard</a></li>
     </ul>
   </section>
 </div>

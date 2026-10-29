@@ -84,9 +84,8 @@ compact_masthead: true
     </div>
     <p>
       Each field component scores <code>100 × clip(1 − error / cap, 0, 1)</code>; each force or profile component scores
-      <code>100 × clip(R², 0, 1)</code>. The overall score is their weighted sum. The approved scoring version
-      <code>airfrans-scoring-v2</code> replaces the former 67%/22%/11% balance. Field definitions and profile extraction
-      are unchanged. Submissions are accepted for Full, Scarce and AoA extrapolation; Reynolds remains closed.
+      <code>100 × clip(R², 0, 1)</code>. The overall score is their weighted sum, as defined by
+      <code>airfrans-scoring-v2</code>. Submissions are accepted for Full, Scarce and AoA extrapolation; Reynolds remains closed.
       <a href="{{ site.submission_repository_url }}/blob/{{ site.submission_source_ref }}/benchmark-specs/airfrans/QUICKSTART.md">Follow the participant quickstart to download support, evaluate and submit.</a>
     </p>
   </section>
@@ -186,16 +185,6 @@ compact_masthead: true
         </dd>
       </div>
     </dl>
-  </section>
-
-  <section class="dataset-panel">
-    <h3>Result interpretation</h3>
-    <p>
-      Historical paper-derived prototype rows use the full-data-regime AirfRANS baseline tables from arXiv v3.
-      Those converted values are distinct from results evaluated from native predictions. Check each row's provenance
-      and approval status before comparing results.
-    </p>
-
   </section>
 
   <section class="dataset-panel">
