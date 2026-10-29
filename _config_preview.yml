@@ -10,8 +10,8 @@ launch:
   dev_intake: false
   # Use the shared Anywhere on Earth deadline and launch date in _data/launch.yml.
 # Pin the blank review feed; this preview does not publish submitted results.
-leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/bad86daccdaa2d59ec53de3e3e9033eb72a83913/
+leaderboard_base_url: https://raw.githubusercontent.com/neilashton/fluidsbench-submission/de555652a0fd3765d5a5130ad7f26a9e8a5997be/
 # Intake documentation and availability retain their matching audited source pin.
-submission_source_ref: bad86daccdaa2d59ec53de3e3e9033eb72a83913
+submission_source_ref: de555652a0fd3765d5a5130ad7f26a9e8a5997be
 
 launch_empty_preview: true
