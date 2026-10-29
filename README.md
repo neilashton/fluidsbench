@@ -1,8 +1,8 @@
 # FluidsBench
 
-## Start here
+FluidsBench is an open benchmark for evaluating machine-learning models on realistic fluid dynamics problems. It brings together public datasets, shared evaluation tools and leaderboards to compare prediction accuracy and computational cost across models. This repository contains the FluidsBench website and leaderboard interface.
 
-Assess physics AI surrogate models across realistic fluid dynamics datasets.
+## Start here
 
 - **[Choose a dataset and submit a result](https://github.com/neilashton/fluidsbench-submission/tree/dev)** — quickstarts, evaluation tools and submission instructions.
 - **[Explore the website](https://fluidsbench.org/)** — dataset descriptions and benchmark information.
@@ -44,9 +44,31 @@ The former setup and validation sections are now in the [contributor guide](CONT
 
 ## Theme and licence
 
-Built with [Jekyll](https://jekyllrb.com/) and the [al-folio](https://github.com/alshedivat/al-folio) theme foundation.
-The retained theme and website code use the [MIT License](LICENSE).
+The website is built with [Jekyll](https://jekyllrb.com/), with a custom FluidsBench design on the retained
+[al-folio](https://github.com/alshedivat/al-folio) layout and theme foundation.
+The retained theme and website code use the [MIT License](LICENSE). Third-party libraries, datasets, photographs and other
+assets retain their own licences or permissions; the repository licence does not override those terms.
 
 ## Contact
 
 [admin@fluidsbench.org](mailto:admin@fluidsbench.org)
+
+## Organising committee
+
+| Name | Affiliation |
+| --- | --- |
+| Neil Ashton | Mistral |
+| Paola Cinnella | Sorbonne University |
+| Astrid Walle | Pasteur Labs |
+| Mohamed Elrefaie | MIT |
+| Jean Kossaifi | NVIDIA |
+| Ricardo Vinuesa | University of Michigan |
+| Daniel Leibovici | NVIDIA |
+| Faez Ahmed | MIT |
+| Emanuele Tamburini | Sorbonne University |
+| Tyler Buchanan | TU Delft |
+
+Meet the [organisers and contributors](https://fluidsbench.org/contributors/) and the
+[scientific and industrial advisory board](https://fluidsbench.org/contributors/#advisory-board).
+
+Visit the [FluidsBench website](https://fluidsbench.org/) for dataset information, benchmark news and community links.
