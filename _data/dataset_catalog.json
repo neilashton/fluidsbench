@@ -393,7 +393,7 @@
     },
     "visual": {
       "inputs": "Vehicle mesh + body category",
-      "support": "Current candidate: native surface pressure points",
+      "support": "Native surface pressure points",
       "metrics": "Area-weighted and equal-point pressure errors"
     }
   },

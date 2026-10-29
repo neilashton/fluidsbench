@@ -4,8 +4,7 @@ organisers:
     initials: NA
     image: /assets/img/people/nashton-small.jpeg
     crop: upper
-    profile: https://orcid.org/0000-0002-9943-2334
-    profile_kind: orcid
+    profile: https://neilashton.co.uk
   - name: Paola Cinnella
     affiliation: Sorbonne University
     initials: PC
@@ -54,6 +53,7 @@ organisers:
   - name: Tyler Buchanan
     affiliation: TU Delft
     initials: TB
+    image: /assets/img/people/tyler-buchanan.jpg
     profile: https://www.tudelft.nl/staff/t.s.b.buchanan/
 
 advisory_board:
