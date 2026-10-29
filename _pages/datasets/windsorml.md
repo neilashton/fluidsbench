@@ -88,7 +88,7 @@ compact_masthead: true
     <h3>Evaluate and submit</h3>
     <p>
       Follow the
-      <a href="{{ site.submission_repository_url }}/blob/dev/benchmark-specs/windsorml/QUICKSTART.md">WindsorML resumable participant quickstart</a>.
+      <a href="{{ site.submission_repository_url }}/blob/{{ site.submission_source_ref }}/benchmark-specs/windsorml/QUICKSTART.md">WindsorML resumable participant quickstart</a>.
       The commands verify the pinned data, package all 16 fixed and relative profiles per case,
       and validate the complete result. Follow the <a href="{{ '/run/' | relative_url }}#windsorml">submission instructions</a> to propose the generated directory for review.
     </p>
@@ -106,7 +106,7 @@ compact_masthead: true
       Every available test case has three surface Cp cuts and five wake velocity profiles, each with 128 samples.
       The viewer shows both fixed locations and body-height-relative locations: 16 series per case.
       Values come directly from the evaluator's pinned native CFD support, with no fabricated model curves or scores.
-      The fixed families contribute to the candidate score; relative families are report-only with zero weight.
+      The fixed families contribute to the benchmark score; relative families are report-only with zero weight.
     </p>
     <div class="dataset-table-wrap">
       <table class="dataset-table compact">

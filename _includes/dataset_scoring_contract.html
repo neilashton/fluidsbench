@@ -70,7 +70,7 @@
               native source pin; <code>UMeanTrim</code> and <code>pMeanTrim</code> in VTK <code>CellData</code>
             </td>
             <td>Every cell carrying <code>UMeanTrim</code> and <code>pMeanTrim</code></td>
-            <td>Equal native cell only; geometric cell-volume weights are not required by the candidate contract</td>
+            <td>Equal native cell only; geometric cell-volume weights are not required by the scoring contract</td>
           </tr>
           {% when "windsorml" %}
           <tr>
@@ -92,7 +92,7 @@
               <code>velocityzavg</code>, and <code>pressureavg</code> in VTK <code>CellData</code>
             </td>
             <td>Every cell carrying those velocity components and pressure</td>
-            <td>Equal native cell only; the candidate contract does not use cell-volume weights</td>
+            <td>Equal native cell only; the scoring contract does not use cell-volume weights</td>
           </tr>
           {% when "hiliftaeroml" %}
           <tr>
@@ -207,7 +207,7 @@
       {% if include.slug == "drivaerml" %}
       <li>
         DrivAerML uses area-weighted relative L2 as the primary surface value and equal-native-polygon relative L2 as its secondary surface value. Its
-        native volume fields use equal-native-cell relative L2 only; the candidate contract deliberately does not require geometric cell-volume
+        native volume fields use equal-native-cell relative L2 only; the scoring contract does not require geometric cell-volume
         weights.
       </li>
       <li>

@@ -19,7 +19,7 @@ chart:
   <header class="leaderboard-masthead">
     <div class="leaderboard-masthead-copy">
       {% if page.committee_review %}
-      <p class="ux-eyebrow" id="committee-review-notice" role="note">Committee preview · Prototype results</p>
+      <p class="ux-eyebrow" id="committee-review-notice" role="note">Committee preview · {% if site.launch_empty_preview %}No submissions yet{% else %}Prototype results{% endif %}</p>
       {% else %}
       <p class="ux-eyebrow">Open benchmarks for scientific machine learning</p>
       {% endif %}
@@ -306,7 +306,7 @@ chart:
     <div class="leaderboard-panel-heading">
       <div>
         <h3>Where do models make errors?</h3>
-        <p>Regional diagnostics show where predictions differ from native CFD. These plots do not affect the benchmark score.</p><details class="ux-chart-notes"><summary>Aggregation details</summary><p>Available for DrivAerML, HiLiftAeroML and AhmedML. HiLift volume fields use equal-case regional RMSE, normalised by each case's whole-volume truth RMS. Local relative L2 and R2 remain in the numeric diagnostics.</p></details>
+        <p>Regional diagnostics show where predictions differ from native CFD. These plots do not affect the benchmark score.</p><details class="ux-chart-notes"><summary>Aggregation details</summary><p>Available for DrivAerML and AhmedML. Local relative L2 and R2 remain in the numeric diagnostics.</p></details>
       </div>
       <div class="chart-control-row">
         <div class="chart-control">

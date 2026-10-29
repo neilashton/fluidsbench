@@ -133,7 +133,7 @@
       </div>
     {% endif %}
     <div class="launch-dataset-grid">
-      {% assign featured = 'airfrans,drivaerml,hiliftaeroml' | split: ',' %}
+      {% assign featured = 'airfrans,drivaerml,drivaernetplusplus' | split: ',' %}
       {% for slug in featured -%}
         {%- assign dataset = site.data.dataset_catalog[slug] %}
         {% unless site.data.leaderboard_display[slug].hidden %}
@@ -215,8 +215,7 @@
         <summary>When will I be able to see the results?</summary>
         <p>
           {% if site.launch.dev_intake -%}
-            Submissions and reviews are visible in GitHub pull requests. Reviewed results can appear in the preview before the official leaderboard
-            release.
+            Submissions and reviews are visible in GitHub pull requests.
           {%- else %}
             The first official leaderboard is planned for {{ site.launch.reveal_at | date: '%-d %B %Y' }} Anywhere on Earth (UTC−12). It will bring
             together reviewed submissions received by the first-release cutoff. Submissions continue afterwards, with later results appearing in

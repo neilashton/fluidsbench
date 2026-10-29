@@ -77,8 +77,8 @@ def validate(root: Path, phase: str, committee_review: bool = False, dev_intake:
             parser.feed(review)
             if not parser.has_noindex:
                 errors.append("committee review page must declare noindex")
-            if 'id="committee-review-notice"' not in review or "Prototype results" not in review:
-                errors.append("committee review page must be labelled as a prototype")
+            if 'id="committee-review-notice"' not in review or not any(label in review for label in ("Prototype results", "No submissions yet")):
+                errors.append("committee review page must identify its empty or prototype state")
             if 'id="leaderboard-table"' not in review or '/assets/js/leaderboard.js' not in review:
                 errors.append("committee review page does not contain the leaderboard")
             if not re.search(r"window\.FluidsBenchLeaderboardPreviewMode\s*=\s*(?:true|!0)\b", review):

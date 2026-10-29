@@ -262,6 +262,8 @@ assert.equal(api.decimalHalfUp(-91.4564999999999, 3), -91.456);
   const manifest = JSON.parse(fs.readFileSync(path.join(submissionRoot, "leaderboard/manifest.json"), "utf8"));
   api.state.manifest = manifest;
   api.state.metrics = new Map(manifest.metric_definitions.map((definition) => [definition.id, definition]));
+  // Exercise historical component rendering without opening the dataset in the site.
+  displayConfig.hiliftaeroml.coming_soon = false;
   api.state.dataset = "HiLiftAeroML";
   const dataset = manifest.datasets.find((item) => item.name === api.state.dataset);
   const entry = JSON.parse(fs.readFileSync(path.join(submissionRoot, dataset.file), "utf8"))[0];
@@ -273,6 +275,7 @@ assert.equal(api.decimalHalfUp(-91.4564999999999, 3), -91.456);
   assert.match(html, /Matches the recorded overall score/);
   assert.match(api.scoreNumberHtml(0.734567891, 3), /data-precise="0.734567891"/);
   assert.match(api.scoreNumberHtml(15, 2, "%"), />15%<\/span>/);
+  displayConfig.hiliftaeroml.coming_soon = true;
   api.state.dataset = "DrivAerML";
   const scopeHtml = api.scoreBreakdownHtml({ model: "Scope test", prediction_scope: "surface_only", metric_values: {} });
   assert.match(scopeHtml, /Unavailable for this scope/);
@@ -1540,7 +1543,6 @@ const expectedSurfaceWeighting = new Map([
   ["AirfRANS", "length-weighted"],
   ["DrivAerML", "area-weighted"],
   ["DrivAerNet++", "area-weighted"],
-  ["HiLiftAeroML", "area-weighted"],
   ["WindsorML", "area-weighted"],
 ]);
 expectedSurfaceWeighting.forEach((weighting, datasetName) => {
@@ -2824,8 +2826,8 @@ async function verifyComingSoonSelection() {
     api.state.manifest = manifest;
     assert.deepEqual(
       Array.from(api.datasetEntries(), (dataset) => dataset.slug).sort(),
-      ["ahmedml", "airfrans", "drivaerml", "drivaernetplusplus", "hiliftaeroml", "windsorml"],
-      "only the six current datasets may expose leaderboard results"
+      ["ahmedml", "airfrans", "drivaerml", "drivaernetplusplus", "windsorml"],
+      "only the five open datasets may expose leaderboard results"
     );
     const options = api.datasetOptions();
     assert.equal(options.length, 9);
@@ -2834,7 +2836,7 @@ async function verifyComingSoonSelection() {
         options.filter((option) => option.disabled),
         (option) => option.value
       ).sort(),
-      ["BlendedNet", "Rotor37", "VKI-LS59"]
+      ["BlendedNet", "HiLiftAeroML", "Rotor37", "VKI-LS59"]
     );
     assert.ok(options.filter((option) => option.disabled).every((option) => option.label.endsWith(" — Coming soon")));
     context.document.createElement = () => ({});
@@ -2848,7 +2850,7 @@ async function verifyComingSoonSelection() {
       },
     };
     api.populateSelect(select, options, "Rotor37");
-    assert.equal(select.children.filter((option) => option.disabled).length, 3, "upcoming options must be natively disabled");
+    assert.equal(select.children.filter((option) => option.disabled).length, 4, "upcoming options must be natively disabled");
     assert.notEqual(select.value, "Rotor37", "a disabled dataset cannot become the default");
     api.state.manifest = { ...manifest, datasets: manifest.datasets.filter((dataset) => !displayConfig[dataset.slug]?.coming_soon) };
     assert.equal(api.datasetOptions().length, 9, "coming-soon labels must not depend on published result feeds");
@@ -2931,10 +2933,10 @@ verifyComingSoonSelection()
   .then(() => verifyNativeV3CpDisplayCoordinates())
   .then(() => verifyCurrentRun419ProfileFixture())
   .then(() => verifyRetainedNativeRun419Bundle())
-  .then(() => verifyHiLiftRegionalReport())
+  .then(() => { displayConfig.hiliftaeroml.coming_soon = false; return verifyHiLiftRegionalReport(); })
   .then(() => verifyHiLiftVelocityStorageDecoder())
   .then(() => verifyHiLiftCompactProfileOverlay())
-  .then(() => verifyGeneratedClaimRecords())
+  .then(() => { displayConfig.hiliftaeroml.coming_soon = true; return verifyGeneratedClaimRecords(); })
   .then(() => {
     verifyPredictionEvidenceLabels();
     verifyDatasetSubmissionAvailability();

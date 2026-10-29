@@ -10,6 +10,10 @@ hide_header_background: true
 compact_masthead: true
 ---
 
+{% if site.data.leaderboard_display.hiliftaeroml.coming_soon %}
+{% include dataset_coming_soon.html slug="hiliftaeroml" %}
+{% else %}
+
 <div class="dataset-page">
   {% include dataset_intro.html slug="hiliftaeroml" %}
 
@@ -23,8 +27,7 @@ compact_masthead: true
       benchmark-owner approval.
     </p>
     <p>
-      The development leaderboard contains 23 retained real-model previews: eleven Transolver and twelve GeoTransolver results. These are
-      pre-release references, not official or citable benchmark results. Public Cp and velocity plot truth covers all 1,355 cases; that plotting
+      Public Cp and velocity plot truth covers all 1,355 cases; that plotting
       derivative omits scoring weights and cannot replace the evaluator's separate scoring-truth release.
     </p>
   </section>
@@ -497,3 +500,5 @@ S_overall  = sum(weight_q * S_q)</code></pre>
     </ul>
   </section>
 </div>
+
+{% endif %}
